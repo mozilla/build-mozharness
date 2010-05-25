@@ -1,4 +1,9 @@
 #!/usr/bin/env python
+"""signdebs.py
+
+Usage:
+    signdebs.py [args]
+"""
 
 import os
 import shutil
@@ -6,28 +11,26 @@ import subprocess
 import sys
 import urllib2
 from urllib2 import Request, urlopen, URLError, HTTPError
-try:
-    import json
-except:
-    import simplejson as json
 
 # load modules from parent dir
 sys.path[0] = os.path.dirname(sys.path[0])
+
 import Log
+reload(Log)
+from Log import SimpleFileLogger
+
 import Config
+reload(Config)
+from Config import SimpleConfig
 
-"""signdebs.py
 
-Usage:
-    signdebs.py [args]
-"""
 
-class MaemoDebSigner(object):
-    def __init__(self, configJson=None):
-        self.debName = debName
-        self.debNameUrl = debNameUrl
-        self.locales = locales
-        self.platforms = platforms
+# MaemoDebSigner {{{1
+class MaemoDebSigner(SimpleConfig, SimpleFileLogger):
+    def __init__(self, logName='debsign.log',
+                 configFile=None, localesFile=None, locales=None):
+        SimpleFileLogger.__init__(self, logName=logName)
+        SimpleConfig.__init__(self)
 
     def getDebName(self):
         if self.debName:
@@ -46,18 +49,6 @@ def mkdir_p(path):
     else:
         print "already exists"
 
-
-def parseLocalesFile(fileName):
-    fh = open(fileName)
-    locales = []
-    if fileName.endswith('.json'):
-        localesJson = json.load(fh, 'ascii')
-        locales.extend(localesJson.keys())
-    else:
-        for line in fh:
-            line = line[:-1]
-            locales.append(line)
-    return locales
 
 def getPlatformLocales(platformConfig):
     platformLocales = []
@@ -79,12 +70,6 @@ def parseArgs():
     config = json.JSONDecoder().decode(configJson)
     if platforms is None:
         platforms = config['platforms'].keys()
-    if locales is None:
-        if 'localesFile' in config:
-            locales=parseLocalesFile(config['localesFile'])
-        else:
-            locales=[]
-    fh.close()
 
     return (config, platforms, locales)
 
@@ -116,8 +101,9 @@ def signRepo(config, repoName, platform):
 
 
 
+# __main__ {{{1
 if __name__ == '__main__':
-    pass
+    debSigner = MaemoDebSigner()
     # repoDir is assumed to be relative from /scratchbox/users/cltbld/home/cltbld
 #    if os.path.exists(config['repoDir']):
 #        shutil.rmtree(config['repoDir'])

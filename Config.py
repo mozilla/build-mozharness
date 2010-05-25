@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from copy import deepcopy
 import os
 import pprint
 import sys
@@ -18,8 +19,11 @@ class BaseConfig(object):
     did elsewhere to lock down the config during runtime, but that's a
     little heavy handed to go with as the default.
     """
-    def __init__(self):
-        pass
+    def __init__(self, config=None, configFile=None):
+        if config:
+            self.setConfig(config)
+        elif configFile:
+            self.setConfig(self.parseConfig(configFile))
 
     def parseConfigFile(self, fileName):
         """Read a config file and return a dictionary.
@@ -43,6 +47,15 @@ class BaseConfig(object):
         """
         return config
 
+    def mapConfig(self, config1, config2):
+        """Copy key/value pairs of config2 onto config1.
+        There can be a lot of other behaviors here; writing this one first.
+        """
+        config = deepcopy(config1)
+        for key, value in config2.iteritems():
+            config[key] = value
+        return config
+
     def queryConfig(self, varName=None):
         if not varName:
             return self.config
@@ -57,11 +70,14 @@ class BaseConfig(object):
             if varName in self.config:
                 return self.config[varName]
 
-    def setConfig(self, config):
+    def setConfig(self, config, overwrite=False):
         """It would be good to detect if self.config is already set, and
         if so, have settings as to how to determine what overrides what.
         """
-        self.config = config
+        if self.config and not overwrite:
+            self.config = self.mapConfig(self.config, config)
+        else:
+            self.config = config
 
     def queryVar(self, varName):
         return self.queryConfig(varName=varName)
@@ -86,8 +102,9 @@ class BaseConfig(object):
 
 
 class SimpleConfig(BaseConfig):
-    def __init__(self):
-        self.config = {}
+    def __init__(self, **kwargs):
+        BaseConfig.__init__(self, **kwargs)
+
 
 
 
@@ -120,9 +137,12 @@ class ParanoidConfig(BaseConfig):
             if varName in self._config:
                 return self._config[varName]
 
-    def setConfig(self, config):
+    def setConfig(self, config, overwrite=False):
         self._checkConfigLock()
-        self._config = config
+        if self._config and not overwrite:
+            self._config = self.mapConfig(self._config, config)
+        else:
+            self._config = config
 
     def setVar(self, varName, value):
         self._checkConfigLock()

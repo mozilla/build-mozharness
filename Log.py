@@ -124,12 +124,19 @@ class SimpleFileLogger(BaseLogger):
     """Create one logFile.  Possibly also output to
     the terminal and a raw log (no prepending of level or date)
     """
-    def __init__(self, logName='test.log',
+    def __init__(self, logName=None, logFile=None,
                  defaultLogFormat='%(asctime)s - %(levelname)s - %(message)s',
                  loggerName='Simple', **kwargs):
-        self.logName = logName
         self.loggerName = loggerName
-        self.logFile = None
+        if logFile:
+            self.logFile = os.path.abspath(logFile)
+            self.logName = os.path.basename(logFile)
+        else:
+            if not logName:
+                logName = 'test.log'
+            self.logName = logName
+            self.logFile = os.path.join(os.getcwd(), self.logName)
+            
         BaseLogger.__init__(self, defaultLogFormat=defaultLogFormat,
                             **kwargs)
 
