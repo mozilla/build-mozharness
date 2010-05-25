@@ -24,9 +24,8 @@ class BaseLogger(object):
               'fatal': logging.FATAL
              }
 
-    def __init__(self,
-                 defaultLogLevel='info',
-                 defaultLogFormat='%(asctime)s - %(levelname)s - %(message)s',
+    def __init__(self, defaultLogLevel='info',
+                 defaultLogFormat='%(message)s',
                  defaultLogDateFormat='%H:%M:%S',
                  haltOnFailure=True,
                 ):
@@ -35,11 +34,6 @@ class BaseLogger(object):
         self.defaultLogFormat = defaultLogFormat
         self.defaultLogDateFormat = defaultLogDateFormat
         self.allHandlers = []
-
-    def initMessage(self):
-        """Optionally log an initial message.
-        """
-        pass
 
     def getLoggerLevel(self, level=None):
         if not level:
@@ -118,21 +112,18 @@ class MultiFileLogger(BaseLogger):
     """Create a log per log level in logDir.  Possibly also output to
     the terminal and a raw log (no prepending of level or date)
     """
-    def __init__(self,
-                 baseLogName='test',
-                 loggerName='',
-                 logDir='logs',
-                 logToConsole=True,
-                 logToRaw=True,
-                 **kwargs
-                ):
+    def __init__(self, baseLogName='test',
+                 defaultLogFormat='%(asctime)s - %(levelname)s - %(message)s',
+                 loggerName='', logDir='logs', logToConsole=True,
+                 logToRaw=True, **kwargs):
         self.baseLogName = baseLogName
         self.logDir = logDir
         self.loggerName = loggerName
         self.logToConsole = logToConsole
         self.logToRaw = logToRaw
         self.logFiles = {}
-        BaseLogger.__init__(self, **kwargs)
+        BaseLogger.__init__(self, defaultLogFormat=defaultLogFormat,
+                            **kwargs)
 
         self.createLogDir()
         self.newLogger(self.loggerName)
@@ -153,8 +144,7 @@ class MultiFileLogger(BaseLogger):
             self.logFiles['raw'] = '%s_raw.log' % self.baseLogName
             self.addFileHandler('%s/%s' % (self.absLogDir,
                                            self.logFiles['raw']),
-                                logFormat='%(message)s',
-                               )
+                                logFormat='%(message)s')
         minLoggerLevel = self.getLoggerLevel(self.defaultLogLevel)
         for level in self.LEVELS.keys():
             if self.getLoggerLevel(level) >= minLoggerLevel:
@@ -162,8 +152,7 @@ class MultiFileLogger(BaseLogger):
                                                       level)
                 self.addFileHandler('%s/%s' % (self.absLogDir,
                                                self.logFiles[level]),
-                                    logLevel=level,
-                                   )
+                                    logLevel=level)
 
 
 
