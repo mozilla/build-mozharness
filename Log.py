@@ -8,76 +8,82 @@ import sys
 FATAL = logging.CRITICAL + 10
 logging.addLevelName(FATAL, 'FATAL')
 
+
+
+# BaseLogger {{{1
 class BaseLogger(object):
+    """Create a base logging class.
+    """
     LEVELS = {'debug': logging.DEBUG,
               'info': logging.INFO,
               'warning': logging.WARNING,
-              'warn': logging.WARNING,
               'error': logging.ERROR,
               'critical': logging.CRITICAL,
               'fatal': logging.FATAL
              }
 
     def __init__(self,
-                 objName='Base',
+                 defaultLogLevel='info',
+                 defaultLogFormat='%(asctime)s - %(levelname)s - %(message)s',
+                 defaultLogDateFormat='%H:%M:%S',
                  haltOnFailure=True,
-                 logDateFormat='%H:%M:%S',
-                 logFormat='%(asctime)s - %(levelname)s - %(message)s',
-                 logLevel='info',
-                 logName='default.log',
-                 logToConsole=True,
-                 logToFile=False,
                 ):
-        self.objName = objName
         self.haltOnFailure = haltOnFailure,
-        self.logLevel = logLevel
-        self.logDateFormat = logDateFormat
-        self.logFormat = logFormat
-        self.logName = logName
-        self.logToConsole = logToConsole
-        self.logToFile = logToFile
+        self.defaultLogLevel = defaultLogLevel
+        self.defaultLogFormat = defaultLogFormat
+        self.defaultLogDateFormat = defaultLogDateFormat
         self.allHandlers = []
-
-        self.newLogger(self.objName)
 
     def initMessage(self):
         """Optionally log an initial message.
         """
         pass
 
+    def getLoggerLevel(self, level=None):
+        if not level:
+            level = self.defaultLogLevel
+        return self.LEVELS.get(level, logging.NOTSET)
+
+    def getFormatter(self, logFormat=None, dateFormat=None):
+        if not logFormat:
+            logFormat = self.defaultLogFormat
+        if not dateFormat:
+            dateFormat = self.defaultLogDateFormat
+        return logging.Formatter(logFormat, dateFormat)
+
     def newLogger(self, loggerName):
         """Create a new logger.
         """
-        self.realLogLevel = self.LEVELS.get(self.logLevel, logging.NOTSET)
-
         self.logger = logging.getLogger(loggerName)
-        self.logger.setLevel(self.realLogLevel)
-        self.logFormatter = logging.Formatter(self.logFormat,
-                                              self.logDateFormat)
+        self.logger.setLevel(self.getLoggerLevel())
 
         # To prevent dups if called multiple times
         for handler in self.allHandlers:
             self.logger.removeHandler(handler)
 
-        if self.logToConsole:
-            self.addConsoleHandler()
-        if self.logToFile:
-            self.addFileHandler(self.logName)
-        self.initMessage()
-
-    def addConsoleHandler(self):
+    def addConsoleHandler(self, logLevel=None, logFormat=None,
+                          dateFormat=None):
         consoleHandler = logging.StreamHandler()
-        consoleHandler.setLevel(self.realLogLevel)
-        consoleHandler.setFormatter(self.logFormatter)
+        consoleHandler.setLevel(self.getLoggerLevel(logLevel))
+        consoleHandler.setFormatter(self.getFormatter(logFormat=logFormat,
+                                                      dateFormat=dateFormat))
         self.logger.addHandler(consoleHandler)
         self.allHandlers.append(consoleHandler)
 
-    def addFileHandler(self, logName):
+    def addFileHandler(self, logName, logLevel=None, logFormat=None,
+                       dateFormat=None):
         fileHandler = logging.FileHandler(logName)
-        fileHandler.setLevel(self.realLogLevel)
-        fileHandler.setFormatter(self.logFormatter)
+        fileHandler.setLevel(self.getLoggerLevel(logLevel))
+        fileHandler.setFormatter(self.getFormatter(logFormat=logFormat,
+                                                   dateFormat=dateFormat))
         self.logger.addHandler(fileHandler)
         self.allHandlers.append(fileHandler)
+
+    def log(self, level, message):
+        if level == 'fatal':
+            self.fatal(message)
+        else:
+            self.logger.log(self.getLoggerLevel(level), message)
 
     def debug(self, message):
         self.logger.debug(message)
@@ -105,12 +111,69 @@ class BaseLogger(object):
 
 
 
+# MultiFileLogger {{{1
+class MultiFileLogger(BaseLogger):
+    """Create a log per log level in logDir.  Possibly also output to
+       the terminal and a raw log (no prepending of level or date)
+    """
+    def __init__(self,
+                 baseLogName='test',
+                 loggerName='',
+                 logDir='logs',
+                 logToConsole=True,
+                 logToRaw=True,
+                 rawLogLevel='info',
+                 **kwargs
+                ):
+        self.baseLogName = baseLogName
+        self.logDir = logDir
+        self.loggerName = loggerName
+        self.logToConsole = logToConsole
+        self.logToRaw = logToRaw
+        self.rawLogLevel = rawLogLevel
+        self.logFiles = {}
+        BaseLogger.__init__(self, **kwargs)
+
+        self.createLogDir()
+        self.newLogger(self.loggerName)
+
+    def createLogDir(self):
+        if os.path.exists(self.logDir):
+            if not os.path.isdir(self.logDir):
+                os.remove(self.logDir)
+        if not os.path.exists(self.logDir):
+            os.makedirs(self.logDir)
+        self.absLogDir = os.path.abspath(self.logDir)
+
+    def newLogger(self, loggerName):
+        BaseLogger.newLogger(self, loggerName)
+        if self.logToConsole:
+            self.addConsoleHandler()
+        if self.logToRaw:
+            self.logFiles['raw'] = '%s_raw.log' % self.baseLogName
+            self.addFileHandler('%s/%s' % (self.absLogDir,
+                                           self.logFiles['raw']),
+                                logLevel=self.rawLogLevel,
+                                logFormat='%(message)s',
+                               )
+        minLoggerLevel = self.getLoggerLevel(self.defaultLogLevel)
+        for level in self.LEVELS.keys():
+            if self.getLoggerLevel(level) >= minLoggerLevel:
+                self.logFiles[level] = '%s_%s.log' % (self.baseLogName,
+                                                      level)
+                self.addFileHandler('%s/%s' % (self.absLogDir,
+                                               self.logFiles[level]),
+                                    logLevel=level,
+                                   )
+
+
+
+# __main__ {{{1
 if __name__ == '__main__':
-    testLogName = 'test.log'
-    if os.path.exists(testLogName):
-        os.remove(testLogName)
-    obj = BaseLogger(logLevel='debug', logName=testLogName, logToFile=True)
-    obj.debug('test debug')
+    logDir = 'test_logs'
+    obj = MultiFileLogger(defaultLogLevel='info', logDir=logDir,
+                          logToRaw=True)
+    obj.debug('YOU SHOULD NOT SEE THIS LINE')
     obj.info('test info')
     obj.warn('test warn')
     obj.error('test error')
@@ -121,16 +184,8 @@ if __name__ == '__main__':
         print "Yay, that's good."
     else:
         print "OH NO!"
-    if os.path.exists(testLogName):
-        os.remove(testLogName)
-    else:
-        print "CAN'T REMOVE %s!" % testLogName
-
-    # Test after resetting the logger
-    obj.logLevel='critical'
     obj.haltOnFailure=False
-    obj.logToFile=False
-    obj.newLogger('Base')
-    obj.error('YOU SHOULD NOT SEE THIS MESSAGE!')
     obj.critical('test critical -- You should see this message.')
     obj.fatal('test fatal -- you should *not* see an exit line after this.')
+    print "=========="
+    print "You should be able to examine the test logs created in %s." % logDir
