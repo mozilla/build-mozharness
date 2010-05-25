@@ -1,0 +1,32 @@
+{
+  "localesFile": "mobile/locales/all-locales",
+  "repoName": "trunk_LOCALE",
+  "remoteRepoPath": "/var/www/html/debtest",
+  "_remoteUser": "ffxbld",
+  "_remoteSshKey": "/home/cltbld/.ssh/ffxbld_dsa",
+  "remoteUser": "cltbld",
+  "remoteSshKey": "/home/cltbld/.ssh/id_rsa",
+  "remoteHost": "staging-mobile-master.build.mozilla.org",
+  "section": "extras",
+  "sboxPath": "/scratchbox/moz_scratchbox",
+  "repoDir": "repos.staging",
+  "baseWorkDir": "/scratchbox/users/cltbld/home/cltbld",
+  "platforms": {
+
+    "chinook": {
+      "installFile": "trunk_LOCALE_nightly_chinook.install",
+      "debNameUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mobile-trunk/deb_name.txt",
+      "multiDirUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mobile-trunk",
+      "enUsDirUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mobile-trunk/en-US",
+      "l10nDirUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mobile-trunk-l10n"
+    },
+
+    "fremantle": {
+      "installFile": "trunk_LOCALE_nightly.install",
+      "debNameUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mobile-trunk-maemo5-gtk/deb_name.txt",
+      "multiDirUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mobile-trunk-maemo5-gtk",
+      "enUsDirUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mobile-trunk-maemo5-gtk/en-US"
+    }
+
+  }
+}
