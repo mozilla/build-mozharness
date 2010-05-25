@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+"""Logging, the way I remember it from scripts gone by.
+"""
 
 import logging
 import os
@@ -114,7 +116,7 @@ class BaseLogger(object):
 # MultiFileLogger {{{1
 class MultiFileLogger(BaseLogger):
     """Create a log per log level in logDir.  Possibly also output to
-       the terminal and a raw log (no prepending of level or date)
+    the terminal and a raw log (no prepending of level or date)
     """
     def __init__(self,
                  baseLogName='test',
@@ -122,7 +124,6 @@ class MultiFileLogger(BaseLogger):
                  logDir='logs',
                  logToConsole=True,
                  logToRaw=True,
-                 rawLogLevel='info',
                  **kwargs
                 ):
         self.baseLogName = baseLogName
@@ -130,7 +131,6 @@ class MultiFileLogger(BaseLogger):
         self.loggerName = loggerName
         self.logToConsole = logToConsole
         self.logToRaw = logToRaw
-        self.rawLogLevel = rawLogLevel
         self.logFiles = {}
         BaseLogger.__init__(self, **kwargs)
 
@@ -153,7 +153,6 @@ class MultiFileLogger(BaseLogger):
             self.logFiles['raw'] = '%s_raw.log' % self.baseLogName
             self.addFileHandler('%s/%s' % (self.absLogDir,
                                            self.logFiles['raw']),
-                                logLevel=self.rawLogLevel,
                                 logFormat='%(message)s',
                                )
         minLoggerLevel = self.getLoggerLevel(self.defaultLogLevel)
@@ -170,6 +169,10 @@ class MultiFileLogger(BaseLogger):
 
 # __main__ {{{1
 if __name__ == '__main__':
+    """Quick 'n' dirty unit tests.
+    Ideally, this would be parsed automatically, too, and wouldn't leave
+    cruft behind.
+    """
     logDir = 'test_logs'
     obj = MultiFileLogger(defaultLogLevel='info', logDir=logDir,
                           logToRaw=True)
