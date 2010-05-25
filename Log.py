@@ -142,16 +142,16 @@ class MultiFileLogger(BaseLogger):
             self.addConsoleHandler()
         if self.logToRaw:
             self.logFiles['raw'] = '%s_raw.log' % self.baseLogName
-            self.addFileHandler('%s/%s' % (self.absLogDir,
-                                           self.logFiles['raw']),
+            self.addFileHandler(os.path.join(self.absLogDir,
+                                             self.logFiles['raw']),
                                 logFormat='%(message)s')
         minLoggerLevel = self.getLoggerLevel(self.defaultLogLevel)
         for level in self.LEVELS.keys():
             if self.getLoggerLevel(level) >= minLoggerLevel:
                 self.logFiles[level] = '%s_%s.log' % (self.baseLogName,
                                                       level)
-                self.addFileHandler('%s/%s' % (self.absLogDir,
-                                               self.logFiles[level]),
+                self.addFileHandler(os.path.join(self.absLogDir,
+                                                 self.logFiles[level]),
                                     logLevel=level)
 
 

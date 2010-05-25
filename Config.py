@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import pprint
 import sys
 try:
@@ -132,13 +133,13 @@ class ParanoidConfig(BaseConfig):
 # __main__ {{{1
 if __name__ == '__main__':
     obj = BaseConfig()
-    config=obj.parseConfigFile('configs/test/test.json')
+    config=obj.parseConfigFile(os.path.join('configs', 'test', 'test.json'))
     obj.dumpConfig(config)
     if config['key1'] != "value1":
         print "ERROR key1 isn't value1!"
 
     obj = ParanoidConfig()
-    obj.setConfig(obj.parseConfigFile('configs/test/test.json'))
+    obj.setConfig(obj.parseConfigFile(os.path.join('configs', 'test', 'test.json')))
     obj.lockConfig()
     if obj.queryConfig('key1') != "value1":
         print "ERROR key1 isn't value1!"
