@@ -27,12 +27,14 @@ class BaseLogger(object):
     def __init__(self, defaultLogLevel='info',
                  defaultLogFormat='%(message)s',
                  defaultLogDateFormat='%H:%M:%S',
+                 logToConsole=True,
                  haltOnFailure=True,
                 ):
         self.haltOnFailure = haltOnFailure,
         self.defaultLogLevel = defaultLogLevel
         self.defaultLogFormat = defaultLogFormat
         self.defaultLogDateFormat = defaultLogDateFormat
+        self.logToConsole = logToConsole
         self.allHandlers = []
 
     def getLoggerLevel(self, level=None):
@@ -40,7 +42,7 @@ class BaseLogger(object):
             level = self.defaultLogLevel
         return self.LEVELS.get(level, logging.NOTSET)
 
-    def getFormatter(self, logFormat=None, dateFormat=None):
+    def getLogFormatter(self, logFormat=None, dateFormat=None):
         if not logFormat:
             logFormat = self.defaultLogFormat
         if not dateFormat:
@@ -49,20 +51,30 @@ class BaseLogger(object):
 
     def newLogger(self, loggerName):
         """Create a new logger.
+        By default there are no handlers.
         """
         self.logger = logging.getLogger(loggerName)
         self.logger.setLevel(self.getLoggerLevel())
+        self._clearHandlers()
+        if self.logToConsole:
+            self.addConsoleHandler()
 
-        # To prevent dups if called multiple times
+    def _clearHandlers(self):
+        """To prevent dups -- logging will preserve Handlers across
+        objects :(
+        """
         for handler in self.allHandlers:
             self.logger.removeHandler(handler)
+
+    def __del__(self):
+        self._clearHandlers()
 
     def addConsoleHandler(self, logLevel=None, logFormat=None,
                           dateFormat=None):
         consoleHandler = logging.StreamHandler()
         consoleHandler.setLevel(self.getLoggerLevel(logLevel))
-        consoleHandler.setFormatter(self.getFormatter(logFormat=logFormat,
-                                                      dateFormat=dateFormat))
+        consoleHandler.setFormatter(self.getLogFormatter(logFormat=logFormat,
+                                                         dateFormat=dateFormat))
         self.logger.addHandler(consoleHandler)
         self.allHandlers.append(consoleHandler)
 
@@ -70,8 +82,8 @@ class BaseLogger(object):
                        dateFormat=None):
         fileHandler = logging.FileHandler(logName)
         fileHandler.setLevel(self.getLoggerLevel(logLevel))
-        fileHandler.setFormatter(self.getFormatter(logFormat=logFormat,
-                                                   dateFormat=dateFormat))
+        fileHandler.setFormatter(self.getLogFormatter(logFormat=logFormat,
+                                                      dateFormat=dateFormat))
         self.logger.addHandler(fileHandler)
         self.allHandlers.append(fileHandler)
 
@@ -107,6 +119,29 @@ class BaseLogger(object):
 
 
 
+# SimpleFileLogger {{{1
+class SimpleFileLogger(BaseLogger):
+    """Create one logFile.  Possibly also output to
+    the terminal and a raw log (no prepending of level or date)
+    """
+    def __init__(self, logName='test.log',
+                 defaultLogFormat='%(asctime)s - %(levelname)s - %(message)s',
+                 loggerName='Simple', **kwargs):
+        self.logName = logName
+        self.loggerName = loggerName
+        self.logFile = None
+        BaseLogger.__init__(self, defaultLogFormat=defaultLogFormat,
+                            **kwargs)
+
+        self.newLogger(self.loggerName)
+
+    def newLogger(self, loggerName):
+        BaseLogger.newLogger(self, loggerName)
+        self.logFile = os.path.join(os.getcwd(), self.logName)
+        self.addFileHandler(self.logFile)
+
+
+
 # MultiFileLogger {{{1
 class MultiFileLogger(BaseLogger):
     """Create a log per log level in logDir.  Possibly also output to
@@ -114,12 +149,10 @@ class MultiFileLogger(BaseLogger):
     """
     def __init__(self, baseLogName='test',
                  defaultLogFormat='%(asctime)s - %(levelname)s - %(message)s',
-                 loggerName='', logDir='logs', logToConsole=True,
-                 logToRaw=True, **kwargs):
+                 loggerName='', logDir='logs', logToRaw=True, **kwargs):
         self.baseLogName = baseLogName
         self.logDir = logDir
         self.loggerName = loggerName
-        self.logToConsole = logToConsole
         self.logToRaw = logToRaw
         self.logFiles = {}
         BaseLogger.__init__(self, defaultLogFormat=defaultLogFormat,
@@ -138,8 +171,6 @@ class MultiFileLogger(BaseLogger):
 
     def newLogger(self, loggerName):
         BaseLogger.newLogger(self, loggerName)
-        if self.logToConsole:
-            self.addConsoleHandler()
         if self.logToRaw:
             self.logFiles['raw'] = '%s_raw.log' % self.baseLogName
             self.addFileHandler(os.path.join(self.absLogDir,
@@ -157,27 +188,33 @@ class MultiFileLogger(BaseLogger):
 
 
 # __main__ {{{1
+
 if __name__ == '__main__':
     """Quick 'n' dirty unit tests.
     Ideally, this would be parsed automatically, too, and wouldn't leave
     cruft behind.
     """
+    def testLogger(obj):
+        obj.debug('YOU SHOULD NOT SEE THIS LINE')
+        obj.info('test info')
+        obj.warn('test warn')
+        obj.error('test error')
+        obj.critical('test critical')
+        try:
+            obj.fatal('test fatal -- you should see an exit line after this.')
+        except:
+            print "Yay, that's good."
+        else:
+            print "OH NO!"
+
     logDir = 'test_logs'
     obj = MultiFileLogger(defaultLogLevel='info', logDir=logDir,
                           logToRaw=True)
-    obj.debug('YOU SHOULD NOT SEE THIS LINE')
-    obj.info('test info')
-    obj.warn('test warn')
-    obj.error('test error')
-    obj.critical('test critical')
-    try:
-        obj.fatal('test fatal -- you should see an exit line after this.')
-    except:
-        print "Yay, that's good."
-    else:
-        print "OH NO!"
+    testLogger(obj)
     obj.haltOnFailure=False
     obj.critical('test critical -- You should see this message.')
     obj.fatal('test fatal -- you should *not* see an exit line after this.')
+    obj = SimpleFileLogger()
+    testLogger(obj)
     print "=========="
-    print "You should be able to examine the test logs created in %s." % logDir
+    print "You should be able to examine test.log and %s." % logDir
