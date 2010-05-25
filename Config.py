@@ -20,10 +20,11 @@ class BaseConfig(object):
     little heavy handed to go with as the default.
     """
     def __init__(self, config=None, configFile=None):
+        self.config = {}
         if config:
             self.setConfig(config)
         elif configFile:
-            self.setConfig(self.parseConfig(configFile))
+            self.setConfig(self.parseConfigFile(configFile))
 
     def parseConfigFile(self, fileName):
         """Read a config file and return a dictionary.
@@ -110,10 +111,10 @@ class SimpleConfig(BaseConfig):
 
 # ParanoidConfig {{{1
 class ParanoidConfig(BaseConfig):
-    def __init__(self):
+    def __init__(self, **kwargs):
         self._config = {}
         self._configLock = False
-        BaseConfig.__init__(self)
+        BaseConfig.__init__(self, **kwargs)
 
     def lockConfig(self):
         self._configLock = True
@@ -152,17 +153,17 @@ class ParanoidConfig(BaseConfig):
 
 # __main__ {{{1
 if __name__ == '__main__':
-    obj = BaseConfig()
-    config=obj.parseConfigFile(os.path.join('configs', 'test', 'test.json'))
-    obj.dumpConfig(config)
-    if config['key1'] != "value1":
+    obj = BaseConfig(configFile=os.path.join(sys.path[0], 'configs', 'test',
+                     'test.json'))
+    obj.setVar('additionalkey', 'additionalvalue')
+    obj.setVar('key2', 'value2override')
+    obj.dumpConfig()
+    if obj.queryVar('key1') != "value1":
         print "ERROR key1 isn't value1!"
 
-    obj = ParanoidConfig()
-    obj.setConfig(obj.parseConfigFile(os.path.join('configs', 'test', 'test.json')))
+    obj = ParanoidConfig(configFile=os.path.join(sys.path[0], 'configs',
+                         'test', 'test.json'))
     obj.lockConfig()
-    if obj.queryConfig('key1') != "value1":
-        print "ERROR key1 isn't value1!"
     try:
         print "This should fail: with a FATAL message"
         obj.setVar('thisShouldFail', 'miserably')

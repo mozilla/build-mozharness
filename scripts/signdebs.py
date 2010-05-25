@@ -27,18 +27,31 @@ from Config import SimpleConfig
 
 # MaemoDebSigner {{{1
 class MaemoDebSigner(SimpleConfig, SimpleFileLogger):
-    def __init__(self, logName='debsign.log',
+    def __init__(self, logLevel='info', logName='debsign.log',
                  configFile=None, localesFile=None, locales=None):
-        SimpleFileLogger.__init__(self, logName=logName)
-        SimpleConfig.__init__(self)
+        SimpleFileLogger.__init__(self, logName=logName,
+                                  defaultLogLevel=logLevel)
+        SimpleConfig.__init__(self, configFile=configFile)
 
     def getDebName(self):
         if self.debName:
             return self.debName
+        debName = self.queryVar('debName')
+        if debName:
+            self.debug('Setting deb name from config: %s' % debName)
+            self.debName = debName
+            return debName
+        debNameUrl = None
         if self.debNameUrl:
+            debNameUrl = self.debNameUrl
+        else:
+            debNameUrl = self.queryVar('debNameUrl')
+        if debNameUrl:
+            self.info('Getting debName from %s' % debNameUrl)
             ul = urllib2.build_opener()
             fh = ul.open(debNameUrl)
             self.debName = fh.read()[:-1]
+            self.debug('Deb name is %s' % self.debName)
             return self.debName
 
 def mkdir_p(path):
@@ -103,7 +116,7 @@ def signRepo(config, repoName, platform):
 
 # __main__ {{{1
 if __name__ == '__main__':
-    debSigner = MaemoDebSigner()
+    debSigner = MaemoDebSigner(logLevel='debug')
     # repoDir is assumed to be relative from /scratchbox/users/cltbld/home/cltbld
 #    if os.path.exists(config['repoDir']):
 #        shutil.rmtree(config['repoDir'])
