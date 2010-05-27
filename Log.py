@@ -87,35 +87,38 @@ class BaseLogger(object):
         self.logger.addHandler(fileHandler)
         self.allHandlers.append(fileHandler)
 
-    def log(self, level, message):
-        if level == 'fatal':
-            self.fatal(message)
-        else:
-            self.logger.log(self.getLoggerLevel(level), message)
-
-    def debug(self, message):
-        self.logger.debug(message)
-
-    def info(self, message):
-        self.logger.info(message)
-
-    def warning(self, message):
-        self.logger.warning(message)
-
-    def warn(self, message):
-        self.logger.warning(message)
-
-    def error(self, message):
-        self.logger.error(message)
-
-    def critical(self, message):
-        self.logger.critical(message)
-
-    def fatal(self, message, exitCode=-1):
-        self.logger.log(FATAL, message)
-        if self.haltOnFailure:
+    def log(self, message, level='info', exitCode=-1):
+        """Generic log method.
+        There should be more options here -- do or don't split by line,
+        use os.linesep instead of assuming \n, be able to pass in log level
+        by name or number.
+        """
+        for line in message.split('\n'):
+            self.logger.log(self.getLoggerLevel(level), line)
+        if level == 'fatal' and self.haltOnFailure:
             self.logger.log(FATAL, 'Exiting %d' % exitCode)
             sys.exit(exitCode)
+            
+    def debug(self, message):
+        self.log(message, level='debug')
+
+    def info(self, message):
+        self.log(message, level='info')
+
+    def warning(self, message):
+        self.log(message, level='warning')
+
+    def warn(self, message):
+        self.log(message, level='warning')
+
+    def error(self, message):
+        self.log(message, level='error')
+
+    def critical(self, message):
+        self.log(message, level='critical')
+
+    def fatal(self, message, exitCode=-1):
+        self.log(message, level='fatal', exitCode=exitCode)
 
 
 

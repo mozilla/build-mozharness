@@ -95,7 +95,7 @@ class BaseConfig(object):
             config = self.queryConfig()
         if not fileName:
             pp = pprint.PrettyPrinter(indent=2, width=10)
-            pp.pprint(config)
+            return pp.pformat(config)
 
     def parseArgs(self):
         pass

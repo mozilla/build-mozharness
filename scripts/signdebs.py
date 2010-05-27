@@ -27,11 +27,12 @@ from Config import SimpleConfig
 
 # MaemoDebSigner {{{1
 class MaemoDebSigner(SimpleConfig, SimpleFileLogger):
-    def __init__(self, logLevel='info', logName='debsign.log',
+    def __init__(self, logLevel='info', logName='signdebs.log',
                  configFile=None, localesFile=None, locales=None):
         SimpleFileLogger.__init__(self, logName=logName,
                                   defaultLogLevel=logLevel)
         SimpleConfig.__init__(self, configFile=configFile)
+        self.info(self.dumpConfig())
 
     def getDebName(self):
         if self.debName:
@@ -116,7 +117,8 @@ def signRepo(config, repoName, platform):
 
 # __main__ {{{1
 if __name__ == '__main__':
-    debSigner = MaemoDebSigner(logLevel='debug')
+    debSigner = MaemoDebSigner(logLevel='debug',
+                               configFile='%s/configs/deb_repos/trunk_nightly.json' % sys.path[0])
     # repoDir is assumed to be relative from /scratchbox/users/cltbld/home/cltbld
 #    if os.path.exists(config['repoDir']):
 #        shutil.rmtree(config['repoDir'])
