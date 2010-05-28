@@ -10,7 +10,7 @@ import shutil
 import subprocess
 import sys
 import urllib2
-from urllib2 import Request, urlopen, URLError, HTTPError
+from urllib2 import URLError, HTTPError
 
 # load modules from parent dir
 sys.path[0] = os.path.dirname(sys.path[0])
@@ -23,45 +23,51 @@ import Config
 reload(Config)
 from Config import SimpleConfig
 
+import Functions
+reload(Functions)
+
 
 
 # MaemoDebSigner {{{1
 class MaemoDebSigner(SimpleConfig, SimpleFileLogger):
     def __init__(self, logLevel='info', logName='signdebs.log',
                  configFile=None, localesFile=None, locales=None):
-        SimpleFileLogger.__init__(self, logName=logName,
-                                  defaultLogLevel=logLevel)
         SimpleConfig.__init__(self, configFile=configFile)
-        self.info(self.dumpConfig())
+        SimpleFileLogger.__init__(self)
+        self.debug(self.dumpConfig())
+        print dir(self)
 
-    def getDebName(self):
-        if self.debName:
-            return self.debName
-        debName = self.queryVar('debName')
-        if debName:
-            self.debug('Setting deb name from config: %s' % debName)
-            self.debName = debName
-            return debName
-        debNameUrl = None
-        if self.debNameUrl:
-            debNameUrl = self.debNameUrl
-        else:
-            debNameUrl = self.queryVar('debNameUrl')
+    def parseArgs(self):
+        parser = SimpleConfig.parseArgs(self)
+        parser.add_option("-f", "--file", dest="filename",
+                          help="write report to FILE", metavar="FILE")
+        (options, args) = parser.parse_args()
+        print options
+
+    def getDebName(self, debNameUrl=None):
         if debNameUrl:
             self.info('Getting debName from %s' % debNameUrl)
-            ul = urllib2.build_opener()
-            fh = ul.open(debNameUrl)
-            self.debName = fh.read()[:-1]
-            self.debug('Deb name is %s' % self.debName)
-            return self.debName
+            try:
+                ul = urllib2.build_opener()
+                fh = ul.open(debNameUrl)
+                debName = fh.read()[:-1] # chomp
+                self.debug('Deb name is %s' % debName)
+                return debName
+            except HTTPError, e:
+                self.fatal("HTTP Error: %s %s" % (e.code, url))
+            except URLError, e:
+                self.fatal("URL Error: %s %s" % (e.code, url))
 
-def mkdir_p(path):
-    print "mkdir: %s" % path
-    if not os.path.exists(path):
-        print "yes"
-        os.makedirs(path)
-    else:
-        print "already exists"
+    def mkdir_p(self, path):
+        Functions.mkdir_p(self, path)
+
+    def rmtree(self, path):
+        Functions.rmtree(self, path, errorLevel='fatal')
+
+    def downloadFile(self, url, fileName=None):
+        # TODO remove testOnly
+        return Functions.downloadFile(self, url, fileName=fileName, testOnly=True)
+
 
 
 def getPlatformLocales(platformConfig):
@@ -87,28 +93,6 @@ def parseArgs():
 
     return (config, platforms, locales)
 
-# http://www.techniqal.com/blog/2008/07/31/python-file-read-write-with-urllib2/
-def downloadFile(url, fileName):
-    req = Request(url)
-
-    # TODO remove these
-    os.system("touch %s" % fileName)
-    return fileName
-
-    try:
-        print "Downloading %s" % url
-        f = urlopen(req)
-        localFile = open(fileName, 'w')
-        localFile.write(f.read())
-        localFile.close()
-    except HTTPError, e:
-        print "HTTP Error:", e.code, url
-        return
-    except URLError, e:
-        print "URL Error:", e.code, url
-        return
-    return fileName
-
 def signRepo(config, repoName, platform):
     # TODO sign
     pass
@@ -119,11 +103,13 @@ def signRepo(config, repoName, platform):
 if __name__ == '__main__':
     debSigner = MaemoDebSigner(logLevel='debug',
                                configFile='%s/configs/deb_repos/trunk_nightly.json' % sys.path[0])
+    debSigner.parseArgs()
     # repoDir is assumed to be relative from /scratchbox/users/cltbld/home/cltbld
-#    if os.path.exists(config['repoDir']):
-#        shutil.rmtree(config['repoDir'])
-#    mkdir_p(config['repoDir'])
-#
+    config = debSigner.queryConfig()
+    if os.path.exists(config['repoDir']):
+        debSigner.rmtree(config['repoDir'])
+    debSigner.mkdir_p(config['repoDir'])
+
 #    for platform in platforms:
 #        print "###%s###" % platform
 #        platformConfig = config['platforms'][platform]

@@ -1,7 +1,17 @@
 #!/usr/bin/env python
 """Logging, the way I remember it from scripts gone by.
+
+TODO:
+- network logging support.
+- ability to change log settings mid-stream
+- per-module log settings
+- are we really forced to use global logging.* settings???
+  - i hope i'm mistaken here
+  - would love to do instance-based settings so we can have multiple
+    objects that can each have their own logger
 """
 
+from optparse import OptionParser
 import logging
 import os
 import sys
@@ -63,8 +73,11 @@ class BaseLogger(object):
         """To prevent dups -- logging will preserve Handlers across
         objects :(
         """
-        for handler in self.allHandlers:
-            self.logger.removeHandler(handler)
+        attrs = dir(self)
+        if 'allHandlers' in attrs and 'logger' in attrs:
+            for handler in self.allHandlers:
+                self.logger.removeHandler(handler)
+            self.allHandlers = []
 
     def __del__(self):
         self._clearHandlers()
@@ -127,28 +140,22 @@ class SimpleFileLogger(BaseLogger):
     """Create one logFile.  Possibly also output to
     the terminal and a raw log (no prepending of level or date)
     """
-    def __init__(self, logName=None, logFile=None,
+    def __init__(self, logDir='.', logName='test.log',
                  defaultLogFormat='%(asctime)s - %(levelname)s - %(message)s',
+                 options=None, longOptions=None,
                  loggerName='Simple', **kwargs):
         self.loggerName = loggerName
-        if logFile:
-            self.logFile = os.path.abspath(logFile)
-            self.logName = os.path.basename(logFile)
-        else:
-            if not logName:
-                logName = 'test.log'
-            self.logName = logName
-            self.logFile = os.path.join(os.getcwd(), self.logName)
-            
+        self.logName = logName
+        self.logDir = logDir
         BaseLogger.__init__(self, defaultLogFormat=defaultLogFormat,
                             **kwargs)
-
         self.newLogger(self.loggerName)
 
     def newLogger(self, loggerName):
         BaseLogger.newLogger(self, loggerName)
-        self.logFile = os.path.join(os.getcwd(), self.logName)
-        self.addFileHandler(self.logFile)
+        self.logPath = os.path.join(os.getcwd(), self.logName)
+        self.addFileHandler(self.logPath)
+
 
 
 

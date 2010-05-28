@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from copy import deepcopy
+from optparse import OptionParser
 import os
 import pprint
 import sys
@@ -97,14 +98,25 @@ class BaseConfig(object):
             pp = pprint.PrettyPrinter(indent=2, width=10)
             return pp.pformat(config)
 
-    def parseArgs(self):
-        pass
+    def parseArgs(self, usage="usage: %prog [options]"):
+        """Parse command line arguments in a generic way.
+        Return the parser object after adding the basic options, so
+        child objects can manipulate it.
+        TODO: be able to read the options from a config.
+        """
+        parser = OptionParser(usage)
+        parser.add_option("-v", "--verbose",
+                          action="store_true", dest="verbose")
+        return parser
 
 
 
+
+# SimpleConfig {{{1
 class SimpleConfig(BaseConfig):
     def __init__(self, **kwargs):
         BaseConfig.__init__(self, **kwargs)
+        self.parseArgs()
 
 
 
@@ -115,6 +127,7 @@ class ParanoidConfig(BaseConfig):
         self._config = {}
         self._configLock = False
         BaseConfig.__init__(self, **kwargs)
+        del self.config
 
     def lockConfig(self):
         self._configLock = True
