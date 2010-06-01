@@ -20,6 +20,35 @@ from Log import SimpleFileLogger
 
 
 
+# MozOptionParser {{{1
+class MozOptionParser(OptionParser):
+    """Very slightly modified optparse.OptionParser, which assumes you know
+    all the options you just add_option'ed, which is usually the case.
+
+    However, I wanted to be able to have options defined in various places
+    and then figure out the dest for each option (e.g. not -v or --verbose,
+    but options.verbose) so I could set those directly in the config.
+
+    The options and parser objects in
+        (options, args) = parser.parseArgs()
+    don't give an easy way of doing that; dir(options) is pretty ugly and
+    I was playing with dict() and str() in ways that made me pretty
+    frustrated.
+
+    Adding a self.variables list seems like a fairly innocuous and easy
+    way to work around this problem.
+    """
+    def __init__(self, **kwargs):
+        OptionParser.__init__(self, **kwargs)
+        self.variables = []
+
+    def add_option(self, *args, **kwargs):
+        option = OptionParser.add_option(self, *args, **kwargs)
+        if option.dest and option.dest not in self.variables:
+            self.variables.append(option.dest)
+
+
+
 # BaseConfig {{{1
 class BaseConfig(object):
     """Basic config setting/getting.
@@ -94,6 +123,7 @@ class BaseConfig(object):
         return self.queryConfig(varName=varName)
 
     def setVar(self, varName, value):
+        self.debug("Setting %s to %s" % (varName, value))
         self.config[varName] = value
 
     def dumpConfig(self, config=None, fileName=None):
@@ -111,11 +141,16 @@ class BaseConfig(object):
         """Parse command line arguments in a generic way.
         Return the parser object after adding the basic options, so
         child objects can manipulate it.
-        TODO: be able to read the options from a config.
+
+        TODO: accept a list of options to add by default, map these onto
+        the config, and just return the leftover args.  This is the ideal
+        behavior.
+        TODO: be able to read the options to add from a config.
+        TODO: add more default options.
         """
-        parser = OptionParser(usage)
-        parser.add_option("--logLevel",
-                          action="store_true", dest="logLevel",
+        parser = MozOptionParser(usage=usage)
+        parser.add_option("--logLevel", action="store", type="string",
+                          dest="logLevel",
                           help="set log level (debug|info|warning|error|critical|fatal)")
         return parser
 
@@ -169,25 +204,17 @@ class SimpleConfig(BaseConfig):
         self.newLogObj()
 
     def newLogObj(self):
-        defaultLogConfig = {"loggerName": 'Simple',
-                            "logName": 'simple.log',
-                            "logDir": '.',
-                            "logLevel": 'info',
-                            "logFormat": '%(asctime)s - %(levelname)s - %(message)s',
-                           }
-        logConfig = self.queryVar('logConfig')
-        if not logConfig:
-            logConfig = defaultLogConfig
-        else:
-            for key in defaultLogConfig.keys():
-                if key not in logConfig:
-                    logConfig[key] = defaultLogConfig[key]
-        self.logObj = SimpleFileLogger(loggerName=logConfig['loggerName'],
-                                       logName=logConfig['logName'],
-                                       logDir=logConfig['logDir'],
-                                       logLevel=logConfig['logLevel'],
-                                       logFormat=logConfig['logFormat'],
-                                      )
+        logConfig = {"loggerName": 'Simple',
+                     "logName": 'simple.log',
+                     "logDir": '.',
+                     "logLevel": 'info',
+                     "logFormat": '%(asctime)s - %(levelname)s - %(message)s',
+                    }
+        for key in logConfig.keys():
+            value = self.queryVar(key)
+            if value:
+                logConfig[key] = value
+        self.logObj = SimpleFileLogger(**logConfig)
 
 
 

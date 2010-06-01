@@ -35,11 +35,27 @@ class MaemoDebSigner(SimpleConfig):
         self.debug(self.dumpConfig())
 
     def parseArgs(self):
+        """I want to change this to send the list of options to
+        Config.parseArgs() but don't know a way to intuitively do that.
+        Each add_option seems to take *args and **kwargs, so it would be
+
+            complexOptionList = [
+             [["-f", "--file"], {"dest": "filename", "help": "blah"}],
+             [*args, **kwargs],
+             [*args, **kwargs],
+             ...
+            ]
+            SimpleConfig.parseArgs(self, options=complexOptionList)
+
+        Not very pretty, but having the options logic in every inheriting
+        script isn't that great either.
+        """
         parser = SimpleConfig.parseArgs(self)
-        parser.add_option("-f", "--file", dest="filename",
-                          help="write report to FILE", metavar="FILE")
+#        parser.add_option("-f", "--file", dest="filename",
+#                          help="write report to FILE", metavar="FILE")
         (options, args) = parser.parse_args()
-        print "Options:", options
+        for option in parser.variables:
+             self.setVar(option, getattr(options, option))
 
     def getDebName(self, debNameUrl=None):
         if debNameUrl:
