@@ -115,7 +115,7 @@ class BaseConfig(object):
         """
         parser = OptionParser(usage)
         parser.add_option("--logLevel",
-                          action="store_true", dest="defaultLogLevel",
+                          action="store_true", dest="logLevel",
                           help="set log level (debug|info|warning|error|critical|fatal)")
         return parser
 
@@ -137,7 +137,7 @@ class BaseConfig(object):
     def debug(self, message):
         level = self.queryVar('logLevel')
         if not level:
-            level = self.queryVar('defaultLogLevel')
+            level = self.queryVar('logLevel')
         if level and level == 'debug':
             self.log(message, level='debug')
 
@@ -185,8 +185,8 @@ class SimpleConfig(BaseConfig):
         self.logObj = SimpleFileLogger(loggerName=logConfig['loggerName'],
                                        logName=logConfig['logName'],
                                        logDir=logConfig['logDir'],
-                                       defaultLogLevel=logConfig['logLevel'],
-                                       defaultLogFormat=logConfig['logFormat'],
+                                       logLevel=logConfig['logLevel'],
+                                       logFormat=logConfig['logFormat'],
                                       )
 
 
@@ -254,3 +254,5 @@ if __name__ == '__main__':
         obj.info("Yay!")
     else:
         obj.error("Gah. ParanoidConfig is broken.")
+    if os.path.exists("simple.log"):
+        os.remove("simple.log")

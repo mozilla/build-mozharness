@@ -1,12 +1,6 @@
 #!/usr/bin/env python
 """Generic logging, the way I remember it from scripts gone by.
 
-NOTE:
-self.defaultLogLevel and self.defaultLogFormat can be a little confusing.
-The reason they're not self.logLevel and self.logFormat is they are the
-default -- each handler can (theoretically) have its own logLevel.
-Maybe that granularity isn't worth the confusion?
-
 TODO:
 - network logging support.
 - ability to change log settings mid-stream
@@ -41,30 +35,30 @@ class BaseLogger(object):
               'fatal': logging.FATAL
              }
 
-    def __init__(self, defaultLogLevel='info',
-                 defaultLogFormat='%(message)s',
-                 defaultLogDateFormat='%H:%M:%S',
+    def __init__(self, logLevel='info',
+                 logFormat='%(message)s',
+                 logDateFormat='%H:%M:%S',
                  logToConsole=True,
                  haltOnFailure=True,
                 ):
         self.haltOnFailure = haltOnFailure,
-        self.defaultLogFormat = defaultLogFormat
-        self.defaultLogDateFormat = defaultLogDateFormat
+        self.logFormat = logFormat
+        self.logDateFormat = logDateFormat
         self.logToConsole = logToConsole
-        self.defaultLogLevel = defaultLogLevel
+        self.logLevel = logLevel
         
         self.allHandlers = []
 
     def getLoggerLevel(self, level=None):
         if not level:
-            level = self.defaultLogLevel
+            level = self.logLevel
         return self.LEVELS.get(level, logging.NOTSET)
 
     def getLogFormatter(self, logFormat=None, dateFormat=None):
         if not logFormat:
-            logFormat = self.defaultLogFormat
+            logFormat = self.logFormat
         if not dateFormat:
-            dateFormat = self.defaultLogDateFormat
+            dateFormat = self.logDateFormat
         return logging.Formatter(logFormat, dateFormat)
 
     def newLogger(self, loggerName):
@@ -128,12 +122,12 @@ class SimpleFileLogger(BaseLogger):
     the terminal and a raw log (no prepending of level or date)
     """
     def __init__(self, logDir='.', logName='test.log',
-                 defaultLogFormat='%(asctime)s - %(levelname)s - %(message)s',
+                 logFormat='%(asctime)s - %(levelname)s - %(message)s',
                  loggerName='Simple', **kwargs):
         self.loggerName = loggerName
         self.logName = logName
         self.logDir = logDir
-        BaseLogger.__init__(self, defaultLogFormat=defaultLogFormat,
+        BaseLogger.__init__(self, logFormat=logFormat,
                             **kwargs)
         self.newLogger(self.loggerName)
 
@@ -151,14 +145,14 @@ class MultiFileLogger(BaseLogger):
     the terminal and a raw log (no prepending of level or date)
     """
     def __init__(self, baseLogName='test',
-                 defaultLogFormat='%(asctime)s - %(levelname)s - %(message)s',
+                 logFormat='%(asctime)s - %(levelname)s - %(message)s',
                  loggerName='', logDir='logs', logToRaw=True, **kwargs):
         self.baseLogName = baseLogName
         self.logDir = logDir
         self.loggerName = loggerName
         self.logToRaw = logToRaw
         self.logFiles = {}
-        BaseLogger.__init__(self, defaultLogFormat=defaultLogFormat,
+        BaseLogger.__init__(self, logFormat=logFormat,
                             **kwargs)
 
         self.createLogDir()
@@ -179,7 +173,7 @@ class MultiFileLogger(BaseLogger):
             self.addFileHandler(os.path.join(self.absLogDir,
                                              self.logFiles['raw']),
                                 logFormat='%(message)s')
-        minLoggerLevel = self.getLoggerLevel(self.defaultLogLevel)
+        minLoggerLevel = self.getLoggerLevel(self.logLevel)
         for level in self.LEVELS.keys():
             if self.getLoggerLevel(level) >= minLoggerLevel:
                 self.logFiles[level] = '%s_%s.log' % (self.baseLogName,
@@ -210,7 +204,7 @@ if __name__ == '__main__':
             print "OH NO!"
 
     logDir = 'test_logs'
-    obj = MultiFileLogger(defaultLogLevel='info', logDir=logDir,
+    obj = MultiFileLogger(logLevel='info', logDir=logDir,
                           logToRaw=True)
     testLogger(obj)
     obj.haltOnFailure=False
