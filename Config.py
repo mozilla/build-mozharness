@@ -156,8 +156,8 @@ class BaseConfig(object):
     def critical(self, message):
         self.log(message, level='critical')
 
-    def fatal(self, message):
-        self.log(message, level='fatal')
+    def fatal(self, message, exitCode=-1):
+        self.log(message, level='fatal', exitCode=exitCode)
 
 
 

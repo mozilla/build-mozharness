@@ -114,6 +114,27 @@ class BaseLogger(object):
             self.logger.log(FATAL, 'Exiting %d' % exitCode)
             sys.exit(exitCode)
 
+    def debug(self, message):
+        self.log(message, level='debug')
+
+    def info(self, message):
+        self.log(message, level='info')
+
+    def warning(self, message):
+        self.log(message, level='warning')
+
+    def warn(self, message):
+        self.log(message, level='warning')
+
+    def error(self, message):
+        self.log(message, level='error')
+
+    def critical(self, message):
+        self.log(message, level='critical')
+
+    def fatal(self, message, exitCode=-1):
+        self.log(message, level='fatal', exitCode=exitCode)
+
 
 
 # SimpleFileLogger {{{1
