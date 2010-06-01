@@ -23,9 +23,6 @@ import Config
 reload(Config)
 from Config import SimpleConfig
 
-import Functions
-reload(Functions)
-
 
 
 # MaemoDebSigner {{{1
@@ -73,16 +70,6 @@ class MaemoDebSigner(SimpleConfig):
                 self.fatal("HTTP Error: %s %s" % (e.code, url))
             except URLError, e:
                 self.fatal("URL Error: %s %s" % (e.code, url))
-
-    def mkdir_p(self, path):
-        Functions.mkdir_p(self, path)
-
-    def rmtree(self, path):
-        Functions.rmtree(self, path, errorLevel='fatal')
-
-    def downloadFile(self, url, fileName=None):
-        # TODO remove testOnly
-        return Functions.downloadFile(self, url, fileName=fileName, testOnly=True)
 
     def clobberRepoDir(self):
         repoDir = self.queryVar("repoDir")

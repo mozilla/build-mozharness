@@ -109,7 +109,12 @@ class BaseLogger(object):
         There should be more options here -- do or don't split by line,
         use os.linesep instead of assuming \n, be able to pass in log level
         by name or number.
+
+        Adding the "ignore" special level for future runCommand
+        regex error parsing.
         """
+        if level == "ignore":
+            return
         for line in message.split('\n'):
             self.logger.log(self.getLoggerLevel(level), line)
         if level == 'fatal' and self.haltOnFailure:
@@ -152,7 +157,7 @@ class BasicFunctions(object):
         else:
             self.info("Already exists.")
 
-    def rmtree(self, path, errorLevel='error'):
+    def rmtree(self, path, errorLevel='error', exitCode=-1):
         self.info("rmtree: %s" % path)
         if os.path.exists(path):
             if os.path.isdir(path):
@@ -160,21 +165,23 @@ class BasicFunctions(object):
             else:
                 os.remove(path)
             if os.path.exists(path):
-                self.log(errorLevel, 'Unable to remove %s!' % path)
+                self.log('Unable to remove %s!' % path, level=errorLevel,
+                         exitCode=exitCode)
         else:
             self.debug("%s doesn't exist.")
 
     # http://www.techniqal.com/blog/2008/07/31/python-file-read-write-with-urllib2/
-    def downloadFile(self, url, fileName=None, testOnly=False):
+    def downloadFile(self, url, fileName=None, testOnly=False,
+                     errorLevel='error', exitCode=-1):
         """Python wget.
         TODO: option to mkdir_p dirname(fileName) if it doesn't exist.
         """
         if not fileName:
             fileName = os.basename(url)
         if testOnly:
+            self.info("Touching %s instead of downloading..." % fileName)
             os.system("touch %s" % fileName)
             return fileName
-
         req = urllib2.Request(url)
         try:
             self.info("Downloading %s" % url)
@@ -183,10 +190,12 @@ class BasicFunctions(object):
             localFile.write(f.read())
             localFile.close()
         except HTTPError, e:
-            print "HTTP Error:", e.code, url
+            self.log("HTTP Error: %s %s" % (e.code, url), level=errorLevel,
+                     exitCode=exitCode)
             return
         except URLError, e:
-            print "URL Error:", e.code, url
+            self.log("URL Error: %s %s" % (e.code, url), level=errorLevel,
+                       exitCode=exitCode)
             return
         return fileName
 
