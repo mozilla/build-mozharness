@@ -13,7 +13,9 @@ TODO:
 
 import logging
 import os
+import shutil
 import sys
+import urllib2
 
 # Define our own FATAL
 FATAL = logging.CRITICAL + 10
@@ -137,8 +139,61 @@ class BaseLogger(object):
 
 
 
+# BasicFunctions {{{1
+class BasicFunctions(object):
+    """This class won't work without also inheriting a Log object.
+    I suppose I could create stub info() etc. functions if that's
+    a want.
+    """
+    def mkdir_p(self, path):
+        self.info("mkdir: %s" % path)
+        if not os.path.exists(path):
+            os.makedirs(path)
+        else:
+            self.info("Already exists.")
+
+    def rmtree(self, path, errorLevel='error'):
+        self.info("rmtree: %s" % path)
+        if os.path.exists(path):
+            if os.path.isdir(path):
+                shutil.rmtree(path)
+            else:
+                os.remove(path)
+            if os.path.exists(path):
+                self.log(errorLevel, 'Unable to remove %s!' % path)
+        else:
+            self.debug("%s doesn't exist.")
+
+    # http://www.techniqal.com/blog/2008/07/31/python-file-read-write-with-urllib2/
+    def downloadFile(self, url, fileName=None, testOnly=False):
+        """Python wget.
+        TODO: option to mkdir_p dirname(fileName) if it doesn't exist.
+        """
+        if not fileName:
+            fileName = os.basename(url)
+        if testOnly:
+            os.system("touch %s" % fileName)
+            return fileName
+
+        req = urllib2.Request(url)
+        try:
+            self.info("Downloading %s" % url)
+            f = urlopen(req)
+            localFile = open(fileName, 'w')
+            localFile.write(f.read())
+            localFile.close()
+        except HTTPError, e:
+            print "HTTP Error:", e.code, url
+            return
+        except URLError, e:
+            print "URL Error:", e.code, url
+            return
+        return fileName
+
+
+
 # SimpleFileLogger {{{1
-class SimpleFileLogger(BaseLogger):
+class SimpleFileLogger(BaseLogger, BasicFunctions):
     """Create one logFile.  Possibly also output to
     the terminal and a raw log (no prepending of level or date)
     """

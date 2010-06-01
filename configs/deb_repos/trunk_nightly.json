@@ -11,7 +11,8 @@
   "section": "extras",
   "sboxPath": "/scratchbox/moz_scratchbox",
   "repoDir": "repos.staging",
-  "baseWorkDir": "/scratchbox/users/cltbld/home/cltbld",
+  "_baseWorkDir": "/scratchbox/users/cltbld/home/cltbld",
+  "baseWorkDir": "/Users/asasaki/wrk/hg/mozharness/scripts",
   "platforms": {
 
     "chinook": {

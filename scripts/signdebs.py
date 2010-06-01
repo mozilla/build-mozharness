@@ -32,7 +32,6 @@ reload(Functions)
 class MaemoDebSigner(SimpleConfig):
     def __init__(self, configFile=None, localesFile=None, locales=None):
         SimpleConfig.__init__(self, configFile=configFile)
-        self.debug(self.dumpConfig())
 
     def parseArgs(self):
         """I want to change this to send the list of options to
@@ -51,8 +50,12 @@ class MaemoDebSigner(SimpleConfig):
         script isn't that great either.
         """
         parser = SimpleConfig.parseArgs(self)
-#        parser.add_option("-f", "--file", dest="filename",
-#                          help="write report to FILE", metavar="FILE")
+        parser.add_option("--locale", action="append", dest="locales",
+                          type="string",
+                          help="Specify the locale(s) to repack")
+        parser.add_option("--platform", action="append", dest="platforms",
+                          type="string",
+                          help="Specify the platform(s) to repack")
         (options, args) = parser.parse_args()
         for option in parser.variables:
              self.setVar(option, getattr(options, option))
@@ -81,45 +84,23 @@ class MaemoDebSigner(SimpleConfig):
         # TODO remove testOnly
         return Functions.downloadFile(self, url, fileName=fileName, testOnly=True)
 
+    def clobberRepoDir(self):
+        repoDir = self.queryVar("repoDir")
+        if not repoDir:
+            self.fatal("clobberRepoDir: repoDir not set!")
+        if os.path.exists(repoDir):
+            self.rmtree(repoDir)
 
-
-def getPlatformLocales(platformConfig):
-    platformLocales = []
-    if 'multiDirUrl' in platformConfig:
-        platformLocales.append('multi')
-    if 'enUsDirUrl' in platformConfig:
-        platformLocales.append('en-US')
-    if 'l10nDirUrl' in platformConfig:
-        platformLocales.extend(locales)
-    return platformLocales
-
-def parseArgs():
-    # TODO parse cmdln args
-    configFile='%s/configs/deb_repos/trunk_nightly.json' % sys.path[0]
-    platforms=None
-    locales=None
-    fh = open(configFile)
-    configJson = json.load(fh)
-    config = json.JSONDecoder().decode(configJson)
-    if platforms is None:
-        platforms = config['platforms'].keys()
-
-    return (config, platforms, locales)
-
-def signRepo(config, repoName, platform):
-    # TODO sign
-    pass
+    def createRepos(self):
+        self.clobberRepoDir()
+        repoDir = self.queryVar("repoDir")
+        self.mkdir_p(repoDir)
 
 
 
 # __main__ {{{1
 if __name__ == '__main__':
     debSigner = MaemoDebSigner(configFile='%s/configs/deb_repos/trunk_nightly.json' % sys.path[0])
-    # repoDir is assumed to be relative from /scratchbox/users/cltbld/home/cltbld
-    config = debSigner.queryConfig()
-    if os.path.exists(config['repoDir']):
-        debSigner.rmtree(config['repoDir'])
-    debSigner.mkdir_p(config['repoDir'])
 
 #    for platform in platforms:
 #        print "###%s###" % platform
