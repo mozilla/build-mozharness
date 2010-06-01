@@ -9,6 +9,7 @@ try:
     import json
 except:
     import simplejson as json
+from Log import SimpleFileLogger
 
 
 
@@ -157,7 +158,28 @@ class SimpleConfig(BaseConfig):
     def __init__(self, **kwargs):
         BaseConfig.__init__(self, **kwargs)
         self.parseArgs()
+        self.newLogObj()
 
+    def newLogObj(self):
+        defaultLogConfig = {"loggerName": 'Simple',
+                            "logName": 'simple.log',
+                            "logDir": '.',
+                            "logLevel": 'info',
+                            "logFormat": '%(asctime)s - %(levelname)s - %(message)s',
+                           }
+        logConfig = self.queryVar('logConfig')
+        if not logConfig:
+            logConfig = defaultLogConfig
+        else:
+            for key in defaultLogConfig.keys():
+                if key not in logConfig:
+                    logConfig[key] = defaultLogConfig[key]
+        self.logObj = SimpleFileLogger(loggerName=logConfig['loggerName'],
+                                       logName=logConfig['logName'],
+                                       logDir=logConfig['logDir'],
+                                       defaultLogLevel=logConfig['logLevel'],
+                                       defaultLogFormat=logConfig['logFormat'],
+                                      )
 
 
 
@@ -206,8 +228,8 @@ class ParanoidConfig(BaseConfig):
 
 # __main__ {{{1
 if __name__ == '__main__':
-    obj = BaseConfig(configFile=os.path.join(sys.path[0], 'configs', 'test',
-                     'test.json'))
+    obj = SimpleConfig(configFile=os.path.join(sys.path[0], 'configs', 'test',
+                       'test.json'))
     obj.setVar('additionalkey', 'additionalvalue')
     obj.setVar('key2', 'value2override')
     obj.dumpConfig()

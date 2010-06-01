@@ -1,6 +1,12 @@
 #!/usr/bin/env python
 """Logging, the way I remember it from scripts gone by.
 
+NOTE:
+self.defaultLogLevel and self.defaultLogFormat can be a little confusing.
+The reason they're not self.logLevel and self.logFormat is they are the
+default -- each handler can (theoretically) have its own logLevel.
+Maybe that granularity isn't worth the confusion?
+
 TODO:
 - network logging support.
 - ability to change log settings mid-stream
@@ -11,7 +17,6 @@ TODO:
     objects that can each have their own logger
 """
 
-from optparse import OptionParser
 import logging
 import os
 import sys
@@ -124,7 +129,6 @@ class SimpleFileLogger(BaseLogger):
     """
     def __init__(self, logDir='.', logName='test.log',
                  defaultLogFormat='%(asctime)s - %(levelname)s - %(message)s',
-                 options=None, longOptions=None,
                  loggerName='Simple', **kwargs):
         self.loggerName = loggerName
         self.logName = logName

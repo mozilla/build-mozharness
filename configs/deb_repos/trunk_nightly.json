@@ -1,4 +1,7 @@
 {
+  "logConfig": {
+    "logName": "signdebs.log"
+  },
   "localesFile": "mobile/locales/all-locales",
   "repoName": "trunk_%(locale)s",
   "remoteRepoPath": "/var/www/html/debtest",
