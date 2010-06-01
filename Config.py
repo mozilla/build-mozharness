@@ -154,7 +154,7 @@ class BaseConfig(object):
                           help="set log level (debug|info|warning|error|critical|fatal)")
         return parser
 
-    """There may be a better way of doing this, but I did this @ PGP...
+    """There may be a better way of doing this, but I did this previously...
     """
     def log(self, message, level='info', exitCode=-1):
         if self.logObj:
@@ -220,6 +220,18 @@ class SimpleConfig(BaseConfig):
 
 # ParanoidConfig {{{1
 class ParanoidConfig(BaseConfig):
+    """I wanted to force accessing the config through functions rather than
+    directly manipulating (and potentially editing!) the config dictionary
+    during runtime.
+
+    Perl doesn't have private variables so I used rand(10000) and appended
+    that to the variable name (e.g. self._config7129), which isn't great
+    but annoying enough to nudge people into using the API rather than
+    directly manipulating the dictionary.
+
+    Turns out python doesn't have private variables either.  We'll see
+    if this is a problem.
+    """
     def __init__(self, **kwargs):
         self._config = {}
         self._configLock = False
