@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Logging, the way I remember it from scripts gone by.
+"""Generic logging, the way I remember it from scripts gone by.
 
 NOTE:
 self.defaultLogLevel and self.defaultLogFormat can be a little confusing.

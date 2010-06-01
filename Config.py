@@ -1,4 +1,11 @@
 #!/usr/bin/env python
+"""Generic config parsing and dumping, the way I remember it from scripts
+gone by.
+
+Ideally the config is loaded + mixed with command line options, then locked
+during runtime (hence ParanoidConfig).  The config dump should be loadable
+and re-runnable for a duplicate run.
+"""
 
 from copy import deepcopy
 from optparse import OptionParser
@@ -107,8 +114,9 @@ class BaseConfig(object):
         TODO: be able to read the options from a config.
         """
         parser = OptionParser(usage)
-        parser.add_option("-v", "--verbose",
-                          action="store_true", dest="verbose")
+        parser.add_option("--logLevel",
+                          action="store_true", dest="defaultLogLevel",
+                          help="set log level (debug|info|warning|error|critical|fatal)")
         return parser
 
     """There may be a better way of doing this, but I did this @ PGP...
@@ -234,15 +242,15 @@ if __name__ == '__main__':
     obj.setVar('key2', 'value2override')
     obj.dumpConfig()
     if obj.queryVar('key1') != "value1":
-        print "ERROR key1 isn't value1!"
+        obj.error("key1 isn't value1!")
 
     obj = ParanoidConfig(configFile=os.path.join(sys.path[0], 'configs',
                          'test', 'test.json'))
     obj.lockConfig()
     try:
-        print "This should fail: with a FATAL message"
+        obj.info("This should fail: with a FATAL message")
         obj.setVar('thisShouldFail', 'miserably')
     except:
-        print "Yay!"
+        obj.info("Yay!")
     else:
-        print "Gah. ParanoidConfig is broken."
+        obj.error("Gah. ParanoidConfig is broken.")

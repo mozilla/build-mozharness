@@ -29,20 +29,17 @@ reload(Functions)
 
 
 # MaemoDebSigner {{{1
-class MaemoDebSigner(SimpleConfig, SimpleFileLogger):
-    def __init__(self, logLevel='info', logName='signdebs.log',
-                 configFile=None, localesFile=None, locales=None):
+class MaemoDebSigner(SimpleConfig):
+    def __init__(self, configFile=None, localesFile=None, locales=None):
         SimpleConfig.__init__(self, configFile=configFile)
-        SimpleFileLogger.__init__(self)
         self.debug(self.dumpConfig())
-        print dir(self)
 
     def parseArgs(self):
         parser = SimpleConfig.parseArgs(self)
         parser.add_option("-f", "--file", dest="filename",
                           help="write report to FILE", metavar="FILE")
         (options, args) = parser.parse_args()
-        print options
+        print "Options:", options
 
     def getDebName(self, debNameUrl=None):
         if debNameUrl:
@@ -101,9 +98,7 @@ def signRepo(config, repoName, platform):
 
 # __main__ {{{1
 if __name__ == '__main__':
-    debSigner = MaemoDebSigner(logLevel='debug',
-                               configFile='%s/configs/deb_repos/trunk_nightly.json' % sys.path[0])
-    debSigner.parseArgs()
+    debSigner = MaemoDebSigner(configFile='%s/configs/deb_repos/trunk_nightly.json' % sys.path[0])
     # repoDir is assumed to be relative from /scratchbox/users/cltbld/home/cltbld
     config = debSigner.queryConfig()
     if os.path.exists(config['repoDir']):
