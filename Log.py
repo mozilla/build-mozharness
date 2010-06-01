@@ -25,6 +25,8 @@ logging.addLevelName(FATAL, 'FATAL')
 # BaseLogger {{{1
 class BaseLogger(object):
     """Create a base logging class.
+    TODO: be able to set defaults from config/parseArgs if self
+    also inherits Config.
     """
     LEVELS = {'debug': logging.DEBUG,
               'info': logging.INFO,
@@ -41,10 +43,11 @@ class BaseLogger(object):
                  haltOnFailure=True,
                 ):
         self.haltOnFailure = haltOnFailure,
-        self.defaultLogLevel = defaultLogLevel
         self.defaultLogFormat = defaultLogFormat
         self.defaultLogDateFormat = defaultLogDateFormat
         self.logToConsole = logToConsole
+        self.defaultLogLevel = defaultLogLevel
+        
         self.allHandlers = []
 
     def getLoggerLevel(self, level=None):
@@ -111,27 +114,6 @@ class BaseLogger(object):
         if level == 'fatal' and self.haltOnFailure:
             self.logger.log(FATAL, 'Exiting %d' % exitCode)
             sys.exit(exitCode)
-            
-    def debug(self, message):
-        self.log(message, level='debug')
-
-    def info(self, message):
-        self.log(message, level='info')
-
-    def warning(self, message):
-        self.log(message, level='warning')
-
-    def warn(self, message):
-        self.log(message, level='warning')
-
-    def error(self, message):
-        self.log(message, level='error')
-
-    def critical(self, message):
-        self.log(message, level='critical')
-
-    def fatal(self, message, exitCode=-1):
-        self.log(message, level='fatal', exitCode=exitCode)
 
 
 
@@ -212,13 +194,12 @@ if __name__ == '__main__':
     cruft behind.
     """
     def testLogger(obj):
-        obj.debug('YOU SHOULD NOT SEE THIS LINE')
-        obj.info('test info')
-        obj.warn('test warn')
-        obj.error('test error')
-        obj.critical('test critical')
+        obj.log('YOU SHOULD NOT SEE THIS LINE', level='debug')
+        for level in ('info', 'warning', 'error', 'critical'):
+            obj.log('test %s' % level, level=level)
         try:
-            obj.fatal('test fatal -- you should see an exit line after this.')
+            obj.log('test fatal -- you should see an exit line after this.',
+                    level='fatal')
         except:
             print "Yay, that's good."
         else:
@@ -229,8 +210,8 @@ if __name__ == '__main__':
                           logToRaw=True)
     testLogger(obj)
     obj.haltOnFailure=False
-    obj.critical('test critical -- You should see this message.')
-    obj.fatal('test fatal -- you should *not* see an exit line after this.')
+    obj.log('test fatal -- you should *not* see an exit line after this.',
+            level='fatal')
     obj = SimpleFileLogger()
     testLogger(obj)
     print "=========="

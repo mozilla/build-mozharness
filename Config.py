@@ -22,6 +22,7 @@ class BaseConfig(object):
     """
     def __init__(self, config=None, configFile=None):
         self.config = {}
+        self.logObj = None
         if config:
             self.setConfig(config)
         elif configFile:
@@ -109,6 +110,45 @@ class BaseConfig(object):
                           action="store_true", dest="verbose")
         return parser
 
+    """There may be a better way of doing this, but I did this @ PGP...
+    """
+    def log(self, message, level='info', exitCode=-1):
+        if self.logObj:
+            return self.logObj.log(message, level=level, exitCode=exitCode)
+        if level == 'info':
+            print message
+        elif level == 'debug':
+            print 'DEBUG: %s' % message
+        elif level in ('warning', 'error', 'critical'):
+            print >> sys.stderr, "%s: %s" % (level.upper(), message)
+        elif level == 'fatal':
+            print >> sys.stderr, "FATAL: %s" % message
+            sys.exit(exitCode)
+
+    def debug(self, message):
+        level = self.queryVar('logLevel')
+        if not level:
+            level = self.queryVar('defaultLogLevel')
+        if level and level == 'debug':
+            self.log(message, level='debug')
+
+    def info(self, message):
+        self.log(message, level='info')
+
+    def warning(self, message):
+        self.log(message, level='warning')
+
+    def warn(self, message):
+        self.log(message, level='warning')
+
+    def error(self, message):
+        self.log(message, level='error')
+
+    def critical(self, message):
+        self.log(message, level='critical')
+
+    def fatal(self, message):
+        self.log(message, level='fatal')
 
 
 
