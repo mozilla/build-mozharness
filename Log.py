@@ -205,11 +205,11 @@ class BasicFunctions(object):
             localFile = open(fileName, 'w')
             localFile.write(f.read())
             localFile.close()
-        except HTTPError, e:
+        except urllib2.HTTPError, e:
             self.log("HTTP Error: %s %s" % (e.code, url), level=errorLevel,
                      exitCode=exitCode)
             return
-        except URLError, e:
+        except urllib2.URLError, e:
             self.log("URL Error: %s %s" % (e.code, url), level=errorLevel,
                        exitCode=exitCode)
             return
