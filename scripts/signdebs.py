@@ -106,8 +106,13 @@ class MaemoDebSigner(SimpleConfig, BasicFunctions):
                 are applicable. If not, we'll have to parse the json
                 for matching platforms.
                 """
-                localesJson = self.parseConfigFile(localesFile)
-                locales.extend(localesJson.keys())
+                if localesFile.endswith(".json"):
+                    localesJson = self.parseConfigFile(localesFile)
+                    locales.extend(localesJson.keys())
+                else:
+                    fh = open(localesFile)
+                    additionalLocales = fh.read().split()
+                    locales.extend(additionalLocales)
         return locales
 
     def createRepos(self):
@@ -128,7 +133,18 @@ class MaemoDebSigner(SimpleConfig, BasicFunctions):
             debName = self.queryDebName(debNameUrl=pf['debNameUrl'])
             locales = self.queryLocales(platform, platformConfig=platformConfig)
             for locale in locales:
-                self.debug("Locale %s" % locale)
+                replaceDict = {'locale': locale}
+                repoName = self.queryVar('repoName') % replaceDict
+                installFile = pf['installFile'] % replaceDict
+                url = ''
+                if locale == 'multi':
+                    url = pf['multiDirUrl']
+                elif locale == 'en-US':
+                    url = pf['enUsDirUrl']
+                else:
+                    url = '%s/%s' % (pf['l10nDirUrl'], locale)
+                url += '/%s' % debName
+                self.debug(url)
 
 
 
@@ -139,24 +155,7 @@ if __name__ == '__main__':
     debSigner.createRepos()
 
 #    for platform in platforms:
-#        signObj = MaemoDebSigner(configJson=platformConfig)
-#        print signObj.debNameUrl
-#        debName = signObj.getDebName()
-#        print debName
-#
-#        # Assuming the deb name is consistent across all locales for a platform
-#
 #        for locale in platformLocales:
-#            repoName = config['repoName'].replace('LOCALE', locale)
-#            installFile = platformConfig['installFile'].replace('LOCALE', locale)
-#            url = ''
-#            if locale == 'multi':
-#                url = platformConfig['multiDirUrl']
-#            elif locale == 'en-US':
-#                url = platformConfig['enUsDirUrl']
-#            else:
-#                url = '%s/%s' % (platformConfig['l10nDirUrl'], locale)
-#            url += '/%s' % debName
 #            if not downloadFile(url, debName):
 #                print "Skipping %s ..." % locale
 #                continue
