@@ -201,7 +201,7 @@ class BasicFunctions(object):
         req = urllib2.Request(url)
         try:
             self.info("Downloading %s" % url)
-            f = urlopen(req)
+            f = urllib2.urlopen(req)
             localFile = open(fileName, 'w')
             localFile.write(f.read())
             localFile.close()
