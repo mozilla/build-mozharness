@@ -84,10 +84,12 @@ class MaemoDebSigner(SimpleConfig, BasicFunctions):
 
     def clobberRepoDir(self):
         repoDir = self.queryVar("repoDir")
-        if not repoDir:
-            self.fatal("clobberRepoDir: repoDir not set!")
-        if os.path.exists(repoDir):
-            self.rmtree(repoDir)
+        baseWorkDir = self.queryVar("baseWorkDir")
+        if not repoDir or not baseWorkDir:
+            self.fatal("baseWorkDir and repoDir need to be set!")
+        repoPath = '%s/%s' % (baseWorkDir, repoDir)
+        if os.path.exists(repoPath):
+            self.rmtree(repoPath)
 
     def queryLocales(self, platform, platformConfig=None):
         locales = self.queryVar("locales")
@@ -158,7 +160,6 @@ class MaemoDebSigner(SimpleConfig, BasicFunctions):
             platforms = platformConfig.keys()
 
         self.clobberRepoDir()
-        self.mkdir_p(repoDir)
 
         hgErrorRegex=[{'regex': '^abort:', 'level': 'error'},
                      ]
