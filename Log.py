@@ -220,33 +220,32 @@ class BasicFunctions(object):
         self.info("Moving %s to %s" % (src, dest))
         shutil.move(src, dest)
 
-    def runCommand(self, command, cwd=None, errorRegex=[], parseAtEnd=False):
+    def runCommand(self, command, cwd=None, errorRegex=[], parseAtEnd=False,
+                   shell=True):
         """Run a command, with logging and error parsing.
 
         TODO: parseAtEnd, contextLines
         TODO: retryInterval?
         TODO: errorLevelOverride?
         TODO: successCodes=[0] ?
+        TODO: make it an either/or for 'regex' or 'match' for less time
+              spent in re.search() (regex for real regexes, match for
+              if match in line: ) ?
 
         errorRegex example:
         [{'regex': '^Error: LOL J/K', level='ignore'},
          {'regex': '^Error:', level='error', contextLines='5:5'},
          {'regex': 'THE WORLD IS ENDING', level='fatal', contextLines='20:'}
         ]
-
-        Should I be parsing stderr too?
-        Previously I forced everything to stdout via "command 2>&1 |" and
-        used the errorRegex and return code solely.
-
-        As evidenced by my very first usage of runCommand here (which uses a
-        pipe), this may cause issues here.
         """
         self.info("Running command: %s" % command)
-        p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE,
-                             cwd=cwd)
+        p = subprocess.Popen(command, shell=shell, stdout=subprocess.PIPE,
+                             cwd=cwd, stderr=subprocess.STDOUT)
         stdout, stderr = p.communicate()
-        lines = stdout.rstrip().split('\n')
+        lines = stdout.rstrip().split('\n') # \r detection?
         for line in lines:
+            if not line or line.isspace():
+                continue
             for errorCheck in errorRegex:
                 if re.search(errorCheck['regex'], line):
                     self.log(' %s' % line,
