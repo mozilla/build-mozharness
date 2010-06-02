@@ -143,7 +143,6 @@ class MaemoDebSigner(SimpleConfig, BasicFunctions):
         self.mkdir_p(repoDir)
 
         hgErrorRegex=[{'regex': '^abort:', 'level': 'error'},
-                      {'regex': 'pulling from', 'level': 'warning'},
                      ]
         if not os.path.exists('mobile'):
             self.runCommand("hg clone %s mobile" % hgRepo,

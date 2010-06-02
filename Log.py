@@ -32,6 +32,15 @@ class BaseLogger(object):
     either logging or config that allows you to count the number of
     error,critical,fatal messages for us to count up at the end (aiming
     for 0).
+
+    This "warning" instead of "warn" is going to trip me up.
+    (It has, already.)
+    However, while adding a 'warn': logging.WARNING would be nice,
+
+        a) I don't want to confuse people who know the logging module and
+           are comfortable with WARNING, so removing 'warning' is out, and
+        b) there's a |for level in self.LEVELS.keys():| below, which would
+           create a dup .warn.log alongside the .warning.log.
     """
     LEVELS = {'debug': logging.DEBUG,
               'info': logging.INFO,
@@ -213,17 +222,24 @@ class BasicFunctions(object):
 
     def runCommand(self, command, cwd=None, errorRegex=[], parseAtEnd=False):
         """Run a command, with logging and error parsing.
+
         TODO: parseAtEnd, contextLines
+        TODO: retryInterval?
+        TODO: errorLevelOverride?
+        TODO: successCodes=[0] ?
 
         errorRegex example:
-        [{'regex': '^Error: not a real error', level='ignore'},
+        [{'regex': '^Error: LOL J/K', level='ignore'},
          {'regex': '^Error:', level='error', contextLines='5:5'},
          {'regex': 'THE WORLD IS ENDING', level='fatal', contextLines='20:'}
         ]
 
         Should I be parsing stderr too?
-        Previously I forced everything to stdout via 2>&1 and used the
-        errorRegex and return code solely.
+        Previously I forced everything to stdout via "command 2>&1 |" and
+        used the errorRegex and return code solely.
+
+        As evidenced by my very first usage of runCommand here (which uses a
+        pipe), this may cause issues here.
         """
         self.info("Running command: %s" % command)
         p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE,
