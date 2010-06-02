@@ -42,12 +42,14 @@ class BaseLogger(object):
                  logDateFormat='%H:%M:%S',
                  logToConsole=True,
                  haltOnFailure=True,
+                 appendToLog=False,
                 ):
         self.haltOnFailure = haltOnFailure,
         self.logFormat = logFormat
         self.logDateFormat = logDateFormat
         self.logToConsole = logToConsole
         self.logLevel = logLevel
+        self.appendToLog = appendToLog
         
         self.allHandlers = []
 
@@ -97,6 +99,8 @@ class BaseLogger(object):
 
     def addFileHandler(self, logName, logLevel=None, logFormat=None,
                        dateFormat=None):
+        if not self.appendToLog and os.path.exists(logName):
+            os.remove(logName)
         fileHandler = logging.FileHandler(logName)
         fileHandler.setLevel(self.getLoggerLevel(logLevel))
         fileHandler.setFormatter(self.getLogFormatter(logFormat=logFormat,
@@ -199,6 +203,10 @@ class BasicFunctions(object):
             return
         return fileName
 
+    def move(self, src, dest):
+        self.info("Moving %s to %s" % (src, dest))
+        shutil.move(src, dest)
+
 
 
 # SimpleFileLogger {{{1
@@ -215,6 +223,7 @@ class SimpleFileLogger(BaseLogger):
         BaseLogger.__init__(self, logFormat=logFormat,
                             **kwargs)
         self.newLogger(self.loggerName)
+        self.info("SimpleFileLogger online.")
 
     def newLogger(self, loggerName):
         BaseLogger.newLogger(self, loggerName)
@@ -242,6 +251,7 @@ class MultiFileLogger(BaseLogger):
 
         self.createLogDir()
         self.newLogger(self.loggerName)
+        self.info("MultiFileLogger online.")
 
     def createLogDir(self):
         if os.path.exists(self.logDir):

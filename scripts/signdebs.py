@@ -115,10 +115,20 @@ class MaemoDebSigner(SimpleConfig, BasicFunctions):
                     locales.extend(additionalLocales)
         return locales
 
+    def signRepo(self, baseWorkDir, repoDir, repoName, platform, section,
+                 sboxPath="/scratchbox/moz_scratchbox"):
+        pass
+#        while not binaryDir.endswith('/dists'):
+#            self.debug(binaryDir)
+#            binaryDir = os.path.dirname(binaryDir)
+#        self.info(binaryDir)
+
     def createRepos(self):
         repoDir = self.queryVar("repoDir")
         platformConfig = self.queryVar("platformConfig")
         platforms = self.queryVar("platforms")
+        section = self.queryVar("section")
+        baseWorkDir = self.queryVar("baseWorkDir")
         if not platforms:
             platforms = platformConfig.keys()
 
@@ -145,6 +155,16 @@ class MaemoDebSigner(SimpleConfig, BasicFunctions):
                     url = '%s/%s' % (pf['l10nDirUrl'], locale)
                 url += '/%s' % debName
                 self.debug(url)
+                #TODO remove testOnly
+                if not self.downloadFile(url, debName, testOnly=True):
+                    self.warn("Skipping %s ..." % locale)
+                    continue
+                binaryDir = '%s/%s/dists/%s/%s/binary-armel' % \
+                            (repoDir, repoName, platform, section)
+                absBinaryDir = '%s/%s' % (baseWorkDir, binaryDir)
+                self.mkdir_p(absBinaryDir)
+                self.move(debName, absBinaryDir)
+                self.signRepo(baseWorkDir, repoDir, repoName, platform, section)
 
 
 
@@ -154,19 +174,5 @@ if __name__ == '__main__':
     # TODO check out appropriate hg repos
     debSigner.createRepos()
 
-#    for platform in platforms:
-#        for locale in platformLocales:
-#            if not downloadFile(url, debName):
-#                print "Skipping %s ..." % locale
-#                continue
-#
-#            binaryDir = '%s/%s/dists/%s/%s/binary-armel' % \
-#                        (config['repoDir'], repoName, platform,
-#                         config['section'])
-#            absBinaryDir = '%s/%s' % (config['baseWorkDir'], binaryDir)
-#            mkdir_p(absBinaryDir)
-#            shutil.move(debName, absBinaryDir)
-#            signRepo(config, repoName, platform)
-#
 #            # TODO create install file
 #            # TODO upload
