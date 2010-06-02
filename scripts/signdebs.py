@@ -142,8 +142,7 @@ class MaemoDebSigner(SimpleConfig, BasicFunctions):
 
             errorRegex = [{'regex': 'command not found', 'level': 'error'},
                          ]
-            # TODO remove echo
-            command = "echo gpg -abs -o Release.gpg Release"
+            command = "gpg -abs -o Release.gpg Release"
             self.runCommand(command, errorRegex=errorRegex,
                             cwd='%s/%s' % (workDir, subDir))
 

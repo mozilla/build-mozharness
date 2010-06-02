@@ -10,11 +10,9 @@
   "remoteSshKey": "/home/cltbld/.ssh/id_rsa",
   "remoteHost": "staging-mobile-master.build.mozilla.org",
   "section": "extras",
-  "_sboxPath": "/scratchbox/moz_scratchbox",
-  "sboxPath": "echo /scratchbox/moz_scratchbox",
+  "sboxPath": "/scratchbox/moz_scratchbox",
   "repoDir": "repos.staging",
-  "_baseWorkDir": "/scratchbox/users/cltbld/home/cltbld",
-  "baseWorkDir": "/Users/asasaki/wrk/hg/mozharness/scripts",
+  "baseWorkDir": "/scratchbox/users/cltbld/home/cltbld",
   "platformConfig": {
 
     "chinook": {
