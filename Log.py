@@ -202,7 +202,7 @@ class BasicFunctions(object):
 
 
 # SimpleFileLogger {{{1
-class SimpleFileLogger(BaseLogger, BasicFunctions):
+class SimpleFileLogger(BaseLogger):
     """Create one logFile.  Possibly also output to
     the terminal and a raw log (no prepending of level or date)
     """

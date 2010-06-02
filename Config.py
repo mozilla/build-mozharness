@@ -69,6 +69,8 @@ class BaseConfig(object):
         """Read a config file and return a dictionary.
         TODO: read subsequent config files once self.config is already
         set, with options to override or drop conflicting config settings.
+        TODO: have a config file search path, so we're less inflexible
+        about cwd().
         """
         fh = open(fileName)
         config = {}
@@ -119,8 +121,12 @@ class BaseConfig(object):
         else:
             self.config = config
 
-    def queryVar(self, varName):
-        return self.queryConfig(varName=varName)
+    def queryVar(self, varName, default=None):
+        value = self.queryConfig(varName=varName)
+        if not value:
+            return default
+        else:
+            return value
 
     def setVar(self, varName, value):
         self.debug("Setting %s to %s" % (varName, value))

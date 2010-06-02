@@ -13,7 +13,7 @@
   "repoDir": "repos.staging",
   "_baseWorkDir": "/scratchbox/users/cltbld/home/cltbld",
   "baseWorkDir": "/Users/asasaki/wrk/hg/mozharness/scripts",
-  "platforms": {
+  "platformConfig": {
 
     "chinook": {
       "installFile": "trunk_%(locale)s_nightly_chinook.install",

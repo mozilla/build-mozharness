@@ -17,7 +17,7 @@ sys.path[0] = os.path.dirname(sys.path[0])
 
 import Log
 reload(Log)
-from Log import SimpleFileLogger
+from Log import SimpleFileLogger, BasicFunctions
 
 import Config
 reload(Config)
@@ -26,9 +26,14 @@ from Config import SimpleConfig
 
 
 # MaemoDebSigner {{{1
-class MaemoDebSigner(SimpleConfig):
-    def __init__(self, configFile=None, localesFile=None, locales=None):
+class MaemoDebSigner(SimpleConfig, BasicFunctions):
+    def __init__(self, configFile=None):
+        """I wanted to inherit BasicFunctions in SimpleFileLogger but
+        that ends up not carrying down to this object since SimpleConfig
+        doesn't inherit the logger, just has a self.logObj.
+        """
         SimpleConfig.__init__(self, configFile=configFile)
+        BasicFunctions.__init__(self)
 
     def parseArgs(self):
         """I want to change this to send the list of options to
@@ -53,11 +58,17 @@ class MaemoDebSigner(SimpleConfig):
         parser.add_option("--platform", action="append", dest="platforms",
                           type="string",
                           help="Specify the platform(s) to repack")
+        parser.add_option("--debname", action="store", dest="debname",
+                          type="string",
+                          help="Specify the name of the deb")
         (options, args) = parser.parse_args()
         for option in parser.variables:
              self.setVar(option, getattr(options, option))
 
-    def getDebName(self, debNameUrl=None):
+    def queryDebName(self, debNameUrl=None):
+        debName = self.queryVar('debname')
+        if debName:
+            return debName
         if debNameUrl:
             self.info('Getting debName from %s' % debNameUrl)
             try:
@@ -78,22 +89,56 @@ class MaemoDebSigner(SimpleConfig):
         if os.path.exists(repoDir):
             self.rmtree(repoDir)
 
+    def queryLocales(self, platform, platformConfig=None):
+        locales = self.queryVar("locales")
+        if not locales:
+            locales = []
+            if not platformConfig:
+                platformConfig = self.queryVar("platformConfig")
+            pf = platformConfig[platform]
+            localesFile = self.queryVar("localesFile")
+            if "multiDirUrl" in pf:
+                locales.append("multi")
+            if "enUsDirUrl" in pf:
+                locales.append("en-US")
+            if "l10nDirUrl" in pf and localesFile:
+                """This assumes all locales in the l10n json file
+                are applicable. If not, we'll have to parse the json
+                for matching platforms.
+                """
+                localesJson = self.parseConfigFile(localesFile)
+                locales.extend(localesJson.keys())
+        return locales
+
     def createRepos(self):
-        self.clobberRepoDir()
         repoDir = self.queryVar("repoDir")
+        platformConfig = self.queryVar("platformConfig")
+        platforms = self.queryVar("platforms")
+        if not platforms:
+            platforms = platformConfig.keys()
+
+        self.clobberRepoDir()
         self.mkdir_p(repoDir)
+
+        for platform in platforms:
+            """This assumes the same deb name for each locale in a platform.
+            """
+            self.info("###%s###" % platform)
+            pf = platformConfig[platform]
+            debName = self.queryDebName(debNameUrl=pf['debNameUrl'])
+            locales = self.queryLocales(platform, platformConfig=platformConfig)
+            for locale in locales:
+                self.debug("Locale %s" % locale)
 
 
 
 # __main__ {{{1
 if __name__ == '__main__':
     debSigner = MaemoDebSigner(configFile='%s/configs/deb_repos/trunk_nightly.json' % sys.path[0])
+    # TODO check out appropriate hg repos
+    debSigner.createRepos()
 
 #    for platform in platforms:
-#        print "###%s###" % platform
-#        platformConfig = config['platforms'][platform]
-#        platformLocales = getPlatformLocales(platformConfig)
-#
 #        signObj = MaemoDebSigner(configJson=platformConfig)
 #        print signObj.debNameUrl
 #        debName = signObj.getDebName()
