@@ -127,8 +127,7 @@ class BaseLogger(object):
         use os.linesep instead of assuming \n, be able to pass in log level
         by name or number.
 
-        Adding the "ignore" special level for future runCommand
-        regex error parsing.
+        Adding the "ignore" special level for runCommand.
         """
         if level == "ignore":
             return
@@ -185,7 +184,7 @@ class BasicFunctions(object):
                 self.log('Unable to remove %s!' % path, level=errorLevel,
                          exitCode=exitCode)
         else:
-            self.debug("%s doesn't exist.")
+            self.debug("%s doesn't exist." % path)
 
     # http://www.techniqal.com/blog/2008/07/31/python-file-read-write-with-urllib2/
     def downloadFile(self, url, fileName=None, testOnly=False,
@@ -238,7 +237,14 @@ class BasicFunctions(object):
          {'regex': 'THE WORLD IS ENDING', level='fatal', contextLines='20:'}
         ]
         """
-        self.info("Running command: %s" % command)
+        if cwd:
+            if not os.path.isdir(cwd):
+                self.error("Can't run command %s in non-existent directory %s!" % \
+                           (command, cwd))
+                return -1
+            self.info("Running command: %s in %s" % (command, cwd))
+        else:
+            self.info("Running command: %s" % command)
         p = subprocess.Popen(command, shell=shell, stdout=subprocess.PIPE,
                              cwd=cwd, stderr=subprocess.STDOUT)
         stdout, stderr = p.communicate()
@@ -253,7 +259,10 @@ class BasicFunctions(object):
                     break
             else:
                 self.info(' %s' % line)
-        self.info("Return code: %d" % p.returncode)
+        returnLevel = 'info'
+        if p.returncode != 0:
+            returnLevel = 'error'
+        self.log("Return code: %d" % p.returncode, level=returnLevel)
         return p.returncode                             
 
 

@@ -118,15 +118,34 @@ class MaemoDebSigner(SimpleConfig, BasicFunctions):
     def signRepo(self, baseWorkDir, repoDir, repoName, platform, section,
                  sboxPath="/scratchbox/moz_scratchbox"):
         sboxWorkDir = '%s/%s' % (repoDir, repoName)
+        workDir = '%s/%s' % (baseWorkDir, sboxWorkDir)
+
+        # TODO errorRegex
+        errorRegex = []
         command = "%s -p -d %s apt-ftparchive packages " % (sboxPath, sboxWorkDir)
         command += "dists/%s/%s/binary-armel |" % (platform, section)
-        command += "gzip -9c > %s/%s/dists/%s/%s/binary-armel/Packages.gz" %\
-                   (baseWorkDir, sboxWorkDir, platform, section)
-        self.runCommand(command)
-#        while not binaryDir.endswith('/dists'):
-#            self.debug(binaryDir)
-#            binaryDir = os.path.dirname(binaryDir)
-#        self.info(binaryDir)
+        command += "gzip -9c > %s/dists/%s/%s/binary-armel/Packages.gz" % \
+                   (workDir, platform, section)
+        self.runCommand(command, errorRegex=errorRegex)
+
+        for subDir in ("dists/%s/%s/binary-armel" % (platform, section),
+                       "dists/%s/%s" % (platform, section),
+                       "dists/%s" % platform):
+            self.rmtree("%s/%s/Release.gpg" % (workDir, subDir))
+            # Create Release file outside of the tree, then move in.
+            # TODO errorRegex
+            command = "%s -p -d %s/%s " % (sboxPath, sboxWorkDir, subDir)
+            command += "apt-ftparchive release . > %s/Release.tmp" % workDir
+            self.runCommand(command, errorRegex=errorRegex)
+            self.move("%s/Release.tmp" % workDir,
+                      "%s/%s/Release" % (workDir, subDir))
+
+            errorRegex = [{'regex': 'command not found', 'level': 'error'},
+                         ]
+            # TODO remove echo
+            command = "echo gpg -abs -o Release.gpg Release"
+            self.runCommand(command, errorRegex=errorRegex,
+                            cwd='%s/%s' % (workDir, subDir))
 
     def createRepos(self):
         repoDir = self.queryVar("repoDir")
