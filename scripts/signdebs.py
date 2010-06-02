@@ -117,7 +117,11 @@ class MaemoDebSigner(SimpleConfig, BasicFunctions):
 
     def signRepo(self, baseWorkDir, repoDir, repoName, platform, section,
                  sboxPath="/scratchbox/moz_scratchbox"):
-        command = "echo %s" % (sboxPath)
+        sboxWorkDir = '%s/%s' % (repoDir, repoName)
+        command = "%s -p -d %s apt-ftparchive packages " % (sboxPath, sboxWorkDir)
+        command += "dists/%s/%s/binary-armel |" % (platform, section)
+        command += "gzip -9c > %s/%s/dists/%s/%s/binary-armel/Packages.gz" %\
+                   (baseWorkDir, sboxWorkDir, platform, section)
         self.runCommand(command)
 #        while not binaryDir.endswith('/dists'):
 #            self.debug(binaryDir)
@@ -130,11 +134,22 @@ class MaemoDebSigner(SimpleConfig, BasicFunctions):
         platforms = self.queryVar("platforms")
         section = self.queryVar("section")
         baseWorkDir = self.queryVar("baseWorkDir")
+        hgRepo = self.queryVar("hgRepo")
+        sboxPath = self.queryVar("sboxPath")
         if not platforms:
             platforms = platformConfig.keys()
 
         self.clobberRepoDir()
         self.mkdir_p(repoDir)
+
+        hgErrorRegex=[{'regex': '^abort:', 'level': 'error'},
+                      {'regex': 'pulling from', 'level': 'warning'},
+                     ]
+        if not os.path.exists('mobile'):
+            self.runCommand("hg clone %s mobile" % hgRepo,
+                            errorRegex=hgErrorRegex)
+        self.runCommand("hg --cwd mobile pull", errorRegex=hgErrorRegex)
+        self.runCommand("hg --cwd mobile update -C", errorRegex=hgErrorRegex)
 
         for platform in platforms:
             """This assumes the same deb name for each locale in a platform.
@@ -165,7 +180,8 @@ class MaemoDebSigner(SimpleConfig, BasicFunctions):
                 absBinaryDir = '%s/%s' % (baseWorkDir, binaryDir)
                 self.mkdir_p(absBinaryDir)
                 self.move(debName, absBinaryDir)
-                self.signRepo(baseWorkDir, repoDir, repoName, platform, section)
+                self.signRepo(baseWorkDir, repoDir, repoName, platform,
+                              section, sboxPath=sboxPath)
 
 
 

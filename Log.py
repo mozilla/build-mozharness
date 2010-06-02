@@ -13,6 +13,7 @@ TODO:
 
 import logging
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -210,9 +211,9 @@ class BasicFunctions(object):
         self.info("Moving %s to %s" % (src, dest))
         shutil.move(src, dest)
 
-    def runCommand(self, command, cwd=None, errorRegex=None):
+    def runCommand(self, command, cwd=None, errorRegex=[], parseAtEnd=False):
         """Run a command, with logging and error parsing.
-        TODO: error parsing.
+        TODO: parseAtEnd, contextLines
 
         errorRegex example:
         [{'regex': '^Error: not a real error', level='ignore'},
@@ -230,8 +231,13 @@ class BasicFunctions(object):
         stdout, stderr = p.communicate()
         lines = stdout.rstrip().split('\n')
         for line in lines:
-            # TODO error parsing
-            self.info(' %s' % line)
+            for errorCheck in errorRegex:
+                if re.search(errorCheck['regex'], line):
+                    self.log(' %s' % line,
+                             level=errorCheck.get('level', 'info'))
+                    break
+            else:
+                self.info(' %s' % line)
         self.info("Return code: %d" % p.returncode)
         return p.returncode                             
 
