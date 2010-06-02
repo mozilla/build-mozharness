@@ -143,6 +143,7 @@ class MaemoDebSigner(SimpleConfig, BasicFunctions):
                       "%s/%s/Release" % (workDir, subDir))
 
             errorRegex = [{'regex': 'command not found', 'level': 'error'},
+                          {'regex': 'secret key not available', 'level': 'error'},
                          ]
             command = "gpg -abs -o Release.gpg Release"
             self.runCommand(command, errorRegex=errorRegex,
@@ -189,8 +190,7 @@ class MaemoDebSigner(SimpleConfig, BasicFunctions):
                     url = '%s/%s' % (pf['l10nDirUrl'], locale)
                 url += '/%s' % debName
                 self.debug(url)
-                #TODO remove testOnly
-                if not self.downloadFile(url, debName, testOnly=True):
+                if not self.downloadFile(url, debName):
                     self.warn("Skipping %s ..." % locale)
                     continue
                 binaryDir = '%s/%s/dists/%s/%s/binary-armel' % \
