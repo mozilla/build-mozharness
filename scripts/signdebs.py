@@ -74,7 +74,7 @@ class MaemoDebSigner(SimpleConfig, BasicFunctions):
             try:
                 ul = urllib2.build_opener()
                 fh = ul.open(debNameUrl)
-                debName = fh.read()[:-1] # chomp
+                debName = fh.read().rstrip()
                 self.debug('Deb name is %s' % debName)
                 return debName
             except HTTPError, e:
@@ -117,7 +117,8 @@ class MaemoDebSigner(SimpleConfig, BasicFunctions):
 
     def signRepo(self, baseWorkDir, repoDir, repoName, platform, section,
                  sboxPath="/scratchbox/moz_scratchbox"):
-        pass
+        command = "echo %s" % (sboxPath)
+        self.runCommand(command)
 #        while not binaryDir.endswith('/dists'):
 #            self.debug(binaryDir)
 #            binaryDir = os.path.dirname(binaryDir)

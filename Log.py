@@ -14,6 +14,7 @@ TODO:
 import logging
 import os
 import shutil
+import subprocess
 import sys
 import urllib2
 
@@ -26,8 +27,10 @@ logging.addLevelName(FATAL, 'FATAL')
 # BaseLogger {{{1
 class BaseLogger(object):
     """Create a base logging class.
-    TODO: be able to set defaults from config/parseArgs if self
-    also inherits Config.
+    TODO: status? There may be a status object or status capability in
+    either logging or config that allows you to count the number of
+    error,critical,fatal messages for us to count up at the end (aiming
+    for 0).
     """
     LEVELS = {'debug': logging.DEBUG,
               'info': logging.INFO,
@@ -206,6 +209,31 @@ class BasicFunctions(object):
     def move(self, src, dest):
         self.info("Moving %s to %s" % (src, dest))
         shutil.move(src, dest)
+
+    def runCommand(self, command, cwd=None, errorRegex=None):
+        """Run a command, with logging and error parsing.
+        TODO: error parsing.
+
+        errorRegex example:
+        [{'regex': '^Error: not a real error', level='ignore'},
+         {'regex': '^Error:', level='error', contextLines='5:5'},
+         {'regex': 'THE WORLD IS ENDING', level='fatal', contextLines='20:'}
+        ]
+
+        Should I be parsing stderr too?
+        Previously I forced everything to stdout via 2>&1 and used the
+        errorRegex and return code solely.
+        """
+        self.info("Running command: %s" % command)
+        p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE,
+                             cwd=cwd)
+        stdout, stderr = p.communicate()
+        lines = stdout.rstrip().split('\n')
+        for line in lines:
+            # TODO error parsing
+            self.info(' %s' % line)
+        self.info("Return code: %d" % p.returncode)
+        return p.returncode                             
 
 
 
