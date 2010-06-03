@@ -162,8 +162,9 @@ dist = %(platform)s
 components = %(section)s
 """ % replaceDict
         self.info("Writing install file to %s" % filePath)
-        open(filePath, 'w')
-        print >> filePath, contents
+        fh = open(filePath, 'w')
+        print >> fh, contents
+        fh.close()
         
 
     def createRepos(self):
@@ -199,11 +200,11 @@ components = %(section)s
             locales = self.queryLocales(platform, platformConfig=platformConfig)
             for locale in locales:
                 replaceDict = {'locale': locale,
-                               'longCatalogName': longCatalogName,
+                               'longCatalogName': pf['longCatalogName'],
                                'packageName': packageName,
                                'platform': platform,
                                'section': section,
-                               'shortCatalogName': shortCatalogName,
+                               'shortCatalogName': pf['shortCatalogName'],
                               }
                 installFile = pf['installFile'] % replaceDict
                 repoName = self.queryVar('repoName') % replaceDict
