@@ -12,6 +12,7 @@
   "section": "extras",
   "sboxPath": "/scratchbox/moz_scratchbox",
   "repoDir": "repos.staging",
+  "baseRepoUrl": "http://staging-mobile-master.build.mozilla.org/debtest",
   "baseWorkDir": "/scratchbox/users/cltbld/home/cltbld",
   "platformConfig": {
 

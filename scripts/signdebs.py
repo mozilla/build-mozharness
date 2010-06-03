@@ -61,9 +61,15 @@ class MaemoDebSigner(SimpleConfig, BasicFunctions):
         parser.add_option("--debname", action="store", dest="debname",
                           type="string",
                           help="Specify the name of the deb")
+        parser.add_option("--configFile", action="store", dest="configFile",
+                          type="string",
+                          help="Specify the config file (required)")
         (options, args) = parser.parse_args()
         for option in parser.variables:
              self.setVar(option, getattr(options, option))
+
+        if not self.queryVar("configFile"):
+            self.fatal("You must specify --configFile!")
 
     def queryDebName(self, debNameUrl=None):
         debName = self.queryVar('debname')
@@ -292,5 +298,5 @@ components = %(section)s
 
 # __main__ {{{1
 if __name__ == '__main__':
-    debSigner = MaemoDebSigner(configFile='deb_repos/trunk_nightly.json')
+    debSigner = MaemoDebSigner()
     debSigner.createRepos()
