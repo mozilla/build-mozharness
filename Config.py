@@ -8,6 +8,8 @@ duplicate run.
 
 TODO:
 
+* dumpConfig and loadConfig need to be seamless. And written.
+
 * actions, logConfig, config
 
 Right now I'm putting everything in the config dictionary.
@@ -185,6 +187,9 @@ class BaseConfig(object):
         """Dump the configuration somewhere, default to STDOUT.
         Be nice to be able to write a .py or .json file according to
         filename.
+
+        TODO: write to file, verify that dump/load is exactly the same
+        config.
         """
         if not config:
             config = self.queryConfig()
