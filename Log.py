@@ -162,7 +162,9 @@ class BaseLogger(object):
                  logDateFormat='%H:%M:%S',
                  logName='test',
                  logToConsole=True,
+                 logDir='.',
                  logToRaw=False,
+                 loggerName='',
                  haltOnFailure=True,
                  appendToLog=False,
                 ):
@@ -173,10 +175,26 @@ class BaseLogger(object):
         self.logToRaw = logToRaw
         self.logLevel = logLevel
         self.logName = logName
+        self.logDir = logDir
         self.appendToLog = appendToLog
-        
+
+        # Not sure what I'm going to use this for; useless unless we
+        # can have multiple logging objects that don't trample each other
+        self.loggerName = loggerName
+
         self.allHandlers = []
         self.logFiles = {}
+
+        self.createLogDir()
+
+    def createLogDir(self):
+        if os.path.exists(self.logDir):
+            if not os.path.isdir(self.logDir):
+                os.remove(self.logDir)
+        if not os.path.exists(self.logDir):
+            os.makedirs(self.logDir)
+        self.absLogDir = os.path.abspath(self.logDir)
+
 
     def getLoggerLevel(self, level=None):
         if not level:
@@ -282,19 +300,17 @@ class SimpleFileLogger(BaseLogger):
     """Create one logFile.  Possibly also output to
     the terminal and a raw log (no prepending of level or date)
     """
-    def __init__(self, logDir='.',
+    def __init__(self,
                  logFormat='%(asctime)s - %(levelname)s - %(message)s',
-                 loggerName='Simple', **kwargs):
-        self.loggerName = loggerName
-        self.logDir = logDir
-        BaseLogger.__init__(self, logFormat=logFormat,
-                            **kwargs)
+                 loggerName='Simple', logDir='logs', **kwargs):
+        BaseLogger.__init__(self, loggerName=loggerName, logFormat=logFormat,
+                            logDir=logDir, **kwargs)
         self.newLogger(self.loggerName)
         self.info("SimpleFileLogger online.")
 
     def newLogger(self, loggerName):
         BaseLogger.newLogger(self, loggerName)
-        self.logPath = os.path.join(os.getcwd(), '%s.log' % self.logName)
+        self.logPath = os.path.join(self.absLogDir, '%s.log' % self.logName)
         self.logFiles['default'] = self.logPath
         self.addFileHandler(self.logPath)
 
@@ -306,25 +322,15 @@ class MultiFileLogger(BaseLogger):
     """Create a log per log level in logDir.  Possibly also output to
     the terminal and a raw log (no prepending of level or date)
     """
-    def __init__(self, loggerName='',
+    def __init__(self, loggerName='Multi',
                  logFormat='%(asctime)s - %(levelname)s - %(message)s',
                  logDir='logs', logToRaw=True, **kwargs):
-        self.logDir = logDir
-        self.loggerName = loggerName
-        BaseLogger.__init__(self, logFormat=logFormat, logToRaw=logToRaw,
+        BaseLogger.__init__(self, loggerName=loggerName, logFormat=logFormat,
+                            logToRaw=logToRaw, logDir=logDir,
                             **kwargs)
 
-        self.createLogDir()
         self.newLogger(self.loggerName)
         self.info("MultiFileLogger online.")
-
-    def createLogDir(self):
-        if os.path.exists(self.logDir):
-            if not os.path.isdir(self.logDir):
-                os.remove(self.logDir)
-        if not os.path.exists(self.logDir):
-            os.makedirs(self.logDir)
-        self.absLogDir = os.path.abspath(self.logDir)
 
     def newLogger(self, loggerName):
         BaseLogger.newLogger(self, loggerName)
@@ -365,7 +371,7 @@ if __name__ == '__main__':
     obj.haltOnFailure=False
     obj.log('test fatal -- you should *not* see an exit line after this.',
             level='fatal')
-    obj = SimpleFileLogger()
+    obj = SimpleFileLogger(logDir=logDir)
     testLogger(obj)
     print "=========="
-    print "You should be able to examine test.log and %s." % logDir
+    print "You should be able to examine %s." % logDir
