@@ -155,6 +155,7 @@ class MaemoDebSigner(SimpleConfig, BasicFunctions):
                                cwd='%s/%s' % (workDir, subDir)):
                 self.error("Exiting signRepo.")
                 return -3
+        return 0
 
     def createInstallFile(self, filePath, replaceDict):
         contents = """[install]
@@ -254,12 +255,9 @@ components = %(section)s
                     self.error("Skipping %s %s" % (platform, locale))
                     continue
 
-                if self.createInstallFile(os.path.join(baseWorkDir, repoDir,
-                                                       repoName, installFile),
-                                          replaceDict):
-                    self.error("Skipping %s %s" % (platform, locale))
-                    continue
-
+                self.createInstallFile(os.path.join(baseWorkDir, repoDir,
+                                                    repoName, installFile),
+                                       replaceDict):
                 self.uploadRepo(os.path.join(baseWorkDir, repoDir),
                                 repoName, platform)
 
