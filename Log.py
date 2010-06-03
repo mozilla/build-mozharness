@@ -25,141 +25,6 @@ logging.addLevelName(FATAL, 'FATAL')
 
 
 
-# BaseLogger {{{1
-class BaseLogger(object):
-    """Create a base logging class.
-    TODO: status? There may be a status object or status capability in
-    either logging or config that allows you to count the number of
-    error,critical,fatal messages for us to count up at the end (aiming
-    for 0).
-
-    This "warning" instead of "warn" is going to trip me up.
-    (It has, already.)
-    However, while adding a 'warn': logging.WARNING would be nice,
-
-        a) I don't want to confuse people who know the logging module and
-           are comfortable with WARNING, so removing 'warning' is out, and
-        b) there's a |for level in self.LEVELS.keys():| below, which would
-           create a dup .warn.log alongside the .warning.log.
-    """
-    LEVELS = {'debug': logging.DEBUG,
-              'info': logging.INFO,
-              'warning': logging.WARNING,
-              'error': logging.ERROR,
-              'critical': logging.CRITICAL,
-              'fatal': logging.FATAL
-             }
-
-    def __init__(self, logLevel='info',
-                 logFormat='%(message)s',
-                 logDateFormat='%H:%M:%S',
-                 logToConsole=True,
-                 haltOnFailure=True,
-                 appendToLog=False,
-                ):
-        self.haltOnFailure = haltOnFailure,
-        self.logFormat = logFormat
-        self.logDateFormat = logDateFormat
-        self.logToConsole = logToConsole
-        self.logLevel = logLevel
-        self.appendToLog = appendToLog
-        
-        self.allHandlers = []
-
-    def getLoggerLevel(self, level=None):
-        if not level:
-            level = self.logLevel
-        return self.LEVELS.get(level, logging.NOTSET)
-
-    def getLogFormatter(self, logFormat=None, dateFormat=None):
-        if not logFormat:
-            logFormat = self.logFormat
-        if not dateFormat:
-            dateFormat = self.logDateFormat
-        return logging.Formatter(logFormat, dateFormat)
-
-    def newLogger(self, loggerName):
-        """Create a new logger.
-        By default there are no handlers.
-        """
-        self.logger = logging.getLogger(loggerName)
-        self.logger.setLevel(self.getLoggerLevel())
-        self._clearHandlers()
-        if self.logToConsole:
-            self.addConsoleHandler()
-
-    def _clearHandlers(self):
-        """To prevent dups -- logging will preserve Handlers across
-        objects :(
-        """
-        attrs = dir(self)
-        if 'allHandlers' in attrs and 'logger' in attrs:
-            for handler in self.allHandlers:
-                self.logger.removeHandler(handler)
-            self.allHandlers = []
-
-    def __del__(self):
-        self._clearHandlers()
-
-    def addConsoleHandler(self, logLevel=None, logFormat=None,
-                          dateFormat=None):
-        consoleHandler = logging.StreamHandler()
-        consoleHandler.setLevel(self.getLoggerLevel(logLevel))
-        consoleHandler.setFormatter(self.getLogFormatter(logFormat=logFormat,
-                                                         dateFormat=dateFormat))
-        self.logger.addHandler(consoleHandler)
-        self.allHandlers.append(consoleHandler)
-
-    def addFileHandler(self, logName, logLevel=None, logFormat=None,
-                       dateFormat=None):
-        if not self.appendToLog and os.path.exists(logName):
-            os.remove(logName)
-        fileHandler = logging.FileHandler(logName)
-        fileHandler.setLevel(self.getLoggerLevel(logLevel))
-        fileHandler.setFormatter(self.getLogFormatter(logFormat=logFormat,
-                                                      dateFormat=dateFormat))
-        self.logger.addHandler(fileHandler)
-        self.allHandlers.append(fileHandler)
-
-    def log(self, message, level='info', exitCode=-1):
-        """Generic log method.
-        There should be more options here -- do or don't split by line,
-        use os.linesep instead of assuming \n, be able to pass in log level
-        by name or number.
-
-        Adding the "ignore" special level for runCommand.
-        """
-        if level == "ignore":
-            return
-        for line in message.split('\n'):
-            self.logger.log(self.getLoggerLevel(level), line)
-        if level == 'fatal' and self.haltOnFailure:
-            self.logger.log(FATAL, 'Exiting %d' % exitCode)
-            sys.exit(exitCode)
-
-    def debug(self, message):
-        self.log(message, level='debug')
-
-    def info(self, message):
-        self.log(message, level='info')
-
-    def warning(self, message):
-        self.log(message, level='warning')
-
-    def warn(self, message):
-        self.log(message, level='warning')
-
-    def error(self, message):
-        self.log(message, level='error')
-
-    def critical(self, message):
-        self.log(message, level='critical')
-
-    def fatal(self, message, exitCode=-1):
-        self.log(message, level='fatal', exitCode=exitCode)
-
-
-
 # BasicFunctions {{{1
 class BasicFunctions(object):
     """This class won't work without also inheriting a Log object.
@@ -267,16 +132,160 @@ class BasicFunctions(object):
 
 
 
+# BaseLogger {{{1
+class BaseLogger(object):
+    """Create a base logging class.
+    TODO: status? There may be a status object or status capability in
+    either logging or config that allows you to count the number of
+    error,critical,fatal messages for us to count up at the end (aiming
+    for 0).
+
+    This "warning" instead of "warn" is going to trip me up.
+    (It has, already.)
+    However, while adding a 'warn': logging.WARNING would be nice,
+
+        a) I don't want to confuse people who know the logging module and
+           are comfortable with WARNING, so removing 'warning' is out, and
+        b) there's a |for level in self.LEVELS.keys():| below, which would
+           create a dup .warn.log alongside the .warning.log.
+    """
+    LEVELS = {'debug': logging.DEBUG,
+              'info': logging.INFO,
+              'warning': logging.WARNING,
+              'error': logging.ERROR,
+              'critical': logging.CRITICAL,
+              'fatal': logging.FATAL
+             }
+
+    def __init__(self, logLevel='info',
+                 logFormat='%(message)s',
+                 logDateFormat='%H:%M:%S',
+                 logName='test',
+                 logToConsole=True,
+                 logToRaw=False,
+                 haltOnFailure=True,
+                 appendToLog=False,
+                ):
+        self.haltOnFailure = haltOnFailure,
+        self.logFormat = logFormat
+        self.logDateFormat = logDateFormat
+        self.logToConsole = logToConsole
+        self.logToRaw = logToRaw
+        self.logLevel = logLevel
+        self.logName = logName
+        self.appendToLog = appendToLog
+        
+        self.allHandlers = []
+        self.logFiles = {}
+
+    def getLoggerLevel(self, level=None):
+        if not level:
+            level = self.logLevel
+        return self.LEVELS.get(level, logging.NOTSET)
+
+    def getLogFormatter(self, logFormat=None, dateFormat=None):
+        if not logFormat:
+            logFormat = self.logFormat
+        if not dateFormat:
+            dateFormat = self.logDateFormat
+        return logging.Formatter(logFormat, dateFormat)
+
+    def newLogger(self, loggerName):
+        """Create a new logger.
+        By default there are no handlers.
+        """
+        self.logger = logging.getLogger(loggerName)
+        self.logger.setLevel(self.getLoggerLevel())
+        self._clearHandlers()
+        if self.logToConsole:
+            self.addConsoleHandler()
+        if self.logToRaw:
+            self.logFiles['raw'] = '%s_raw.log' % self.logName
+            self.addFileHandler(os.path.join(self.absLogDir,
+                                             self.logFiles['raw']),
+                                logFormat='%(message)s')
+
+    def _clearHandlers(self):
+        """To prevent dups -- logging will preserve Handlers across
+        objects :(
+        """
+        attrs = dir(self)
+        if 'allHandlers' in attrs and 'logger' in attrs:
+            for handler in self.allHandlers:
+                self.logger.removeHandler(handler)
+            self.allHandlers = []
+
+    def __del__(self):
+        self._clearHandlers()
+
+    def addConsoleHandler(self, logLevel=None, logFormat=None,
+                          dateFormat=None):
+        consoleHandler = logging.StreamHandler()
+        consoleHandler.setLevel(self.getLoggerLevel(logLevel))
+        consoleHandler.setFormatter(self.getLogFormatter(logFormat=logFormat,
+                                                         dateFormat=dateFormat))
+        self.logger.addHandler(consoleHandler)
+        self.allHandlers.append(consoleHandler)
+
+    def addFileHandler(self, logPath, logLevel=None, logFormat=None,
+                       dateFormat=None):
+        if not self.appendToLog and os.path.exists(logPath):
+            os.remove(logPath)
+        fileHandler = logging.FileHandler(logPath)
+        fileHandler.setLevel(self.getLoggerLevel(logLevel))
+        fileHandler.setFormatter(self.getLogFormatter(logFormat=logFormat,
+                                                      dateFormat=dateFormat))
+        self.logger.addHandler(fileHandler)
+        self.allHandlers.append(fileHandler)
+
+    def log(self, message, level='info', exitCode=-1):
+        """Generic log method.
+        There should be more options here -- do or don't split by line,
+        use os.linesep instead of assuming \n, be able to pass in log level
+        by name or number.
+
+        Adding the "ignore" special level for runCommand.
+        """
+        if level == "ignore":
+            return
+        for line in message.split('\n'):
+            self.logger.log(self.getLoggerLevel(level), line)
+        if level == 'fatal' and self.haltOnFailure:
+            self.logger.log(FATAL, 'Exiting %d' % exitCode)
+            sys.exit(exitCode)
+
+    def debug(self, message):
+        self.log(message, level='debug')
+
+    def info(self, message):
+        self.log(message, level='info')
+
+    def warning(self, message):
+        self.log(message, level='warning')
+
+    def warn(self, message):
+        self.log(message, level='warning')
+
+    def error(self, message):
+        self.log(message, level='error')
+
+    def critical(self, message):
+        self.log(message, level='critical')
+
+    def fatal(self, message, exitCode=-1):
+        self.log(message, level='fatal', exitCode=exitCode)
+
+
+
 # SimpleFileLogger {{{1
 class SimpleFileLogger(BaseLogger):
     """Create one logFile.  Possibly also output to
     the terminal and a raw log (no prepending of level or date)
     """
-    def __init__(self, logDir='.', logName='test.log',
+    def __init__(self, logDir='.',
                  logFormat='%(asctime)s - %(levelname)s - %(message)s',
                  loggerName='Simple', **kwargs):
         self.loggerName = loggerName
-        self.logName = logName
         self.logDir = logDir
         BaseLogger.__init__(self, logFormat=logFormat,
                             **kwargs)
@@ -285,7 +294,8 @@ class SimpleFileLogger(BaseLogger):
 
     def newLogger(self, loggerName):
         BaseLogger.newLogger(self, loggerName)
-        self.logPath = os.path.join(os.getcwd(), self.logName)
+        self.logPath = os.path.join(os.getcwd(), '%s.log' % self.logName)
+        self.logFiles['default'] = self.logPath
         self.addFileHandler(self.logPath)
 
 
@@ -296,15 +306,12 @@ class MultiFileLogger(BaseLogger):
     """Create a log per log level in logDir.  Possibly also output to
     the terminal and a raw log (no prepending of level or date)
     """
-    def __init__(self, baseLogName='test',
+    def __init__(self, loggerName='',
                  logFormat='%(asctime)s - %(levelname)s - %(message)s',
-                 loggerName='', logDir='logs', logToRaw=True, **kwargs):
-        self.baseLogName = baseLogName
+                 logDir='logs', logToRaw=True, **kwargs):
         self.logDir = logDir
         self.loggerName = loggerName
-        self.logToRaw = logToRaw
-        self.logFiles = {}
-        BaseLogger.__init__(self, logFormat=logFormat,
+        BaseLogger.__init__(self, logFormat=logFormat, logToRaw=logToRaw,
                             **kwargs)
 
         self.createLogDir()
@@ -321,15 +328,10 @@ class MultiFileLogger(BaseLogger):
 
     def newLogger(self, loggerName):
         BaseLogger.newLogger(self, loggerName)
-        if self.logToRaw:
-            self.logFiles['raw'] = '%s_raw.log' % self.baseLogName
-            self.addFileHandler(os.path.join(self.absLogDir,
-                                             self.logFiles['raw']),
-                                logFormat='%(message)s')
         minLoggerLevel = self.getLoggerLevel(self.logLevel)
         for level in self.LEVELS.keys():
             if self.getLoggerLevel(level) >= minLoggerLevel:
-                self.logFiles[level] = '%s_%s.log' % (self.baseLogName,
+                self.logFiles[level] = '%s_%s.log' % (self.logName,
                                                       level)
                 self.addFileHandler(os.path.join(self.absLogDir,
                                                  self.logFiles[level]),

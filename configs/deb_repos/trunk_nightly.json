@@ -1,5 +1,5 @@
 {
-  "logName": "signdebs.log",
+  "logName": "signdebs",
   "localesFile": "mobile/locales/all-locales",
   "hgRepo": "http://hg.mozilla.org/mobile-browser",
   "repoName": "trunk_%(locale)s",
