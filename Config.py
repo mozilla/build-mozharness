@@ -16,7 +16,7 @@ try:
     import json
 except:
     import simplejson as json
-from Log import SimpleFileLogger
+from Log import SimpleFileLogger, MultiFileLogger
 
 
 
