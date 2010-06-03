@@ -268,13 +268,13 @@ components = %(section)s
         remoteHost = self.queryVar("remoteHost")
 
         # TODO errorRegex
-        errorRegex=[]
+        errorRegex=[{'regex': 'Name or service not known', 'level': 'error'},
+                   ]
         command = "ssh -i %s %s@%s mkdir -p %s/%s/dists/%s" % \
                   (remoteSshKey, remoteUser, remoteHost, remoteRepoPath,
                    repoName, platform)
         self.runCommand(command, errorRegex=errorRegex)
 
-        errorRegex=[]
         command = 'rsync --rsh="ssh -i %s" -azv --delete %s %s@%s:%s/%s/dists/%s' % \
                   (remoteSshKey,
                    os.path.join(localRepoDir, repoName, 'dists', platform, '.'),
