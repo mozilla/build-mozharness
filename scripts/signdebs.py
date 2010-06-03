@@ -259,9 +259,9 @@ components = %(section)s
                                                     repoName, installFile),
                                        replaceDict)
                 self.uploadRepo(os.path.join(baseWorkDir, repoDir),
-                                repoName, platform)
+                                repoName, platform, installFile)
 
-    def uploadRepo(self, localRepoDir, repoName, platform):
+    def uploadRepo(self, localRepoDir, repoName, platform, installFile):
         remoteRepoPath = self.queryVar("remoteRepoPath")
         remoteUser = self.queryVar("remoteUser")
         remoteSshKey = self.queryVar("remoteSshKey")
@@ -269,6 +269,7 @@ components = %(section)s
 
         # TODO errorRegex
         errorRegex=[{'regex': 'Name or service not known', 'level': 'error'},
+                    {'regex': 'POSSIBLE BREAK-IN ATTEMPT', 'level': 'warning'},
                    ]
         command = "ssh -i %s %s@%s mkdir -p %s/%s/dists/%s" % \
                   (remoteSshKey, remoteUser, remoteHost, remoteRepoPath,
@@ -279,6 +280,12 @@ components = %(section)s
                   (remoteSshKey,
                    os.path.join(localRepoDir, repoName, 'dists', platform, '.'),
                    remoteUser, remoteHost, remoteRepoPath, repoName, platform)
+        self.runCommand(command, errorRegex=errorRegex)
+
+        command = 'scp -i %s %s %s@%s:%s/%s/' % \
+                  (remoteSshKey,
+                   os.path.join(localRepoDir, repoName, installFile),
+                   remoteUser, remoteHost, remoteRepoPath, repoName)
         self.runCommand(command, errorRegex=errorRegex)
 
 
