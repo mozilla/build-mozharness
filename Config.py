@@ -5,6 +5,48 @@ gone by.
 Ideally the config is loaded + mixed with command line options, then locked
 during runtime.  The config dump should be loadable and re-runnable for a
 duplicate run.
+
+TODO:
+
+* actions, logConfig, config
+
+Right now I'm putting everything in the config dictionary.
+
+Really, only part of it is configuration that needs to be saved across runs;
+how verbose it is or whether you want to re-run one chunk of the script
+doesn't need to be saved for posterity.
+
+I solved that previously by specifying certain config variables went into
+the actions dictionary, others went into the logConfig, and others to
+the actual [build]config.   To do that we'd have to modify MozOptionParser
+to be a bit smarter I think... and make the config files a bit more complex.
+
+
+* custom append option action
+
+Right now in MozOptionParser there's an append action, so you can
+
+  ./script.py --locale en-US --locale fr --locale jp
+
+which gets saved into a list.
+
+Elsewhere I had a custom append action which allowed you to specify multiple
+values per argument and it would split over commas so you could
+
+  ./script.py --locale en-US,fr,jp --locale ar,multi
+
+and you'd have those 5 locales in your locale list.
+
+The ACTIONS and STORE_ACTIONS are in tuples in optparse.Option; we could
+add a custom action or override Option.take_action() to behave differently
+when action == "append".  It's not very pretty.
+
+Alternately if we had a flag on the arg for us to later
+
+  self.setVar('locales', self.queryVar('locales').join(',').split(','))
+
+that would work too (assuming we caught the exception when
+self.queryVar('locales') is None).
 """
 
 from copy import deepcopy

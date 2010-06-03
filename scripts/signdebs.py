@@ -168,6 +168,11 @@ components = %(section)s
         
 
     def createRepos(self):
+        """
+        This method is getting a little long... I could split a lot of it
+        out if I weren't trying to optimize for the fewest queryVar()s
+        for some strange reason.
+        """
         baseRepoUrl = self.queryVar("baseRepoUrl")
         baseWorkDir = self.queryVar("baseWorkDir")
         hgRepo = self.queryVar("hgRepo")
