@@ -18,7 +18,7 @@
   "platformConfig": {
 
     "chinook": {
-      "longCatalogName": "1.1 Chinook",
+      "longCatalogName": "Release Chinook",
       "shortCatalogName": "fennec",
       "installFile": "%(locale)s_chinook.install",
       "debNameUrl": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/1.1rc1-candidates/build2/maemo4/multi/deb_name.txt",
@@ -28,7 +28,7 @@
     },
 
     "fremantle": {
-      "longCatalogName": "1.1 Fremantle",
+      "longCatalogName": "Release Fremantle",
       "shortCatalogName": "fennec",
       "installFile": "%(locale)s_fremantle.install",
       "debNameUrl": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/1.1rc1-candidates/build2/maemo4/multi/deb_name.txt",
