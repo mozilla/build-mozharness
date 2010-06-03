@@ -1,6 +1,6 @@
 {
   "logName": "signdebs",
-  "localesFile": "mobile/locales/all-locales",
+  "localesFile": "configs/mozilla2/l10n-changesets_mobile-1.1.json",
   "hgConfigRepo": "http://hg.mozilla.org/build/buildbot-configs",
   "repoName": "%(locale)s",
   "remoteRepoPath": "/var/www/html/debtest/candidates",
