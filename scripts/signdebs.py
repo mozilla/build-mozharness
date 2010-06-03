@@ -182,7 +182,8 @@ components = %(section)s
         """
         baseRepoUrl = self.queryVar("baseRepoUrl")
         baseWorkDir = self.queryVar("baseWorkDir")
-        hgRepo = self.queryVar("hgRepo")
+        hgMobileRepo = self.queryVar("hgMobileRepo")
+        hgConfigRepo = self.queryVar("hgConfigRepo")
         packageName = self.queryVar("packageName")
         platformConfig = self.queryVar("platformConfig")
         platforms = self.queryVar("platforms")
@@ -197,11 +198,18 @@ components = %(section)s
 
         hgErrorRegex=[{'regex': '^abort:', 'level': 'error'},
                      ]
-        if not os.path.exists('mobile'):
-            self.runCommand("hg clone %s mobile" % hgRepo,
-                            errorRegex=hgErrorRegex)
-        self.runCommand("hg --cwd mobile pull", errorRegex=hgErrorRegex)
-        self.runCommand("hg --cwd mobile update -C", errorRegex=hgErrorRegex)
+        if hgMobileRepo is not None:
+            if not os.path.exists('mobile'):
+                self.runCommand("hg clone %s mobile" % hgMobileRepo,
+                                errorRegex=hgErrorRegex)
+            self.runCommand("hg --cwd mobile pull", errorRegex=hgErrorRegex)
+            self.runCommand("hg --cwd mobile update -C", errorRegex=hgErrorRegex)
+        if hgConfigRepo is not None:
+            if not os.path.exists('configs'):
+                self.runCommand("hg clone %s configs" % hgConfigRepo,
+                                errorRegex=hgErrorRegex)
+            self.runCommand("hg --cwd configs pull", errorRegex=hgErrorRegex)
+            self.runCommand("hg --cwd configs update -C", errorRegex=hgErrorRegex)
 
         for platform in platforms:
             """This assumes the same deb name for each locale in a platform.

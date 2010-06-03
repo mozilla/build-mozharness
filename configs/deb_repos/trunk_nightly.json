@@ -1,7 +1,7 @@
 {
   "logName": "signdebs",
   "localesFile": "mobile/locales/all-locales",
-  "hgRepo": "http://hg.mozilla.org/mobile-browser",
+  "hgMobileRepo": "http://hg.mozilla.org/mobile-browser",
   "repoName": "trunk_%(locale)s",
   "remoteRepoPath": "/var/www/html/debtest",
   "_remoteUser": "ffxbld",
