@@ -10,6 +10,9 @@ TODO:
   - would love to do instance-based settings so we can have multiple
     objects that can each have their own logger
 - log rotation
+- per-runCommand-haltOnFailure in BasicFunctions
+- general "echo-don't-execute" flag that gets every destructive method in
+  BasicFunctions to echo only
 """
 
 import logging

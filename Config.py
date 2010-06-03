@@ -10,7 +10,7 @@ TODO:
 
 * dumpConfig and loadConfig need to be seamless. And written.
 
-* actions, logConfig, config
+* logConfig, config, actions
 
 Right now I'm putting everything in the config dictionary.
 
@@ -20,8 +20,17 @@ doesn't need to be saved for posterity.
 
 I solved that previously by specifying certain config variables went into
 the actions dictionary, others went into the logConfig, and others to
-the actual [build]config.   To do that we'd have to modify MozOptionParser
-to be a bit smarter I think... and make the config files a bit more complex.
+the actual [build]config.
+
+I'm now thinking we should have a parser for log config options, a parser
+for [build] config options, and a parser for actions.  This allows us to
+keep the options and variables separate.  We could keep queryConfig() and
+{query,set}Var() for the main config, and add queryActions() and
+queryLogConfig().  The main sticking point I see here is the automated
+usage/help built by each parser.
+
+We could get around this, maybe, by wrapping that, or creating a
+MultipleOptionContainer or something. I dunno.
 
 
 * custom append option action

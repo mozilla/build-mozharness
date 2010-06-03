@@ -128,7 +128,9 @@ class MaemoDebSigner(SimpleConfig, BasicFunctions):
         command += "dists/%s/%s/binary-armel |" % (platform, section)
         command += "gzip -9c > %s/dists/%s/%s/binary-armel/Packages.gz" % \
                    (workDir, platform, section)
-        self.runCommand(command, errorRegex=errorRegex)
+        if self.runCommand(command, errorRegex=errorRegex):
+            self.error("Exiting signRepo.")
+            return -1
 
         for subDir in ("dists/%s/%s/binary-armel" % (platform, section),
                        "dists/%s/%s" % (platform, section),
@@ -136,9 +138,12 @@ class MaemoDebSigner(SimpleConfig, BasicFunctions):
             self.rmtree("%s/%s/Release.gpg" % (workDir, subDir))
             # Create Release file outside of the tree, then move in.
             # TODO errorRegex
+            errorRegex=[]
             command = "%s -p -d %s/%s " % (sboxPath, sboxWorkDir, subDir)
             command += "apt-ftparchive release . > %s/Release.tmp" % workDir
-            self.runCommand(command, errorRegex=errorRegex)
+            if self.runCommand(command, errorRegex=errorRegex):
+                self.error("Exiting signRepo.")
+                return -2
             self.move("%s/Release.tmp" % workDir,
                       "%s/%s/Release" % (workDir, subDir))
 
@@ -146,8 +151,10 @@ class MaemoDebSigner(SimpleConfig, BasicFunctions):
                           {'regex': 'secret key not available', 'level': 'error'},
                          ]
             command = "gpg -abs -o Release.gpg Release"
-            self.runCommand(command, errorRegex=errorRegex,
-                            cwd='%s/%s' % (workDir, subDir))
+            if self.runCommand(command, errorRegex=errorRegex,
+                               cwd='%s/%s' % (workDir, subDir)):
+                self.error("Exiting signRepo.")
+                return -3
 
     def createInstallFile(self, filePath, replaceDict):
         contents = """[install]
@@ -232,12 +239,41 @@ components = %(section)s
                 absBinaryDir = '%s/%s' % (baseWorkDir, binaryDir)
                 self.mkdir_p(absBinaryDir)
                 self.move(debName, absBinaryDir)
-                self.signRepo(baseWorkDir, repoDir, repoName, platform,
-                              section, sboxPath=sboxPath)
 
-                self.createInstallFile(os.path.join(baseWorkDir, repoDir,
-                                                    repoName, installFile),
-                                       replaceDict)
+                # Not sure I like this syntax
+                if self.signRepo(baseWorkDir, repoDir, repoName, platform,
+                                 section, sboxPath=sboxPath) != 0:
+                    self.error("Skipping %s %s" % (platform, locale))
+                    continue
+
+                if self.createInstallFile(os.path.join(baseWorkDir, repoDir,
+                                                       repoName, installFile),
+                                          replaceDict):
+                    self.error("Skipping %s %s" % (platform, locale))
+                    continue
+
+                self.uploadRepo(os.path.join(baseWorkDir, repoDir),
+                                repoName, platform)
+
+    def uploadRepo(self, localRepoDir, repoName):
+        remoteRepoPath = self.queryVar("remoteRepoPath")
+        remoteUser = self.queryVar("remoteUser")
+        remoteSshKey = self.queryVar("remoteSshKey")
+        remoteHost = self.queryVar("remoteHost")
+
+        # TODO errorRegex
+        errorRegex=[]
+        command = "ssh -i %s %s@%s mkdir -p %s/%s/dists/%s" % \
+                  (remoteSshKey, remoteUser, remoteHost, remoteRepoPath,
+                   repoName, platform)
+        self.runCommand(command, errorRegex=errorRegex)
+
+        errorRegex=[]
+        command = 'rsync --rsh="ssh -i %s" -azv --delete %s %s@%s:%s/%s/dists/%s' % \
+                  (remoteSshKey,
+                   os.path.join(localRepoDir, repoName, 'dists', platform, '.'),
+                   remoteUser, remoteHost, remoteRepoPath, repoName, platform)
+        self.runCommand(command, errorRegex=errorRegex)
 
 
 
@@ -245,5 +281,3 @@ components = %(section)s
 if __name__ == '__main__':
     debSigner = MaemoDebSigner(configFile='deb_repos/trunk_nightly.json')
     debSigner.createRepos()
-
-#            # TODO upload
