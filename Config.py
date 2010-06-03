@@ -3,8 +3,8 @@
 gone by.
 
 Ideally the config is loaded + mixed with command line options, then locked
-during runtime (hence ParanoidConfig).  The config dump should be loadable
-and re-runnable for a duplicate run.
+during runtime.  The config dump should be loadable and re-runnable for a
+duplicate run.
 """
 
 from copy import deepcopy
@@ -212,10 +212,19 @@ class BaseConfig(object):
 
 # SimpleConfig {{{1
 class SimpleConfig(BaseConfig):
+    """Effectively BaseConfig with logging.
+    """
     def __init__(self, **kwargs):
         BaseConfig.__init__(self, **kwargs)
         self.parseArgs()
         self.newLogObj()
+
+    def parseArgs(self, usage="usage: %prog [options]"):
+        parser = BaseConfig.parseArgs(self, usage=usage)
+        parser.add_option("--multiLog", action="store_true",
+                          dest="multiLog", default=False,
+                          help="Log using MultiFileLogger")
+        return parser
 
     def newLogObj(self):
         logConfig = {"loggerName": 'Simple',
@@ -230,62 +239,10 @@ class SimpleConfig(BaseConfig):
             value = self.queryVar(key)
             if value:
                 logConfig[key] = value
-        self.logObj = SimpleFileLogger(**logConfig)
-
-
-
-# ParanoidConfig {{{1
-class ParanoidConfig(BaseConfig):
-    """I wanted to force accessing the config through functions rather than
-    directly manipulating (and potentially editing!) the config dictionary
-    during runtime.
-
-    Perl doesn't have private variables so I used rand(10000) and appended
-    that to the variable name (e.g. self._config7129), which isn't great
-    but annoying enough to nudge people into using the API rather than
-    directly manipulating the dictionary.
-
-    Turns out python doesn't have private variables either.  We'll see
-    if this is a problem.
-    """
-    def __init__(self, **kwargs):
-        self._config = {}
-        self._configLock = False
-        BaseConfig.__init__(self, **kwargs)
-        del self.config
-
-    def lockConfig(self):
-        self._configLock = True
-
-    def _checkConfigLock(self):
-        if self._configLock:
-            print "FATAL: ParanoidConfig is locked! Exiting..."
-            sys.exit(-1)
-
-    def queryConfig(self, varName=None):
-        if not varName:
-            return self._config
-        try:
-            str(varName) == varName
-        except:
-            """It would be cool to allow for dictionaries here, to specify
-            which subset(s) of config to return
-            """
-            pass
+        if self.queryVar("multiLog"):
+            self.logObj = MultiFileLogger(**logConfig)
         else:
-            if varName in self._config:
-                return self._config[varName]
-
-    def setConfig(self, config, overwrite=False):
-        self._checkConfigLock()
-        if self._config and not overwrite:
-            self._config = self.mapConfig(self._config, config)
-        else:
-            self._config = config
-
-    def setVar(self, varName, value):
-        self._checkConfigLock()
-        self._config[varName] = value
+            self.logObj = SimpleFileLogger(**logConfig)
 
 
 
