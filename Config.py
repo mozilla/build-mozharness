@@ -158,6 +158,9 @@ class BaseConfig(object):
         parser.add_option("--logLevel", action="store", type="string",
                           dest="logLevel",
                           help="set log level (debug|info|warning|error|critical|fatal)")
+        parser.add_option("-q", "--quiet", action="store_false",
+                          dest="logToConsole", default=True,
+                          help="don't log to the console")
         return parser
 
     """There may be a better way of doing this, but I did this previously...
@@ -215,6 +218,7 @@ class SimpleConfig(BaseConfig):
                      "logDir": '.',
                      "logLevel": 'info',
                      "logFormat": '%(asctime)s - %(levelname)s - %(message)s',
+                     "logToConsole": True,
                     }
         for key in logConfig.keys():
             value = self.queryVar(key)
