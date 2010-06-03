@@ -149,14 +149,34 @@ class MaemoDebSigner(SimpleConfig, BasicFunctions):
             self.runCommand(command, errorRegex=errorRegex,
                             cwd='%s/%s' % (workDir, subDir))
 
+    def createInstallFile(self, filePath, replaceDict):
+        contents = """[install]
+repo_deb_3 = deb %(repoUrl)s %(platform)s %(section)s
+catalogues = %(shortCatalogName)s
+package = %(packageName)s
+
+[fennec]
+name =     Mozilla %(longCatalogName)s %(locale)s Catalog
+uri = %(repoUrl)s
+dist = %(platform)s
+components = %(section)s
+""" % replaceDict
+        self.info("Writing install file to %s" % filePath)
+        open(filePath, 'w')
+        print >> filePath, contents
+        
+
     def createRepos(self):
-        repoDir = self.queryVar("repoDir")
-        platformConfig = self.queryVar("platformConfig")
-        platforms = self.queryVar("platforms")
-        section = self.queryVar("section")
+        baseRepoUrl = self.queryVar("baseRepoUrl")
         baseWorkDir = self.queryVar("baseWorkDir")
         hgRepo = self.queryVar("hgRepo")
+        packageName = self.queryVar("packageName")
+        platformConfig = self.queryVar("platformConfig")
+        platforms = self.queryVar("platforms")
+        repoDir = self.queryVar("repoDir")
         sboxPath = self.queryVar("sboxPath")
+        section = self.queryVar("section")
+
         if not platforms:
             platforms = platformConfig.keys()
 
@@ -178,19 +198,27 @@ class MaemoDebSigner(SimpleConfig, BasicFunctions):
             debName = self.queryDebName(debNameUrl=pf['debNameUrl'])
             locales = self.queryLocales(platform, platformConfig=platformConfig)
             for locale in locales:
-                replaceDict = {'locale': locale}
-                repoName = self.queryVar('repoName') % replaceDict
+                replaceDict = {'locale': locale,
+                               'longCatalogName': longCatalogName,
+                               'packageName': packageName,
+                               'platform': platform,
+                               'section': section,
+                               'shortCatalogName': shortCatalogName,
+                              }
                 installFile = pf['installFile'] % replaceDict
-                url = ''
+                repoName = self.queryVar('repoName') % replaceDict
+                repoUrl = '%s/%s' % (baseRepoUrl, repoName)
+                replaceDict['repoUrl'] = repoUrl
+                debUrl = ''
                 if locale == 'multi':
-                    url = pf['multiDirUrl']
+                    debUrl = pf['multiDirUrl']
                 elif locale == 'en-US':
-                    url = pf['enUsDirUrl']
+                    debUrl = pf['enUsDirUrl']
                 else:
-                    url = '%s/%s' % (pf['l10nDirUrl'], locale)
-                url += '/%s' % debName
-                self.debug(url)
-                if not self.downloadFile(url, debName):
+                    debUrl = '%s/%s' % (pf['l10nDirUrl'], locale)
+                debUrl += '/%s' % debName
+                self.debug(debUrl)
+                if not self.downloadFile(debUrl, debName):
                     self.warn("Skipping %s ..." % locale)
                     continue
                 binaryDir = '%s/%s/dists/%s/%s/binary-armel' % \
@@ -201,13 +229,15 @@ class MaemoDebSigner(SimpleConfig, BasicFunctions):
                 self.signRepo(baseWorkDir, repoDir, repoName, platform,
                               section, sboxPath=sboxPath)
 
+                self.createInstallFile(os.path.join(baseWorkDir, repoDir,
+                                                    repoName, installFile),
+                                       replaceDict)
+
 
 
 # __main__ {{{1
 if __name__ == '__main__':
     debSigner = MaemoDebSigner(configFile='deb_repos/trunk_nightly.json')
-    # TODO check out appropriate hg repos
     debSigner.createRepos()
 
-#            # TODO create install file
 #            # TODO upload
