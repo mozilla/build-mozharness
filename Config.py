@@ -97,9 +97,9 @@ class MozOptionParser(OptionParser):
 class BaseConfig(object):
     """Basic config setting/getting.
     Debating whether to be paranoid about this stuff and put it all in
-    self._config and forcing everyone to use methods to access it, as I
-    did elsewhere to lock down the config during runtime, but that's a
-    little heavy handed to go with as the default.
+    self._config+rand(10000) and forcing everyone to use methods to access
+    it, as I did elsewhere to lock down the config during runtime, but
+    that's a little heavy handed to go with as the default.
     """
     def __init__(self, config=None, configFile=None):
         self.config = {}
@@ -197,6 +197,13 @@ class BaseConfig(object):
             pp = pprint.PrettyPrinter(indent=2, width=10)
             return pp.pformat(config)
 
+    def loadConfig(self, configFile):
+        """TODO: Write Me, Test Me
+        Probably self.config = self.parseConfig(configFile)
+        or something, but with more error checking.
+        """
+        pass
+
     def parseArgs(self, usage="usage: %prog [options]"):
         """Parse command line arguments in a generic way.
         Return the parser object after adding the basic options, so
@@ -282,7 +289,7 @@ class SimpleConfig(BaseConfig):
 
     def newLogObj(self):
         logConfig = {"loggerName": 'Simple',
-                     "logName": 'simple.log',
+                     "logName": 'test',
                      "logDir": 'logs',
                      "logLevel": 'info',
                      "logFormat": '%(asctime)s - %(levelname)s - %(message)s',
@@ -302,23 +309,9 @@ class SimpleConfig(BaseConfig):
 
 # __main__ {{{1
 if __name__ == '__main__':
-    obj = SimpleConfig(configFile=os.path.join(sys.path[0], 'configs', 'test',
-                       'test.json'))
+    obj = SimpleConfig(configFile=os.path.join('test', 'test.json'))
     obj.setVar('additionalkey', 'additionalvalue')
     obj.setVar('key2', 'value2override')
     obj.dumpConfig()
     if obj.queryVar('key1') != "value1":
         obj.error("key1 isn't value1!")
-
-    obj = ParanoidConfig(configFile=os.path.join(sys.path[0], 'configs',
-                         'test', 'test.json'))
-    obj.lockConfig()
-    try:
-        obj.info("This should fail: with a FATAL message")
-        obj.setVar('thisShouldFail', 'miserably')
-    except:
-        obj.info("Yay!")
-    else:
-        obj.error("Gah. ParanoidConfig is broken.")
-    if os.path.exists("simple.log"):
-        os.remove("simple.log")
