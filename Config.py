@@ -155,12 +155,17 @@ class BaseConfig(object):
         TODO: add more default options.
         """
         parser = MozOptionParser(usage=usage)
-        parser.add_option("--logLevel", action="store", type="string",
-                          dest="logLevel",
-                          help="set log level (debug|info|warning|error|critical|fatal)")
+        parser.add_option("--logLevel", action="store", type="choice",
+                          dest="logLevel", default="info",
+                          choices=['debug', 'info', 'warning', 'error',
+                                   'critical', 'fatal'],
+                          help="Set log level (debug|info|warning|error|critical|fatal)")
         parser.add_option("-q", "--quiet", action="store_false",
                           dest="logToConsole", default=True,
-                          help="don't log to the console")
+                          help="Don't log to the console")
+        parser.add_option("--appendToLog", action="store_true",
+                          dest="appendToLog", default=False,
+                          help="Append to the log")
         return parser
 
     """There may be a better way of doing this, but I did this previously...
@@ -219,6 +224,7 @@ class SimpleConfig(BaseConfig):
                      "logLevel": 'info',
                      "logFormat": '%(asctime)s - %(levelname)s - %(message)s',
                      "logToConsole": True,
+                     "appendToLog": False,
                     }
         for key in logConfig.keys():
             value = self.queryVar(key)
