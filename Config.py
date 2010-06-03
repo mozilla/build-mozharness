@@ -229,7 +229,7 @@ class SimpleConfig(BaseConfig):
     def newLogObj(self):
         logConfig = {"loggerName": 'Simple',
                      "logName": 'simple.log',
-                     "logDir": '.',
+                     "logDir": 'logs',
                      "logLevel": 'info',
                      "logFormat": '%(asctime)s - %(levelname)s - %(message)s',
                      "logToConsole": True,
