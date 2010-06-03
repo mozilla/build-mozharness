@@ -257,7 +257,7 @@ components = %(section)s
 
                 self.createInstallFile(os.path.join(baseWorkDir, repoDir,
                                                     repoName, installFile),
-                                       replaceDict):
+                                       replaceDict)
                 self.uploadRepo(os.path.join(baseWorkDir, repoDir),
                                 repoName, platform)
 
