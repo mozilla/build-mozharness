@@ -261,7 +261,7 @@ components = %(section)s
                 self.uploadRepo(os.path.join(baseWorkDir, repoDir),
                                 repoName, platform)
 
-    def uploadRepo(self, localRepoDir, repoName):
+    def uploadRepo(self, localRepoDir, repoName, platform):
         remoteRepoPath = self.queryVar("remoteRepoPath")
         remoteUser = self.queryVar("remoteUser")
         remoteSshKey = self.queryVar("remoteSshKey")
