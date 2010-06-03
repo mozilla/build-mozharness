@@ -65,11 +65,14 @@ class MaemoDebSigner(SimpleConfig, BasicFunctions):
                           type="string",
                           help="Specify the config file (required)")
         (options, args) = parser.parse_args()
+
+        if not options.configFile:
+            self.fatal("You must specify --configFile!")
+        else:
+            self.setConfig(self.parseConfigFile(options.configFile))
+
         for option in parser.variables:
              self.setVar(option, getattr(options, option))
-
-        if not self.queryVar("configFile"):
-            self.fatal("You must specify --configFile!")
 
     def queryDebName(self, debNameUrl=None):
         debName = self.queryVar('debname')
