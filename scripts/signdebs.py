@@ -205,7 +205,7 @@ class MaemoDebSigner(SimpleConfig, BasicFunctions):
 
 # __main__ {{{1
 if __name__ == '__main__':
-    debSigner = MaemoDebSigner(configFile='%s/configs/deb_repos/trunk_nightly.json' % sys.path[0])
+    debSigner = MaemoDebSigner(configFile='deb_repos/trunk_nightly.json')
     # TODO check out appropriate hg repos
     debSigner.createRepos()
 

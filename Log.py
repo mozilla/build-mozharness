@@ -9,6 +9,7 @@ TODO:
   - i hope i'm mistaken here
   - would love to do instance-based settings so we can have multiple
     objects that can each have their own logger
+- log rotation
 """
 
 import logging

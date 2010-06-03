@@ -69,10 +69,17 @@ class BaseConfig(object):
         """Read a config file and return a dictionary.
         TODO: read subsequent config files once self.config is already
         set, with options to override or drop conflicting config settings.
-        TODO: have a config file search path, so we're less inflexible
-        about cwd().
         """
-        fh = open(fileName)
+        filePath = None
+        searchPath = ['.', os.path.join(sys.path[0], 'configs')]
+        for path in searchPath:
+            if os.path.exists(os.path.join(path, fileName)):
+                filePath = os.path.join(path, fileName)
+                break
+        else:
+            self.error("Can't find %s in %s!" % (fileName, searchPath))
+            return
+        fh = open(filePath)
         config = {}
         if fileName.endswith('.json'):
             jsonConfig = json.load(fh)
