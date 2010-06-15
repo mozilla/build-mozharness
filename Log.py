@@ -9,9 +9,10 @@ TODO:
   - i hope i'm mistaken here
   - would love to do instance-based settings so we can have multiple
     objects that can each have their own logger
-- log rotation
-- general "echo-don't-execute" flag that gets every destructive method in
-  BasicFunctions to echo only
+- ability to queryConfig/queryVar from here
+  - log rotation config
+  - general "echo-don't-execute" flag that gets every destructive method in
+    BasicFunctions to echo only
 """
 
 from datetime import datetime
@@ -141,7 +142,7 @@ class BasicFunctions(object):
         p = subprocess.Popen(command, shell=shell, stdout=subprocess.PIPE,
                              cwd=cwd, stderr=subprocess.STDOUT)
         stdout, stderr = p.communicate()
-        lines = stdout.rstrip().split('\n') # \r detection?
+        lines = stdout.rstrip().splitlines()
         for line in lines:
             if not line or line.isspace():
                 continue
@@ -310,7 +311,7 @@ class BaseLogger(object):
         """
         if level == "ignore":
             return
-        for line in message.split('\n'):
+        for line in message.splitlines():
             self.logger.log(self.getLoggerLevel(level), line)
         if level == 'fatal' and self.haltOnFailure:
             self.logger.log(FATAL, 'Exiting %d' % exitCode)
