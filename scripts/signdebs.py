@@ -57,15 +57,12 @@ class MaemoDebSigner(SimpleConfig):
         parser.add_option("--platform", action="append", dest="platforms",
                           type="string",
                           help="Specify the platform(s) to repack")
-        parser.add_option("--debname", action="store", dest="debname",
+        parser.add_option("--debName", action="store", dest="debName",
                           type="string",
                           help="Specify the name of the deb")
         parser.add_option("--configFile", action="store", dest="configFile",
                           type="string",
                           help="Specify the config file (required)")
-        parser.add_option("--workDir", action="store", dest="workDir",
-                          type="string", default=".",
-                          help="Specify the workDir")
         (options, args) = parser.parse_args()
 
         if not options.configFile:
@@ -77,7 +74,7 @@ class MaemoDebSigner(SimpleConfig):
              self.setVar(option, getattr(options, option))
 
     def queryDebName(self, debNameUrl=None):
-        debName = self.queryVar('debname')
+        debName = self.queryVar('debName')
         if debName:
             return debName
         if debNameUrl:

@@ -252,6 +252,9 @@ class BaseConfig(object):
         parser.add_option("--appendToLog", action="store_true",
                           dest="appendToLog", default=False,
                           help="Append to the log")
+        parser.add_option("--workDir", action="store", dest="workDir",
+                          type="string", default=".",
+                          help="Specify the workDir relative to cwd")
         return parser
 
     """There may be a better way of doing this, but I did this previously...
