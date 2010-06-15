@@ -364,7 +364,9 @@ class MultiFileLogger(BaseLogger):
                             **kwargs)
 
         self.newLogger(self.loggerName)
-        self.info("MultiFileLogger online.")
+        self.info("MultiFileLogger online %s in %s" % \
+                  (datetime.now().strftime("%Y%m%d %H:%M:%S"),
+                   os.getcwd()))
 
     def newLogger(self, loggerName):
         BaseLogger.newLogger(self, loggerName)
