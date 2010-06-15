@@ -27,36 +27,36 @@ from Config import SimpleConfig
 
 # MaemoDebSigner {{{1
 class MaemoDebSigner(SimpleConfig):
-    def __init__(self, initialConfigFile=None):
+    def __init__(self, requireConfigFile=True):
         """I wanted to inherit BasicFunctions in SimpleFileLogger but
         that ends up not carrying down to this object since SimpleConfig
         doesn't inherit the logger, just has a self.logObj.
         """
-        configOptions = [
+        configOptions = [[
          ["--locale",],
-         {"action"="append",
-          "dest"="locales",
-          "type"="string",
-          "help"="Specify the locale(s) to repack"
+         {"action": "append",
+          "dest": "locales",
+          "type": "string",
+          "help": "Specify the locale(s) to repack"
          }
         ],[
          ["--platform",],
-         {"action"="append",
-          "dest"="platforms",
-          "type"="string",
-          "help"="Specify the platform(s) to repack"
+         {"action": "append",
+          "dest": "platforms",
+          "type": "string",
+          "help": "Specify the platform(s) to repack"
          }
         ],[
          ["--debName",],
-         {"action"="store",
-          "dest"="debName",
-          "type"="string",
-          "help"="Specify the name of the deb"
+         {"action": "store",
+          "dest": "debName",
+          "type": "string",
+          "help": "Specify the name of the deb"
          }
-        ]
+        ]]
         SimpleConfig.__init__(self, configOptions=configOptions,
                               allActions=['clobber', 'sign', 'upload'],
-                              initialConfigFile=initialConfigFile)
+                              requireConfigFile=requireConfigFile)
 
     def queryDebName(self, debNameUrl=None):
         debName = self.queryVar('debName')

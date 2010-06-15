@@ -68,7 +68,7 @@ class MozOptionParser(OptionParser):
         if option.dest and option.dest not in self.variables:
             if not origAction.startswith("temp_"):
                 self.variables.append(option.dest)
-            if origAction.endswith("append_split"):
+            if origAction.endswith("_split"):
                 self.appendVariables.append(option.dest)
 
 
@@ -82,16 +82,19 @@ class BaseConfig(object):
     that's a little heavy handed to go with as the default.
     """
     def __init__(self, config=None, initialConfigFile=None, configOptions=[],
-                 allActions=["clobber", "build"], defaultActions=["build"],
+                 allActions=["clobber", "build"], defaultActions=None,
                  requireConfigFile=False, usage="usage: %prog [options]"):
         self._config = {}
-        self.actionConfig = {}
+        self.actions = []
         self.logObj = None
         self.configLock = False
         self.requireConfigFile = requireConfigFile
 
         self.allActions = allActions
-        self.defaultActions = defaultActions
+        if defaultActions:
+            self.defaultActions = defaultActions
+        else:
+            self.defaultActions = allActions
 
         if config:
             self.setConfig(config)
@@ -130,24 +133,29 @@ class BaseConfig(object):
         # Actions
         self.configParser.add_option(
          "--action", action="temp_append_split",
-         dest="onlyActions",
+         dest="onlyActions", metavar="ACTIONS",
          help="Do action %s" % self.allActions
         )
         self.configParser.add_option(
+         "--addAction", action="temp_append_split",
+         dest="addActions", metavar="ACTIONS",
+         help="Add action %s to the list of actions" % self.allActions
+        )
+        self.configParser.add_option(
          "--noAction", action="temp_append_split",
-         dest="noActions",
+         dest="noActions", metavar="ACTIONS",
          help="Don't perform action"
         )
         for action in self.allActions:
             Action = action.title()
             self.configParser.add_option(
-             "--only%s" % Action, action="temp_append",
-             dest="onlyActions",
+             "--only%s" % Action, action="temp_append_const",
+             dest="onlyActions", const=action,
              help="Add %s to the limited list of actions" % action
             )
             self.configParser.add_option(
-             "--no%s" % Action, action="temp_append",
-             dest="noActions",
+             "--no%s" % Action, action="temp_append_const",
+             dest="noActions", const=action,
              help="Remove %s from the list of actions to perform" % action
             )
 
@@ -229,6 +237,18 @@ class BaseConfig(object):
         self._config[varName] = value
         return self.queryVar(varName)
 
+    def setActions(self, actions):
+        self.actions = actions
+        return self.actions
+
+    def queryAction(self, action):
+        if action in self.actions:
+            return True
+        return False
+
+    def queryActions(self):
+        return self.actions
+
     def dumpConfig(self, config=None, fileName=None):
         """Dump the configuration somewhere, default to STDOUT.
         Be nice to be able to write a .py or .json file according to
@@ -253,28 +273,61 @@ class BaseConfig(object):
             return
         pass
 
+    def verifyActions(self, actionList):
+        actions = actionList.join(',').split(',')
+        for action in actions:
+            if action not in self.allActions:
+                self.fatal("Invalid action %s not in %s!" % (action,
+                                                             self.allActions))
+        return actions
+
     def parseArgs(self):
         """Parse command line arguments in a generic way.
         Return the parser object after adding the basic options, so
         child objects can manipulate it.
 
         TODO: be able to read the options to add from a config.
-        TODO: add more default options.
         """
-        (configOptions, args) = self.configParser.parse_args()
+        (options, args) = self.configParser.parse_args()
 
-        if configOptions.configFile:
-            self.setConfig(self.parseConfigFile(configOptions.configFile))
+        if options.configFile:
+            self.setConfig(self.parseConfigFile(options.configFile))
         elif self.requireConfigFile:
             self.fatal("You must specify --configFile!")
-        # TODO deal with actions specially
         for key in self.configParser.variables:
-            value = getattr(configOptions, key)
+            value = getattr(options, key)
             if value and key in self.configParser.appendVariables:
                 value = value.join(',').split(',')
             self.setVar(key, value)
 
-        return (configOptions, args)
+        """Actions.
+
+        Seems a little complex, but the logic goes:
+
+        If we specify --onlyBLAH once or multiple times, we want to override
+        the defaultActions list with the ones we list.
+
+        Otherwise, if we specify --addAction, we want to add an action to
+        the default list.
+
+        Finally, if we specify --noBLAH, remove that from the list of
+        actions to perform.
+        """
+        actionsToRun = self.defaultActions
+        if options.onlyActions:
+            actions = self.verifyActions(options.onlyActions)
+            actionsToRun = actions
+        elif options.addActions:
+            actions = self.verifyActions(options.addActions)
+            actionsToRun.extend(actions)
+        if options.noActions:
+            actions = self.verifyActions(options.noActions)
+            for action in actions:
+                if action in actionsToRun:
+                    actionsToRun.remove(action)
+        self.setActions(actionsToRun)
+
+        return (options, args)
 
     """There may be a better way of doing this, but I did this previously...
     """
