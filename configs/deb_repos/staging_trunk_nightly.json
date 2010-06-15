@@ -13,7 +13,6 @@
   "repoDir": "repos.staging",
   "baseRepoUrl": "http://staging-mobile-master.build.mozilla.org/debtest",
   "baseWorkDir": "/scratchbox/users/cltbld/home/cltbld",
-  "workDir": "trunk_nightly_deb_staging",
   "platformConfig": {
 
     "chinook": {

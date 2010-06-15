@@ -64,6 +64,9 @@ class MaemoDebSigner(SimpleConfig, BasicFunctions):
         parser.add_option("--configFile", action="store", dest="configFile",
                           type="string",
                           help="Specify the config file (required)")
+        parser.add_option("--workDir", action="store", dest="workDir",
+                          type="string", default=".",
+                          help="Specify the workDir")
         (options, args) = parser.parse_args()
 
         if not options.configFile:
