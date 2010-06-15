@@ -9,55 +9,6 @@ duplicate run.
 TODO:
 
 * dumpConfig and loadConfig need to be seamless. And written.
-
-* logConfig, config, actions, env, exes
-
-Right now I'm putting everything in the config dictionary.
-
-Really, only part of it is configuration that needs to be saved across runs;
-how verbose it is or whether you want to re-run one chunk of the script
-doesn't need to be saved for posterity.
-
-I solved that previously by specifying certain config variables went into
-the actions dictionary, others went into the logConfig, and others to
-the actual [build]config (and exes, env).
-
-I'm now thinking we should have a parser for log config options, a parser
-for [build] config options, and a parser for actions.  This allows us to
-keep the options and variables separate.  We could keep queryConfig() and
-{query,set}Var() for the main config, and add queryActions() and
-queryLogConfig().  The main sticking point I see here is the automated
-usage/help built by each parser.
-
-We could get around this, maybe, by wrapping that, or creating a
-MultipleOptionContainer or something. I dunno.
-
-
-* custom append option action
-
-Right now in MozOptionParser there's an append action, so you can
-
-  ./script.py --locale en-US --locale fr --locale jp
-
-which gets saved into a list.
-
-Elsewhere I had a custom append action which allowed you to specify multiple
-values per argument and it would split over commas so you could
-
-  ./script.py --locale en-US,fr,jp --locale ar,multi
-
-and you'd have those 5 locales in your locale list.
-
-The ACTIONS and STORE_ACTIONS are in tuples in optparse.Option; we could
-add a custom action or override Option.take_action() to behave differently
-when action == "append".  It's not very pretty.
-
-Alternately if we had a flag on the arg for us to later
-
-  self.setVar('locales', self.queryVar('locales').join(',').split(','))
-
-that would work too (assuming we caught the exception when
-self.queryVar('locales') is None).
 """
 
 from copy import deepcopy
@@ -89,16 +40,36 @@ class MozOptionParser(OptionParser):
     frustrated.
 
     Adding a self.variables list seems like a fairly innocuous and easy
-    way to work around this problem.
+    way to work around this problem
+
+    appendVariables is a small hack to allow for things like
+        ./script --locale en-US,multi --locale fr
+    in which case we get
+        locales=["en-US,multi", "fr"]
+    If we then say
+        locales = locales.join(',').split(',')
+    then we get
+        locales=["en-US", "multi", "fr"]
+    which is nice for less commandline typing.
     """
     def __init__(self, **kwargs):
         OptionParser.__init__(self, **kwargs)
         self.variables = []
+        self.appendVariables = []
 
     def add_option(self, *args, **kwargs):
-        option = OptionParser.add_option(self, *args, **kwargs)
+        origAction = kwargs['action']
+        if origAction.endswith("_split"):
+            kwargs['action'] = kwargs['action'].replace("_split", "")
+        if origAction.startswith("temp_"):
+            kwargs['action'] = kwargs['action'].replace("temp_", "")
+        option = OptionParser.add_option(self, *args,
+                                         **kwargs)
         if option.dest and option.dest not in self.variables:
-            self.variables.append(option.dest)
+            if not origAction.startswith("temp_"):
+                self.variables.append(option.dest)
+            if origAction.endswith("append_split"):
+                self.appendVariables.append(option.dest)
 
 
 
@@ -110,14 +81,87 @@ class BaseConfig(object):
     it, as I did elsewhere to lock down the config during runtime, but
     that's a little heavy handed to go with as the default.
     """
-    def __init__(self, config=None, configFile=None):
+    def __init__(self, config=None, initialConfigFile=None, configOptions=[],
+                 allActions=["clobber", "build"], defaultActions=["build"],
+                 requireConfigFile=False, usage="usage: %prog [options]"):
         self._config = {}
+        self.actionConfig = {}
         self.logObj = None
         self.configLock = False
+        self.requireConfigFile = requireConfigFile
+
+        self.allActions = allActions
+        self.defaultActions = defaultActions
+
         if config:
             self.setConfig(config)
-        elif configFile:
-            self.setConfig(self.parseConfigFile(configFile))
+        if initialConfigFile:
+            self.setConfig(self.parseConfigFile(initialConfigFile))
+        self._createConfigParser(configOptions, usage)
+        self.parseArgs()
+
+    def _createConfigParser(self, configOptions, usage):
+        self.configParser = MozOptionParser(usage=usage)
+        self.configParser.add_option(
+         "--logLevel", action="store",
+         type="choice", dest="logLevel", default="info",
+         choices=['debug', 'info', 'warning', 'error', 'critical', 'fatal'],
+         help="Set log level (debug|info|warning|error|critical|fatal)"
+        )
+        self.configParser.add_option(
+         "-q", "--quiet", action="store_false", dest="logToConsole",
+         default=True, help="Don't log to the console"
+        )
+        self.configParser.add_option(
+         "--appendToLog", action="store_true",
+         dest="appendToLog", default=False,
+         help="Append to the log"
+        )
+        self.configParser.add_option(
+         "--workDir", action="store", dest="workDir",
+         type="string", default=".",
+         help="Specify the workDir relative to cwd"
+        )
+        self.configParser.add_option(
+         "--configFile", action="store", dest="configFile",
+         type="string", help="Specify the config file (required)"
+        )
+
+        # Actions
+        self.configParser.add_option(
+         "--action", action="temp_append_split",
+         dest="onlyActions",
+         help="Do action %s" % self.allActions
+        )
+        self.configParser.add_option(
+         "--noAction", action="temp_append_split",
+         dest="noActions",
+         help="Don't perform action"
+        )
+        for action in self.allActions:
+            Action = action.title()
+            self.configParser.add_option(
+             "--only%s" % Action, action="temp_append",
+             dest="onlyActions",
+             help="Add %s to the limited list of actions" % action
+            )
+            self.configParser.add_option(
+             "--no%s" % Action, action="temp_append",
+             dest="noActions",
+             help="Remove %s from the list of actions to perform" % action
+            )
+
+        # Child-specified options
+        # TODO error checking for overlapping options
+        if configOptions:
+            for option in configOptions:
+                self.configParser.add_option(*option[0], **option[1])
+
+        # Initial-config-specified options
+        configOptions = self.queryVar('configOptions')
+        if configOptions:
+            for option in configOptions:
+                self.configParser.add_option(*option[0], **option[1])
 
     def parseConfigFile(self, fileName):
         """Read a config file and return a dictionary.
@@ -154,28 +198,8 @@ class BaseConfig(object):
         self.info("Locking configuration.")
         self.configLock = True
 
-    def mapConfig(self, config1, config2):
-        """Copy key/value pairs of config2 onto config1.
-        There can be a lot of other behaviors here; writing this one first.
-        """
-        config = deepcopy(config1)
-        for key, value in config2.iteritems():
-            config[key] = value
-        return config
-
     def queryConfig(self, varName=None):
-        if not varName:
-            return self._config
-        try:
-            str(varName) == varName
-        except:
-            """It would be cool to allow for dictionaries here, to specify
-            which subset(s) of config to return
-            """
-            pass
-        else:
-            if varName in self._config:
-                return self._config[varName]
+        return self._config
 
     def setConfig(self, config, overwrite=False):
         """It would be good to detect if self._config is already set, and
@@ -185,17 +209,17 @@ class BaseConfig(object):
             self.error("Can't alter locked config!")
             return
         if self._config and not overwrite:
-            self._config = self.mapConfig(self._config, config)
+            for key, value in config.iteritems():
+                self._config[key] = value
         else:
             self._config = config
         return self._config
 
     def queryVar(self, varName, default=None):
-        value = self.queryConfig(varName=varName)
-        if not value:
+        if varName not in self._config or not self._config[varName]:
             return default
         else:
-            return value
+            return self._config[varName]
 
     def setVar(self, varName, value):
         if self.configLock:
@@ -229,33 +253,28 @@ class BaseConfig(object):
             return
         pass
 
-    def parseArgs(self, usage="usage: %prog [options]"):
+    def parseArgs(self):
         """Parse command line arguments in a generic way.
         Return the parser object after adding the basic options, so
         child objects can manipulate it.
 
-        TODO: accept a list of options to add by default, map these onto
-        the config, and just return the leftover args.  This is the ideal
-        behavior.
         TODO: be able to read the options to add from a config.
         TODO: add more default options.
         """
-        parser = MozOptionParser(usage=usage)
-        parser.add_option("--logLevel", action="store", type="choice",
-                          dest="logLevel", default="info",
-                          choices=['debug', 'info', 'warning', 'error',
-                                   'critical', 'fatal'],
-                          help="Set log level (debug|info|warning|error|critical|fatal)")
-        parser.add_option("-q", "--quiet", action="store_false",
-                          dest="logToConsole", default=True,
-                          help="Don't log to the console")
-        parser.add_option("--appendToLog", action="store_true",
-                          dest="appendToLog", default=False,
-                          help="Append to the log")
-        parser.add_option("--workDir", action="store", dest="workDir",
-                          type="string", default=".",
-                          help="Specify the workDir relative to cwd")
-        return parser
+        (configOptions, args) = self.configParser.parse_args()
+
+        if configOptions.configFile:
+            self.setConfig(self.parseConfigFile(configOptions.configFile))
+        elif self.requireConfigFile:
+            self.fatal("You must specify --configFile!")
+        # TODO deal with actions specially
+        for key in self.configParser.variables:
+            value = getattr(configOptions, key)
+            if value and key in self.configParser.appendVariables:
+                value = value.join(',').split(',')
+            self.setVar(key, value)
+
+        return (configOptions, args)
 
     """There may be a better way of doing this, but I did this previously...
     """
@@ -303,24 +322,25 @@ class BaseConfig(object):
 class SimpleConfig(BaseConfig, BasicFunctions):
     """Effectively BaseConfig with logging.
     """
-    def __init__(self, **kwargs):
-        BaseConfig.__init__(self, **kwargs)
+    def __init__(self, configOptions=[], logLevel="info", **kwargs):
+        configOptions.append([
+         ["--multiLog",],
+         {"action": "store_true",
+          "dest": "multiLog",
+          "default": False,
+          "help": "Log using MultiFileLogger"
+         }
+        ])
+        BaseConfig.__init__(self, configOptions=configOptions, **kwargs)
         BasicFunctions.__init__(self)
-        self.parseArgs()
+        self.logLevel = logLevel
         self.newLogObj()
-
-    def parseArgs(self, usage="usage: %prog [options]"):
-        parser = BaseConfig.parseArgs(self, usage=usage)
-        parser.add_option("--multiLog", action="store_true",
-                          dest="multiLog", default=False,
-                          help="Log using MultiFileLogger")
-        return parser
 
     def newLogObj(self):
         logConfig = {"loggerName": 'Simple',
                      "logName": 'test',
                      "logDir": 'logs',
-                     "logLevel": 'info',
+                     "logLevel": self.logLevel,
                      "logFormat": '%(asctime)s - %(levelname)s - %(message)s',
                      "logToConsole": True,
                      "appendToLog": False,
@@ -338,7 +358,8 @@ class SimpleConfig(BaseConfig, BasicFunctions):
 
 # __main__ {{{1
 if __name__ == '__main__':
-    obj = SimpleConfig(configFile=os.path.join('test', 'test.json'))
+    obj = SimpleConfig(initialConfigFile=os.path.join('test', 'test.json'),
+                       logLevel="debug")
     obj.setVar('additionalkey', 'additionalvalue')
     obj.setVar('key2', 'value2override')
     obj.dumpConfig()

@@ -27,51 +27,36 @@ from Config import SimpleConfig
 
 # MaemoDebSigner {{{1
 class MaemoDebSigner(SimpleConfig):
-    def __init__(self, configFile=None):
+    def __init__(self, initialConfigFile=None):
         """I wanted to inherit BasicFunctions in SimpleFileLogger but
         that ends up not carrying down to this object since SimpleConfig
         doesn't inherit the logger, just has a self.logObj.
         """
-        SimpleConfig.__init__(self, configFile=configFile)
-
-    def parseArgs(self):
-        """I want to change this to send the list of options to
-        Config.parseArgs() but don't know a way to intuitively do that.
-        Each add_option seems to take *args and **kwargs, so it would be
-
-            complexOptionList = [
-             [["-f", "--file"], {"dest": "filename", "help": "blah"}],
-             [*args, **kwargs],
-             [*args, **kwargs],
-             ...
-            ]
-            SimpleConfig.parseArgs(self, options=complexOptionList)
-
-        Not very pretty, but having the options logic in every inheriting
-        script isn't that great either.
-        """
-        parser = SimpleConfig.parseArgs(self)
-        parser.add_option("--locale", action="append", dest="locales",
-                          type="string",
-                          help="Specify the locale(s) to repack")
-        parser.add_option("--platform", action="append", dest="platforms",
-                          type="string",
-                          help="Specify the platform(s) to repack")
-        parser.add_option("--debName", action="store", dest="debName",
-                          type="string",
-                          help="Specify the name of the deb")
-        parser.add_option("--configFile", action="store", dest="configFile",
-                          type="string",
-                          help="Specify the config file (required)")
-        (options, args) = parser.parse_args()
-
-        if not options.configFile:
-            self.fatal("You must specify --configFile!")
-        else:
-            self.setConfig(self.parseConfigFile(options.configFile))
-
-        for option in parser.variables:
-             self.setVar(option, getattr(options, option))
+        configOptions = [
+         ["--locale",],
+         {"action"="append",
+          "dest"="locales",
+          "type"="string",
+          "help"="Specify the locale(s) to repack"
+         }
+        ],[
+         ["--platform",],
+         {"action"="append",
+          "dest"="platforms",
+          "type"="string",
+          "help"="Specify the platform(s) to repack"
+         }
+        ],[
+         ["--debName",],
+         {"action"="store",
+          "dest"="debName",
+          "type"="string",
+          "help"="Specify the name of the deb"
+         }
+        ]
+        SimpleConfig.__init__(self, configOptions=configOptions,
+                              allActions=['clobber', 'sign', 'upload'],
+                              initialConfigFile=initialConfigFile)
 
     def queryDebName(self, debNameUrl=None):
         debName = self.queryVar('debName')
