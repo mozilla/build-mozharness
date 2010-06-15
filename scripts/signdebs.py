@@ -90,9 +90,9 @@ class MaemoDebSigner(SimpleConfig, BasicFunctions):
                 self.debug('Deb name is %s' % debName)
                 return debName
             except HTTPError, e:
-                self.fatal("HTTP Error: %s %s" % (e.code, url))
+                self.fatal("HTTP Error: %s %s" % (e.code, debNameUrl))
             except URLError, e:
-                self.fatal("URL Error: %s %s" % (e.code, url))
+                self.fatal("URL Error: %s %s" % (e.code, debNameUrl))
 
     def clobberRepoDir(self):
         baseWorkDir = self.queryVar("baseWorkDir")
