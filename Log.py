@@ -49,7 +49,7 @@ SshErrorRegex=[{'substr': 'Name or service not known', 'level': 'error'},
               ]
 
 HgErrorRegex=[{'regex': '^abort:', 'level': 'error'},
-              {'substt': 'command not found', 'level': 'error'},
+              {'substr': 'command not found', 'level': 'error'},
               {'substr': 'unknown exception encountered', 'level': 'error'},
              ]
 
