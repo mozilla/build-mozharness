@@ -91,14 +91,14 @@ class MaemoDebSigner(SimpleConfig, BasicFunctions):
             except URLError, e:
                 self.fatal("URL Error: %s %s" % (e.code, url))
 
-    def clobberRepoDir(self):
-        repoDir = self.queryVar("repoDir")
+    def clobberWorkDir(self):
+        workDir = self.queryVar("workDir")
         baseWorkDir = self.queryVar("baseWorkDir")
-        if not repoDir or not baseWorkDir:
-            self.fatal("baseWorkDir and repoDir need to be set!")
-        repoPath = '%s/%s' % (baseWorkDir, repoDir)
-        if os.path.exists(repoPath):
-            self.rmtree(repoPath)
+        if not workDir or not baseWorkDir:
+            self.fatal("baseWorkDir and workDir need to be set!")
+        workPath = '%s/%s' % (baseWorkDir, workDir)
+        if os.path.exists(workPath):
+            self.rmtree(workPath)
 
     def queryLocales(self, platform, platformConfig=None):
         locales = self.queryVar("locales")
@@ -126,17 +126,17 @@ class MaemoDebSigner(SimpleConfig, BasicFunctions):
                     locales.extend(additionalLocales)
         return locales
 
-    def signRepo(self, baseWorkDir, repoDir, repoName, platform, section,
-                 sboxPath="/scratchbox/moz_scratchbox"):
-        sboxWorkDir = '%s/%s' % (repoDir, repoName)
-        workDir = '%s/%s' % (baseWorkDir, sboxWorkDir)
+    def signRepo(self, baseWorkDir, workDir, repoDir, repoName, platform,
+                 section, sboxPath="/scratchbox/moz_scratchbox"):
+        sboxWorkDir = '%s/%s/%s' % (workDir, repoDir, repoName)
+        absWorkDir = '%s/%s' % (baseWorkDir, sboxWorkDir)
 
         # TODO errorRegex
         errorRegex = []
         command = "%s -p -d %s apt-ftparchive packages " % (sboxPath, sboxWorkDir)
         command += "dists/%s/%s/binary-armel |" % (platform, section)
         command += "gzip -9c > %s/dists/%s/%s/binary-armel/Packages.gz" % \
-                   (workDir, platform, section)
+                   (absWorkDir, platform, section)
         if self.runCommand(command, errorRegex=errorRegex):
             self.error("Exiting signRepo.")
             return -1
@@ -144,24 +144,24 @@ class MaemoDebSigner(SimpleConfig, BasicFunctions):
         for subDir in ("dists/%s/%s/binary-armel" % (platform, section),
                        "dists/%s/%s" % (platform, section),
                        "dists/%s" % platform):
-            self.rmtree("%s/%s/Release.gpg" % (workDir, subDir))
+            self.rmtree("%s/%s/Release.gpg" % (absWorkDir, subDir))
             # Create Release file outside of the tree, then move in.
             # TODO errorRegex
             errorRegex=[]
             command = "%s -p -d %s/%s " % (sboxPath, sboxWorkDir, subDir)
-            command += "apt-ftparchive release . > %s/Release.tmp" % workDir
+            command += "apt-ftparchive release . > %s/Release.tmp" % absWorkDir
             if self.runCommand(command, errorRegex=errorRegex):
                 self.error("Exiting signRepo.")
                 return -2
-            self.move("%s/Release.tmp" % workDir,
-                      "%s/%s/Release" % (workDir, subDir))
+            self.move("%s/Release.tmp" % absWorkDir,
+                      "%s/%s/Release" % (absWorkDir, subDir))
 
             errorRegex = [{'regex': 'command not found', 'level': 'error'},
                           {'regex': 'secret key not available', 'level': 'error'},
                          ]
             command = "gpg -abs -o Release.gpg Release"
             if self.runCommand(command, errorRegex=errorRegex,
-                               cwd='%s/%s' % (workDir, subDir)):
+                               cwd='%s/%s' % (absWorkDir, subDir)):
                 self.error("Exiting signRepo.")
                 return -3
         return 0
@@ -200,11 +200,12 @@ components = %(section)s
         repoDir = self.queryVar("repoDir")
         sboxPath = self.queryVar("sboxPath")
         section = self.queryVar("section")
+        workDir = self.queryVar("workDir")
 
         if not platforms:
             platforms = platformConfig.keys()
 
-        self.clobberRepoDir()
+        self.clobberWorkDir()
 
         hgErrorRegex=[{'regex': '^abort:', 'level': 'error'},
                      ]
@@ -252,22 +253,23 @@ components = %(section)s
                 if not self.downloadFile(debUrl, debName):
                     self.warn("Skipping %s ..." % locale)
                     continue
-                binaryDir = '%s/%s/dists/%s/%s/binary-armel' % \
-                            (repoDir, repoName, platform, section)
+                binaryDir = '%s/%s/%s/dists/%s/%s/binary-armel' % \
+                            (workDir, repoDir, repoName, platform, section)
                 absBinaryDir = '%s/%s' % (baseWorkDir, binaryDir)
                 self.mkdir_p(absBinaryDir)
                 self.move(debName, absBinaryDir)
 
                 # Not sure I like this syntax
-                if self.signRepo(baseWorkDir, repoDir, repoName, platform,
-                                 section, sboxPath=sboxPath) != 0:
+                if self.signRepo(baseWorkDir, workDir, repoDir, repoName,
+                                 platform, section, sboxPath=sboxPath) != 0:
                     self.error("Skipping %s %s" % (platform, locale))
                     continue
 
-                self.createInstallFile(os.path.join(baseWorkDir, repoDir,
-                                                    repoName, installFile),
+                self.createInstallFile(os.path.join(baseWorkDir, workDir,
+                                                    repoDir, repoName,
+                                                    installFile),
                                        replaceDict)
-                self.uploadRepo(os.path.join(baseWorkDir, repoDir),
+                self.uploadRepo(os.path.join(baseWorkDir, workDir, repoDir),
                                 repoName, platform, installFile)
 
     def uploadRepo(self, localRepoDir, repoName, platform, installFile):
