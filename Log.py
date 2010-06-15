@@ -338,8 +338,8 @@ class SimpleFileLogger(BaseLogger):
         BaseLogger.__init__(self, loggerName=loggerName, logFormat=logFormat,
                             logDir=logDir, **kwargs)
         self.newLogger(self.loggerName)
-        self.info("SimpleFileLogger online %s in %s" % \
-                  (datetime.now().strftime("%Y%m%d %H:%M:%S"),
+        self.info("SimpleFileLogger online at %s in %s" % \
+                  (datetime.now().strftime("%Y %B %d %H:%M:%S"),
                    os.getcwd()))
 
     def newLogger(self, loggerName):
@@ -364,8 +364,8 @@ class MultiFileLogger(BaseLogger):
                             **kwargs)
 
         self.newLogger(self.loggerName)
-        self.info("MultiFileLogger online %s in %s" % \
-                  (datetime.now().strftime("%Y%m%d %H:%M:%S"),
+        self.info("MultiFileLogger online at %s in %s" % \
+                  (datetime.now().strftime("%Y %B %d %H:%M:%S"),
                    os.getcwd()))
 
     def newLogger(self, loggerName):
