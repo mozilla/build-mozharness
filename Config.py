@@ -111,8 +111,9 @@ class BaseConfig(object):
     that's a little heavy handed to go with as the default.
     """
     def __init__(self, config=None, configFile=None):
-        self.config = {}
+        self._config = {}
         self.logObj = None
+        self.configLock = False
         if config:
             self.setConfig(config)
         elif configFile:
@@ -120,7 +121,7 @@ class BaseConfig(object):
 
     def parseConfigFile(self, fileName):
         """Read a config file and return a dictionary.
-        TODO: read subsequent config files once self.config is already
+        TODO: read subsequent config files once self._config is already
         set, with options to override or drop conflicting config settings.
         """
         filePath = None
@@ -149,6 +150,10 @@ class BaseConfig(object):
         """
         return config
 
+    def lockConfig(self):
+        self.info("Locking configuration.")
+        self.configLock = True
+
     def mapConfig(self, config1, config2):
         """Copy key/value pairs of config2 onto config1.
         There can be a lot of other behaviors here; writing this one first.
@@ -160,7 +165,7 @@ class BaseConfig(object):
 
     def queryConfig(self, varName=None):
         if not varName:
-            return self.config
+            return self._config
         try:
             str(varName) == varName
         except:
@@ -169,17 +174,21 @@ class BaseConfig(object):
             """
             pass
         else:
-            if varName in self.config:
-                return self.config[varName]
+            if varName in self._config:
+                return self._config[varName]
 
     def setConfig(self, config, overwrite=False):
-        """It would be good to detect if self.config is already set, and
+        """It would be good to detect if self._config is already set, and
         if so, have settings as to how to determine what overrides what.
         """
-        if self.config and not overwrite:
-            self.config = self.mapConfig(self.config, config)
+        if self.configLock:
+            self.error("Can't alter locked config!")
+            return
+        if self._config and not overwrite:
+            self._config = self.mapConfig(self._config, config)
         else:
-            self.config = config
+            self._config = config
+        return self._config
 
     def queryVar(self, varName, default=None):
         value = self.queryConfig(varName=varName)
@@ -189,8 +198,12 @@ class BaseConfig(object):
             return value
 
     def setVar(self, varName, value):
+        if self.configLock:
+            self.error("Can't alter locked config!")
+            return
         self.debug("Setting %s to %s" % (varName, value))
-        self.config[varName] = value
+        self._config[varName] = value
+        return self.queryVar(varName)
 
     def dumpConfig(self, config=None, fileName=None):
         """Dump the configuration somewhere, default to STDOUT.
@@ -208,9 +221,12 @@ class BaseConfig(object):
 
     def loadConfig(self, configFile):
         """TODO: Write Me, Test Me
-        Probably self.config = self.parseConfig(configFile)
+        Probably self._config = self.parseConfig(configFile)
         or something, but with more error checking.
         """
+        if self.configLock:
+            self.error("Can't alter locked config!")
+            return
         pass
 
     def parseArgs(self, usage="usage: %prog [options]"):
@@ -323,8 +339,11 @@ if __name__ == '__main__':
     obj.setVar('additionalkey', 'additionalvalue')
     obj.setVar('key2', 'value2override')
     obj.dumpConfig()
+    obj.lockConfig()
     if obj.queryVar('key1') != "value1":
-        obj.error("key1 isn't value1!")
-    else:
-        obj.info("Things look good.")
+        obj.fatal("key1 isn't value1!")
+    obj.info("You should see an error here about a locked config:")
+    if obj.setVar("foo", "bar"):
+        obj.fatal("Something's broken in lockConfig()!")
+    obj.info("Things look good.")
     obj.rmtree("test_logs")
