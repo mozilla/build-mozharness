@@ -280,6 +280,9 @@ components = %(section)s
         errorRegex=[{'regex': 'Name or service not known', 'level': 'error'},
                     {'regex': 'POSSIBLE BREAK-IN ATTEMPT', 'level': 'warning'},
                     {'regex': 'WARNING:', 'level': 'warning'},
+                    {'regex': 'rsync error:', 'level': 'error'},
+                    {'regex': 'Broken pipe:', 'level': 'error'},
+                    {'regex': 'connection unexpectedly closed:', 'level': 'error'},
                    ]
         command = "ssh -i %s %s@%s mkdir -p %s/%s/dists/%s" % \
                   (remoteSshKey, remoteUser, remoteHost, remoteRepoPath,
