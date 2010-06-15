@@ -10,7 +10,7 @@ TODO:
 
 * dumpConfig and loadConfig need to be seamless. And written.
 
-* logConfig, config, actions
+* logConfig, config, actions, env, exes
 
 Right now I'm putting everything in the config dictionary.
 
@@ -20,7 +20,7 @@ doesn't need to be saved for posterity.
 
 I solved that previously by specifying certain config variables went into
 the actions dictionary, others went into the logConfig, and others to
-the actual [build]config.
+the actual [build]config (and exes, env).
 
 I'm now thinking we should have a parser for log config options, a parser
 for [build] config options, and a parser for actions.  This allows us to

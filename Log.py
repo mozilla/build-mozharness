@@ -10,7 +10,6 @@ TODO:
   - would love to do instance-based settings so we can have multiple
     objects that can each have their own logger
 - log rotation
-- per-runCommand-haltOnFailure in BasicFunctions
 - general "echo-don't-execute" flag that gets every destructive method in
   BasicFunctions to echo only
 """
@@ -33,25 +32,25 @@ logging.addLevelName(FATAL, 'FATAL')
 # ErrorRegexes {{{1
 
 # For ssh, scp, rsync over ssh
-SshErrorRegex=[{'regex': 'Name or service not known', 'level': 'error'},
-               {'regex': 'Could not resolve hostname', 'level': 'error'},
-               {'regex': 'POSSIBLE BREAK-IN ATTEMPT', 'level': 'warning'},
-               {'regex': 'Network error:', 'level': 'error'},
-               {'regex': 'Access denied', 'level': 'error'},
-               {'regex': 'Authentication refused', 'level': 'error'},
-               {'regex': 'Out of memory', 'level': 'error'},
-               {'regex': 'Connection reset by peer', 'level': 'warning'},
-               {'regex': 'Host key verification failed', 'level': 'error'},
-               {'regex': 'command not found', 'level': 'error'},
-               {'regex': 'WARNING:', 'level': 'warning'},
-               {'regex': 'rsync error:', 'level': 'error'},
-               {'regex': 'Broken pipe:', 'level': 'error'},
-               {'regex': 'connection unexpectedly closed:', 'level': 'error'},
+SshErrorRegex=[{'substr': 'Name or service not known', 'level': 'error'},
+               {'substr': 'Could not resolve hostname', 'level': 'error'},
+               {'substr': 'POSSIBLE BREAK-IN ATTEMPT', 'level': 'warning'},
+               {'substr': 'Network error:', 'level': 'error'},
+               {'substr': 'Access denied', 'level': 'error'},
+               {'substr': 'Authentication refused', 'level': 'error'},
+               {'substr': 'Out of memory', 'level': 'error'},
+               {'substr': 'Connection reset by peer', 'level': 'warning'},
+               {'substr': 'Host key verification failed', 'level': 'error'},
+               {'substr': 'command not found', 'level': 'error'},
+               {'substr': 'WARNING:', 'level': 'warning'},
+               {'substr': 'rsync error:', 'level': 'error'},
+               {'substr': 'Broken pipe:', 'level': 'error'},
+               {'substr': 'connection unexpectedly closed:', 'level': 'error'},
               ]
 
 HgErrorRegex=[{'regex': '^abort:', 'level': 'error'},
-              {'regex': 'command not found', 'level': 'error'},
-              {'regex': 'unknown exception encountered', 'level': 'error'},
+              {'substt': 'command not found', 'level': 'error'},
+              {'substr': 'unknown exception encountered', 'level': 'error'},
              ]
 
 
@@ -117,23 +116,20 @@ class BasicFunctions(object):
         shutil.move(src, dest)
 
     def runCommand(self, command, cwd=None, errorRegex=[], parseAtEnd=False,
-                   shell=True):
+                   shell=True, haltOnFailure=False, successCodes=[0]):
         """Run a command, with logging and error parsing.
 
         TODO: parseAtEnd, contextLines
         TODO: retryInterval?
         TODO: errorLevelOverride?
-        TODO: successCodes=[0] ?
-        TODO: make it an either/or for 'regex' or 'match' for less time
-              spent in re.search() (regex for real regexes, match for
-              if match in line: ) ?
 
         errorRegex example:
         [{'regex': '^Error: LOL J/K', level='ignore'},
          {'regex': '^Error:', level='error', contextLines='5:5'},
-         {'regex': 'THE WORLD IS ENDING', level='fatal', contextLines='20:'}
+         {'substr': 'THE WORLD IS ENDING', level='fatal', contextLines='20:'}
         ]
         """
+        numErrors = 0
         if cwd:
             if not os.path.isdir(cwd):
                 self.error("Can't run command %s in non-existent directory %s!" % \
@@ -150,16 +146,28 @@ class BasicFunctions(object):
             if not line or line.isspace():
                 continue
             for errorCheck in errorRegex:
-                if re.search(errorCheck['regex'], line):
-                    self.log(' %s' % line,
-                             level=errorCheck.get('level', 'info'))
+                match = False
+                if 'substr' in errorRegex:
+                    if errorCheck['substr'] in line:
+                        match = True
+                elif re.search(errorCheck['regex'], line):
+                    match = True
+                if match:
+                    level=errorCheck.get('level', 'info')
+                    self.log(' %s' % line, level=level)
+                    if level in ('error', 'critical', 'fatal'):
+                        numErrors = numErrors + 1
                     break
             else:
                 self.info(' %s' % line)
         returnLevel = 'info'
-        if p.returncode != 0:
+        if p.returncode not in successCodes:
             returnLevel = 'error'
         self.log("Return code: %d" % p.returncode, level=returnLevel)
+        if haltOnFailure:
+            if numErrors or p.returncode not in successCodes:
+                self.fatal("Halting on failure while running %s" % command,
+                           exitCode=p.returncode)
         return p.returncode                             
 
 
