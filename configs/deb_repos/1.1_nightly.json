@@ -1,0 +1,39 @@
+{
+  "logName": "signdebs",
+  "localesFile": "mobile/locales/all-locales",
+  "hgMobileRepo": "http://hg.mozilla.org/releases/mobile-1.1",
+  "packageName": "fennec"
+  "repoName": "1.9.2_%(locale)s",
+  "remoteRepoPath": "/home/ftp/pub/mozilla.org/mobile/repos",
+  "remoteUser": "ffxbld",
+  "remoteSshKey": "/home/cltbld/.ssh/ffxbld_dsa",
+  "remoteHost": "stage.mozilla.org",
+  "section": "extras",
+  "sboxPath": "/scratchbox/moz_scratchbox",
+  "repoDir": "repos",
+  "baseRepoUrl": "http://ftp.mozilla.org/pub/mozilla.org/mobile/repos",
+  "baseWorkDir": "/scratchbox/users/cltbld/home/cltbld",
+  "platformConfig": {
+
+    "chinook": {
+      "longCatalogName": "1.9.2 chinook",
+      "shortCatalogName": "fennec",
+      "installFile": "1.9.2_%(locale)s_nightly_chinook.install",
+      "debNameUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mobile-1.9.2/deb_name.txt",
+      "multiDirUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mobile-1.9.2",
+      "enUsDirUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mobile-1.9.2/en-US",
+      "l10nDirUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mobile-1.9.2-l10n"
+    },
+
+    "fremantle": {
+      "longCatalogName": "1.9.2 fremantle",
+      "shortCatalogName": "fennec",
+      "installFile": "1.9.2_%(locale)s_nightly.install",
+      "debNameUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mobile-1.9.2-maemo5-gtk/deb_name.txt",
+      "multiDirUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mobile-1.9.2-maemo5-gtk",
+      "enUsDirUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mobile-1.9.2-maemo5-gtk/en-US",
+      "l10nDirUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mobile-1.9.2-maemo5-gtk-l10n"
+    }
+
+  }
+}
