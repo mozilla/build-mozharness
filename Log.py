@@ -150,8 +150,12 @@ class BasicFunctions(object):
                 if 'substr' in errorRegex:
                     if errorCheck['substr'] in line:
                         match = True
-                elif re.search(errorCheck['regex'], line):
-                    match = True
+                elif 'regex' in errorRegex:
+                    if re.search(errorCheck['regex'], line):
+                        match = True
+                else:
+                    self.warn("'substr' and 'regex' not in errorCheck %s" % \
+                              errorCheck)
                 if match:
                     level=errorCheck.get('level', 'info')
                     self.log(' %s' % line, level=level)
