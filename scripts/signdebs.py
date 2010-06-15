@@ -17,7 +17,7 @@ sys.path[0] = os.path.dirname(sys.path[0])
 
 import Log
 reload(Log)
-from Log import SimpleFileLogger, BasicFunctions
+from Log import SimpleFileLogger, BasicFunctions, SshErrorRegex, HgErrorRegex
 
 import Config
 reload(Config)
@@ -130,8 +130,12 @@ class MaemoDebSigner(SimpleConfig, BasicFunctions):
                     locales.extend(additionalLocales)
         return locales
 
-    def signRepo(self, baseWorkDir, workDir, repoDir, repoName, platform,
-                 section, sboxPath="/scratchbox/moz_scratchbox"):
+    def signRepo(self, repoName, platform):
+        baseWorkDir = self.queryVar("baseWorkDir")
+        repoDir = self.queryVar("repoDir")
+        sboxPath = self.queryVar("sboxPath")
+        section = self.queryVar("section")
+        workDir = self.queryVar("workDir")
         sboxWorkDir = '%s/%s/%s' % (workDir, repoDir, repoName)
         absWorkDir = '%s/%s' % (baseWorkDir, sboxWorkDir)
 
@@ -170,7 +174,18 @@ class MaemoDebSigner(SimpleConfig, BasicFunctions):
                 return -3
         return 0
 
-    def createInstallFile(self, filePath, replaceDict):
+    def createInstallFile(self, filePath, locale, platform):
+        packageName = self.queryVar("packageName")
+        platformConfig = self.queryVar("platformConfig")
+        section = self.queryVar("section")
+        pf = platformConfig[platform]
+        replaceDict = {'locale': locale,
+                       'longCatalogName': pf['longCatalogName'],
+                       'packageName': packageName,
+                       'platform': platform,
+                       'section': section,
+                       'shortCatalogName': pf['shortCatalogName'],
+                      }
         contents = """[install]
 repo_deb_3 = deb %(repoUrl)s %(platform)s %(section)s
 catalogues = %(shortCatalogName)s
@@ -198,33 +213,27 @@ components = %(section)s
         baseWorkDir = self.queryVar("baseWorkDir")
         hgMobileRepo = self.queryVar("hgMobileRepo")
         hgConfigRepo = self.queryVar("hgConfigRepo")
-        packageName = self.queryVar("packageName")
         platformConfig = self.queryVar("platformConfig")
-        platforms = self.queryVar("platforms")
+        platforms = self.queryVar("platforms", default=platformConfig.keys())
         repoDir = self.queryVar("repoDir")
         sboxPath = self.queryVar("sboxPath")
         section = self.queryVar("section")
         workDir = self.queryVar("workDir")
 
-        if not platforms:
-            platforms = platformConfig.keys()
-
         self.clobberRepoDir()
 
-        hgErrorRegex=[{'regex': '^abort:', 'level': 'error'},
-                     ]
         if hgMobileRepo is not None:
             if not os.path.exists('mobile'):
                 self.runCommand("hg clone %s mobile" % hgMobileRepo,
-                                errorRegex=hgErrorRegex)
-            self.runCommand("hg --cwd mobile pull", errorRegex=hgErrorRegex)
-            self.runCommand("hg --cwd mobile update -C", errorRegex=hgErrorRegex)
+                                errorRegex=HgErrorRegex)
+            self.runCommand("hg --cwd mobile pull", errorRegex=HgErrorRegex)
+            self.runCommand("hg --cwd mobile update -C", errorRegex=HgErrorRegex)
         if hgConfigRepo is not None:
             if not os.path.exists('configs'):
                 self.runCommand("hg clone %s configs" % hgConfigRepo,
-                                errorRegex=hgErrorRegex)
-            self.runCommand("hg --cwd configs pull", errorRegex=hgErrorRegex)
-            self.runCommand("hg --cwd configs update -C", errorRegex=hgErrorRegex)
+                                errorRegex=HgErrorRegex)
+            self.runCommand("hg --cwd configs pull", errorRegex=HgErrorRegex)
+            self.runCommand("hg --cwd configs update -C", errorRegex=HgErrorRegex)
 
         for platform in platforms:
             """This assumes the same deb name for each locale in a platform.
@@ -234,17 +243,9 @@ components = %(section)s
             debName = self.queryDebName(debNameUrl=pf['debNameUrl'])
             locales = self.queryLocales(platform, platformConfig=platformConfig)
             for locale in locales:
-                replaceDict = {'locale': locale,
-                               'longCatalogName': pf['longCatalogName'],
-                               'packageName': packageName,
-                               'platform': platform,
-                               'section': section,
-                               'shortCatalogName': pf['shortCatalogName'],
-                              }
+                replaceDict = {'locale': locale}
                 installFile = pf['installFile'] % replaceDict
                 repoName = self.queryVar('repoName') % replaceDict
-                repoUrl = '%s/%s' % (baseRepoUrl, repoName)
-                replaceDict['repoUrl'] = repoUrl
                 debUrl = ''
                 if locale == 'multi':
                     debUrl = pf['multiDirUrl']
@@ -264,15 +265,14 @@ components = %(section)s
                 self.move(debName, absBinaryDir)
 
                 # Not sure I like this syntax
-                if self.signRepo(baseWorkDir, workDir, repoDir, repoName,
-                                 platform, section, sboxPath=sboxPath) != 0:
+                if self.signRepo(repoName, platform) != 0:
                     self.error("Skipping %s %s" % (platform, locale))
                     continue
 
                 self.createInstallFile(os.path.join(baseWorkDir, workDir,
                                                     repoDir, repoName,
                                                     installFile),
-                                       replaceDict)
+                                       locale, platform)
                 self.uploadRepo(os.path.join(baseWorkDir, workDir, repoDir),
                                 repoName, platform, installFile)
 
@@ -282,38 +282,22 @@ components = %(section)s
         remoteSshKey = self.queryVar("remoteSshKey")
         remoteHost = self.queryVar("remoteHost")
 
-        # TODO errorRegex
-        errorRegex=[{'regex': 'Name or service not known', 'level': 'error'},
-                    {'regex': 'Could not resolve hostname', 'level': 'error'},
-                    {'regex': 'POSSIBLE BREAK-IN ATTEMPT', 'level': 'warning'},
-                    {'regex': 'Network error:', 'level': 'error'},
-                    {'regex': 'Access denied', 'level': 'error'},
-                    {'regex': 'Authentication refused', 'level': 'error'},
-                    {'regex': 'Out of memory', 'level': 'error'},
-                    {'regex': 'Connection reset by peer', 'level': 'warning'},
-                    {'regex': 'Host key verification failed', 'level': 'error'},
-                    {'regex': 'command not found', 'level': 'error'},
-                    {'regex': 'WARNING:', 'level': 'warning'},
-                    {'regex': 'rsync error:', 'level': 'error'},
-                    {'regex': 'Broken pipe:', 'level': 'error'},
-                    {'regex': 'connection unexpectedly closed:', 'level': 'error'},
-                   ]
         command = "ssh -i %s %s@%s mkdir -p %s/%s/dists/%s" % \
                   (remoteSshKey, remoteUser, remoteHost, remoteRepoPath,
                    repoName, platform)
-        self.runCommand(command, errorRegex=errorRegex)
+        self.runCommand(command, errorRegex=SshErrorRegex)
 
         command = 'rsync --rsh="ssh -i %s" -azv --delete %s %s@%s:%s/%s/dists/%s' % \
                   (remoteSshKey,
                    os.path.join(localRepoDir, repoName, 'dists', platform, '.'),
                    remoteUser, remoteHost, remoteRepoPath, repoName, platform)
-        self.runCommand(command, errorRegex=errorRegex)
+        self.runCommand(command, errorRegex=SshErrorRegex)
 
         command = 'scp -i %s %s %s@%s:%s/%s/' % \
                   (remoteSshKey,
                    os.path.join(localRepoDir, repoName, installFile),
                    remoteUser, remoteHost, remoteRepoPath, repoName)
-        self.runCommand(command, errorRegex=errorRegex)
+        self.runCommand(command, errorRegex=SshErrorRegex)
 
 
 
