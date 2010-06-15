@@ -91,14 +91,15 @@ class MaemoDebSigner(SimpleConfig, BasicFunctions):
             except URLError, e:
                 self.fatal("URL Error: %s %s" % (e.code, url))
 
-    def clobberWorkDir(self):
-        workDir = self.queryVar("workDir")
+    def clobberRepoDir(self):
         baseWorkDir = self.queryVar("baseWorkDir")
-        if not workDir or not baseWorkDir:
-            self.fatal("baseWorkDir and workDir need to be set!")
-        workPath = '%s/%s' % (baseWorkDir, workDir)
-        if os.path.exists(workPath):
-            self.rmtree(workPath)
+        workDir = self.queryVar("workDir")
+        repoDir = self.queryVar("repoDir")
+        if not workDir or not baseWorkDir or not repoDir:
+            self.fatal("baseWorkDir, workDir, repoDir need to be set!")
+        repoPath = os.path.join(baseWorkDir, workDir, repoDir)
+        if os.path.exists(repoPath):
+            self.rmtree(repoPath)
 
     def queryLocales(self, platform, platformConfig=None):
         locales = self.queryVar("locales")
@@ -205,7 +206,7 @@ components = %(section)s
         if not platforms:
             platforms = platformConfig.keys()
 
-        self.clobberWorkDir()
+        self.clobberRepoDir()
 
         hgErrorRegex=[{'regex': '^abort:', 'level': 'error'},
                      ]
