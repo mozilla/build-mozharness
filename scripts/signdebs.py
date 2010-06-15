@@ -175,6 +175,7 @@ class MaemoDebSigner(SimpleConfig, BasicFunctions):
         return 0
 
     def createInstallFile(self, filePath, locale, platform):
+        baseRepoUrl = self.queryVar("baseRepoUrl")
         packageName = self.queryVar("packageName")
         platformConfig = self.queryVar("platformConfig")
         section = self.queryVar("section")
@@ -186,6 +187,8 @@ class MaemoDebSigner(SimpleConfig, BasicFunctions):
                        'section': section,
                        'shortCatalogName': pf['shortCatalogName'],
                       }
+        repoName = self.queryVar('repoName') % replaceDict
+        replaceDict['repoUrl'] = '%s/%s' % (baseRepoUrl, repoName)
         contents = """[install]
 repo_deb_3 = deb %(repoUrl)s %(platform)s %(section)s
 catalogues = %(shortCatalogName)s
@@ -209,7 +212,6 @@ components = %(section)s
         out if I weren't trying to optimize for the fewest queryVar()s
         for some strange reason.
         """
-        baseRepoUrl = self.queryVar("baseRepoUrl")
         baseWorkDir = self.queryVar("baseWorkDir")
         hgMobileRepo = self.queryVar("hgMobileRepo")
         hgConfigRepo = self.queryVar("hgConfigRepo")
