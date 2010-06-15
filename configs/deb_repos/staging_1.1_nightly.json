@@ -2,7 +2,7 @@
   "logName": "signdebs",
   "localesFile": "mobile/locales/all-locales",
   "hgMobileRepo": "http://hg.mozilla.org/releases/mobile-1.1",
-  "packageName": "fennec"
+  "packageName": "fennec",
   "repoName": "1.9.2_%(locale)s",
   "remoteRepoPath": "/var/www/html/debtest",
   "remoteUser": "cltbld",
