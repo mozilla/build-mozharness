@@ -185,7 +185,7 @@ class BaseLogger(object):
               'warning': logging.WARNING,
               'error': logging.ERROR,
               'critical': logging.CRITICAL,
-              'fatal': logging.FATAL
+              'fatal': FATAL
              }
 
     def __init__(self, logLevel='info',
