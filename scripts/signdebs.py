@@ -278,7 +278,15 @@ components = %(section)s
 
         # TODO errorRegex
         errorRegex=[{'regex': 'Name or service not known', 'level': 'error'},
+                    {'regex': 'Could not resolve hostname', 'level': 'error'},
                     {'regex': 'POSSIBLE BREAK-IN ATTEMPT', 'level': 'warning'},
+                    {'regex': 'Network error:', 'level': 'error'},
+                    {'regex': 'Access denied', 'level': 'error'},
+                    {'regex': 'Authentication refused', 'level': 'error'},
+                    {'regex': 'Out of memory', 'level': 'error'},
+                    {'regex': 'Connection reset by peer', 'level': 'warning'},
+                    {'regex': 'Host key verification failed', 'level': 'error'},
+                    {'regex': 'command not found', 'level': 'error'},
                     {'regex': 'WARNING:', 'level': 'warning'},
                     {'regex': 'rsync error:', 'level': 'error'},
                     {'regex': 'Broken pipe:', 'level': 'error'},
