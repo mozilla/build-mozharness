@@ -279,6 +279,7 @@ components = %(section)s
         # TODO errorRegex
         errorRegex=[{'regex': 'Name or service not known', 'level': 'error'},
                     {'regex': 'POSSIBLE BREAK-IN ATTEMPT', 'level': 'warning'},
+                    {'regex': 'WARNING:', 'level': 'warning'},
                    ]
         command = "ssh -i %s %s@%s mkdir -p %s/%s/dists/%s" % \
                   (remoteSshKey, remoteUser, remoteHost, remoteRepoPath,
