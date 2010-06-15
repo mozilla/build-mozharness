@@ -147,12 +147,11 @@ class BasicFunctions(object):
                 continue
             for errorCheck in errorRegex:
                 match = False
-                if 'substr' in errorRegex:
+                if 'substr' in errorCheck:
                     if errorCheck['substr'] in line:
                         match = True
-                elif 'regex' in errorRegex:
-                    if re.search(errorCheck['regex'], line):
-                        match = True
+                elif re.search(errorCheck['regex'], line):
+                    match = True
                 else:
                     self.warn("'substr' and 'regex' not in errorCheck %s" % \
                               errorCheck)
