@@ -30,6 +30,8 @@ logging.addLevelName(FATAL, 'FATAL')
 
 
 # ErrorRegexes {{{1
+
+# For ssh, scp, rsync over ssh
 SshErrorRegex=[{'regex': 'Name or service not known', 'level': 'error'},
                {'regex': 'Could not resolve hostname', 'level': 'error'},
                {'regex': 'POSSIBLE BREAK-IN ATTEMPT', 'level': 'warning'},
@@ -47,6 +49,8 @@ SshErrorRegex=[{'regex': 'Name or service not known', 'level': 'error'},
               ]
 
 HgErrorRegex=[{'regex': '^abort:', 'level': 'error'},
+              {'regex': 'command not found', 'level': 'error'},
+              {'regex': 'unknown exception encountered', 'level': 'error'},
              ]
 
 
