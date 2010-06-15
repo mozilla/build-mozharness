@@ -26,14 +26,13 @@ from Config import SimpleConfig
 
 
 # MaemoDebSigner {{{1
-class MaemoDebSigner(SimpleConfig, BasicFunctions):
+class MaemoDebSigner(SimpleConfig):
     def __init__(self, configFile=None):
         """I wanted to inherit BasicFunctions in SimpleFileLogger but
         that ends up not carrying down to this object since SimpleConfig
         doesn't inherit the logger, just has a self.logObj.
         """
         SimpleConfig.__init__(self, configFile=configFile)
-        BasicFunctions.__init__(self)
 
     def parseArgs(self):
         """I want to change this to send the list of options to

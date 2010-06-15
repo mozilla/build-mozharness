@@ -15,6 +15,7 @@ TODO:
   BasicFunctions to echo only
 """
 
+from datetime import datetime
 import logging
 import os
 import re
@@ -337,7 +338,9 @@ class SimpleFileLogger(BaseLogger):
         BaseLogger.__init__(self, loggerName=loggerName, logFormat=logFormat,
                             logDir=logDir, **kwargs)
         self.newLogger(self.loggerName)
-        self.info("SimpleFileLogger online.")
+        self.info("SimpleFileLogger online %s in %s" % \
+                  (datetime.now().strftime("%Y%m%d %H:%M:%S"),
+                   os.getcwd()))
 
     def newLogger(self, loggerName):
         BaseLogger.newLogger(self, loggerName)

@@ -69,7 +69,7 @@ try:
     import json
 except:
     import simplejson as json
-from Log import SimpleFileLogger, MultiFileLogger
+from Log import SimpleFileLogger, MultiFileLogger, BasicFunctions
 
 
 
@@ -281,11 +281,12 @@ class BaseConfig(object):
 
 
 # SimpleConfig {{{1
-class SimpleConfig(BaseConfig):
+class SimpleConfig(BaseConfig, BasicFunctions):
     """Effectively BaseConfig with logging.
     """
     def __init__(self, **kwargs):
         BaseConfig.__init__(self, **kwargs)
+        BasicFunctions.__init__(self)
         self.parseArgs()
         self.newLogObj()
 
@@ -324,3 +325,6 @@ if __name__ == '__main__':
     obj.dumpConfig()
     if obj.queryVar('key1') != "value1":
         obj.error("key1 isn't value1!")
+    else:
+        obj.info("Things look good.")
+    obj.rmtree("test_logs")
