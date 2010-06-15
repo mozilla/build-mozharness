@@ -13,6 +13,7 @@
   "repoDir": "repos",
   "baseRepoUrl": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/1.1rc1-candidates/repos",
   "baseWorkDir": "/scratchbox/users/cltbld/home/cltbld",
+  "workDir": "1.1_release_deb_repos",
   "platformConfig": {
 
     "chinook": {
