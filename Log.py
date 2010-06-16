@@ -240,6 +240,12 @@ class BaseLogger(object):
             os.makedirs(self.logDir)
         self.absLogDir = os.path.abspath(self.logDir)
 
+    def initMessage(self, name=None):
+        if not name:
+            name = self.__class__.__name__
+        self.info("%s online at %s in %s" % \
+                  (name, datetime.now().strftime("%Y%m%d %H:%M:%S"),
+                   os.getcwd()))
 
     def getLoggerLevel(self, level=None):
         if not level:
@@ -351,9 +357,7 @@ class SimpleFileLogger(BaseLogger):
         BaseLogger.__init__(self, loggerName=loggerName, logFormat=logFormat,
                             logDir=logDir, **kwargs)
         self.newLogger(self.loggerName)
-        self.info("SimpleFileLogger online at %s in %s" % \
-                  (datetime.now().strftime("%Y%m%d %H:%M:%S"),
-                   os.getcwd()))
+        self.initMessage()
 
     def newLogger(self, loggerName):
         BaseLogger.newLogger(self, loggerName)
@@ -377,9 +381,7 @@ class MultiFileLogger(BaseLogger):
                             **kwargs)
 
         self.newLogger(self.loggerName)
-        self.info("MultiFileLogger online at %s in %s" % \
-                  (datetime.now().strftime("%Y%m%d %H:%M:%S"),
-                   os.getcwd()))
+        self.initMessage()
 
     def newLogger(self, loggerName):
         BaseLogger.newLogger(self, loggerName)

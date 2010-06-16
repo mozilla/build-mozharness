@@ -147,7 +147,7 @@ class BaseConfig(object):
          help="Don't perform action"
         )
         for action in self.allActions:
-            Action = action.title()
+            Action = action[0].capitalize()+action[1:]
             self.configParser.add_option(
              "--only%s" % Action, action="temp_append_const",
              dest="onlyActions", const=action,
@@ -283,6 +283,7 @@ class BaseConfig(object):
         Return the parser object after adding the basic options, so
         child objects can manipulate it.
         """
+        self.commandLine = ' '.join(sys.argv)
         (options, args) = self.configParser.parse_args()
 
         if options.configFile:
@@ -383,6 +384,7 @@ class SimpleConfig(BaseConfig, BasicFunctions):
         BasicFunctions.__init__(self)
         self.logLevel = logLevel
         self.newLogObj()
+        self.info("Run as %s" % self.commandLine)
 
     def newLogObj(self):
         logConfig = {"loggerName": 'Simple',
