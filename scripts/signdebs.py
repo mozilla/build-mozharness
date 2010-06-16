@@ -67,6 +67,7 @@ class MaemoDebSigner(SimpleConfig):
             return debName
         if debNameUrl:
             self.info('Getting debName from %s' % debNameUrl)
+            # TODO belongs in downloadFile or equivalent?
             try:
                 ul = urllib2.build_opener()
                 fh = ul.open(debNameUrl)

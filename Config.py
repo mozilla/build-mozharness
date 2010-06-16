@@ -173,8 +173,6 @@ class BaseConfig(object):
 
     def parseConfigFile(self, fileName):
         """Read a config file and return a dictionary.
-        TODO: read subsequent config files once self._config is already
-        set, with options to override or drop conflicting config settings.
         """
         filePath = None
         searchPath = ['.', os.path.join(sys.path[0], 'configs')]
@@ -198,8 +196,7 @@ class BaseConfig(object):
                 config = dict(contents)
         fh.close()
 
-        """Return it here? Or set something?
-        """
+        # TODO Return it here? Or set something?
         return config
 
     def lockConfig(self):
@@ -285,8 +282,6 @@ class BaseConfig(object):
         """Parse command line arguments in a generic way.
         Return the parser object after adding the basic options, so
         child objects can manipulate it.
-
-        TODO: be able to read the options to add from a config.
         """
         (options, args) = self.configParser.parse_args()
 
