@@ -47,7 +47,7 @@ class MozOptionParser(OptionParser):
     in which case we get
         locales=["en-US,multi", "fr"]
     If we then say
-        locales = locales.join(',').split(',')
+        locales = ','.join(locales).split(',')
     then we get
         locales=["en-US", "multi", "fr"]
     which is nice for less commandline typing.
@@ -274,7 +274,7 @@ class BaseConfig(object):
         pass
 
     def verifyActions(self, actionList):
-        actions = actionList.join(',').split(',')
+        actions = ','.join(actionList).split(',')
         for action in actions:
             if action not in self.allActions:
                 self.fatal("Invalid action %s not in %s!" % (action,
@@ -297,7 +297,7 @@ class BaseConfig(object):
         for key in self.configParser.variables:
             value = getattr(options, key)
             if value and key in self.configParser.appendVariables:
-                value = value.join(',').split(',')
+                value = ','.join(value).split(',')
             self.setVar(key, value)
 
         """Actions.
