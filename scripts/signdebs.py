@@ -3,6 +3,8 @@
 
 Usage:
     signdebs.py [args]
+
+TODO: make createRepos and signRepo(s) more standalone for discrete actions
 """
 
 import os
@@ -34,14 +36,14 @@ class MaemoDebSigner(SimpleConfig):
         """
         configOptions = [[
          ["--locale",],
-         {"action": "append",
+         {"action": "append_split",
           "dest": "locales",
           "type": "string",
           "help": "Specify the locale(s) to repack"
          }
         ],[
          ["--platform",],
-         {"action": "append",
+         {"action": "append_split",
           "dest": "platforms",
           "type": "string",
           "help": "Specify the platform(s) to repack"
@@ -55,7 +57,8 @@ class MaemoDebSigner(SimpleConfig):
          }
         ]]
         SimpleConfig.__init__(self, configOptions=configOptions,
-                              allActions=['clobber', 'sign', 'upload'],
+                              allActions=['clobber', 'createRepos',
+                                          'signRepos', 'upload'],
                               requireConfigFile=requireConfigFile)
 
     def queryDebName(self, debNameUrl=None):
@@ -76,6 +79,9 @@ class MaemoDebSigner(SimpleConfig):
                 self.fatal("URL Error: %s %s" % (e.code, debNameUrl))
 
     def clobberRepoDir(self):
+        if not self.queryAction('clobber'):
+            self.info("Skipping clobber step.")
+            return
         baseWorkDir = self.queryVar("baseWorkDir")
         workDir = self.queryVar("workDir")
         repoDir = self.queryVar("repoDir")
@@ -192,6 +198,9 @@ components = %(section)s
         This method is getting a little long... I could split a lot of it
         out if I weren't trying to optimize for the fewest queryVar()s
         for some strange reason.
+
+        TODO: separate some of this stuff out so I can make create/signRepos
+        discrete actions.
         """
         baseWorkDir = self.queryVar("baseWorkDir")
         hgMobileRepo = self.queryVar("hgMobileRepo")
@@ -260,6 +269,9 @@ components = %(section)s
                                 repoName, platform, installFile)
 
     def uploadRepo(self, localRepoDir, repoName, platform, installFile):
+        if not self.queryAction('upload'):
+            self.info("Skipping upload step.")
+            return
         remoteRepoPath = self.queryVar("remoteRepoPath")
         remoteUser = self.queryVar("remoteUser")
         remoteSshKey = self.queryVar("remoteSshKey")
