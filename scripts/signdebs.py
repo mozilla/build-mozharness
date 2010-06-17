@@ -92,6 +92,7 @@ class MaemoDebSigner(SimpleConfig):
         if not self.queryAction('clobber'):
             self.info("Skipping clobber step.")
             return
+        self.info("Clobbering repo dir.")
         baseWorkDir = self.queryVar("baseWorkDir")
         workDir = self.queryVar("workDir")
         repoDir = self.queryVar("repoDir")
