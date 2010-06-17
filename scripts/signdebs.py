@@ -220,8 +220,6 @@ components = %(section)s
         section = self.queryVar("section")
         workDir = self.queryVar("workDir")
 
-        self.clobberRepoDir()
-
         if hgMobileRepo is not None:
             if not os.path.exists('mobile'):
                 self.runCommand("hg clone %s mobile" % hgMobileRepo,
