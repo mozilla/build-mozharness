@@ -62,7 +62,15 @@ class MaemoDebSigner(SimpleConfig):
                               requireConfigFile=requireConfigFile)
         self.failures = []
 
-    def queryDebName(self, debNameUrl=None):
+    def run(self):
+        self.clobberRepoDir()
+        self.createRepos()
+        self.uploadRepos()
+        if self.failures:
+            self.error("%s failures: %s" % (self.__class__.__name__,
+                                            self.failures))
+
+    def _queryDebName(self, debNameUrl=None):
         debName = self.queryVar('debName')
         if debName:
             return debName
@@ -119,7 +127,7 @@ class MaemoDebSigner(SimpleConfig):
                     locales.extend(additionalLocales)
         return locales
 
-    def signRepo(self, repoName, platform):
+    def _signRepo(self, repoName, platform):
         baseWorkDir = self.queryVar("baseWorkDir")
         repoDir = self.queryVar("repoDir")
         sboxPath = self.queryVar("sboxPath")
@@ -164,7 +172,7 @@ class MaemoDebSigner(SimpleConfig):
                 return -3
         return 0
 
-    def createInstallFile(self, filePath, locale, platform):
+    def _createInstallFile(self, filePath, locale, platform):
         baseRepoUrl = self.queryVar("baseRepoUrl")
         packageName = self.queryVar("packageName")
         platformConfig = self.queryVar("platformConfig")
@@ -231,7 +239,7 @@ components = %(section)s
             """
             self.info("%s" % platform)
             pf = platformConfig[platform]
-            debName = self.queryDebName(debNameUrl=pf['debNameUrl'])
+            debName = self._queryDebName(debNameUrl=pf['debNameUrl'])
             locales = self._queryLocales(platform, platformConfig=platformConfig)
             for locale in locales:
                 replaceDict = {'locale': locale}
@@ -255,12 +263,12 @@ components = %(section)s
                 self.mkdir_p(absBinaryDir)
                 self.move(debName, absBinaryDir)
 
-                if self.signRepo(repoName, platform) != 0:
+                if self._signRepo(repoName, platform) != 0:
                     self.error("Skipping %s %s" % (platform, locale))
                     self.failures.append('%s_%s' % (platform, locale))
                     continue
 
-                self.createInstallFile(os.path.join(baseWorkDir, workDir,
+                self._createInstallFile(os.path.join(baseWorkDir, workDir,
                                                     repoDir, repoName,
                                                     installFile),
                                        locale, platform)
@@ -283,7 +291,9 @@ components = %(section)s
             locales = self._queryLocales(platform, platformConfig=platformConfig)
             for locale in locales:
                 if '%s_%s' % (platform, locale) not in self.failures:
-                    installFile = pf['installFile'] % {'locale': locale}
+                    replaceDict = {'locale': locale}
+                    installFile = pf['installFile'] % replaceDict
+                    repoName = self.queryVar('repoName') % replaceDict
                     self._uploadRepo(os.path.join(baseWorkDir, workDir, repoDir),
                                      repoName, platform, installFile)
 
@@ -321,5 +331,4 @@ components = %(section)s
 # __main__ {{{1
 if __name__ == '__main__':
     debSigner = MaemoDebSigner()
-    debSigner.createRepos()
-    debSigner.uploadRepos()
+    debSigner.run()
