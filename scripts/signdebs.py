@@ -58,8 +58,9 @@ class MaemoDebSigner(SimpleConfig):
         ]]
         SimpleConfig.__init__(self, configOptions=configOptions,
                               allActions=['clobber', 'createRepos',
-                                          'signRepos', 'upload'],
+                                          'upload'],
                               requireConfigFile=requireConfigFile)
+        self.failures = []
 
     def queryDebName(self, debNameUrl=None):
         debName = self.queryVar('debName')
@@ -92,7 +93,7 @@ class MaemoDebSigner(SimpleConfig):
         if os.path.exists(repoPath):
             self.rmtree(repoPath)
 
-    def queryLocales(self, platform, platformConfig=None):
+    def _queryLocales(self, platform, platformConfig=None):
         locales = self.queryVar("locales")
         if not locales:
             locales = []
@@ -133,9 +134,10 @@ class MaemoDebSigner(SimpleConfig):
         command += "dists/%s/%s/binary-armel |" % (platform, section)
         command += "gzip -9c > %s/dists/%s/%s/binary-armel/Packages.gz" % \
                    (absWorkDir, platform, section)
-        if self.runCommand(command, errorRegex=errorRegex):
+        status = self.runCommand(command, errorRegex=errorRegex)
+        if status:
             self.error("Exiting signRepo.")
-            return -1
+            return status
 
         for subDir in ("dists/%s/%s/binary-armel" % (platform, section),
                        "dists/%s/%s" % (platform, section),
@@ -195,14 +197,10 @@ components = %(section)s
         
 
     def createRepos(self):
-        """
-        This method is getting a little long... I could split a lot of it
-        out if I weren't trying to optimize for the fewest queryVar()s
-        for some strange reason.
-
-        TODO: separate some of this stuff out so I can make create/signRepos
-        discrete actions.
-        """
+        if not self.queryAction('createRepos'):
+            self.info("Skipping create repo step.")
+            return
+        self.info("Creating repos.")
         baseWorkDir = self.queryVar("baseWorkDir")
         hgMobileRepo = self.queryVar("hgMobileRepo")
         hgConfigRepo = self.queryVar("hgConfigRepo")
@@ -231,10 +229,10 @@ components = %(section)s
         for platform in platforms:
             """This assumes the same deb name for each locale in a platform.
             """
-            self.info("###%s###" % platform)
+            self.info("%s" % platform)
             pf = platformConfig[platform]
             debName = self.queryDebName(debNameUrl=pf['debNameUrl'])
-            locales = self.queryLocales(platform, platformConfig=platformConfig)
+            locales = self._queryLocales(platform, platformConfig=platformConfig)
             for locale in locales:
                 replaceDict = {'locale': locale}
                 installFile = pf['installFile'] % replaceDict
@@ -257,26 +255,51 @@ components = %(section)s
                 self.mkdir_p(absBinaryDir)
                 self.move(debName, absBinaryDir)
 
-                # Not sure I like this syntax
                 if self.signRepo(repoName, platform) != 0:
                     self.error("Skipping %s %s" % (platform, locale))
+                    self.failures.append('%s_%s' % (platform, locale))
                     continue
 
                 self.createInstallFile(os.path.join(baseWorkDir, workDir,
                                                     repoDir, repoName,
                                                     installFile),
                                        locale, platform)
-                self.uploadRepo(os.path.join(baseWorkDir, workDir, repoDir),
-                                repoName, platform, installFile)
 
-    def uploadRepo(self, localRepoDir, repoName, platform, installFile):
+    def uploadRepos(self):
         if not self.queryAction('upload'):
             self.info("Skipping upload step.")
             return
+        self.info("Uploading repos.")
+        baseWorkDir = self.queryVar("baseWorkDir")
+        platformConfig = self.queryVar("platformConfig")
+        platforms = self.queryVar("platforms", default=platformConfig.keys())
+        repoDir = self.queryVar("repoDir")
+        workDir = self.queryVar("workDir")
+        for platform in platforms:
+            """This assumes the same deb name for each locale in a platform.
+            """
+            self.info("%s" % platform)
+            pf = platformConfig[platform]
+            locales = self._queryLocales(platform, platformConfig=platformConfig)
+            for locale in locales:
+                if '%s_%s' % (platform, locale) not in self.failures:
+                    installFile = pf['installFile'] % {'locale': locale}
+                    self._uploadRepo(os.path.join(baseWorkDir, workDir, repoDir),
+                                     repoName, platform, installFile)
+
+    def _uploadRepo(self, localRepoDir, repoName, platform, installFile):
         remoteRepoPath = self.queryVar("remoteRepoPath")
         remoteUser = self.queryVar("remoteUser")
         remoteSshKey = self.queryVar("remoteSshKey")
         remoteHost = self.queryVar("remoteHost")
+        repoPath = os.path.join(localRepoDir, repoName, 'dists', platform)
+        installFilePath = os.path.join(localRepoDir, repoName, installFile)
+
+        if not os.path.isdir(repoPath):
+            self.error("uploadRepo: %s isn't a valid repo!" % repoPath)
+            return -1
+        if not os.path.exists(installFilePath):
+            self.error("uploadRepo: %s doesn't exist!" % installFilePath)
 
         command = "ssh -i %s %s@%s mkdir -p %s/%s/dists/%s" % \
                   (remoteSshKey, remoteUser, remoteHost, remoteRepoPath,
@@ -284,14 +307,12 @@ components = %(section)s
         self.runCommand(command, errorRegex=SshErrorRegex)
 
         command = 'rsync --rsh="ssh -i %s" -azv --delete %s %s@%s:%s/%s/dists/%s' % \
-                  (remoteSshKey,
-                   os.path.join(localRepoDir, repoName, 'dists', platform, '.'),
+                  (remoteSshKey, os.path.join(repoPath, '.'),
                    remoteUser, remoteHost, remoteRepoPath, repoName, platform)
         self.runCommand(command, errorRegex=SshErrorRegex)
 
         command = 'scp -i %s %s %s@%s:%s/%s/' % \
-                  (remoteSshKey,
-                   os.path.join(localRepoDir, repoName, installFile),
+                  (remoteSshKey, installFilePath,
                    remoteUser, remoteHost, remoteRepoPath, repoName)
         self.runCommand(command, errorRegex=SshErrorRegex)
 
@@ -301,3 +322,4 @@ components = %(section)s
 if __name__ == '__main__':
     debSigner = MaemoDebSigner()
     debSigner.createRepos()
+    debSigner.uploadRepos()
