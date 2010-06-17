@@ -101,6 +101,8 @@ class MaemoDebSigner(SimpleConfig):
         repoPath = os.path.join(baseWorkDir, workDir, repoDir)
         if os.path.exists(repoPath):
             self.rmtree(repoPath)
+        else:
+            self.debug("%s doesn't exist." % repoPath)
 
     def _queryLocales(self, platform, platformConfig=None):
         locales = self.queryVar("locales")
