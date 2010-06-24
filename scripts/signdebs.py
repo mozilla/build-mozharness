@@ -84,9 +84,9 @@ class MaemoDebSigner(SimpleConfig):
                 self.debug('Deb name is %s' % debName)
                 return debName
             except HTTPError, e:
-                self.fatal("HTTP Error: %s %s" % (e.code, debNameUrl))
+                self.error("HTTP Error: %s %s" % (e.code, debNameUrl))
             except URLError, e:
-                self.fatal("URL Error: %s %s" % (e.code, debNameUrl))
+                self.error("URL Error: %s %s" % (e.code, debNameUrl))
 
     def clobberRepoDir(self):
         if not self.queryAction('clobber'):
@@ -241,6 +241,8 @@ components = %(section)s
             self.info("%s" % platform)
             pf = platformConfig[platform]
             debName = self._queryDebName(debNameUrl=pf['debNameUrl'])
+            if not debName:
+                continue
             locales = self._queryLocales(platform, platformConfig=platformConfig)
             for locale in locales:
                 replaceDict = {'locale': locale}
