@@ -28,7 +28,7 @@
     "fremantle": {
       "longCatalogName": "1.9.2 fremantle",
       "shortCatalogName": "fennec",
-      "installFile": "1.9.2_%(locale)s_nightly.install",
+      "installFile": "1.9.2_%(locale)s_nightly_fremantle.install",
       "debNameUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mobile-1.9.2-maemo5-gtk/deb_name.txt",
       "multiDirUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mobile-1.9.2-maemo5-gtk",
       "enUsDirUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mobile-1.9.2-maemo5-gtk/en-US",
