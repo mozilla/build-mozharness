@@ -19,30 +19,30 @@
       "longCatalogName": "trunk chinook",
       "shortCatalogName": "fennec",
       "installFile": "trunk_%(locale)s_nightly_chinook.install",
-      "debNameUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mobile-trunk/deb_name.txt",
-      "multiDirUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mobile-trunk",
-      "enUsDirUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mobile-trunk/en-US",
-      "l10nDirUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mobile-trunk-l10n"
+      "debNameUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mozilla-central-maemo4/deb_name.txt",
+      "multiDirUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mozilla-central-maemo4",
+      "enUsDirUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mozilla-central-maemo4/en-US",
+      "l10nDirUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mozilla-central-maemo4-l10n"
     },
 
     "fremantle": {
       "longCatalogName": "trunk fremantle",
       "shortCatalogName": "fennec",
       "installFile": "trunk_%(locale)s_nightly_fremantle.install",
-      "debNameUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mobile-trunk-maemo5-gtk/deb_name.txt",
-      "multiDirUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mobile-trunk-maemo5-gtk",
-      "enUsDirUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mobile-trunk-maemo5-gtk/en-US",
-      "l10nDirUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mobile-trunk-maemo5-gtk-l10n"
+      "debNameUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mozilla-central-maemo5-gtk/deb_name.txt",
+      "multiDirUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mozilla-central-maemo5-gtk",
+      "enUsDirUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mozilla-central-maemo5-gtk/en-US",
+      "l10nDirUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mozilla-central-maemo5-gtk-l10n"
     },
 
     "fremantle-qt": {
       "longCatalogName": "trunk fremantle QT",
       "shortCatalogName": "fennec",
       "installFile": "trunk_%(locale)s_nightly_fremantle_qt.install",
-      "debNameUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mobile-trunk-maemo5-qt/deb_name.txt",
-      "multiDirUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mobile-trunk-maemo5-qt",
-      "enUsDirUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mobile-trunk-maemo5-qt/en-US",
-      "l10nDirUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mobile-trunk-maemo5-qt-l10n"
+      "debNameUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mozilla-central-maemo5-qt/deb_name.txt",
+      "multiDirUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mozilla-central-maemo5-qt",
+      "enUsDirUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mozilla-central-maemo5-qt/en-US",
+      "l10nDirUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mozilla-central-maemo5-qt-l10n"
     }
 
   }
