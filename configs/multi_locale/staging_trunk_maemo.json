@@ -1,0 +1,18 @@
+{
+  "logName": "multilocale",
+  "localesFile": "mobile/locales/maemo-locales",
+
+  "hgMobileRepo": "http://hg.mozilla.org/mobile-browser",
+  "hgMobileTag": "default",
+  "hgL10nBase": "http://hg.mozilla.org/l10n-central",
+  "hgL10nTag": "default",
+  "hgCompareLocalesRepo": "http://hg.mozilla.org/compare-locales",
+  "hgCompareLocalesTag": "RELEASE_AUTOMATION",
+  "hgMozillaRepo": "http://hg.mozilla.org/mozilla-central",
+  "hgMozillaTag": "default",
+
+  "enUsBinaryUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mobile-trunk-maemo5-gtk/en-US",
+
+  "repackType": "deb",
+  "sboxTarget": "FREMANTLE_ARMEL"
+}
