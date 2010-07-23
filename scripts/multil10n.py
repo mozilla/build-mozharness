@@ -115,15 +115,27 @@ class MultiLocaleRepack(SimpleConfig):
         doesn't inherit the logger, just has a self.logObj.
         """
         SimpleConfig.__init__(self, configOptions=self.configOptions,
-                              allActions=['clobber', 'pull',
+                              allActions=['clobber', 'pull', 'setup',
                                           'repack', 'upload'],
                               requireConfigFile=requireConfigFile)
         self.failures = []
 
     def run(self):
+        self.clobber()
         if self.failures:
             self.error("%s failures: %s" % (self.__class__.__name__,
                                             self.failures))
+
+    def clobber(self):
+        if not self.queryAction('clobber'):
+            self.info("Skipping clobber step.")
+            return
+        self.info("Clobbering.")
+        baseWorkDir = self.queryVar("baseWorkDir", os.getcwd())
+        workDir = self.queryVar("workDir")
+        path = os.path.join(baseWorkDir, workDir)
+        if os.path.exists(path):
+            self.rmtree(path, errorLevel='fatal')
 
     def processCommand(self, **kwargs):
         return kwargs
@@ -180,7 +192,8 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
     def __init__(self, **kwargs):
         MultiLocaleRepack.__init__(self, **kwargs)
 
-
+    def processCommand(self, **kwargs):
+        return kwargs
 
 
 

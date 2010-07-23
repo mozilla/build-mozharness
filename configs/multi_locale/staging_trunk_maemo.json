@@ -1,4 +1,5 @@
 {
+  "workDir": "multilocale",
   "logName": "multilocale",
   "localesFile": "mobile/locales/maemo-locales",
 
