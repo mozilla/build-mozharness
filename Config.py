@@ -299,7 +299,8 @@ class BaseConfig(object):
             value = getattr(options, key)
             if value and key in self.configParser.appendVariables:
                 value = ','.join(value).split(',')
-            self.setVar(key, value)
+            if value is not None:
+                self.setVar(key, value)
 
         """Actions.
 

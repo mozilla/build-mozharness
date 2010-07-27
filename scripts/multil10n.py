@@ -123,6 +123,7 @@ class MultiLocaleRepack(SimpleConfig):
 
     def run(self):
         self.clobber()
+        self.pull()
         if self.failures:
             self.error("%s failures: %s" % (self.__class__.__name__,
                                             self.failures))
@@ -161,7 +162,7 @@ class MultiLocaleRepack(SimpleConfig):
                 haltOnFailure=True):
         if not dirName:
             dirName = os.path.basename(repo)
-        if not os.path.exists(os.path.join(parentDir, dirName):
+        if not os.path.exists(os.path.join(parentDir, dirName)):
             command = "hg clone %s %s" % (repo, dirName)
         else:
             command = "hg --cwd %s pull" % (dirName)
@@ -201,7 +202,7 @@ class MultiLocaleRepack(SimpleConfig):
 
         # Chicken/egg: need to pull repos to determine locales.
         # Solve by pulling non-locale repos first.
-        for repoDict in repos + additionalRepos:
+        for repoDict in repos:
             self._hgPull(
              repo=repoDict['repo'],
              tag=repoDict.get('tag', 'default'),
@@ -280,7 +281,7 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
 # __main__ {{{1
 if __name__ == '__main__':
     multiRepack = MultiLocaleRepack()
-#    multiRepack.run()
     print multiRepack.dumpConfig()
+    multiRepack.run()
     maemoRepack = MaemoMultiLocaleRepack()
     print maemoRepack.dumpConfig()
