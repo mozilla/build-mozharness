@@ -1,8 +1,7 @@
 {
   "workDir": "multilocale",
   "logName": "multilocale",
-  "localesFile": "mobile/locales/maemo-locales",
-
+  "localesFile": "mozilla/mobile/locales/maemo-locales",
   "hgMobileRepo": "http://hg.mozilla.org/mobile-browser",
   "hgMobileTag": "default",
   "hgL10nBase": "http://hg.mozilla.org/l10n-central",

@@ -119,6 +119,7 @@ class MultiLocaleRepack(SimpleConfig):
                                           'repack', 'upload'],
                               requireConfigFile=requireConfigFile)
         self.failures = []
+        self.locales = None
 
     def run(self):
         self.clobber()
@@ -131,11 +132,90 @@ class MultiLocaleRepack(SimpleConfig):
             self.info("Skipping clobber step.")
             return
         self.info("Clobbering.")
-        baseWorkDir = self.queryVar("baseWorkDir", os.getcwd())
+        baseWorkDir = self.queryVar("baseWorkDir")
         workDir = self.queryVar("workDir")
         path = os.path.join(baseWorkDir, workDir)
         if os.path.exists(path):
             self.rmtree(path, errorLevel='fatal')
+
+    def queryLocales(self):
+        if self.locales:
+            return self.locales
+        locales = self.queryVar("locales")
+        if not locales:
+            locales = []
+            localesFile = self.queryVar("localesFile")
+            if localesFile.endswith(".json"):
+                localesJson = self.parseConfigFile(localesFile)
+                locales = localesJson.keys()
+            else:
+                fh = open(localesFile)
+                locales = fh.read().split()
+                fh.close()
+            self.debug("Found the locales %s in %s." % (locales, localesFile))
+        if locales:
+            self.locales = locales
+            return self.locales
+
+    def _hgPull(self, repo, parentDir, tag="default", dirName=None,
+                haltOnFailure=True):
+        if not dirName:
+            dirName = os.path.basename(repo)
+        if not os.path.exists(os.path.join(parentDir, dirName):
+            command = "hg clone %s %s" % (repo, dirName)
+        else:
+            command = "hg --cwd %s pull" % (dirName)
+        self.runCommand(command, cwd=parentDir, haltOnFailure=haltOnFailure,
+                        errorRegex=HgErrorRegex)
+        command = "hg --cwd %s update -C -r %s" % (dirName, tag)
+        self.runCommand(command, cwd=parentDir, haltOnFailure=haltOnFailure,
+                        errorRegex=HgErrorRegex)
+
+    def pull(self, repos=None):
+        if not self.queryAction('pull'):
+            self.info("Skipping pull step.")
+            return
+        self.info("Pulling.")
+        baseWorkDir = self.queryVar("baseWorkDir")
+        workDir = self.queryVar("workDir")
+        absWorkDir = os.path.join(baseWorkDir, workDir)
+        hgL10nBase = self.queryVar("hgL10nBase")
+        hgL10nTag = self.queryVar("hgL10nTag")
+        if not repos:
+            hgMozillaRepo = self.queryVar("hgMozillaRepo")
+            hgMozillaTag = self.queryVar("hgMozillaTag")
+            hgCompareLocalesRepo = self.queryVar("hgCompareLocalesRepo")
+            hgCompareLocalesTag = self.queryVar("hgCompareLocalesTag")
+            repos = [{
+                'repo': hgMozillaRepo,
+                'tag': hgMozillaTag,
+                'dirName': 'mozilla',
+            },{
+                'repo': hgCompareLocalesRepo,
+                'tag': hgCompareLocalesTag,
+                'dirName': 'compare-locales',
+            }]
+
+        absL10nDir = os.path.join(absWorkDir, "l10n")
+        self.mkdir_p(absL10nDir)
+
+        # Chicken/egg: need to pull repos to determine locales.
+        # Solve by pulling non-locale repos first.
+        for repoDict in repos + additionalRepos:
+            self._hgPull(
+             repo=repoDict['repo'],
+             tag=repoDict.get('tag', 'default'),
+             dirName=repoDict.get('dirName', None),
+             parentDir=absWorkDir
+            )
+
+        locales = self.queryLocales()
+        for locale in locales:
+            self._hgPull(
+             repo="%s/%s" % (hgL10nBase, locale),
+             tag=hgL10nTag,
+             parentDir=absL10nDir
+            )
 
     def processCommand(self, **kwargs):
         return kwargs

@@ -122,8 +122,13 @@ class BaseConfig(object):
         )
         self.configParser.add_option(
          "--workDir", action="store", dest="workDir",
-         type="string", default=".",
-         help="Specify the workDir relative to cwd"
+         type="string", default="workDir",
+         help="Specify the workDir (subdir of baseWorkDir)"
+        )
+        self.configParser.add_option(
+         "--baseWorkDir", action="store", dest="baseWorkDir",
+         type="string", default=os.getcwd(),
+         help="Specify the absolute path of the parent of the working directory"
         )
         self.configParser.add_option(
          "--configFile", action="store", dest="configFile",
