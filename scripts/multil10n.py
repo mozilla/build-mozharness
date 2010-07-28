@@ -115,7 +115,7 @@ class MultiLocaleRepack(SimpleConfig):
         doesn't inherit the logger, just has a self.logObj.
         """
         SimpleConfig.__init__(self, configOptions=self.configOptions,
-                              allActions=['clobber', 'pull', 'setup',
+                              allActions=['clobber', 'pull',
                                           'repack', 'upload'],
                               requireConfigFile=requireConfigFile)
         self.failures = []
@@ -159,6 +159,7 @@ class MultiLocaleRepack(SimpleConfig):
         if ignoreLocales:
             for locale in ignoreLocales:
                 if locale in locales:
+                    self.debug("Ignoring locale %s." % locale)
                     locales.remove(locale)
         if locales:
             self.locales = locales
@@ -227,6 +228,7 @@ class MultiLocaleRepack(SimpleConfig):
     def processCommand(self, **kwargs):
         return kwargs
 
+# MaemoMultiLocaleRepack {{{1
 class MaemoMultiLocaleRepack(MultiLocaleRepack):
     configOptions = MultiLocaleRepack.configOptions + [[
      ["--debName",],
@@ -279,6 +281,28 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
     def __init__(self, **kwargs):
         MultiLocaleRepack.__init__(self, **kwargs)
 
+    def pull(self):
+        hgMozillaRepo = self.queryVar("hgMozillaRepo")
+        hgMozillaTag = self.queryVar("hgMozillaTag")
+        hgCompareLocalesRepo = self.queryVar("hgCompareLocalesRepo")
+        hgCompareLocalesTag = self.queryVar("hgCompareLocalesTag")
+        hgMobileRepo = self.queryVar("hgMobileRepo")
+        hgMobileTag = self.queryVar("hgMobileTag")
+        repos = [{
+            'repo': hgMozillaRepo,
+            'tag': hgMozillaTag,
+            'dirName': 'mozilla',
+        },{
+            'repo': hgMobileRepo,
+            'tag': hgMobileTag,
+            'dirName': 'mozilla/mobile',
+        },{
+            'repo': hgCompareLocalesRepo,
+            'tag': hgCompareLocalesTag,
+            'dirName': 'compare-locales',
+        }]
+        MultiLocaleRepack.pull(self, repos=repos)
+
     def processCommand(self, **kwargs):
         return kwargs
 
@@ -286,8 +310,5 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
 
 # __main__ {{{1
 if __name__ == '__main__':
-    multiRepack = MultiLocaleRepack()
-    multiRepack.debug(multiRepack.dumpConfig())
-    multiRepack.run()
     maemoRepack = MaemoMultiLocaleRepack()
-    maemoRepack.debug(maemoRepack.dumpConfig())
+    maemoRepack.run()
