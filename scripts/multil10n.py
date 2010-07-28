@@ -143,9 +143,11 @@ class MultiLocaleRepack(SimpleConfig):
         if self.locales:
             return self.locales
         locales = self.queryVar("locales")
+        ignoreLocales = self.queryVar("ignoreLocales")
         if not locales:
             locales = []
-            localesFile = self.queryVar("localesFile")
+            workDir = self.queryVar("workDir")
+            localesFile = os.path.join(workDir, self.queryVar("localesFile"))
             if localesFile.endswith(".json"):
                 localesJson = self.parseConfigFile(localesFile)
                 locales = localesJson.keys()
@@ -154,6 +156,10 @@ class MultiLocaleRepack(SimpleConfig):
                 locales = fh.read().split()
                 fh.close()
             self.debug("Found the locales %s in %s." % (locales, localesFile))
+        if ignoreLocales:
+            for locale in ignoreLocales:
+                if locale in locales:
+                    locales.remove(locale)
         if locales:
             self.locales = locales
             return self.locales
@@ -281,7 +287,7 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
 # __main__ {{{1
 if __name__ == '__main__':
     multiRepack = MultiLocaleRepack()
-    print multiRepack.dumpConfig()
+    multiRepack.debug(multiRepack.dumpConfig())
     multiRepack.run()
     maemoRepack = MaemoMultiLocaleRepack()
-    print maemoRepack.dumpConfig()
+    maemoRepack.debug(maemoRepack.dumpConfig())
