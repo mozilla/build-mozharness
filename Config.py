@@ -124,12 +124,12 @@ class BaseConfig(object):
         )
         self.configParser.add_option(
          "--workDir", action="store", dest="workDir",
-         type="string",
+         type="string", default="workDir",
          help="Specify the workDir (subdir of baseWorkDir)"
         )
         self.configParser.add_option(
          "--baseWorkDir", action="store", dest="baseWorkDir",
-         type="string",
+         type="string", default=os.getcwd(),
          help="Specify the absolute path of the parent of the working directory"
         )
         self.configParser.add_option(
@@ -227,6 +227,10 @@ class BaseConfig(object):
             self._config = config
         return self._config
 
+    def existsVar(self, varName):
+        if varName in self._config:
+            return True
+
     def queryVar(self, varName, default=None):
         if varName not in self._config or not self._config[varName]:
             return default
@@ -292,7 +296,7 @@ class BaseConfig(object):
         """
         self.commandLine = ' '.join(sys.argv)
         (options, args) = self.configParser.parse_args()
-        print self.configParser.defaults
+        defaults = self.configParser.defaults.copy()
 
         if options.configFile:
             self.setConfig(self.parseConfigFile(options.configFile))
@@ -300,22 +304,14 @@ class BaseConfig(object):
             self.fatal("You must specify --configFile!")
         for key in self.configParser.variables:
             value = getattr(options, key)
+            if value is None:
+                continue
+            # Don't override configFile defaults with configParser defaults
+            if key in defaults and value == defaults[key] and self.existsVar(key):
+                continue
             if value and key in self.configParser.appendVariables:
                 value = ','.join(value).split(',')
-            if value is not None:
-                self.setVar(key, value)
-        """Special cases.
-        If we put a default in the configParser option, that overrides
-        any default we put into the config file.  Really, we want
-        configParser default < configFile default < commandline option
-        but since commandline + configParser default come together,
-        there isn't an easy way to put the configFile defaults in between.
-        We need a better way to do this.
-        """
-        if not self.queryVar("baseWorkDir"):
-            self.setVar("baseWorkDir", os.getcwd())
-        if not self.queryVar("workDir"):
-            self.setVar("workDir", "workDir")
+            self.setVar(key, value)
 
         """Actions.
 
