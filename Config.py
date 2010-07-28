@@ -9,6 +9,8 @@ duplicate run.
 TODO:
 
 * dumpConfig and loadConfig need to be seamless. And written.
+* options with defaults are overwriting the defaults in the config
+  files, which is good for some of 'em and bad for others.
 """
 
 from copy import deepcopy
@@ -122,12 +124,12 @@ class BaseConfig(object):
         )
         self.configParser.add_option(
          "--workDir", action="store", dest="workDir",
-         type="string", default="workDir",
+         type="string",
          help="Specify the workDir (subdir of baseWorkDir)"
         )
         self.configParser.add_option(
          "--baseWorkDir", action="store", dest="baseWorkDir",
-         type="string", default=os.getcwd(),
+         type="string",
          help="Specify the absolute path of the parent of the working directory"
         )
         self.configParser.add_option(
@@ -290,6 +292,7 @@ class BaseConfig(object):
         """
         self.commandLine = ' '.join(sys.argv)
         (options, args) = self.configParser.parse_args()
+        print self.configParser.defaults
 
         if options.configFile:
             self.setConfig(self.parseConfigFile(options.configFile))
@@ -301,6 +304,18 @@ class BaseConfig(object):
                 value = ','.join(value).split(',')
             if value is not None:
                 self.setVar(key, value)
+        """Special cases.
+        If we put a default in the configParser option, that overrides
+        any default we put into the config file.  Really, we want
+        configParser default < configFile default < commandline option
+        but since commandline + configParser default come together,
+        there isn't an easy way to put the configFile defaults in between.
+        We need a better way to do this.
+        """
+        if not self.queryVar("baseWorkDir"):
+            self.setVar("baseWorkDir", os.getcwd())
+        if not self.queryVar("workDir"):
+            self.setVar("workDir", "workDir")
 
         """Actions.
 

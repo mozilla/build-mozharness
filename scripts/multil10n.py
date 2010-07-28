@@ -115,7 +115,7 @@ class MultiLocaleRepack(SimpleConfig):
         doesn't inherit the logger, just has a self.logObj.
         """
         SimpleConfig.__init__(self, configOptions=self.configOptions,
-                              allActions=['clobber', 'pull',
+                              allActions=['clobber', 'pull', 'compareLocales',
                                           'repack', 'upload'],
                               requireConfigFile=requireConfigFile)
         self.failures = []
@@ -124,6 +124,9 @@ class MultiLocaleRepack(SimpleConfig):
     def run(self):
         self.clobber()
         self.pull()
+        self.compareLocales()
+        self.repack()
+        self.upload()
         if self.failures:
             self.error("%s failures: %s" % (self.__class__.__name__,
                                             self.failures))
@@ -224,6 +227,26 @@ class MultiLocaleRepack(SimpleConfig):
              tag=hgL10nTag,
              parentDir=absL10nDir
             )
+
+    def compareLocales(self):
+        if not self.queryAction("compareLocales"):
+            self.info("Skipping compare-locales step.")
+            return
+        self.info("Comparing locales.")
+        baseWorkDir = self.queryVar("baseWorkDir")
+        workDir = self.queryVar("workDir")
+
+    def repack(self):
+        if not self.queryAction("repack"):
+            self.info("Skipping repack step.")
+            return
+        self.info("Repacking.")
+
+    def upload(self):
+        if not self.queryAction("upload"):
+            self.info("Skipping upload step.")
+            return
+        self.info("Uploading.")
 
     def processCommand(self, **kwargs):
         return kwargs
