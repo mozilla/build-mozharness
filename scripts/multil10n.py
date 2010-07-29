@@ -272,7 +272,8 @@ class MultiLocaleRepack(SimpleConfig):
             self.rmtree(os.path.join(absLocalesDir, mergeDir))
             command = "python %s -m %s l10n.ini %s/l10n %s" % (
               compareLocalesScript, mergeDir, absWorkDir, locale)
-            # TODO
+            self.runCommand(command, errorRegex=CompareLocalesErrorRegex,
+                            cwd=absLocalesDir)
 
     def repack(self):
         if not self.queryAction("repack"):
@@ -379,7 +380,7 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
         sboxPath = self.queryVar("sboxPath")
         sboxTarget = self.queryVar("sboxTarget")
         self.runCommand("%s -p sb-conf select %s" % (sboxPath, sboxTarget))
-        self.runCommand("%s -p echo -n TinderboxPrint: && sb-conf current | sed 's/ARMEL// ; s/_// ; s/-//'" % sboxPath)
+        self.runCommand("%s -p \"echo -n TinderboxPrint: && sb-conf current | sed 's/ARMEL// ; s/_// ; s/-//'\"" % sboxPath)
 
     def processCommand(self, **kwargs):
         return kwargs
