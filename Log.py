@@ -54,6 +54,14 @@ HgErrorRegex=[{'regex': '^abort:', 'level': 'error'},
               {'substr': 'unknown exception encountered', 'level': 'error'},
              ]
 
+PythonErrorRegex=[{'substr': 'Traceback (most recent call last)', 'level': 'error'},
+                  {'substr': 'SyntaxError: ', 'level': 'error'},
+                  {'substr': 'TypeError: ', 'level': 'error'},
+                  {'substr': 'NameError: ', 'level': 'error'},
+                  {'substr': 'ZeroDivisionError: ', 'level': 'error'},
+                  {'substr': 'command not found', 'level': 'error'},
+                 ]
+
 
 
 
@@ -148,8 +156,6 @@ class BasicFunctions(object):
             self.info("Running command: %s in %s" % (command, cwd))
         else:
             self.info("Running command: %s" % command)
-        if env:
-            self.debug("Env: %s" % env)
         p = subprocess.Popen(command, shell=shell, stdout=subprocess.PIPE,
                              cwd=cwd, stderr=subprocess.STDOUT, env=env)
         stdout, stderr = p.communicate()

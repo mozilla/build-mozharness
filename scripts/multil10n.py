@@ -19,7 +19,7 @@ sys.path[0] = os.path.dirname(sys.path[0])
 
 import Log
 reload(Log)
-from Log import SimpleFileLogger, BasicFunctions, SshErrorRegex, HgErrorRegex
+from Log import SimpleFileLogger, BasicFunctions, SshErrorRegex, HgErrorRegex, PythonErrorRegex
 
 import Config
 reload(Config)
@@ -233,7 +233,7 @@ class MultiLocaleRepack(SimpleConfig):
         locales = self.queryLocales()
         for locale in locales:
             self._hgPull(
-             repo="%s/%s" % (hgL10nBase, locale),
+             repo=os.path.join(hgL10nBase, locale),
              tag=hgL10nTag,
              parentDir=absL10nDir
             )
@@ -249,7 +249,7 @@ class MultiLocaleRepack(SimpleConfig):
         mozconfig = self.queryVar("mozconfig")
 
         self.chdir(absWorkDir)
-        self.copyfile(mozconfig, "mozilla/.mozconfig")
+        self.copyfile(mozconfig, os.path.join("mozilla", ".mozconfig"))
 
     def compareLocales(self):
         if not self.queryAction("compareLocales"):
@@ -263,16 +263,18 @@ class MultiLocaleRepack(SimpleConfig):
         absWorkDir = os.path.join(baseWorkDir, workDir)
         absLocalesDir = os.path.join(absWorkDir, localesDir)
         locales = self.queryLocales()
-        compareLocalesScript = "../../../compare-locales/scripts/compare-locales"
+        compareLocalesScript = os.path.join("..", "..", "..", "compare-locales",
+                                            "scripts", "compare-locales")
         compareLocalesEnv = os.environ.copy()
-        compareLocalesEnv['PYTHONPATH'] = '../../../compare-locales/lib'
-        # TODO
-        CompareLocalesErrorRegex = []
+        compareLocalesEnv['PYTHONPATH'] = os.path.join('..', '..', '..',
+                                                       'compare-locales', 'lib')
+        CompareLocalesErrorRegex = PythonErrorRegex.copy()
 
         for locale in locales:
             self.rmtree(os.path.join(absLocalesDir, mergeDir))
-            command = "python %s -m %s l10n.ini ../../../l10n %s" % (
-              compareLocalesScript, mergeDir, locale)
+            command = "python %s -m %s l10n.ini %s %s" % (
+              compareLocalesScript, mergeDir,
+              os.path.join('..', '..', '..', 'l10n'), locale)
             self.runCommand(command, errorRegex=CompareLocalesErrorRegex,
                             cwd=absLocalesDir, env=compareLocalesEnv)
 
@@ -281,6 +283,16 @@ class MultiLocaleRepack(SimpleConfig):
             self.info("Skipping repack step.")
             return
         self.info("Repacking.")
+        baseWorkDir = self.queryVar("baseWorkDir")
+        workDir = self.queryVar("workDir")
+        localesDir = self.queryVar("localesDir")
+        absWorkDir = os.path.join(baseWorkDir, workDir)
+        absLocalesDir = os.path.join(absWorkDir, localesDir)
+
+        command = "bash -c autoconf-2.13"
+        self.runCommand(command, os.path.join(absWorkDir, 'mozilla'))
+        self.runCommand(command, os.path.join(absWorkDir, 'mozilla',
+                                              'js', 'src'))
 
     def upload(self):
         if not self.queryAction("upload"):
@@ -360,7 +372,7 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
         },{
             'repo': hgMobileRepo,
             'tag': hgMobileTag,
-            'dirName': 'mozilla/mobile',
+            'dirName': os.path.join('mozilla', 'mobile'),
         },{
             'repo': hgCompareLocalesRepo,
             'tag': hgCompareLocalesTag,
