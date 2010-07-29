@@ -1,4 +1,5 @@
 {
+  "baseWorkDir": "/scratchbox/users/cltbld/home/cltbld/build",
   "workDir": "multilocale",
   "logName": "multilocale",
   "localesFile": "mozilla/mobile/locales/maemo-locales",

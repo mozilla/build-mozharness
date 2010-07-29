@@ -199,6 +199,8 @@ class MultiLocaleRepack(SimpleConfig):
             hgMozillaTag = self.queryVar("hgMozillaTag")
             hgCompareLocalesRepo = self.queryVar("hgCompareLocalesRepo")
             hgCompareLocalesTag = self.queryVar("hgCompareLocalesTag")
+            hgConfigsRepo = self.queryVar("hgConfigsRepo")
+            hgConfigsTag = self.queryVar("hgConfigsTag")
             repos = [{
                 'repo': hgMozillaRepo,
                 'tag': hgMozillaTag,
@@ -345,6 +347,8 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
         hgCompareLocalesTag = self.queryVar("hgCompareLocalesTag")
         hgMobileRepo = self.queryVar("hgMobileRepo")
         hgMobileTag = self.queryVar("hgMobileTag")
+        hgConfigsRepo = self.queryVar("hgConfigsRepo")
+        hgConfigsTag = self.queryVar("hgConfigsTag")
         repos = [{
             'repo': hgMozillaRepo,
             'tag': hgMozillaTag,
