@@ -116,6 +116,14 @@ class BasicFunctions(object):
         self.info("Moving %s to %s" % (src, dest))
         shutil.move(src, dest)
 
+    def copyfile(self, src, dest):
+        self.info("Copying %s to %s" % (src, dest))
+        shutil.copyfile(src, dest)
+
+    def chdir(self, dirName):
+        self.log("Changing directory to %s." % dirName)
+        os.chdir(dirName)
+
     def runCommand(self, command, cwd=None, errorRegex=[], parseAtEnd=False,
                    shell=True, haltOnFailure=False, successCodes=[0]):
         """Run a command, with logging and error parsing.
@@ -343,7 +351,6 @@ class BaseLogger(object):
 
     def fatal(self, message, exitCode=-1):
         self.log(message, level='fatal', exitCode=exitCode)
-
 
 
 # SimpleFileLogger {{{1

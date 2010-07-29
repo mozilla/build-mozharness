@@ -115,7 +115,8 @@ class MultiLocaleRepack(SimpleConfig):
         doesn't inherit the logger, just has a self.logObj.
         """
         SimpleConfig.__init__(self, configOptions=self.configOptions,
-                              allActions=['clobber', 'pull', 'compareLocales',
+                              allActions=['clobber', 'pull', 'setup',
+                                          'compareLocales',
                                           'repack', 'upload'],
                               requireConfigFile=requireConfigFile)
         self.failures = []
@@ -124,6 +125,7 @@ class MultiLocaleRepack(SimpleConfig):
     def run(self):
         self.clobber()
         self.pull()
+        self.setup()
         self.compareLocales()
         self.repack()
         self.upload()
@@ -205,6 +207,10 @@ class MultiLocaleRepack(SimpleConfig):
                 'repo': hgCompareLocalesRepo,
                 'tag': hgCompareLocalesTag,
                 'dirName': 'compare-locales',
+            },{
+                'repo': hgConfigsRepo,
+                'tag': hgConfigsTag,
+                'dirName': 'configs',
             }]
 
         absL10nDir = os.path.join(absWorkDir, "l10n")
@@ -228,6 +234,19 @@ class MultiLocaleRepack(SimpleConfig):
              parentDir=absL10nDir
             )
 
+    def setup(self):
+        if not self.queryAction("setup"):
+            self.info("Skipping setup step.")
+            return
+        self.info("Setting up.")
+        workDir = self.queryVar("workDir")
+        baseWorkDir = self.queryVar("baseWorkDir")
+        absWorkDir = os.path.join(baseWorkDir, workDir)
+        mozconfig = self.queryVar("mozconfig")
+
+        self.chdir(absWorkDir)
+        self.copyfile(mozconfig, "mozilla/.mozconfig")
+
     def compareLocales(self):
         if not self.queryAction("compareLocales"):
             self.info("Skipping compare-locales step.")
@@ -235,6 +254,21 @@ class MultiLocaleRepack(SimpleConfig):
         self.info("Comparing locales.")
         baseWorkDir = self.queryVar("baseWorkDir")
         workDir = self.queryVar("workDir")
+        localesDir = self.queryVar("localesDir")
+        mergeDir = "merged"
+        absWorkDir = os.path.join(baseWorkDir, workDir)
+        absLocalesDir = os.path.join(absWorkDir, localesDir)
+        locales = self.queryLocales()
+        compareLocalesScript = os.path.join(absWorkDir,
+          "compare-locales/scripts/compare-locales")
+        # TODO
+        CompareLocalesErrorRegex = None
+
+        for locale in locales:
+            self.rmtree(os.path.join(absLocalesDir, mergeDir))
+            command = "python %s -m %s l10n.ini %s/l10n %s" % (
+              compareLocalesScript, mergeDir, absWorkDir, locale)
+            # TODO
 
     def repack(self):
         if not self.queryAction("repack"):
@@ -323,8 +357,23 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
             'repo': hgCompareLocalesRepo,
             'tag': hgCompareLocalesTag,
             'dirName': 'compare-locales',
+        },{
+            'repo': hgConfigsRepo,
+            'tag': hgConfigsTag,
+            'dirName': 'configs',
         }]
         MultiLocaleRepack.pull(self, repos=repos)
+
+    def setup(self):
+        if not self.queryAction("setup"):
+            self.info("Skipping setup step.")
+            return
+        MultiLocaleRepack.setup(self)
+
+        sboxPath = self.queryVar("sboxPath")
+        sboxTarget = self.queryVar("sboxTarget")
+        self.runCommand("%s -p sb-conf select %s" % (sboxPath, sboxTarget))
+        self.runCommand("%s -p echo -n TinderboxPrint: && sb-conf current | sed 's/ARMEL// ; s/_// ; s/-//'" % sboxPath)
 
     def processCommand(self, **kwargs):
         return kwargs

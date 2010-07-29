@@ -2,15 +2,20 @@
   "workDir": "multilocale",
   "logName": "multilocale",
   "localesFile": "mozilla/mobile/locales/maemo-locales",
+  "localesDir": "mozilla/mobile/locales",
   "ignoreLocales": ["en-US", "multi"],
   "hgMobileRepo": "http://hg.mozilla.org/mobile-browser",
   "hgMobileTag": "default",
+  "hgConfigsRepo": "http://hg.mozilla.org/build/buildbot-configs",
+  "hgConfigsTag": "default",
   "hgL10nBase": "http://hg.mozilla.org/l10n-central",
   "hgL10nTag": "default",
   "hgCompareLocalesRepo": "http://hg.mozilla.org/build/compare-locales",
   "hgCompareLocalesTag": "RELEASE_AUTOMATION",
   "hgMozillaRepo": "http://hg.mozilla.org/mozilla-central",
   "hgMozillaTag": "default",
+
+  "mozconfig": "configs/mozilla2/mobile/maemo5-gtk/mobile-browser/nightly/mozconfig",
 
   "enUsBinaryUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mobile-trunk-maemo5-gtk/en-US",
 
