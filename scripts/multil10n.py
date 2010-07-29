@@ -151,8 +151,10 @@ class MultiLocaleRepack(SimpleConfig):
         ignoreLocales = self.queryVar("ignoreLocales")
         if not locales:
             locales = []
+            baseWorkDir = self.queryVar("baseWorkDir")
             workDir = self.queryVar("workDir")
-            localesFile = os.path.join(workDir, self.queryVar("localesFile"))
+            localesFile = os.path.join(baseWorkDir, workDir,
+              self.queryVar("localesFile"))
             if localesFile.endswith(".json"):
                 localesJson = self.parseConfigFile(localesFile)
                 locales = localesJson.keys()
