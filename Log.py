@@ -125,7 +125,8 @@ class BasicFunctions(object):
         os.chdir(dirName)
 
     def runCommand(self, command, cwd=None, errorRegex=[], parseAtEnd=False,
-                   shell=True, haltOnFailure=False, successCodes=[0]):
+                   shell=True, haltOnFailure=False, successCodes=[0],
+                   env=None):
         """Run a command, with logging and error parsing.
 
         TODO: parseAtEnd, contextLines
@@ -148,7 +149,7 @@ class BasicFunctions(object):
         else:
             self.info("Running command: %s" % command)
         p = subprocess.Popen(command, shell=shell, stdout=subprocess.PIPE,
-                             cwd=cwd, stderr=subprocess.STDOUT)
+                             cwd=cwd, stderr=subprocess.STDOUT, env=env)
         stdout, stderr = p.communicate()
         lines = stdout.rstrip().splitlines()
         for line in lines:

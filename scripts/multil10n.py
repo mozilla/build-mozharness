@@ -265,15 +265,18 @@ class MultiLocaleRepack(SimpleConfig):
         locales = self.queryLocales()
         compareLocalesScript = os.path.join(absWorkDir,
           "compare-locales/scripts/compare-locales")
+        compareLocalesEnv = {
+            'PYTHONPATH': os.path.join(absWorkDir, 'compare-locales/lib')
+        }
         # TODO
-        CompareLocalesErrorRegex = None
+        CompareLocalesErrorRegex = []
 
         for locale in locales:
             self.rmtree(os.path.join(absLocalesDir, mergeDir))
             command = "python %s -m %s l10n.ini %s/l10n %s" % (
               compareLocalesScript, mergeDir, absWorkDir, locale)
             self.runCommand(command, errorRegex=CompareLocalesErrorRegex,
-                            cwd=absLocalesDir)
+                            cwd=absLocalesDir, env=compareLocalesEnv)
 
     def repack(self):
         if not self.queryAction("repack"):
