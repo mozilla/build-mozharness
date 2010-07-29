@@ -264,9 +264,8 @@ class MultiLocaleRepack(SimpleConfig):
         absLocalesDir = os.path.join(absWorkDir, localesDir)
         locales = self.queryLocales()
         compareLocalesScript = "../../../compare-locales/scripts/compare-locales"
-        compareLocalesEnv = {
-            'PYTHONPATH': '../../../compare-locales/lib'
-        }
+        compareLocalesEnv = os.environ.copy()
+        compareLocalesEnv['PYTHONPATH'] = '../../../compare-locales/lib'
         # TODO
         CompareLocalesErrorRegex = []
 

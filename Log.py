@@ -148,6 +148,8 @@ class BasicFunctions(object):
             self.info("Running command: %s in %s" % (command, cwd))
         else:
             self.info("Running command: %s" % command)
+        if env:
+            self.debug("Env: %s" % env)
         p = subprocess.Popen(command, shell=shell, stdout=subprocess.PIPE,
                              cwd=cwd, stderr=subprocess.STDOUT, env=env)
         stdout, stderr = p.communicate()
