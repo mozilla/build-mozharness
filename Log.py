@@ -147,7 +147,7 @@ class BasicFunctions(object):
          {'substr': 'THE WORLD IS ENDING', level='fatal', contextLines='20:'}
         ]
         """
-        if returnType == 'output':
+        if returnType != 'status':
             return self.getOutputFromCommand(command=command, cwd=cwd,
                                              shell=shell,
                                              haltOnFailure=haltOnFailure,
@@ -195,12 +195,7 @@ class BasicFunctions(object):
             if numErrors or p.returncode not in successCodes:
                 self.fatal("Halting on failure while running %s" % command,
                            exitCode=p.returncode)
-        # More elegant way of doing this? 'output' is to mirror backticks
-        # and status is to mirror a perl system() type call.
-        if returnType == 'status':
-            return p.returncode
-        if returnType == 'output':
-            return '\n'.join(lines)
+        return p.returncode
 
     def getOutputFromCommand(self, command, cwd=None, shell=True,
                              haltOnFailure=False, env=None):
@@ -245,12 +240,7 @@ class BasicFunctions(object):
         if haltOnFailure and returnLevel == 'error':
             self.fatal("Halting on failure while running %s" % command,
                        exitCode=p.returncode)
-        # More elegant way of doing this? 'output' is to mirror backticks
-        # and status is to mirror a perl system() type call.
-        if returnType == 'status':
-            return p.returncode
-        if returnType == 'output':
-            return '\n'.join(outputLines)
+        return '\n'.join(outputLines)
 
 
 
