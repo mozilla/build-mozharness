@@ -336,7 +336,7 @@ class MultiLocaleRepack(SimpleConfig):
 
         for locale in locales:
             self.rmtree(os.path.join(absLocalesDir, mergeDir))
-            # TODO error checking
+            # TODO more error checking
             command = "python %s -m %s l10n.ini %s %s" % (
               compareLocalesScript, mergeDir,
               os.path.join('..', '..', '..', l10nDir), locale)
@@ -515,7 +515,7 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
         debName = self.queryDebName()
 
         # TODO error checking
-        command = "make repackage deb AB_CD=multi DEB_PKG_NAME=%s" % debName
+        command = "make repackage-deb AB_CD=multi DEB_PKG_NAME=%s" % debName
         self._processCommand(command=command, cwd=absLocalesDir)
 
     def _processCommand(self, **kwargs):
@@ -528,6 +528,10 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
             command += '-d %s ' % kwargs['cwd'].replace(sboxHome, '')
             del kwargs['cwd']
         kwargs['command'] = '%s %s' % (command, kwargs['command'])
+        if 'errorRegex' in kwargs:
+            kwargs['errorRegex'] = PythonErrorRegex + kwargs['errorRegex']
+        else:
+            kwargs['errorRegex'] = PythonErrorRegex
         if 'returnType' not in kwargs or kwargs['returnType'] != 'output':
             return self.runCommand(**kwargs)
         else:
