@@ -21,5 +21,7 @@
   "enUsBinaryUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mobile-trunk-maemo5-gtk/en-US",
 
   "repackType": "deb",
-  "sboxTarget": "FREMANTLE_ARMEL"
+  "sboxTarget": "FREMANTLE_ARMEL",
+  "configureApplication": "mobile",
+  "configureTarget": "arm-linux-gnueabi"
 }

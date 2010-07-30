@@ -278,6 +278,24 @@ class MultiLocaleRepack(SimpleConfig):
             self.runCommand(command, errorRegex=CompareLocalesErrorRegex,
                             cwd=absLocalesDir, env=compareLocalesEnv)
 
+    def _configure(self):
+        # TODO figure out if this works for desktop
+        baseWorkDir = self.queryVar("baseWorkDir")
+        workDir = self.queryVar("workDir")
+        absWorkDir = os.path.join(baseWorkDir, workDir)
+        configureApplication = self.queryVar("configureApplication")
+        configureTarget = self.queryVar("configureTarget")
+
+        command = "./configure --with-l10n-base=../l10n "
+        if configureApplication:
+            command += "--enable-application=%s " % configureApplication
+        if configureTarget:
+            command += "--target=%s " % configureTarget
+        # TODO
+        ConfigureErrorRegex = []
+        self.processCommand(command, errorRegex=ConfigureErrorRegex,
+                            cwd=os.path.join(absWorkDir, "mozilla"))
+
     def repack(self):
         if not self.queryAction("repack"):
             self.info("Skipping repack step.")
@@ -294,6 +312,8 @@ class MultiLocaleRepack(SimpleConfig):
         self.runCommand(command, os.path.join(absWorkDir, 'mozilla',
                                               'js', 'src'))
 
+        self._configure()
+
     def upload(self):
         if not self.queryAction("upload"):
             self.info("Skipping upload step.")
@@ -301,7 +321,7 @@ class MultiLocaleRepack(SimpleConfig):
         self.info("Uploading.")
 
     def processCommand(self, **kwargs):
-        return kwargs
+        return self.runCommand(**kwargs)
 
 # MaemoMultiLocaleRepack {{{1
 class MaemoMultiLocaleRepack(MultiLocaleRepack):
@@ -326,7 +346,7 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
      {"action": "store",
       "dest": "sboxHome",
       "type": "string",
-      "default": "/scratchbox/users/cltbld/home/cltbld",
+      "default": "/scratchbox/users/cltbld/home/cltbld/",
       "help": "Specify the scratchbox user home directory"
      }
     ],[
@@ -396,7 +416,14 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
         self.runCommand("%s -p \"echo -n TinderboxPrint: && sb-conf current | sed 's/ARMEL// ; s/_// ; s/-//'\"" % sboxPath)
 
     def processCommand(self, **kwargs):
-        return kwargs
+        sboxPath = self.queryVar("sboxPath")
+        sboxHome = self.queryVar("sboxHome")
+        command = '%s -p ' % sboxPath
+        if 'cwd' in kwargs:
+            command += '-d %s ' % kwargs['cwd'].replace(sboxHome, '')
+            del kwargs['cwd']
+        kwargs['command'] = '%s %s' % (command, kwargs['command'])
+        return self.runCommand(**kwargs)
 
 
 
