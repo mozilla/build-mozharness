@@ -293,7 +293,7 @@ class MultiLocaleRepack(SimpleConfig):
             command += "--target=%s " % configureTarget
         # TODO
         ConfigureErrorRegex = []
-        self.processCommand(command, errorRegex=ConfigureErrorRegex,
+        self.processCommand(command=command, errorRegex=ConfigureErrorRegex,
                             cwd=os.path.join(absWorkDir, "mozilla"))
 
     def repack(self):
