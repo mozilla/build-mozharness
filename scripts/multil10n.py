@@ -304,15 +304,21 @@ class MultiLocaleRepack(SimpleConfig):
         baseWorkDir = self.queryVar("baseWorkDir")
         workDir = self.queryVar("workDir")
         localesDir = self.queryVar("localesDir")
+        enUsBinaryUrl = self.queryVar("enUsBinaryUrl")
         absWorkDir = os.path.join(baseWorkDir, workDir)
         absLocalesDir = os.path.join(absWorkDir, localesDir)
 
+        # TODO error checking
         command = "bash -c autoconf-2.13"
-        self.runCommand(command, os.path.join(absWorkDir, 'mozilla'))
-        self.runCommand(command, os.path.join(absWorkDir, 'mozilla',
+        self.runCommand(command, cwd=os.path.join(absWorkDir, 'mozilla'))
+        self.runCommand(command, cwd=os.path.join(absWorkDir, 'mozilla',
                                               'js', 'src'))
-
         self._configure()
+        command = "make"
+        self.processCommand(command=command,
+                            cwd=os.path.join(absWorkDir, "mozilla", "config"))
+        command = "make wget-en-US EN_US_BINARY_URL=%s" % enUsBinaryUrl
+        self.processCommand(command=command, cwd=absLocalesDir)
 
     def upload(self):
         if not self.queryAction("upload"):

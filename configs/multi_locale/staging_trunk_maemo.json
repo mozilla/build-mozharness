@@ -18,7 +18,7 @@
 
   "mozconfig": "configs/mozilla2/mobile/maemo5-gtk/mobile-browser/nightly/mozconfig",
 
-  "enUsBinaryUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mobile-trunk-maemo5-gtk/en-US",
+  "enUsBinaryUrl": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mozilla-central-maemo5-gtk/en-US",
 
   "repackType": "deb",
   "sboxTarget": "FREMANTLE_ARMEL",
