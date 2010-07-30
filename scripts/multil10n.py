@@ -37,13 +37,11 @@ class MultiLocaleRepack(SimpleConfig):
       "help": "Specify the locale(s) to repack"
      }
     ],[
-     ["--repackType",],
+     ["--onlyPullLocales",],
      {"action": "store",
-      "dest": "repackType",
-      "type": "choice",
-      "default": "installer",
-      "choices": ["installer", "deb"],
-      "help": "Choose which type of repack"
+      "dest": "onlyPullLocales",
+      "type": "string",
+      "help": "Only do the locale portion of the pull step"
      }
     ],[
      ["--mergeLocales",],
@@ -222,13 +220,14 @@ class MultiLocaleRepack(SimpleConfig):
 
         # Chicken/egg: need to pull repos to determine locales.
         # Solve by pulling non-locale repos first.
-        for repoDict in repos:
-            self._hgPull(
-             repo=repoDict['repo'],
-             tag=repoDict.get('tag', 'default'),
-             dirName=repoDict.get('dirName', None),
-             parentDir=absWorkDir
-            )
+        if not self.queryVar("onlyPullLocales"):
+            for repoDict in repos:
+                self._hgPull(
+                 repo=repoDict['repo'],
+                 tag=repoDict.get('tag', 'default'),
+                 dirName=repoDict.get('dirName', None),
+                 parentDir=absWorkDir
+                )
 
         locales = self.queryLocales()
         for locale in locales:
@@ -263,14 +262,15 @@ class MultiLocaleRepack(SimpleConfig):
                                                   'js', 'src'))
         self._configure()
         command = "make"
-        self.processCommand(command=command,
+        self._processCommand(command=command,
                             cwd=os.path.join(absWorkDir, "mozilla", "config"))
         command = "make wget-en-US EN_US_BINARY_URL=%s" % enUsBinaryUrl
-        self.processCommand(command=command, cwd=absLocalesDir)
+        self._processCommand(command=command, cwd=absLocalesDir)
 
         self._getInstaller()
         command = "make unpack"
-        self.processCommand(command=command, cwd=absLocalesDir)
+        self._processCommand(command=command, cwd=absLocalesDir)
+        self._updateRevisions()
 
     def compareLocales(self):
         if not self.queryAction("compareLocales"):
@@ -314,10 +314,14 @@ class MultiLocaleRepack(SimpleConfig):
             command += "--target=%s " % configureTarget
         # TODO
         ConfigureErrorRegex = []
-        self.processCommand(command=command, errorRegex=ConfigureErrorRegex,
-                            cwd=os.path.join(absWorkDir, "mozilla"))
+        self._processCommand(command=command, errorRegex=ConfigureErrorRegex,
+                             cwd=os.path.join(absWorkDir, "mozilla"))
 
     def _getInstaller(self):
+        # TODO
+        pass
+
+    def _updateRevisions(self):
         # TODO
         pass
 
@@ -326,6 +330,7 @@ class MultiLocaleRepack(SimpleConfig):
             self.info("Skipping repack step.")
             return
         self.info("Repacking.")
+        # TODO
 
     def upload(self):
         if not self.queryAction("upload"):
@@ -333,7 +338,7 @@ class MultiLocaleRepack(SimpleConfig):
             return
         self.info("Uploading.")
 
-    def processCommand(self, **kwargs):
+    def _processCommand(self, **kwargs):
         return self.runCommand(**kwargs)
 
 # MaemoMultiLocaleRepack {{{1
@@ -440,7 +445,7 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
         enUsBinaryUrl = self.queryVar("enUsBinaryUrl")
 
         command = "make wget-DEB_PKG_NAME EN_US_BINARY_URL=%s" % enUsBinaryUrl
-        self.debName = self.processCommand(command=command, cwd=absLocalesDir,
+        self.debName = self._processCommand(command=command, cwd=absLocalesDir,
                                            haltOnFailure=True,
                                            returnType='output')
         return self.debName
@@ -456,9 +461,36 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
         debName = self.queryDebName()
 
         command = "make wget-deb EN_US_BINARY_URL=%s DEB_PKG_NAME=%s DEB_BUILD_ARCH=armel" % (enUsBinaryUrl, debName)
-        self.processCommand(command=command, cwd=absLocalesDir)
+        self._processCommand(command=command, cwd=absLocalesDir)
 
-    def processCommand(self, **kwargs):
+    def _updateRevisions(self):
+        baseWorkDir = self.queryVar("baseWorkDir")
+        workDir = self.queryVar("workDir")
+        localesDir = self.queryVar("localesDir")
+        absWorkDir = os.path.join(baseWorkDir, workDir)
+        absLocalesDir = os.path.join(absWorkDir, localesDir)
+
+        command = "make ident"
+        output = self._processCommand(command=command, cwd=absLocalesDir,
+                                      returnType='output')
+        for line in output.split('\n'):
+            if line.startswith('gecko_revision '):
+                gecko_revision = line.split(' ')[-1]
+            elif line.startswith('fennec_revision '):
+                fennec_revision = line.split(' ')[-1]
+        command = "hg up -C -r %s" % gecko_revision
+        self.runCommand(command, cwd=os.path.join(absWorkDir, "mozilla"))
+        command = "hg up -C -r %s" % fennec_revision
+        self.runCommand(command, cwd=os.path.join(absWorkDir, "mozilla",
+                                                  "mobile"))
+
+    def repack(self):
+        if not self.queryAction("repack"):
+            self.info("Skipping repack step.")
+            return
+        self.info("Repacking.")
+
+    def _processCommand(self, **kwargs):
         sboxPath = self.queryVar("sboxPath")
         sboxHome = self.queryVar("sboxHome")
         command = '%s ' % sboxPath
