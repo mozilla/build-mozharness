@@ -37,13 +37,6 @@ class MultiLocaleRepack(SimpleConfig):
       "help": "Specify the locale(s) to repack"
      }
     ],[
-     ["--onlyPullLocales",],
-     {"action": "store",
-      "dest": "onlyPullLocales",
-      "type": "string",
-      "help": "Only do the locale portion of the pull step"
-     }
-    ],[
      ["--mergeLocales",],
      {"action": "store_true",
       "dest": "mergeLocales",
@@ -337,6 +330,8 @@ class MultiLocaleRepack(SimpleConfig):
             self.runCommand(command, errorRegex=CompareLocalesErrorRegex,
                             cwd=absLocalesDir, env=compareLocalesEnv)
             # aki
+            # /scratchbox/moz_scratchbox -p -d build/maemo-1.9.2-nightly/mozilla-1.9.2/objdir/mobile/locales make chrome-ru LOCALE_MERGEDIR=/home/cltbld/build/maemo-1.9.2-nightly/mozilla-1.9.2/objdir/merged
+            # make repackage-deb AB_CD=$(AB_CD) DEB_PKG_NAME=$(DEB_PKG_NAME)
 
     def upload(self):
         if not self.queryAction("upload"):
