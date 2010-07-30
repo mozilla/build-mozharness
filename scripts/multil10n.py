@@ -528,11 +528,11 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
             command += '-d %s ' % kwargs['cwd'].replace(sboxHome, '')
             del kwargs['cwd']
         kwargs['command'] = '%s %s' % (command, kwargs['command'])
-        if 'errorRegex' in kwargs:
-            kwargs['errorRegex'] = PythonErrorRegex + kwargs['errorRegex']
-        else:
-            kwargs['errorRegex'] = PythonErrorRegex
         if 'returnType' not in kwargs or kwargs['returnType'] != 'output':
+            if 'errorRegex' in kwargs:
+                kwargs['errorRegex'] = PythonErrorRegex + kwargs['errorRegex']
+            else:
+                kwargs['errorRegex'] = PythonErrorRegex
             return self.runCommand(**kwargs)
         else:
             del(kwargs['returnType'])
