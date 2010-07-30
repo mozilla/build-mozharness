@@ -232,6 +232,7 @@ class BaseConfig(object):
             return True
 
     def queryVar(self, varName, default=None):
+        #TODO return self.queryVARNAME if varName in self.specialVars ?
         if varName not in self._config or not self._config[varName]:
             return default
         else:

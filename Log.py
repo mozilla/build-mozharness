@@ -134,7 +134,7 @@ class BasicFunctions(object):
 
     def runCommand(self, command, cwd=None, errorRegex=[], parseAtEnd=False,
                    shell=True, haltOnFailure=False, successCodes=[0],
-                   env=None):
+                   env=None, returnType='status'):
         """Run a command, with logging and error parsing.
 
         TODO: parseAtEnd, contextLines
@@ -190,7 +190,12 @@ class BasicFunctions(object):
             if numErrors or p.returncode not in successCodes:
                 self.fatal("Halting on failure while running %s" % command,
                            exitCode=p.returncode)
-        return p.returncode                             
+        # More elegant way of doing this? 'output' is to mirror backticks
+        # and status is to mirror a perl system() type call.
+        if returnType == 'status':
+            return p.returncode
+        if returnType == 'output':
+            return '\n'.join(lines)
 
 
 
