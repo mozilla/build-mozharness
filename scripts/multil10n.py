@@ -73,7 +73,7 @@ class MultiLocaleRepack(SimpleConfig):
     ],[
      ["--mozillaDir",],
      {"action": "store",
-      "dest": "mozilladir",
+      "dest": "mozillaDir",
       "type": "string",
       "default": "mozilla",
       "help": "Specify the Mozilla dir name"
@@ -91,6 +91,14 @@ class MultiLocaleRepack(SimpleConfig):
       "dest": "hgL10nTag",
       "type": "string",
       "help": "Specify the L10n tag"
+     }
+    ],[
+     ["--l10nDir",],
+     {"action": "store",
+      "dest": "l10nDir",
+      "type": "string",
+      "default": "l10n",
+      "help": "Specify the l10n dir name"
      }
     ],[
      ["--compareLocalesRepo",],
@@ -189,6 +197,7 @@ class MultiLocaleRepack(SimpleConfig):
         absWorkDir = os.path.join(baseWorkDir, workDir)
         hgL10nBase = self.queryVar("hgL10nBase")
         hgL10nTag = self.queryVar("hgL10nTag")
+        l10nDir = self.queryVar("l10nDir")
         if not repos:
             hgMozillaRepo = self.queryVar("hgMozillaRepo")
             hgMozillaTag = self.queryVar("hgMozillaTag")
@@ -229,7 +238,7 @@ class MultiLocaleRepack(SimpleConfig):
             self.info("Skipping pull locales step.")
         else:
             self.info("Pulling locales.")
-            absL10nDir = os.path.join(absWorkDir, "l10n")
+            absL10nDir = os.path.join(absWorkDir, l10nDir)
             self.mkdir_p(absL10nDir)
             locales = self.queryLocales()
             for locale in locales:
@@ -284,8 +293,9 @@ class MultiLocaleRepack(SimpleConfig):
         configureApplication = self.queryVar("configureApplication")
         configureTarget = self.queryVar("configureTarget")
         mozillaDir = self.queryVar("mozillaDir")
+        l10nDir = self.queryVar("l10nDir")
 
-        command = "./configure --with-l10n-base=../l10n "
+        command = "./configure --with-l10n-base=../%s " % l10nDir
         if configureApplication:
             command += "--enable-application=%s " % configureApplication
         if configureTarget:
@@ -311,6 +321,7 @@ class MultiLocaleRepack(SimpleConfig):
         baseWorkDir = self.queryVar("baseWorkDir")
         workDir = self.queryVar("workDir")
         localesDir = self.queryVar("localesDir")
+        l10nDir = self.queryVar("l10nDir")
         mergeDir = "merged"
         absWorkDir = os.path.join(baseWorkDir, workDir)
         absLocalesDir = os.path.join(absWorkDir, localesDir)
@@ -326,7 +337,7 @@ class MultiLocaleRepack(SimpleConfig):
             self.rmtree(os.path.join(absLocalesDir, mergeDir))
             command = "python %s -m %s l10n.ini %s %s" % (
               compareLocalesScript, mergeDir,
-              os.path.join('..', '..', '..', 'l10n'), locale)
+              os.path.join('..', '..', '..', l10nDir), locale)
             self.runCommand(command, errorRegex=CompareLocalesErrorRegex,
                             cwd=absLocalesDir, env=compareLocalesEnv)
             # aki
@@ -469,6 +480,7 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
         baseWorkDir = self.queryVar("baseWorkDir")
         workDir = self.queryVar("workDir")
         localesDir = self.queryVar("localesDir")
+        mozillaDir = self.queryVar("mozillaDir")
         absWorkDir = os.path.join(baseWorkDir, workDir)
         absLocalesDir = os.path.join(absWorkDir, localesDir)
 

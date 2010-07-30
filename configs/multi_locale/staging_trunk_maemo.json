@@ -11,6 +11,7 @@
   "hgConfigsTag": "default",
   "hgL10nBase": "http://hg.mozilla.org/l10n-central",
   "hgL10nTag": "default",
+  "l10nDir": "l10n-central",
   "hgCompareLocalesRepo": "http://hg.mozilla.org/build/compare-locales",
   "hgCompareLocalesTag": "RELEASE_AUTOMATION",
   "hgMozillaRepo": "http://hg.mozilla.org/mozilla-central",
