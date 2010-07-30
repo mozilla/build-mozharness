@@ -322,6 +322,7 @@ class MultiLocaleRepack(SimpleConfig):
         workDir = self.queryVar("workDir")
         localesDir = self.queryVar("localesDir")
         l10nDir = self.queryVar("l10nDir")
+        mergeLocales = self.queryVar("mergeLocales")
         mergeDir = "merged"
         absWorkDir = os.path.join(baseWorkDir, workDir)
         absLocalesDir = os.path.join(absWorkDir, localesDir)
@@ -335,14 +336,21 @@ class MultiLocaleRepack(SimpleConfig):
 
         for locale in locales:
             self.rmtree(os.path.join(absLocalesDir, mergeDir))
+            # TODO error checking
             command = "python %s -m %s l10n.ini %s %s" % (
               compareLocalesScript, mergeDir,
               os.path.join('..', '..', '..', l10nDir), locale)
             self.runCommand(command, errorRegex=CompareLocalesErrorRegex,
                             cwd=absLocalesDir, env=compareLocalesEnv)
-            # aki
-            # /scratchbox/moz_scratchbox -p -d build/maemo-1.9.2-nightly/mozilla-1.9.2/objdir/mobile/locales make chrome-ru LOCALE_MERGEDIR=/home/cltbld/build/maemo-1.9.2-nightly/mozilla-1.9.2/objdir/merged
-            # make repackage-deb AB_CD=$(AB_CD) DEB_PKG_NAME=$(DEB_PKG_NAME)
+            command = "make chrome-%s" % locale
+            if mergeLocales:
+                command += " LOCALE_MERGEDIR=%s" % mergeDir
+            self._processCommand(command=command, cwd=absLocalesDir)
+        self._repackage()
+
+    def _repackage(self):
+        # TODO
+        pass
 
     def upload(self):
         if not self.queryAction("upload"):
@@ -498,11 +506,17 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
         self.runCommand(command, cwd=os.path.join(absWorkDir, mozillaDir,
                                                   "mobile"))
 
-    def repack(self):
-        if not self.queryAction("repack"):
-            self.info("Skipping repack step.")
-            return
-        self.info("Repacking.")
+    def _repackage(self):
+        baseWorkDir = self.queryVar("baseWorkDir")
+        workDir = self.queryVar("workDir")
+        localesDir = self.queryVar("localesDir")
+        absWorkDir = os.path.join(baseWorkDir, workDir)
+        absLocalesDir = os.path.join(absWorkDir, localesDir)
+        debName = self.queryDebName()
+
+        # TODO error checking
+        command = "make repackage deb AB_CD=multi DEB_PKG_NAME=%s" % debName
+        self._processCommand(command=command, cwd=absLocalesDir)
 
     def _processCommand(self, **kwargs):
         sboxPath = self.queryVar("sboxPath")
