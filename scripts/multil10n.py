@@ -457,12 +457,18 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
     def processCommand(self, **kwargs):
         sboxPath = self.queryVar("sboxPath")
         sboxHome = self.queryVar("sboxHome")
-        command = '%s -p ' % sboxPath
+        command = '%s ' % sboxPath
+        if 'returnType' not in kwargs or kwargs['returnType'] != 'output':
+            command += '-p '
         if 'cwd' in kwargs:
             command += '-d %s ' % kwargs['cwd'].replace(sboxHome, '')
             del kwargs['cwd']
         kwargs['command'] = '%s %s' % (command, kwargs['command'])
-        return self.runCommand(**kwargs)
+        if 'returnType' not in kwargs or kwargs['returnType'] != 'output':
+            return self.runCommand(**kwargs)
+        else:
+            del(kwargs['returnType'])
+            return self.getOutputFromCommand(**kwargs)
 
 
 

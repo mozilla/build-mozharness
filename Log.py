@@ -242,10 +242,9 @@ class BasicFunctions(object):
         elif p.returncode:
             returnLevel = 'error'
         self.log("Return code: %d" % p.returncode, level=returnLevel)
-        if haltOnFailure:
-            if numErrors or p.returncode not in successCodes:
-                self.fatal("Halting on failure while running %s" % command,
-                           exitCode=p.returncode)
+        if haltOnFailure and returnLevel == 'error':
+            self.fatal("Halting on failure while running %s" % command,
+                       exitCode=p.returncode)
         # More elegant way of doing this? 'output' is to mirror backticks
         # and status is to mirror a perl system() type call.
         if returnType == 'status':
