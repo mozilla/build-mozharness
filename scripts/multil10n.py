@@ -344,7 +344,7 @@ class MultiLocaleRepack(SimpleConfig):
                             cwd=absLocalesDir, env=compareLocalesEnv)
             command = "make chrome-%s" % locale
             if mergeLocales:
-                command += " LOCALE_MERGEDIR=%s" % mergeDir
+                command += " LOCALE_MERGEDIR=%s" % os.path.join(absLocalesDir, mergeDir)
             self._processCommand(command=command, cwd=absLocalesDir)
         self._repackage()
 
@@ -385,6 +385,14 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
       "dest": "sboxHome",
       "type": "string",
       "default": "/scratchbox/users/cltbld/home/cltbld/",
+      "help": "Specify the scratchbox user home directory"
+     }
+    ],[
+     ["--sboxRoot",],
+     {"action": "store",
+      "dest": "sboxRoot",
+      "type": "string",
+      "default": "/scratchbox/users/cltbld",
       "help": "Specify the scratchbox user home directory"
      }
     ],[
@@ -521,13 +529,14 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
     def _processCommand(self, **kwargs):
         sboxPath = self.queryVar("sboxPath")
         sboxHome = self.queryVar("sboxHome")
+        sboxRoot = self.queryVar("sboxRoot")
         command = '%s ' % sboxPath
         if 'returnType' not in kwargs or kwargs['returnType'] != 'output':
             command += '-p '
         if 'cwd' in kwargs:
             command += '-d %s ' % kwargs['cwd'].replace(sboxHome, '')
             del kwargs['cwd']
-        kwargs['command'] = '%s %s' % (command, kwargs['command'])
+        kwargs['command'] = '%s %s' % (command, kwargs['command'].replace(sboxRoot, ''))
         if 'returnType' not in kwargs or kwargs['returnType'] != 'output':
             if 'errorRegex' in kwargs:
                 kwargs['errorRegex'] = PythonErrorRegex + kwargs['errorRegex']
