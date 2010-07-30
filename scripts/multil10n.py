@@ -342,10 +342,11 @@ class MultiLocaleRepack(SimpleConfig):
               os.path.join('..', '..', '..', l10nDir), locale)
             self.runCommand(command, errorRegex=CompareLocalesErrorRegex,
                             cwd=absLocalesDir, env=compareLocalesEnv)
-            command = "make chrome-%s" % locale
-            if mergeLocales:
-                command += " LOCALE_MERGEDIR=%s" % os.path.join(absLocalesDir, mergeDir)
-            self._processCommand(command=command, cwd=absLocalesDir)
+            for step in ("chrome", "libs"):
+                command = "make %s-%s" % (step, locale)
+                if mergeLocales:
+                    command += " LOCALE_MERGEDIR=%s" % os.path.join(absLocalesDir, mergeDir)
+                self._processCommand(command=command, cwd=absLocalesDir)
         self._repackage()
 
     def _repackage(self):

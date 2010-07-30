@@ -16,6 +16,7 @@
   "hgCompareLocalesTag": "RELEASE_AUTOMATION",
   "hgMozillaRepo": "http://hg.mozilla.org/mozilla-central",
   "hgMozillaTag": "default",
+  "mergeLocales": "True",
   "mozillaDir": "mozilla-central",
 
   "mozconfig": "configs/mozilla2/mobile/maemo5-gtk/mobile-browser/nightly/mozconfig",
