@@ -2,8 +2,8 @@
   "baseWorkDir": "/scratchbox/users/cltbld/home/cltbld/build",
   "workDir": "multilocale",
   "logName": "multilocale",
-  "localesFile": "mozilla/mobile/locales/maemo-locales",
-  "localesDir": "mozilla/mobile/locales",
+  "localesFile": "mozilla-central/mobile/locales/maemo-locales",
+  "localesDir": "mozilla-central/mobile/locales",
   "ignoreLocales": ["en-US", "multi"],
   "hgMobileRepo": "http://hg.mozilla.org/mobile-browser",
   "hgMobileTag": "default",
@@ -15,6 +15,7 @@
   "hgCompareLocalesTag": "RELEASE_AUTOMATION",
   "hgMozillaRepo": "http://hg.mozilla.org/mozilla-central",
   "hgMozillaTag": "default",
+  "mozillaDir": "mozilla-central",
 
   "mozconfig": "configs/mozilla2/mobile/maemo5-gtk/mobile-browser/nightly/mozconfig",
 

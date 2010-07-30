@@ -78,6 +78,14 @@ class MultiLocaleRepack(SimpleConfig):
       "help": "Specify the Mozilla tag"
      }
     ],[
+     ["--mozillaDir",],
+     {"action": "store",
+      "dest": "mozilladir",
+      "type": "string",
+      "default": "mozilla",
+      "help": "Specify the Mozilla dir name"
+     }
+    ],[
      ["--l10nBase",],
      {"action": "store",
       "dest": "hgL10nBase",
@@ -113,9 +121,8 @@ class MultiLocaleRepack(SimpleConfig):
         doesn't inherit the logger, just has a self.logObj.
         """
         SimpleConfig.__init__(self, configOptions=self.configOptions,
-                              allActions=['clobber', 'pull', 'setup',
-                                          'compareLocales',
-                                          'repack', 'upload'],
+                              allActions=['clobber', 'pull', 'pullLocales',
+                                          'setup', 'repack', 'upload'],
                               requireConfigFile=requireConfigFile)
         self.failures = []
         self.locales = None
@@ -124,7 +131,6 @@ class MultiLocaleRepack(SimpleConfig):
         self.clobber()
         self.pull()
         self.setup()
-        self.compareLocales()
         self.repack()
         self.upload()
         if self.failures:
@@ -185,10 +191,6 @@ class MultiLocaleRepack(SimpleConfig):
                         errorRegex=HgErrorRegex)
 
     def pull(self, repos=None):
-        if not self.queryAction('pull'):
-            self.info("Skipping pull step.")
-            return
-        self.info("Pulling.")
         baseWorkDir = self.queryVar("baseWorkDir")
         workDir = self.queryVar("workDir")
         absWorkDir = os.path.join(baseWorkDir, workDir)
@@ -197,6 +199,7 @@ class MultiLocaleRepack(SimpleConfig):
         if not repos:
             hgMozillaRepo = self.queryVar("hgMozillaRepo")
             hgMozillaTag = self.queryVar("hgMozillaTag")
+            mozillaDir = self.queryVar("mozillaDir")
             hgCompareLocalesRepo = self.queryVar("hgCompareLocalesRepo")
             hgCompareLocalesTag = self.queryVar("hgCompareLocalesTag")
             hgConfigsRepo = self.queryVar("hgConfigsRepo")
@@ -204,7 +207,7 @@ class MultiLocaleRepack(SimpleConfig):
             repos = [{
                 'repo': hgMozillaRepo,
                 'tag': hgMozillaTag,
-                'dirName': 'mozilla',
+                'dirName': mozillaDir,
             },{
                 'repo': hgCompareLocalesRepo,
                 'tag': hgCompareLocalesTag,
@@ -215,12 +218,12 @@ class MultiLocaleRepack(SimpleConfig):
                 'dirName': 'configs',
             }]
 
-        absL10nDir = os.path.join(absWorkDir, "l10n")
-        self.mkdir_p(absL10nDir)
-
         # Chicken/egg: need to pull repos to determine locales.
         # Solve by pulling non-locale repos first.
-        if not self.queryVar("onlyPullLocales"):
+        if not self.queryAction('pull'):
+            self.info("Skipping pull step.")
+        else:
+            self.info("Pulling.")
             for repoDict in repos:
                 self._hgPull(
                  repo=repoDict['repo'],
@@ -229,13 +232,19 @@ class MultiLocaleRepack(SimpleConfig):
                  parentDir=absWorkDir
                 )
 
-        locales = self.queryLocales()
-        for locale in locales:
-            self._hgPull(
-             repo=os.path.join(hgL10nBase, locale),
-             tag=hgL10nTag,
-             parentDir=absL10nDir
-            )
+        if not self.queryAction('pullLocales'):
+            self.info("Skipping pull locales step.")
+        else:
+            self.info("Pulling locales.")
+            absL10nDir = os.path.join(absWorkDir, "l10n")
+            self.mkdir_p(absL10nDir)
+            locales = self.queryLocales()
+            for locale in locales:
+                self._hgPull(
+                 repo=os.path.join(hgL10nBase, locale),
+                 tag=hgL10nTag,
+                 parentDir=absL10nDir
+                )
 
     def setup(self, checkAction=True):
         if checkAction:
@@ -249,21 +258,22 @@ class MultiLocaleRepack(SimpleConfig):
         mozconfig = self.queryVar("mozconfig")
         localesDir = self.queryVar("localesDir")
         enUsBinaryUrl = self.queryVar("enUsBinaryUrl")
+        mozillaDir = self.queryVar("mozillaDir")
         absWorkDir = os.path.join(baseWorkDir, workDir)
         absLocalesDir = os.path.join(absWorkDir, localesDir)
 
         self.chdir(absWorkDir)
-        self.copyfile(mozconfig, os.path.join("mozilla", ".mozconfig"))
+        self.copyfile(mozconfig, os.path.join(mozillaDir, ".mozconfig"))
 
         # TODO error checking
         command = "bash -c autoconf-2.13"
-        self.runCommand(command, cwd=os.path.join(absWorkDir, 'mozilla'))
-        self.runCommand(command, cwd=os.path.join(absWorkDir, 'mozilla',
+        self.runCommand(command, cwd=os.path.join(absWorkDir, mozillaDir))
+        self.runCommand(command, cwd=os.path.join(absWorkDir, mozillaDir,
                                                   'js', 'src'))
         self._configure()
         command = "make"
         self._processCommand(command=command,
-                            cwd=os.path.join(absWorkDir, "mozilla", "config"))
+                            cwd=os.path.join(absWorkDir, mozillaDir, "config"))
         command = "make wget-en-US EN_US_BINARY_URL=%s" % enUsBinaryUrl
         self._processCommand(command=command, cwd=absLocalesDir)
 
@@ -272,11 +282,39 @@ class MultiLocaleRepack(SimpleConfig):
         self._processCommand(command=command, cwd=absLocalesDir)
         self._updateRevisions()
 
-    def compareLocales(self):
-        if not self.queryAction("compareLocales"):
-            self.info("Skipping compare-locales step.")
+
+    def _configure(self):
+        # TODO figure out if this works for desktop
+        baseWorkDir = self.queryVar("baseWorkDir")
+        workDir = self.queryVar("workDir")
+        absWorkDir = os.path.join(baseWorkDir, workDir)
+        configureApplication = self.queryVar("configureApplication")
+        configureTarget = self.queryVar("configureTarget")
+        mozillaDir = self.queryVar("mozillaDir")
+
+        command = "./configure --with-l10n-base=../l10n "
+        if configureApplication:
+            command += "--enable-application=%s " % configureApplication
+        if configureTarget:
+            command += "--target=%s " % configureTarget
+        # TODO
+        ConfigureErrorRegex = []
+        self._processCommand(command=command, errorRegex=ConfigureErrorRegex,
+                             cwd=os.path.join(absWorkDir, mozillaDir))
+
+    def _getInstaller(self):
+        # TODO
+        pass
+
+    def _updateRevisions(self):
+        # TODO
+        pass
+
+    def repack(self):
+        if not self.queryAction("repack"):
+            self.info("Skipping repack step.")
             return
-        self.info("Comparing locales.")
+        self.info("Repacking.")
         baseWorkDir = self.queryVar("baseWorkDir")
         workDir = self.queryVar("workDir")
         localesDir = self.queryVar("localesDir")
@@ -298,39 +336,7 @@ class MultiLocaleRepack(SimpleConfig):
               os.path.join('..', '..', '..', 'l10n'), locale)
             self.runCommand(command, errorRegex=CompareLocalesErrorRegex,
                             cwd=absLocalesDir, env=compareLocalesEnv)
-
-    def _configure(self):
-        # TODO figure out if this works for desktop
-        baseWorkDir = self.queryVar("baseWorkDir")
-        workDir = self.queryVar("workDir")
-        absWorkDir = os.path.join(baseWorkDir, workDir)
-        configureApplication = self.queryVar("configureApplication")
-        configureTarget = self.queryVar("configureTarget")
-
-        command = "./configure --with-l10n-base=../l10n "
-        if configureApplication:
-            command += "--enable-application=%s " % configureApplication
-        if configureTarget:
-            command += "--target=%s " % configureTarget
-        # TODO
-        ConfigureErrorRegex = []
-        self._processCommand(command=command, errorRegex=ConfigureErrorRegex,
-                             cwd=os.path.join(absWorkDir, "mozilla"))
-
-    def _getInstaller(self):
-        # TODO
-        pass
-
-    def _updateRevisions(self):
-        # TODO
-        pass
-
-    def repack(self):
-        if not self.queryAction("repack"):
-            self.info("Skipping repack step.")
-            return
-        self.info("Repacking.")
-        # TODO
+            # aki
 
     def upload(self):
         if not self.queryAction("upload"):
@@ -398,6 +404,7 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
     def pull(self):
         hgMozillaRepo = self.queryVar("hgMozillaRepo")
         hgMozillaTag = self.queryVar("hgMozillaTag")
+        mozillaDir = self.queryVar("mozillaDir")
         hgCompareLocalesRepo = self.queryVar("hgCompareLocalesRepo")
         hgCompareLocalesTag = self.queryVar("hgCompareLocalesTag")
         hgMobileRepo = self.queryVar("hgMobileRepo")
@@ -407,11 +414,11 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
         repos = [{
             'repo': hgMozillaRepo,
             'tag': hgMozillaTag,
-            'dirName': 'mozilla',
+            'dirName': mozillaDir,
         },{
             'repo': hgMobileRepo,
             'tag': hgMobileTag,
-            'dirName': os.path.join('mozilla', 'mobile'),
+            'dirName': os.path.join(mozillaDir, 'mobile'),
         },{
             'repo': hgCompareLocalesRepo,
             'tag': hgCompareLocalesTag,
@@ -479,9 +486,9 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
             elif line.startswith('fennec_revision '):
                 fennec_revision = line.split(' ')[-1]
         command = "hg up -C -r %s" % gecko_revision
-        self.runCommand(command, cwd=os.path.join(absWorkDir, "mozilla"))
+        self.runCommand(command, cwd=os.path.join(absWorkDir, mozillaDir))
         command = "hg up -C -r %s" % fennec_revision
-        self.runCommand(command, cwd=os.path.join(absWorkDir, "mozilla",
+        self.runCommand(command, cwd=os.path.join(absWorkDir, mozillaDir,
                                                   "mobile"))
 
     def repack(self):
