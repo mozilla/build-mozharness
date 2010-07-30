@@ -148,7 +148,7 @@ class BasicFunctions(object):
         ]
         """
         if returnType == 'output':
-            return self.getOutputFromCommand(self, command, cwd=cwd,
+            return self.getOutputFromCommand(command=command, cwd=cwd,
                                              shell=shell,
                                              haltOnFailure=haltOnFailure,
                                              env=env)

@@ -436,12 +436,10 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
         enUsBinaryUrl = self.queryVar("enUsBinaryUrl")
 
         command = "make wget-DEB_PKG_NAME EN_US_BINARY_URL=%s" % enUsBinaryUrl
-        debName = self.processCommand(command=command, cwd=absLocalesDir,
-                                      returnType='output')
-        if debName:
-            self.debName = debName
-            return self.debName
-        # error?
+        self.debName = self.processCommand(command=command, cwd=absLocalesDir,
+                                           haltOnFailure=True,
+                                           returnType='output')
+        return self.debName
 
     def _getInstaller(self):
         baseWorkDir = self.queryVar("baseWorkDir")
