@@ -238,11 +238,13 @@ class MultiLocaleRepack(SimpleConfig):
              parentDir=absL10nDir
             )
 
-    def setup(self):
-        if not self.queryAction("setup"):
-            self.info("Skipping setup step.")
-            return
-        self.info("Setting up.")
+    def setup(self, checkAction=True):
+        if checkAction:
+            # We haven't been called from a child object.
+            if not self.queryAction("setup"):
+                self.info("Skipping setup step.")
+                return
+            self.info("Setting up.")
         workDir = self.queryVar("workDir")
         baseWorkDir = self.queryVar("baseWorkDir")
         mozconfig = self.queryVar("mozconfig")
@@ -267,6 +269,8 @@ class MultiLocaleRepack(SimpleConfig):
         self.processCommand(command=command, cwd=absLocalesDir)
 
         self._getInstaller()
+        command = "make unpack"
+        self.processCommand(command=command, cwd=absLocalesDir)
 
     def compareLocales(self):
         if not self.queryAction("compareLocales"):
@@ -418,12 +422,12 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
         if not self.queryAction("setup"):
             self.info("Skipping setup step.")
             return
-        MultiLocaleRepack.setup(self)
-
+        self.info("Setting up.")
         sboxPath = self.queryVar("sboxPath")
         sboxTarget = self.queryVar("sboxTarget")
         self.runCommand("%s -p sb-conf select %s" % (sboxPath, sboxTarget))
         self.runCommand("%s -p \"echo -n TinderboxPrint: && sb-conf current | sed 's/ARMEL// ; s/_// ; s/-//'\"" % sboxPath)
+        MultiLocaleRepack.setup(self, checkAction=False)
 
     def queryDebName(self):
         if self.debName:

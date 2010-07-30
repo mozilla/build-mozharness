@@ -240,6 +240,8 @@ class BasicFunctions(object):
         if haltOnFailure and returnLevel == 'error':
             self.fatal("Halting on failure while running %s" % command,
                        exitCode=p.returncode)
+        # Hm, options on how to return this? I bet often we'll want
+        # outputLines[0] with no newline.
         return '\n'.join(outputLines)
 
 
