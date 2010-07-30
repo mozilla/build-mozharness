@@ -384,6 +384,7 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
 
     def __init__(self, **kwargs):
         MultiLocaleRepack.__init__(self, **kwargs)
+        self.debName = None
 
     def pull(self):
         hgMozillaRepo = self.queryVar("hgMozillaRepo")

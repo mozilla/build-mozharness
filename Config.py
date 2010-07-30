@@ -11,6 +11,7 @@ TODO:
 * dumpConfig and loadConfig need to be seamless. And written.
 * options with defaults are overwriting the defaults in the config
   files, which is good for some of 'em and bad for others.
+* queryExe() ?
 """
 
 from copy import deepcopy
@@ -232,7 +233,8 @@ class BaseConfig(object):
             return True
 
     def queryVar(self, varName, default=None):
-        #TODO return self.queryVARNAME if varName in self.specialVars ?
+        # TODO return self.queryVARNAME if varName in self.specialVars ?
+        # if so, remember to update existsVar()
         if varName not in self._config or not self._config[varName]:
             return default
         else:

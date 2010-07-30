@@ -147,6 +147,11 @@ class BasicFunctions(object):
          {'substr': 'THE WORLD IS ENDING', level='fatal', contextLines='20:'}
         ]
         """
+        if returnType == 'output':
+            return self.getOutputFromCommand(self, command, cwd=cwd,
+                                             shell=shell,
+                                             haltOnFailure=haltOnFailure,
+                                             env=env)
         numErrors = 0
         if cwd:
             if not os.path.isdir(cwd):
@@ -196,6 +201,57 @@ class BasicFunctions(object):
             return p.returncode
         if returnType == 'output':
             return '\n'.join(lines)
+
+    def getOutputFromCommand(self, command, cwd=None, shell=True,
+                             haltOnFailure=False, env=None):
+        """Similar to runCommand, but where runCommand is an
+        os.system(command) analog, getOutputFromCommand is a `command`
+        analog.
+
+        Less error checking by design, though if we figure out how to
+        do it without borking the output, great.
+        """
+        if cwd:
+            if not os.path.isdir(cwd):
+                self.error("Can't run command %s in non-existent directory %s!" % \
+                           (command, cwd))
+                return -1
+            self.info("Getting output from command: %s in %s" % (command, cwd))
+        else:
+            self.info("Getting output from command: %s" % command)
+        p = subprocess.Popen(command, shell=shell, stdout=subprocess.PIPE,
+                             cwd=cwd, stderr=subprocess.PIPE, env=env)
+        stdout, stderr = p.communicate()
+        outputLines = stdout.rstrip().splitlines()
+        errorLines = stderr.rstrip().splitlines()
+        returnLevel = 'error'
+        if outputLines:
+            returnLevel = 'info'
+            self.info("Output received:")
+            for line in outputLines:
+                if not line or line.isspace():
+                    continue
+                self.info(' %s' % line)
+        if errorLines:
+            returnLevel = 'error'
+            self.error("Errors received:")
+            for line in outputLines:
+                if not line or line.isspace():
+                    continue
+                self.error(' %s' % line)
+        elif p.returncode:
+            returnLevel = 'error'
+        self.log("Return code: %d" % p.returncode, level=returnLevel)
+        if haltOnFailure:
+            if numErrors or p.returncode not in successCodes:
+                self.fatal("Halting on failure while running %s" % command,
+                           exitCode=p.returncode)
+        # More elegant way of doing this? 'output' is to mirror backticks
+        # and status is to mirror a perl system() type call.
+        if returnType == 'status':
+            return p.returncode
+        if returnType == 'output':
+            return '\n'.join(outputLines)
 
 
 
