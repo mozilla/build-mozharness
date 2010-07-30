@@ -268,7 +268,7 @@ class MultiLocaleRepack(SimpleConfig):
         compareLocalesEnv = os.environ.copy()
         compareLocalesEnv['PYTHONPATH'] = os.path.join('..', '..', '..',
                                                        'compare-locales', 'lib')
-        CompareLocalesErrorRegex = PythonErrorRegex.copy()
+        CompareLocalesErrorRegex = list(PythonErrorRegex)
 
         for locale in locales:
             self.rmtree(os.path.join(absLocalesDir, mergeDir))
