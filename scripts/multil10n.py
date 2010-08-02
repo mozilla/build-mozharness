@@ -340,12 +340,14 @@ class MultiLocaleRepack(SimpleConfig):
         mergeDir = "merged"
         absWorkDir = os.path.join(baseWorkDir, workDir)
         absLocalesDir = os.path.join(absWorkDir, mozillaDir, objdir, localesDir)
+        absLocalesSrcDir = os.path.join(absWorkDir, mozillaDir, localesDir)
+        absMergeDir = os.path.join(absLocalesDir, mergeDir)
         locales = self.queryLocales()
-        compareLocalesScript = os.path.join("..", "..", "..", "..",
+        compareLocalesScript = os.path.join("..", "..", "..",
                                             "compare-locales",
                                             "scripts", "compare-locales")
         compareLocalesEnv = os.environ.copy()
-        compareLocalesEnv['PYTHONPATH'] = os.path.join('..', '..', '..', "..",
+        compareLocalesEnv['PYTHONPATH'] = os.path.join('..', '..', '..',
                                                        'compare-locales', 'lib')
         CompareLocalesErrorRegex = list(PythonErrorRegex)
 
@@ -353,10 +355,10 @@ class MultiLocaleRepack(SimpleConfig):
             self.rmtree(os.path.join(absLocalesDir, mergeDir))
             # TODO more error checking
             command = "python %s -m %s l10n.ini %s %s" % (
-              compareLocalesScript, mergeDir,
+              compareLocalesScript, absMergeDir,
               os.path.join('..', '..', '..', l10nDir), locale)
             self.runCommand(command, errorRegex=CompareLocalesErrorRegex,
-                            cwd=absLocalesDir, env=compareLocalesEnv)
+                            cwd=absLocalesSrcDir, env=compareLocalesEnv)
             for step in ("chrome", "libs"):
                 command = "make %s-%s" % (step, locale)
                 if mergeLocales:
@@ -504,7 +506,7 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
         objdir = self.queryVar("objdir")
         localesDir = self.queryVar("localesDir")
         absWorkDir = os.path.join(baseWorkDir, workDir)
-        absLocalesDir = os.path.join(absWorkDir, mozilladir, objdir, localesDir)
+        absLocalesDir = os.path.join(absWorkDir, mozillaDir, objdir, localesDir)
         enUsBinaryUrl = self.queryVar("enUsBinaryUrl")
 
         debName = self.queryDebName()
