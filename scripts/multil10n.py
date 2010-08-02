@@ -544,8 +544,11 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
 
         # Ugh, get the binary bits from the en-US deb, and the multilocale
         # bits from the multi deb
-        self.rmtree(os.path.join(absObjdir, tmpDebDir)
-        self.mkdir_p(os.path.join(absObjdir, tmpDebDir, "DEBIAN")
+        self.rmtree(os.path.join(absObjdir, tmpDebDir))
+        self.mkdir_p(os.path.join(absObjdir, tmpDebDir, "DEBIAN"))
+        arErrorRegex = [{
+         'substr': 'Cannot write: Broken pipe', 'level': 'error'
+        }]
         command = "ar p mobile/locales/%s control.tar.gz | tar zx -C %s/DEBIAN" % \
           (debName, tmpDebDir)
         self._processCommand(command=command, cwd=absObjdir)
@@ -568,7 +571,7 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
         if 'cwd' in kwargs:
             command += '-d %s ' % kwargs['cwd'].replace(sboxHome, '')
             del kwargs['cwd']
-        kwargs['command'] = '%s %s' % (command, kwargs['command'].replace(sboxRoot, ''))
+        kwargs['command'] = '%s "%s"' % (command, kwargs['command'].replace(sboxRoot, ''))
         if 'returnType' not in kwargs or kwargs['returnType'] != 'output':
             if 'errorRegex' in kwargs:
                 kwargs['errorRegex'] = PythonErrorRegex + kwargs['errorRegex']
