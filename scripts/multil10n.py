@@ -534,7 +534,8 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
         absWorkDir = os.path.join(baseWorkDir, workDir)
         absObjdir = os.path.join(absWorkDir, mozillaDir, objdir)
         debName = self.queryDebName()
-        tmpDebDir = "dist/tmp.deb"
+        tmpDebDir = os.path.join("dist", "tmp.deb")
+        absTmpDebDir = os.path.join(absObjdir, tmpDebDir)
 
         # TODO error checking
         command = "make package AB_CD=multi"
@@ -544,21 +545,24 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
 
         # Ugh, get the binary bits from the en-US deb, and the multilocale
         # bits from the multi deb
-        self.rmtree(os.path.join(absObjdir, tmpDebDir))
-        self.mkdir_p(os.path.join(absObjdir, tmpDebDir, "DEBIAN"))
+        self.rmtree(os.path.join(absTmpDebDir))
+        self.mkdir_p(os.path.join(absTmpDebDir, "DEBIAN"))
         arErrorRegex = [{
          'substr': 'Cannot write: Broken pipe', 'level': 'error'
         }]
         command = "ar p mobile/locales/%s control.tar.gz | tar zx -C %s/DEBIAN" % \
-          (debName, tmpDebDir)
-        self._processCommand(command=command, cwd=absObjdir)
+          (debName, absTmpDebDir)
+        self._processCommand(command=command, cwd=absObjdir,
+                             errorRegex=arErrorRegex)
         command = "ar p mobile/locales/%s data.tar.gz | tar zx -C %s" % \
-          (debName, tmpDebDir)
-        self._processCommand(command=command, cwd=absObjdir)
+          (debName, absTmpDebDir)
+        self._processCommand(command=command, cwd=absObjdir,
+                             errorRegex=arErrorRege)
         command = "ar p mobile/%s data.tar.gz | tar zx -C %s" % \
-          (debName, tmpDebDir)
-        self._processCommand(command=command, cwd=absObjdir)
-        command = "dpkg-deb -b %s dist/%s" % (tmpDebDir, debName)
+          (debName, absTmpDebDir)
+        self._processCommand(command=command, cwd=absObjdir,
+                             errorRegex=arErrorRegex)
+        command = "dpkg-deb -b %s dist/%s" % (absTmpDebDir, debName)
         self._processCommand(command=command, cwd=absObjdir)
 
     def _processCommand(self, **kwargs):
