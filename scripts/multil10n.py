@@ -12,6 +12,7 @@ slave can use its cycles determining which locales to repack.
 """
 
 import os
+import re
 import sys
 
 # load modules from parent dir
@@ -440,6 +441,7 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
     def __init__(self, **kwargs):
         MultiLocaleRepack.__init__(self, **kwargs)
         self.debName = None
+        self.debPackageVersion = None
 
     def pull(self):
         hgMozillaRepo = self.queryVar("hgMozillaRepo")
@@ -495,9 +497,17 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
 
         command = "make wget-DEB_PKG_NAME EN_US_BINARY_URL=%s" % enUsBinaryUrl
         self.debName = self._processCommand(command=command, cwd=absLocalesDir,
-                                           haltOnFailure=True,
-                                           returnType='output')
+                                            haltOnFailure=True,
+                                            returnType='output')
         return self.debName
+
+    def queryDebPackageVersion(self):
+        if self.debPackageVersion:
+            return self.debPackageVersion
+        debName = self.queryDebName()
+        m = re.match(r'[^_]+_([^_]+)_', debName)
+        self.debPackageVersion = m.groups()[0]
+        return self.debPackageVersion
 
     def _getInstaller(self):
         baseWorkDir = self.queryVar("baseWorkDir")
@@ -544,12 +554,13 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
         objdir = self.queryVar("objdir")
         absWorkDir = os.path.join(baseWorkDir, workDir)
         absObjdir = os.path.join(absWorkDir, mozillaDir, objdir)
-        debName = self.queryDebName()
+#        debName = self.queryDebName()
+        debPackageVersion = self.queryDebPackageVersion()
 
         # TODO error checking
         command = "make package AB_CD=multi"
         self._processCommand(command=command, cwd=absObjdir)
-        command = "make deb AB_CD=multi DEB_PKG_NAME=%s" % debName
+        command = "make deb AB_CD=multi DEB_PKG_VERSION" % debPackageVersion
         self._processCommand(command=command, cwd=absObjdir)
 
     def _processCommand(self, **kwargs):
