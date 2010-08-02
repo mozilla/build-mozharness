@@ -360,7 +360,7 @@ class MultiLocaleRepack(SimpleConfig):
             self.runCommand(command, errorRegex=CompareLocalesErrorRegex,
                             cwd=absLocalesSrcDir, env=compareLocalesEnv)
             for step in ("chrome", "libs"):
-                command = "make %s-%s" % (step, locale)
+                command = 'make %s-%s L10NBASEDIR=../../../../%s' % (step, locale, l10nDir)
                 if mergeLocales:
                     command += " LOCALE_MERGEDIR=%s" % os.path.join(absLocalesDir, mergeDir)
                 self._processCommand(command=command, cwd=absLocalesDir)
