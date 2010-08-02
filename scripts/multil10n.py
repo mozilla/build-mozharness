@@ -79,6 +79,14 @@ class MultiLocaleRepack(SimpleConfig):
       "help": "Specify the Mozilla dir name"
      }
     ],[
+     ["--objdir",],
+     {"action": "store",
+      "dest": "objdir",
+      "type": "string",
+      "default": "objdir",
+      "help": "Specify the objdir"
+     }
+    ],[
      ["--l10nBase",],
      {"action": "store",
       "dest": "hgL10nBase",
@@ -261,23 +269,25 @@ class MultiLocaleRepack(SimpleConfig):
         localesDir = self.queryVar("localesDir")
         enUsBinaryUrl = self.queryVar("enUsBinaryUrl")
         mozillaDir = self.queryVar("mozillaDir")
+        brandingDir = self.queryVar("brandingDir")
+        objdir = self.queryVar("objdir")
         absWorkDir = os.path.join(baseWorkDir, workDir)
-        absLocalesDir = os.path.join(absWorkDir, localesDir)
+        absObjdir = os.path.join(absWorkDir, mozillaDir, objdir)
+        absLocalesDir = os.path.join(absObjdir, localesDir)
+        absBrandingDir = os.path.join(absObjdir, brandingDir)
 
         self.chdir(absWorkDir)
         self.copyfile(mozconfig, os.path.join(mozillaDir, ".mozconfig"))
 
-        self.rmtree(os.path.join(absWorkDir, mozillaDir, "dist"))
+        self.rmtree(os.path.join(absWorkDir, mozillaDir, objdir, "dist"))
 
         # TODO error checking
-        command = "bash -c autoconf-2.13"
+        command = "make -f client.mk configure"
         self.runCommand(command, cwd=os.path.join(absWorkDir, mozillaDir))
-        self.runCommand(command, cwd=os.path.join(absWorkDir, mozillaDir,
-                                                  'js', 'src'))
-        self._configure()
         command = "make"
         self._processCommand(command=command,
-                            cwd=os.path.join(absWorkDir, mozillaDir, "config"))
+                            cwd=os.path.join(absWorkDir, mozillaDir, objdir,
+                                             "config"))
         command = "make wget-en-US EN_US_BINARY_URL=%s" % enUsBinaryUrl
         self._processCommand(command=command, cwd=absLocalesDir)
 
@@ -285,6 +295,8 @@ class MultiLocaleRepack(SimpleConfig):
         command = "make unpack"
         self._processCommand(command=command, cwd=absLocalesDir)
         self._updateRevisions()
+        command = "make"
+        self._processCommand(command=command, cwd=absBrandingDir)
 
 
     def _configure(self):
@@ -323,16 +335,19 @@ class MultiLocaleRepack(SimpleConfig):
         baseWorkDir = self.queryVar("baseWorkDir")
         workDir = self.queryVar("workDir")
         localesDir = self.queryVar("localesDir")
+        mozillaDir = self.queryVar("mozillaDir")
+        objdir = self.queryVar("objdir")
         l10nDir = self.queryVar("l10nDir")
         mergeLocales = self.queryVar("mergeLocales")
         mergeDir = "merged"
         absWorkDir = os.path.join(baseWorkDir, workDir)
-        absLocalesDir = os.path.join(absWorkDir, localesDir)
+        absLocalesDir = os.path.join(absWorkDir, mozillaDir, objdir, localesDir)
         locales = self.queryLocales()
-        compareLocalesScript = os.path.join("..", "..", "..", "compare-locales",
+        compareLocalesScript = os.path.join("..", "..", "..", "..",
+                                            "compare-locales",
                                             "scripts", "compare-locales")
         compareLocalesEnv = os.environ.copy()
-        compareLocalesEnv['PYTHONPATH'] = os.path.join('..', '..', '..',
+        compareLocalesEnv['PYTHONPATH'] = os.path.join('..', '..', '..', "..",
                                                        'compare-locales', 'lib')
         CompareLocalesErrorRegex = list(PythonErrorRegex)
 
@@ -349,7 +364,7 @@ class MultiLocaleRepack(SimpleConfig):
                 if mergeLocales:
                     command += " LOCALE_MERGEDIR=%s" % os.path.join(absLocalesDir, mergeDir)
                 self._processCommand(command=command, cwd=absLocalesDir)
-        self._repackage()
+        #self._repackage()
 
     def _repackage(self):
         # TODO
@@ -471,9 +486,11 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
             return self.debName
         baseWorkDir = self.queryVar("baseWorkDir")
         workDir = self.queryVar("workDir")
+        mozillaDir = self.queryVar("mozillaDir")
+        objdir = self.queryVar("objdir")
         localesDir = self.queryVar("localesDir")
         absWorkDir = os.path.join(baseWorkDir, workDir)
-        absLocalesDir = os.path.join(absWorkDir, localesDir)
+        absLocalesDir = os.path.join(absWorkDir, mozillaDir, objdir, localesDir)
         enUsBinaryUrl = self.queryVar("enUsBinaryUrl")
 
         command = "make wget-DEB_PKG_NAME EN_US_BINARY_URL=%s" % enUsBinaryUrl
@@ -485,9 +502,11 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
     def _getInstaller(self):
         baseWorkDir = self.queryVar("baseWorkDir")
         workDir = self.queryVar("workDir")
+        mozillaDir = self.queryVar("mozillaDir")
+        objdir = self.queryVar("objdir")
         localesDir = self.queryVar("localesDir")
         absWorkDir = os.path.join(baseWorkDir, workDir)
-        absLocalesDir = os.path.join(absWorkDir, localesDir)
+        absLocalesDir = os.path.join(absWorkDir, mozilladir, objdir, localesDir)
         enUsBinaryUrl = self.queryVar("enUsBinaryUrl")
 
         debName = self.queryDebName()
@@ -499,9 +518,10 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
         baseWorkDir = self.queryVar("baseWorkDir")
         workDir = self.queryVar("workDir")
         localesDir = self.queryVar("localesDir")
+        objdir = self.queryVar("objdir")
         mozillaDir = self.queryVar("mozillaDir")
         absWorkDir = os.path.join(baseWorkDir, workDir)
-        absLocalesDir = os.path.join(absWorkDir, localesDir)
+        absLocalesDir = os.path.join(absWorkDir, mozillaDir, objdir, localesDir)
 
         command = "make ident"
         output = self._processCommand(command=command, cwd=absLocalesDir,
@@ -520,14 +540,17 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
     def _repackage(self):
         baseWorkDir = self.queryVar("baseWorkDir")
         workDir = self.queryVar("workDir")
-        localesDir = self.queryVar("localesDir")
+        mozillaDir = self.queryVar("mozillaDir")
+        objdir = self.queryVar("objdir")
         absWorkDir = os.path.join(baseWorkDir, workDir)
-        absLocalesDir = os.path.join(absWorkDir, localesDir)
+        absObjdir = os.path.join(absWorkDir, mozillaDir, objdir)
         debName = self.queryDebName()
 
         # TODO error checking
-        command = "make repackage-deb AB_CD=multi DEB_PKG_NAME=%s" % debName
-        self._processCommand(command=command, cwd=absLocalesDir)
+        command = "make package AB_CD=multi" % debName
+        self._processCommand(command=command, cwd=absObjdir)
+        command = "make deb AB_CD=multi DEB_PKG_NAME=%s" % debName
+        self._processCommand(command=command, cwd=absObjdir)
 
     def _processCommand(self, **kwargs):
         sboxPath = self.queryVar("sboxPath")
