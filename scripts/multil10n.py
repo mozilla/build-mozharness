@@ -267,6 +267,8 @@ class MultiLocaleRepack(SimpleConfig):
         self.chdir(absWorkDir)
         self.copyfile(mozconfig, os.path.join(mozillaDir, ".mozconfig"))
 
+        self.rmtree(os.path.join(absWorkDir, mozillaDir, "dist"))
+
         # TODO error checking
         command = "bash -c autoconf-2.13"
         self.runCommand(command, cwd=os.path.join(absWorkDir, mozillaDir))
