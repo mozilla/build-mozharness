@@ -550,16 +550,22 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
         arErrorRegex = [{
          'substr': 'Cannot write: Broken pipe', 'level': 'error'
         }]
-        command = "ar p mobile/locales/%s control.tar.gz | tar zx -C %s/DEBIAN" % \
-          (debName, absTmpDebDir)
+        command = "ar p mobile/locales/%s control.tar.gz" % debName
         self._processCommand(command=command, cwd=absObjdir,
                              errorRegex=arErrorRegex)
-        command = "ar p mobile/locales/%s data.tar.gz | tar zx -C %s" % \
-          (debName, absTmpDebDir)
+        command = "tar zx control.tar.gz -C %s/DEBIAN" % tmpDebDir
         self._processCommand(command=command, cwd=absObjdir,
-                             errorRegex=arErrorRege)
-        command = "ar p mobile/%s data.tar.gz | tar zx -C %s" % \
-          (debName, absTmpDebDir)
+                             errorRegex=arErrorRegex)
+        command = "ar p mobile/locales/%s data.tar.gz" % debName
+        self._processCommand(command=command, cwd=absObjdir,
+                             errorRegex=arErrorRegex)
+        command = "tar zx data.tar.gz -C %s" % tmpDebDir
+        self._processCommand(command=command, cwd=absObjdir,
+                             errorRegex=arErrorRegex)
+        command = "ar p mobile/%s data.tar.gz" % debName
+        self._processCommand(command=command, cwd=absObjdir,
+                             errorRegex=arErrorRegex)
+        command = "tar zx data.tar.gz -C %s" % tmpDebDir
         self._processCommand(command=command, cwd=absObjdir,
                              errorRegex=arErrorRegex)
         command = "dpkg-deb -b %s dist/%s" % (absTmpDebDir, debName)
