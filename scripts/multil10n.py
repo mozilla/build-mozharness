@@ -364,7 +364,7 @@ class MultiLocaleRepack(SimpleConfig):
                 if mergeLocales:
                     command += " LOCALE_MERGEDIR=%s" % os.path.join(absLocalesDir, mergeDir)
                 self._processCommand(command=command, cwd=absLocalesDir)
-        #self._repackage()
+        self._repackage()
 
     def _repackage(self):
         # TODO
@@ -547,7 +547,7 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
         debName = self.queryDebName()
 
         # TODO error checking
-        command = "make package AB_CD=multi" % debName
+        command = "make package AB_CD=multi"
         self._processCommand(command=command, cwd=absObjdir)
         command = "make deb AB_CD=multi DEB_PKG_NAME=%s" % debName
         self._processCommand(command=command, cwd=absObjdir)
