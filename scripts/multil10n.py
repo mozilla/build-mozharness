@@ -297,27 +297,6 @@ class MultiLocaleRepack(SimpleConfig):
         command = "make"
         self._processCommand(command=command, cwd=absBrandingDir)
 
-
-    def _configure(self):
-        # TODO figure out if this works for desktop
-        baseWorkDir = self.queryVar("baseWorkDir")
-        workDir = self.queryVar("workDir")
-        absWorkDir = os.path.join(baseWorkDir, workDir)
-        configureApplication = self.queryVar("configureApplication")
-        configureTarget = self.queryVar("configureTarget")
-        mozillaDir = self.queryVar("mozillaDir")
-        l10nDir = self.queryVar("l10nDir")
-
-        command = "./configure --with-l10n-base=../%s " % l10nDir
-        if configureApplication:
-            command += "--enable-application=%s " % configureApplication
-        if configureTarget:
-            command += "--target=%s " % configureTarget
-        # TODO
-        ConfigureErrorRegex = []
-        self._processCommand(command=command, errorRegex=ConfigureErrorRegex,
-                             cwd=os.path.join(absWorkDir, mozillaDir))
-
     def _getInstaller(self):
         # TODO
         pass
@@ -554,13 +533,29 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
         objdir = self.queryVar("objdir")
         absWorkDir = os.path.join(baseWorkDir, workDir)
         absObjdir = os.path.join(absWorkDir, mozillaDir, objdir)
-#        debName = self.queryDebName()
-#        debPackageVersion = self.queryDebPackageVersion()
+        debName = self.queryDebName()
+        tmpDebDir = "dist/tmp.deb"
 
         # TODO error checking
         command = "make package AB_CD=multi"
         self._processCommand(command=command, cwd=absObjdir)
         command = "make deb AB_CD=multi"
+        self._processCommand(command=command, cwd=absObjdir)
+
+        # Ugh, get the binary bits from the en-US deb, and the multilocale
+        # bits from the multi deb
+        self.rmtree(os.path.join(absObjdir, tmpDebDir)
+        self.mkdir_p(os.path.join(absObjdir, tmpDebDir, "DEBIAN")
+        command = "ar p mobile/locales/%s control.tar.gz | tar zx -C %s/DEBIAN" % \
+          (debName, tmpDebDir)
+        self._processCommand(command=command, cwd=absObjdir)
+        command = "ar p mobile/locales/%s data.tar.gz | tar zx -C %s" % \
+          (debName, tmpDebDir)
+        self._processCommand(command=command, cwd=absObjdir)
+        command = "ar p mobile/%s data.tar.gz | tar zx -C %s" % \
+          (debName, tmpDebDir)
+        self._processCommand(command=command, cwd=absObjdir)
+        command = "dpkg-deb -b %s dist/%s" % (tmpDebDir, debName)
         self._processCommand(command=command, cwd=absObjdir)
 
     def _processCommand(self, **kwargs):
