@@ -283,11 +283,9 @@ class MultiLocaleRepack(SimpleConfig):
 
         # TODO error checking
         command = "make -f client.mk configure"
-        self._processCommand(command, cwd=os.path.join(absWorkDir, mozillaDir))
+        self._processCommand(command=command, cwd=os.path.join(absWorkDir, mozillaDir))
         command = "make"
-        self._processCommand(command=command,
-                            cwd=os.path.join(absWorkDir, mozillaDir, objdir,
-                                             "config"))
+        self._processCommand(command=command, cwd=os.path.join(absObjdir, "config"))
         command = "make wget-en-US EN_US_BINARY_URL=%s" % enUsBinaryUrl
         self._processCommand(command=command, cwd=absLocalesDir)
 
