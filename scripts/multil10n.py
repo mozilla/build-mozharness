@@ -283,7 +283,7 @@ class MultiLocaleRepack(SimpleConfig):
 
         # TODO error checking
         command = "make -f client.mk configure"
-        self.runCommand(command, cwd=os.path.join(absWorkDir, mozillaDir))
+        self._processCommand(command, cwd=os.path.join(absWorkDir, mozillaDir))
         command = "make"
         self._processCommand(command=command,
                             cwd=os.path.join(absWorkDir, mozillaDir, objdir,
