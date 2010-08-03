@@ -567,11 +567,10 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
         self.info("Creating md5sums file...")
         command = "find * -name DEBIAN -prune -o -type f"
         fileList = self.getOutputFromCommand(command=command, cwd=absTmpDebDir).split('\n')
-        self.debug('\n'.join(fileList))
         md5File = os.path.join(absTmpDebDir, "DEBIAN", "md5sums")
         md5FH = open(md5File, 'w')
         for fileName in fileList:
-            contents = open(fileName).read()
+            contents = open(os.path.join(absTmpDebDir, fileName)).read()
             md5sum = hashlib.md5(contents).hexdigest()
             md5FH.write("%s  %s\n" % (md5sum, fileName))
         md5FH.close()
