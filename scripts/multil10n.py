@@ -538,13 +538,6 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
         absTmpDebDir = os.path.join(absObjdir, tmpDebDir)
 
         # TODO error checking
-#        command = "make package AB_CD=multi"
-#        self._processCommand(command=command, cwd=absObjdir)
-#        command = "make deb AB_CD=multi"
-#        self._processCommand(command=command, cwd=absObjdir)
-#
-#        # Ugh, get the binary bits from the en-US deb, and the multilocale
-#        # bits from the multi deb
         self.rmtree(os.path.join(absTmpDebDir))
         self.mkdir_p(os.path.join(absTmpDebDir, "DEBIAN"))
         arErrorRegex = [{
@@ -568,6 +561,18 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
                                                    cwd=absObjdir)
         command = "cp ../mobile/installer/mobile-l10n.js %s" % mobileL10nFile
         self.runCommand(command=command, cwd=absObjdir, haltOnFailure=True)
+
+        # fix DEBIAN/md5sums
+        command = "find * -name DEBIAN -prune -o -type f"
+        fileList = self.getOutputFromCommand(command=command, cwd=absTmpDebDir).split('\n')
+        self.info("Creating md5sums file...")
+        md5File = os.path.join(absTmpDebDir, "DEBIAN", "md5sums")
+        md5FH = open(md5File, 'w')
+        for fileName in fileList:
+            contents = open(fileName).read()
+            md5sum = hashlib.md5(contents).hexdigest()
+            md5FH.write("%s  %s\n" % (md5sum, fileName))
+        md5FH.close()
 
         command = "dpkg-deb -b %s dist/%s" % (absTmpDebDir, debName)
         self._processCommand(command=command, cwd=absObjdir)
