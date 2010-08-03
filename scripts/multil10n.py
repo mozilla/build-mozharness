@@ -235,6 +235,7 @@ class MultiLocaleRepack(SimpleConfig):
             self.info("Skipping pull step.")
         else:
             self.info("Pulling.")
+            self.mkdir_p(absWorkDir)
             for repoDict in repos:
                 self._hgPull(
                  repo=repoDict['repo'],
