@@ -540,9 +540,16 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
         absTmpDebDir = os.path.join(absObjdir, tmpDebDir)
 
         # TODO error checking
+        command = "make package AB_CD=multi"
+        self._processCommand(command=command, cwd=absObjdir)
+        command = "make deb AB_CD=multi"
+        self._processCommand(command=command, cwd=absObjdir)
+
         self.rmtree(os.path.join(absTmpDebDir))
         self.mkdir_p(os.path.join(absTmpDebDir, "DEBIAN"))
         arErrorRegex = [{
+         'substr': 'No such file or directory', 'level': 'error'
+        },{
          'substr': 'Cannot write: Broken pipe', 'level': 'error'
         }]
         command = "ar p mobile/locales/%s control.tar.gz | tar zxv -C %s/DEBIAN" % \
@@ -557,12 +564,6 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
           (debName, tmpDebDir)
         self.runCommand(command=command, cwd=absObjdir,
                         errorRegex=arErrorRegex)
-
-        command = "find %s -name mobile-l10n.js" % tmpDebDir
-        mobileL10nFile = self.getOutputFromCommand(command=command,
-                                                   cwd=absObjdir)
-        command = "cp ../mobile/installer/mobile-l10n.js %s" % mobileL10nFile
-        self.runCommand(command=command, cwd=absObjdir, haltOnFailure=True)
 
         # fix DEBIAN/md5sums
         self.info("Creating md5sums file...")
