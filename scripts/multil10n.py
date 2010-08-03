@@ -564,9 +564,10 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
         self.runCommand(command=command, cwd=absObjdir, haltOnFailure=True)
 
         # fix DEBIAN/md5sums
+        self.info("Creating md5sums file...")
         command = "find * -name DEBIAN -prune -o -type f"
         fileList = self.getOutputFromCommand(command=command, cwd=absTmpDebDir).split('\n')
-        self.info("Creating md5sums file...")
+        self.debug('\n'.join(fileList))
         md5File = os.path.join(absTmpDebDir, "DEBIAN", "md5sums")
         md5FH = open(md5File, 'w')
         for fileName in fileList:
