@@ -565,7 +565,7 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
 
         # fix DEBIAN/md5sums
         self.info("Creating md5sums file...")
-        command = "find * -name DEBIAN -prune -o -type f"
+        command = "find * -type f | grep -v DEBIAN"
         fileList = self.getOutputFromCommand(command=command, cwd=absTmpDebDir).split('\n')
         md5File = os.path.join(absTmpDebDir, "DEBIAN", "md5sums")
         md5FH = open(md5File, 'w')
