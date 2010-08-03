@@ -11,6 +11,7 @@ To improve things, we're moving the logic slave-side where a dedicated
 slave can use its cycles determining which locales to repack.
 """
 
+import hashlib
 import os
 import re
 import sys
