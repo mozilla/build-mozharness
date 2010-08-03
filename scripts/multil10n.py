@@ -536,13 +536,14 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
         absWorkDir = os.path.join(baseWorkDir, workDir)
         absObjdir = os.path.join(absWorkDir, mozillaDir, objdir)
         debName = self.queryDebName()
+        debPackageVersion = self.queryDebPackageVersion()
         tmpDebDir = os.path.join("dist", "tmp.deb")
         absTmpDebDir = os.path.join(absObjdir, tmpDebDir)
 
         # TODO error checking
-        command = "make package AB_CD=multi"
-        self._processCommand(command=command, cwd=absObjdir)
-        command = "make deb AB_CD=multi"
+#        command = "make package AB_CD=multi"
+#        self._processCommand(command=command, cwd=absObjdir)
+        command = "make deb AB_CD=multi DEB_PKG_NAME=%s DEB_PKG_VERSION=%s" % (debName, debPackageVersion)
         self._processCommand(command=command, cwd=absObjdir)
 
         self.rmtree(os.path.join(absTmpDebDir))
