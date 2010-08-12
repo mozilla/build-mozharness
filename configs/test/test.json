@@ -1,5 +1,5 @@
 {
-  "logName": "test",
+  "log_name": "test",
   "log_dir": "test_logs",
   "key1": "value1",
   "key2": "value2",

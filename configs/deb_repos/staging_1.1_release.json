@@ -1,38 +1,38 @@
 {
-  "logName": "signdebs",
-  "localesFile": "configs/mozilla2/l10n-changesets_mobile-1.1.json",
-  "hgConfigRepo": "http://hg.mozilla.org/build/buildbot-configs",
-  "packageName": "fennec",
-  "repoName": "%(locale)s",
-  "remoteRepoPath": "/var/www/html/debtest/candidates",
-  "remoteUser": "cltbld",
-  "remoteSshKey": "/home/cltbld/.ssh/id_rsa",
-  "remoteHost": "staging-mobile-master.build.mozilla.org",
+  "log_name": "signdebs",
+  "locales_file": "configs/mozilla2/l10n-changesets_mobile-1.1.json",
+  "hg_config_repo": "http://hg.mozilla.org/build/buildbot-configs",
+  "package_name": "fennec",
+  "repo_name": "%(locale)s",
+  "remote_repo_path": "/var/www/html/debtest/candidates",
+  "remote_user": "cltbld",
+  "remote_ssh_key": "/home/cltbld/.ssh/id_rsa",
+  "remote_host": "staging-mobile-master.build.mozilla.org",
   "section": "release",
-  "sboxPath": "/scratchbox/moz_scratchbox",
+  "sbox_path": "/scratchbox/moz_scratchbox",
   "repo_dir": "repos.staging",
-  "baseRepoUrl": "http://staging-mobile-master.build.mozilla.org/debtest/candidates",
+  "base_repo_url": "http://staging-mobile-master.build.mozilla.org/debtest/candidates",
   "base_work_dir": "/scratchbox/users/cltbld/home/cltbld",
-  "platformConfig": {
+  "platform_config": {
 
     "chinook": {
-      "longCatalogName": "Release Staging Chinook",
-      "shortCatalogName": "fennec",
-      "installFile": "%(locale)s_chinook.install",
-      "debNameUrl": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/1.1rc1-candidates/build2/maemo4/multi/deb_name.txt",
-      "multiDirUrl": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/1.1rc1-candidates/build2/maemo4/multi",
-      "enUsDirUrl": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/1.1rc1-candidates/build2/maemo4/en-US",
-      "l10nDirUrl": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/1.1rc1-candidates/build2/maemo4"
+      "long_catalog_name": "Release Staging Chinook",
+      "short_catalog_name": "fennec",
+      "install_file": "%(locale)s_chinook.install",
+      "deb_name_url": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/1.1rc1-candidates/build2/maemo4/multi/deb_name.txt",
+      "multi_dir_url": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/1.1rc1-candidates/build2/maemo4/multi",
+      "en_us_dir_url": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/1.1rc1-candidates/build2/maemo4/en-US",
+      "l10n_dir_url": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/1.1rc1-candidates/build2/maemo4"
     },
 
     "fremantle": {
-      "longCatalogName": "Release Staging Fremantle",
-      "shortCatalogName": "fennec",
-      "installFile": "%(locale)s_fremantle.install",
-      "debNameUrl": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/1.1rc1-candidates/build2/maemo4/multi/deb_name.txt",
-      "multiDirUrl": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/1.1rc1-candidates/build2/maemo4/multi",
-      "enUsDirUrl": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/1.1rc1-candidates/build2/maemo4/en-US",
-      "l10nDirUrl": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/1.1rc1-candidates/build2/maemo4"
+      "long_catalog_name": "Release Staging Fremantle",
+      "short_catalog_name": "fennec",
+      "install_file": "%(locale)s_fremantle.install",
+      "deb_name_url": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/1.1rc1-candidates/build2/maemo4/multi/deb_name.txt",
+      "multi_dir_url": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/1.1rc1-candidates/build2/maemo4/multi",
+      "en_us_dir_url": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/1.1rc1-candidates/build2/maemo4/en-US",
+      "l10n_dir_url": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/1.1rc1-candidates/build2/maemo4"
     }
 
   }

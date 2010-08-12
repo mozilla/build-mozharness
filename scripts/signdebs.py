@@ -29,12 +29,12 @@ from config import SimpleConfig
 
 # MaemoDebSigner {{{1
 class MaemoDebSigner(SimpleConfig):
-    def __init__(self, requireConfigFile=True):
+    def __init__(self, require_config_file=True):
         """I wanted to inherit BasicFunctions in SimpleFileLogger but
         that ends up not carrying down to this object since SimpleConfig
         doesn't inherit the logger, just has a self.logObj.
         """
-        configOptions = [[
+        config_options = [[
          ["--locale",],
          {"action": "append_split",
           "dest": "locales",
@@ -49,17 +49,17 @@ class MaemoDebSigner(SimpleConfig):
           "help": "Specify the platform(s) to repack"
          }
         ],[
-         ["--debName",],
+         ["--deb_name",],
          {"action": "store",
-          "dest": "debName",
+          "dest": "deb_name",
           "type": "string",
           "help": "Specify the name of the deb"
          }
         ]]
-        SimpleConfig.__init__(self, configOptions=configOptions,
-                              allActions=['clobber', 'createRepos',
-                                          'upload'],
-                              requireConfigFile=requireConfigFile)
+        SimpleConfig.__init__(self, config_options=config_options,
+                              all_actions=['clobber', 'create-repos',
+                                           'upload'],
+                              require_config_file=require_config_file)
         self.failures = []
 
     def run(self):
@@ -70,23 +70,23 @@ class MaemoDebSigner(SimpleConfig):
             self.error("%s failures: %s" % (self.__class__.__name__,
                                             self.failures))
 
-    def _queryDebName(self, debNameUrl=None):
-        debName = self.queryVar('debName')
-        if debName:
-            return debName
-        if debNameUrl:
-            self.info('Getting debName from %s' % debNameUrl)
+    def _queryDebName(self, deb_name_url=None):
+        deb_name = self.queryVar('deb_name')
+        if deb_name:
+            return deb_name
+        if deb_name_url:
+            self.info('Getting deb_name from %s' % deb_name_url)
             # TODO belongs in downloadFile or equivalent?
             try:
                 ul = urllib2.build_opener()
-                fh = ul.open(debNameUrl)
-                debName = fh.read().rstrip()
-                self.debug('Deb name is %s' % debName)
-                return debName
+                fh = ul.open(deb_name_url)
+                deb_name = fh.read().rstrip()
+                self.debug('Deb name is %s' % deb_name)
+                return deb_name
             except HTTPError, e:
-                self.error("HTTP Error: %s %s" % (e.code, debNameUrl))
+                self.error("HTTP Error: %s %s" % (e.code, deb_name_url))
             except URLError, e:
-                self.error("URL Error: %s %s" % (e.code, debNameUrl))
+                self.error("URL Error: %s %s" % (e.code, deb_name_url))
 
     def clobberRepoDir(self):
         if not self.queryAction('clobber'):
@@ -98,54 +98,54 @@ class MaemoDebSigner(SimpleConfig):
         repo_dir = self.queryVar("repo_dir")
         if not work_dir or not base_work_dir or not repo_dir:
             self.fatal("base_work_dir, work_dir, repo_dir need to be set!")
-        repoPath = os.path.join(base_work_dir, work_dir, repo_dir)
-        if os.path.exists(repoPath):
-            self.rmtree(repoPath)
+        repo_path = os.path.join(base_work_dir, work_dir, repo_dir)
+        if os.path.exists(repo_path):
+            self.rmtree(repo_path)
         else:
-            self.debug("%s doesn't exist." % repoPath)
+            self.debug("%s doesn't exist." % repo_path)
 
-    def _queryLocales(self, platform, platformConfig=None):
+    def _queryLocales(self, platform, platform_config=None):
         locales = self.queryVar("locales")
         if not locales:
             locales = []
-            if not platformConfig:
-                platformConfig = self.queryVar("platformConfig")
-            pf = platformConfig[platform]
-            localesFile = self.queryVar("localesFile")
-            if "multiDirUrl" in pf:
+            if not platform_config:
+                platform_config = self.queryVar("platform_config")
+            pf = platform_config[platform]
+            locales_file = self.queryVar("locales_file")
+            if "multi_dir_url" in pf:
                 locales.append("multi")
-            if "enUsDirUrl" in pf:
+            if "en_us_dir_url" in pf:
                 locales.append("en-US")
-            if "l10nDirUrl" in pf and localesFile:
+            if "l10n_dir_url" in pf and locales_file:
                 """This assumes all locales in the l10n json file
                 are applicable. If not, we'll have to parse the json
                 for matching platforms.
                 """
-                if localesFile.endswith(".json"):
-                    localesJson = self.parseConfigFile(localesFile)
-                    locales.extend(localesJson.keys())
+                if locales_file.endswith(".json"):
+                    locales_json = self.parseConfigFile(locales_file)
+                    locales.extend(locales_json.keys())
                 else:
-                    fh = open(localesFile)
-                    additionalLocales = fh.read().split()
-                    locales.extend(additionalLocales)
+                    fh = open(locales_file)
+                    additional_locales = fh.read().split()
+                    locales.extend(additional_locales)
         return locales
 
-    def _signRepo(self, repoName, platform):
+    def _signRepo(self, repo_name, platform):
         base_work_dir = self.queryVar("base_work_dir")
         repo_dir = self.queryVar("repo_dir")
-        sboxPath = self.queryVar("sboxPath")
+        sbox_path = self.queryVar("sbox_path")
         section = self.queryVar("section")
         work_dir = self.queryVar("work_dir")
-        sbox_work_dir = '%s/%s/%s' % (work_dir, repo_dir, repoName)
+        sbox_work_dir = '%s/%s/%s' % (work_dir, repo_dir, repo_name)
         abs_work_dir = '%s/%s' % (base_work_dir, sbox_work_dir)
 
         # TODO errorRegex
-        errorRegexList = []
-        command = "%s -p -d %s apt-ftparchive packages " % (sboxPath, sbox_work_dir)
+        error_regex_list = []
+        command = "%s -p -d %s apt-ftparchive packages " % (sbox_path, sbox_work_dir)
         command += "dists/%s/%s/binary-armel |" % (platform, section)
         command += "gzip -9c > %s/dists/%s/%s/binary-armel/Packages.gz" % \
                    (abs_work_dir, platform, section)
-        status = self.runCommand(command, errorRegexList=errorRegexList)
+        status = self.runCommand(command, error_regex_list=error_regex_list)
         if status:
             self.error("Exiting signRepo.")
             return status
@@ -155,125 +155,125 @@ class MaemoDebSigner(SimpleConfig):
                        "dists/%s" % platform):
             self.rmtree("%s/%s/Release.gpg" % (abs_work_dir, sub_dir))
             # Create Release file outside of the tree, then move in.
-            # TODO errorRegexList
-            errorRegexList=[]
-            command = "%s -p -d %s/%s " % (sboxPath, sbox_work_dir, sub_dir)
+            # TODO error_regex_list
+            error_regex_list=[]
+            command = "%s -p -d %s/%s " % (sbox_path, sbox_work_dir, sub_dir)
             command += "apt-ftparchive release . > %s/Release.tmp" % abs_work_dir
-            if self.runCommand(command, errorRegexList=errorRegexList):
+            if self.runCommand(command, error_regex_list=error_regex_list):
                 self.error("Exiting signRepo.")
                 return -2
             self.move("%s/Release.tmp" % abs_work_dir,
                       "%s/%s/Release" % (abs_work_dir, sub_dir))
 
-            errorRegexList = [{'regex': 'command not found', 'level': 'error'},
-                          {'regex': 'secret key not available', 'level': 'error'},
-                         ]
+            error_regex_list = [{'regex': 'command not found', 'level': 'error'},
+                                {'regex': 'secret key not available', 'level': 'error'},
+                               ]
             command = "gpg -abs -o Release.gpg Release"
-            if self.runCommand(command, errorRegexList=errorRegexList,
+            if self.runCommand(command, error_regex_list=error_regex_list,
                                cwd='%s/%s' % (abs_work_dir, sub_dir)):
                 self.error("Exiting signRepo.")
                 return -3
         return 0
 
-    def _createInstallFile(self, filePath, locale, platform):
-        baseRepoUrl = self.queryVar("baseRepoUrl")
-        packageName = self.queryVar("packageName")
-        platformConfig = self.queryVar("platformConfig")
+    def _createInstallFile(self, file_path, locale, platform):
+        base_repo_url = self.queryVar("base_repo_url")
+        package_name = self.queryVar("package_name")
+        platform_config = self.queryVar("platform_config")
         section = self.queryVar("section")
-        pf = platformConfig[platform]
-        replaceDict = {'locale': locale,
-                       'longCatalogName': pf['longCatalogName'],
-                       'packageName': packageName,
+        pf = platform_config[platform]
+        replace_dict = {'locale': locale,
+                       'long_catalog_name': pf['long_catalog_name'],
+                       'package_name': package_name,
                        'platform': platform,
                        'section': section,
-                       'shortCatalogName': pf['shortCatalogName'],
+                       'short_catalog_name': pf['short_catalog_name'],
                       }
-        repoName = self.queryVar('repoName') % replaceDict
-        replaceDict['repoUrl'] = '%s/%s' % (baseRepoUrl, repoName)
+        repo_name = self.queryVar('repo_name') % replace_dict
+        replace_dict['repo_url'] = '%s/%s' % (base_repo_url, repo_name)
         contents = """[install]
-repo_deb_3 = deb %(repoUrl)s %(platform)s %(section)s
-catalogues = %(shortCatalogName)s
-package = %(packageName)s
+repo_deb_3 = deb %(repo_url)s %(platform)s %(section)s
+catalogues = %(short_catalog_name)s
+package = %(package_name)s
 
 [fennec]
-name =     Mozilla %(longCatalogName)s %(locale)s Catalog
-uri = %(repoUrl)s
+name =     Mozilla %(long_catalog_name)s %(locale)s Catalog
+uri = %(repo_url)s
 dist = %(platform)s
 components = %(section)s
-""" % replaceDict
-        self.info("Writing install file to %s" % filePath)
-        fh = open(filePath, 'w')
+""" % replace_dict
+        self.info("Writing install file to %s" % file_path)
+        fh = open(file_path, 'w')
         print >> fh, contents
         fh.close()
         
 
     def createRepos(self):
-        if not self.queryAction('createRepos'):
+        if not self.queryAction('create-repos'):
             self.info("Skipping create repo step.")
             return
         self.info("Creating repos.")
         base_work_dir = self.queryVar("base_work_dir")
-        hgMobileRepo = self.queryVar("hgMobileRepo")
-        hgConfigRepo = self.queryVar("hgConfigRepo")
-        platformConfig = self.queryVar("platformConfig")
-        platforms = self.queryVar("platforms", default=platformConfig.keys())
+        hg_mobile_repo = self.queryVar("hg_mobile_repo")
+        hg_config_repo = self.queryVar("hg_config_repo")
+        platform_config = self.queryVar("platform_config")
+        platforms = self.queryVar("platforms", default=platform_config.keys())
         repo_dir = self.queryVar("repo_dir")
-        sboxPath = self.queryVar("sboxPath")
+        sbox_path = self.queryVar("sbox_path")
         section = self.queryVar("section")
         work_dir = self.queryVar("work_dir")
 
-        if hgMobileRepo is not None:
+        if hg_mobile_repo is not None:
             if not os.path.exists('mobile'):
-                self.runCommand("hg clone %s mobile" % hgMobileRepo,
-                                errorRegexList=HgErrorRegexList)
-            self.runCommand("hg --cwd mobile pull", errorRegexList=HgErrorRegexList)
-            self.runCommand("hg --cwd mobile update -C", errorRegexList=HgErrorRegexList)
-        if hgConfigRepo is not None:
+                self.runCommand("hg clone %s mobile" % hg_mobile_repo,
+                                error_regex_list=HgErrorRegexList)
+            self.runCommand("hg --cwd mobile pull", error_regex_list=HgErrorRegexList)
+            self.runCommand("hg --cwd mobile update -C", error_regex_list=HgErrorRegexList)
+        if hg_config_repo is not None:
             if not os.path.exists('configs'):
-                self.runCommand("hg clone %s configs" % hgConfigRepo,
-                                errorRegexList=HgErrorRegexList)
-            self.runCommand("hg --cwd configs pull", errorRegexList=HgErrorRegexList)
-            self.runCommand("hg --cwd configs update -C", errorRegexList=HgErrorRegexList)
+                self.runCommand("hg clone %s configs" % hg_config_repo,
+                                error_regex_list=HgErrorRegexList)
+            self.runCommand("hg --cwd configs pull", error_regex_list=HgErrorRegexList)
+            self.runCommand("hg --cwd configs update -C", error_regex_list=HgErrorRegexList)
 
         for platform in platforms:
             """This assumes the same deb name for each locale in a platform.
             """
             self.info("%s" % platform)
-            pf = platformConfig[platform]
-            debName = self._queryDebName(debNameUrl=pf['debNameUrl'])
-            if not debName:
+            pf = platform_config[platform]
+            deb_name = self._queryDebName(deb_name_url=pf['deb_name_url'])
+            if not deb_name:
                 continue
-            locales = self._queryLocales(platform, platformConfig=platformConfig)
+            locales = self._queryLocales(platform, platform_config=platform_config)
             for locale in locales:
-                replaceDict = {'locale': locale}
-                installFile = pf['installFile'] % replaceDict
-                repoName = self.queryVar('repoName') % replaceDict
-                debUrl = ''
+                replace_dict = {'locale': locale}
+                install_file = pf['install_file'] % replace_dict
+                repo_name = self.queryVar('repo_name') % replace_dict
+                deb_url = ''
                 if locale == 'multi':
-                    debUrl = pf['multiDirUrl']
+                    deb_url = pf['multi_dir_url']
                 elif locale == 'en-US':
-                    debUrl = pf['enUsDirUrl']
+                    deb_url = pf['en_us_dir_url']
                 else:
-                    debUrl = '%s/%s' % (pf['l10nDirUrl'], locale)
-                debUrl += '/%s' % debName
-                self.debug(debUrl)
-                if not self.downloadFile(debUrl, debName):
+                    deb_url = '%s/%s' % (pf['l10n_dir_url'], locale)
+                deb_url += '/%s' % deb_name
+                self.debug(deb_url)
+                if not self.downloadFile(deb_url, deb_name):
                     self.warn("Skipping %s ..." % locale)
                     continue
                 binary_dir = '%s/%s/%s/dists/%s/%s/binary-armel' % \
-                             (work_dir, repo_dir, repoName, platform, section)
+                             (work_dir, repo_dir, repo_name, platform, section)
                 abs_binary_dir = '%s/%s' % (base_work_dir, binary_dir)
                 self.mkdir_p(abs_binary_dir)
-                self.move(debName, abs_binary_dir)
+                self.move(deb_name, abs_binary_dir)
 
-                if self._signRepo(repoName, platform) != 0:
+                if self._signRepo(repo_name, platform) != 0:
                     self.error("Skipping %s %s" % (platform, locale))
                     self.failures.append('%s_%s' % (platform, locale))
                     continue
 
                 self._createInstallFile(os.path.join(base_work_dir, work_dir,
-                                                    repo_dir, repoName,
-                                                    installFile),
+                                                    repo_dir, repo_name,
+                                                    install_file),
                                        locale, platform)
 
     def uploadRepos(self):
@@ -282,52 +282,52 @@ components = %(section)s
             return
         self.info("Uploading repos.")
         base_work_dir = self.queryVar("base_work_dir")
-        platformConfig = self.queryVar("platformConfig")
-        platforms = self.queryVar("platforms", default=platformConfig.keys())
+        platform_config = self.queryVar("platform_config")
+        platforms = self.queryVar("platforms", default=platform_config.keys())
         repo_dir = self.queryVar("repo_dir")
         work_dir = self.queryVar("work_dir")
         for platform in platforms:
             """This assumes the same deb name for each locale in a platform.
             """
             self.info("%s" % platform)
-            pf = platformConfig[platform]
-            locales = self._queryLocales(platform, platformConfig=platformConfig)
+            pf = platform_config[platform]
+            locales = self._queryLocales(platform, platform_config=platform_config)
             for locale in locales:
                 if '%s_%s' % (platform, locale) not in self.failures:
-                    replaceDict = {'locale': locale}
-                    installFile = pf['installFile'] % replaceDict
-                    repoName = self.queryVar('repoName') % replaceDict
+                    replace_dict = {'locale': locale}
+                    install_file = pf['install_file'] % replace_dict
+                    repo_name = self.queryVar('repo_name') % replace_dict
                     self._uploadRepo(os.path.join(base_work_dir, work_dir, repo_dir),
-                                     repoName, platform, installFile)
+                                     repo_name, platform, install_file)
 
-    def _uploadRepo(self, local_repo_dir, repoName, platform, installFile):
-        remoteRepoPath = self.queryVar("remoteRepoPath")
-        remoteUser = self.queryVar("remoteUser")
-        remoteSshKey = self.queryVar("remoteSshKey")
-        remoteHost = self.queryVar("remoteHost")
-        repoPath = os.path.join(local_repo_dir, repoName, 'dists', platform)
-        installFilePath = os.path.join(local_repo_dir, repoName, installFile)
+    def _uploadRepo(self, local_repo_dir, repo_name, platform, install_file):
+        remote_repo_path = self.queryVar("remote_repo_path")
+        remote_user = self.queryVar("remote_user")
+        remote_ssh_key = self.queryVar("remote_ssh_key")
+        remote_host = self.queryVar("remote_host")
+        repo_path = os.path.join(local_repo_dir, repo_name, 'dists', platform)
+        install_file_path = os.path.join(local_repo_dir, repo_name, install_file)
 
-        if not os.path.isdir(repoPath):
-            self.error("uploadRepo: %s isn't a valid repo!" % repoPath)
+        if not os.path.isdir(repo_path):
+            self.error("uploadRepo: %s isn't a valid repo!" % repo_path)
             return -1
-        if not os.path.exists(installFilePath):
-            self.error("uploadRepo: %s doesn't exist!" % installFilePath)
+        if not os.path.exists(install_file_path):
+            self.error("uploadRepo: %s doesn't exist!" % install_file_path)
 
         command = "ssh -i %s %s@%s mkdir -p %s/%s/dists/%s" % \
-                  (remoteSshKey, remoteUser, remoteHost, remoteRepoPath,
-                   repoName, platform)
-        self.runCommand(command, errorRegexList=SSHErrorRegexList)
+                  (remote_ssh_key, remote_user, remote_host, remote_repo_path,
+                   repo_name, platform)
+        self.runCommand(command, error_regex_list=SSHErrorRegexList)
 
         command = 'rsync --rsh="ssh -i %s" -azv --delete %s %s@%s:%s/%s/dists/%s' % \
-                  (remoteSshKey, os.path.join(repoPath, '.'),
-                   remoteUser, remoteHost, remoteRepoPath, repoName, platform)
-        self.runCommand(command, errorRegexList=SSHErrorRegexList)
+                  (remote_ssh_key, os.path.join(repo_path, '.'),
+                   remote_user, remote_host, remote_repo_path, repo_name, platform)
+        self.runCommand(command, error_regex_list=SSHErrorRegexList)
 
         command = 'scp -i %s %s %s@%s:%s/%s/' % \
-                  (remoteSshKey, installFilePath,
-                   remoteUser, remoteHost, remoteRepoPath, repoName)
-        self.runCommand(command, errorRegexList=SSHErrorRegexList)
+                  (remote_ssh_key, install_file_path,
+                   remote_user, remote_host, remote_repo_path, repo_name)
+        self.runCommand(command, error_regex_list=SSHErrorRegexList)
 
 
 

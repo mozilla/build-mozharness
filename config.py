@@ -45,7 +45,7 @@ class MozOptionParser(OptionParser):
     Adding a self.variables list seems like a fairly innocuous and easy
     way to work around this problem
 
-    appendVariables is a small hack to allow for things like
+    append_variables is a small hack to allow for things like
         ./script --locale en-US,multi --locale fr
     in which case we get
         locales=["en-US,multi", "fr"]
@@ -58,7 +58,7 @@ class MozOptionParser(OptionParser):
     def __init__(self, **kwargs):
         OptionParser.__init__(self, **kwargs)
         self.variables = []
-        self.appendVariables = []
+        self.append_variables = []
 
     def add_option(self, *args, **kwargs):
         origAction = kwargs['action']
@@ -84,43 +84,43 @@ class BaseConfig(object):
     it, as I did elsewhere to lock down the config during runtime, but
     that's a little heavy handed to go with as the default.
     """
-    def __init__(self, config=None, initialConfigFile=None, configOptions=[],
-                 allActions=["clobber", "build"], defaultActions=None,
-                 requireConfigFile=False, usage="usage: %prog [options]"):
+    def __init__(self, config=None, initial_config_file=None, config_options=[],
+                 all_actions=["clobber", "build"], default_actions=None,
+                 require_config_file=False, usage="usage: %prog [options]"):
         self._config = {}
         self.actions = []
-        self.logObj = None
-        self.configLock = False
-        self.requireConfigFile = requireConfigFile
+        self.log_obj = None
+        self.config_lock = False
+        self.require_config_file = require_config_file
 
-        self.allActions = allActions
-        if defaultActions:
-            self.defaultActions = defaultActions
+        self.all_actions = all_actions
+        if default_actions:
+            self.default_actions = default_actions
         else:
-            self.defaultActions = allActions
+            self.default_actions = all_actions
 
         if config:
             self.setConfig(config)
-        if initialConfigFile:
-            self.setConfig(self.parseConfigFile(initialConfigFile))
-        self._createConfigParser(configOptions, usage)
+        if initial_config_file:
+            self.setConfig(self.parseConfigFile(initial_config_file))
+        self._createConfigParser(config_options, usage)
         self.parseArgs()
 
-    def _createConfigParser(self, configOptions, usage):
+    def _createConfigParser(self, config_options, usage):
         self.configParser = MozOptionParser(usage=usage)
         self.configParser.add_option(
-         "--logLevel", action="store",
-         type="choice", dest="logLevel", default="info",
+         "--log-level", action="store",
+         type="choice", dest="log_level", default="info",
          choices=['debug', 'info', 'warning', 'error', 'critical', 'fatal'],
          help="Set log level (debug|info|warning|error|critical|fatal)"
         )
         self.configParser.add_option(
-         "-q", "--quiet", action="store_false", dest="logToConsole",
+         "-q", "--quiet", action="store_false", dest="log_to_console",
          default=True, help="Don't log to the console"
         )
         self.configParser.add_option(
-         "--appendToLog", action="store_true",
-         dest="appendToLog", default=False,
+         "--append-to-log", action="store_true",
+         dest="append_to_log", default=False,
          help="Append to the log"
         )
         self.configParser.add_option(
@@ -134,66 +134,65 @@ class BaseConfig(object):
          help="Specify the absolute path of the parent of the working directory"
         )
         self.configParser.add_option(
-         "--configFile", action="store", dest="configFile",
+         "--config-file", action="store", dest="config_file",
          type="string", help="Specify the config file (required)"
         )
 
         # Actions
         self.configParser.add_option(
          "--action", action="temp_append_split",
-         dest="onlyActions", metavar="ACTIONS",
-         help="Do action %s" % self.allActions
+         dest="only_actions", metavar="ACTIONS",
+         help="Do action %s" % self.all_actions
         )
         self.configParser.add_option(
-         "--addAction", action="temp_append_split",
-         dest="addActions", metavar="ACTIONS",
-         help="Add action %s to the list of actions" % self.allActions
+         "--add-action", action="temp_append_split",
+         dest="add_actions", metavar="ACTIONS",
+         help="Add action %s to the list of actions" % self.all_actions
         )
         self.configParser.add_option(
-         "--noAction", action="temp_append_split",
-         dest="noActions", metavar="ACTIONS",
+         "--no-action", action="temp_append_split",
+         dest="no_actions", metavar="ACTIONS",
          help="Don't perform action"
         )
-        for action in self.allActions:
-            Action = action[0].capitalize()+action[1:]
+        for action in self.all_actions:
             self.configParser.add_option(
-             "--only%s" % Action, action="temp_append_const",
-             dest="onlyActions", const=action,
+             "--only-%s" % action, action="temp_append_const",
+             dest="only_actions", const=action,
              help="Add %s to the limited list of actions" % action
             )
             self.configParser.add_option(
-             "--no%s" % Action, action="temp_append_const",
-             dest="noActions", const=action,
+             "--no-%s" % action, action="temp_append_const",
+             dest="no_actions", const=action,
              help="Remove %s from the list of actions to perform" % action
             )
 
         # Child-specified options
         # TODO error checking for overlapping options
-        if configOptions:
-            for option in configOptions:
+        if config_options:
+            for option in config_options:
                 self.configParser.add_option(*option[0], **option[1])
 
         # Initial-config-specified options
-        configOptions = self.queryVar('configOptions')
-        if configOptions:
-            for option in configOptions:
+        config_options = self.queryVar('config_options')
+        if config_options:
+            for option in config_options:
                 self.configParser.add_option(*option[0], **option[1])
 
-    def parseConfigFile(self, fileName):
+    def parseConfigFile(self, file_name):
         """Read a config file and return a dictionary.
         """
-        filePath = None
-        searchPath = ['.', os.path.join(sys.path[0], 'configs')]
-        for path in searchPath:
-            if os.path.exists(os.path.join(path, fileName)):
-                filePath = os.path.join(path, fileName)
+        file_path = None
+        search_path = ['.', os.path.join(sys.path[0], 'configs')]
+        for path in search_path:
+            if os.path.exists(os.path.join(path, file_name)):
+                file_path = os.path.join(path, file_name)
                 break
         else:
-            self.error("Can't find %s in %s!" % (fileName, searchPath))
+            self.error("Can't find %s in %s!" % (file_name, search_path))
             return
-        fh = open(filePath)
+        fh = open(file_path)
         config = {}
-        if fileName.endswith('.json'):
+        if file_name.endswith('.json'):
             jsonConfig = json.load(fh)
             config = dict(jsonConfig)
         else:
@@ -209,16 +208,16 @@ class BaseConfig(object):
 
     def lockConfig(self):
         self.info("Locking configuration.")
-        self.configLock = True
+        self.config_lock = True
 
-    def queryConfig(self, varName=None):
+    def queryConfig(self, var_name=None):
         return self._config
 
     def setConfig(self, config, overwrite=False):
         """It would be good to detect if self._config is already set, and
         if so, have settings as to how to determine what overrides what.
         """
-        if self.configLock:
+        if self.config_lock:
             self.error("Can't alter locked config!")
             return
         if self._config and not overwrite:
@@ -228,25 +227,25 @@ class BaseConfig(object):
             self._config = config
         return self._config
 
-    def existsVar(self, varName):
-        if varName in self._config:
+    def existsVar(self, var_name):
+        if var_name in self._config:
             return True
 
-    def queryVar(self, varName, default=None):
-        # TODO return self.queryVARNAME if varName in self.specialVars ?
+    def queryVar(self, var_name, default=None):
+        # TODO return self.queryVARNAME if var_name in self.specialVars ?
         # if so, remember to update existsVar()
-        if varName not in self._config or not self._config[varName]:
+        if var_name not in self._config or not self._config[var_name]:
             return default
         else:
-            return self._config[varName]
+            return self._config[var_name]
 
-    def setVar(self, varName, value):
-        if self.configLock:
+    def setVar(self, var_name, value):
+        if self.config_lock:
             self.error("Can't alter locked config!")
             return
-        self.debug("Setting %s to %s" % (varName, value))
-        self._config[varName] = value
-        return self.queryVar(varName)
+        self.debug("Setting %s to %s" % (var_name, value))
+        self._config[var_name] = value
+        return self.queryVar(var_name)
 
     def setActions(self, actions):
         self.actions = actions
@@ -260,7 +259,7 @@ class BaseConfig(object):
     def queryActions(self):
         return self.actions
 
-    def dumpConfig(self, config=None, fileName=None):
+    def dumpConfig(self, config=None, file_name=None):
         """Dump the configuration somewhere, default to STDOUT.
         Be nice to be able to write a .py or .json file according to
         filename.
@@ -270,26 +269,26 @@ class BaseConfig(object):
         """
         if not config:
             config = self.queryConfig()
-        if not fileName:
+        if not file_name:
             pp = pprint.PrettyPrinter(indent=2, width=10)
             return pp.pformat(config)
 
-    def loadConfig(self, configFile):
+    def loadConfig(self, config_file):
         """TODO: Write Me, Test Me
-        Probably self._config = self.parseConfig(configFile)
+        Probably self._config = self.parseConfig(config_file)
         or something, but with more error checking.
         """
-        if self.configLock:
+        if self.config_lock:
             self.error("Can't alter locked config!")
             return
         pass
 
-    def verifyActions(self, actionList):
-        actions = ','.join(actionList).split(',')
+    def verifyActions(self, action_list):
+        actions = ','.join(action_list).split(',')
         for action in actions:
-            if action not in self.allActions:
+            if action not in self.all_actions:
                 self.fatal("Invalid action %s not in %s!" % (action,
-                                                             self.allActions))
+                                                             self.all_actions))
         return actions
 
     def parseArgs(self):
@@ -297,22 +296,22 @@ class BaseConfig(object):
         Return the parser object after adding the basic options, so
         child objects can manipulate it.
         """
-        self.commandLine = ' '.join(sys.argv)
+        self.command_line = ' '.join(sys.argv)
         (options, args) = self.configParser.parse_args()
         defaults = self.configParser.defaults.copy()
 
-        if options.configFile:
-            self.setConfig(self.parseConfigFile(options.configFile))
-        elif self.requireConfigFile:
-            self.fatal("You must specify --configFile!")
+        if options.config_file:
+            self.setConfig(self.parseConfigFile(options.config_file))
+        elif self.require_config_file:
+            self.fatal("You must specify --config-file!")
         for key in self.configParser.variables:
             value = getattr(options, key)
             if value is None:
                 continue
-            # Don't override configFile defaults with configParser defaults
+            # Don't override config_file defaults with configParser defaults
             if key in defaults and value == defaults[key] and self.existsVar(key):
                 continue
-            if value and key in self.configParser.appendVariables:
+            if value and key in self.configParser.append_variables:
                 value = ','.join(value).split(',')
             self.setVar(key, value)
 
@@ -320,36 +319,36 @@ class BaseConfig(object):
 
         Seems a little complex, but the logic goes:
 
-        If we specify --onlyBLAH once or multiple times, we want to override
-        the defaultActions list with the ones we list.
+        If we specify --only-BLAH once or multiple times, we want to override
+        the default_actions list with the ones we list.
 
-        Otherwise, if we specify --addAction, we want to add an action to
+        Otherwise, if we specify --add-action, we want to add an action to
         the default list.
 
-        Finally, if we specify --noBLAH, remove that from the list of
+        Finally, if we specify --no-BLAH, remove that from the list of
         actions to perform.
         """
-        actionsToRun = self.defaultActions
-        if options.onlyActions:
-            actions = self.verifyActions(options.onlyActions)
-            actionsToRun = actions
-        elif options.addActions:
-            actions = self.verifyActions(options.addActions)
-            actionsToRun.extend(actions)
-        if options.noActions:
-            actions = self.verifyActions(options.noActions)
+        actions_to_run = self.default_actions
+        if options.only_actions:
+            actions = self.verifyActions(options.only_actions)
+            actions_to_run = actions
+        elif options.add_actions:
+            actions = self.verifyActions(options.add_actions)
+            actions_to_run.extend(actions)
+        if options.no_actions:
+            actions = self.verifyActions(options.no_actions)
             for action in actions:
-                if action in actionsToRun:
-                    actionsToRun.remove(action)
-        self.setActions(actionsToRun)
+                if action in actions_to_run:
+                    actions_to_run.remove(action)
+        self.setActions(actions_to_run)
 
         return (options, args)
 
     """There may be a better way of doing this, but I did this previously...
     """
-    def log(self, message, level='info', exitCode=-1):
-        if self.logObj:
-            return self.logObj.log(message, level=level, exitCode=exitCode)
+    def log(self, message, level='info', exit_code=-1):
+        if self.log_obj:
+            return self.log_obj.log(message, level=level, exit_code=exit_code)
         if level == 'info':
             print message
         elif level == 'debug':
@@ -358,12 +357,12 @@ class BaseConfig(object):
             print >> sys.stderr, "%s: %s" % (level.upper(), message)
         elif level == 'fatal':
             print >> sys.stderr, "FATAL: %s" % message
-            sys.exit(exitCode)
+            sys.exit(exit_code)
 
     def debug(self, message):
-        level = self.queryVar('logLevel')
+        level = self.queryVar('log_level')
         if not level:
-            level = self.queryVar('logLevel')
+            level = self.queryVar('log_level')
         if level and level == 'debug':
             self.log(message, level='debug')
 
@@ -382,8 +381,8 @@ class BaseConfig(object):
     def critical(self, message):
         self.log(message, level='critical')
 
-    def fatal(self, message, exitCode=-1):
-        self.log(message, level='fatal', exitCode=exitCode)
+    def fatal(self, message, exit_code=-1):
+        self.log(message, level='fatal', exit_code=exit_code)
 
 
 
@@ -391,45 +390,45 @@ class BaseConfig(object):
 class SimpleConfig(BaseConfig, BasicFunctions):
     """Effectively BaseConfig with logging.
     """
-    def __init__(self, configOptions=[], logLevel="info", **kwargs):
-        configOptions.append([
-         ["--multiLog",],
+    def __init__(self, config_options=[], log_level="info", **kwargs):
+        config_options.append([
+         ["--multi-log",],
          {"action": "store_true",
-          "dest": "multiLog",
+          "dest": "multi_log",
           "default": False,
           "help": "Log using MultiFileLogger"
          }
         ])
-        BaseConfig.__init__(self, configOptions=configOptions, **kwargs)
+        BaseConfig.__init__(self, config_options=config_options, **kwargs)
         BasicFunctions.__init__(self)
-        self.logLevel = logLevel
+        self.log_level = log_level
         self.newLogObj()
-        self.info("Run as %s" % self.commandLine)
+        self.info("Run as %s" % self.command_line)
 
     def newLogObj(self):
-        logConfig = {"loggerName": 'Simple',
-                     "logName": 'test',
-                     "log_dir": 'logs',
-                     "logLevel": self.logLevel,
-                     "logFormat": '%(asctime)s - %(levelname)s - %(message)s',
-                     "logToConsole": True,
-                     "appendToLog": False,
-                    }
-        for key in logConfig.keys():
+        log_config = {"logger_name": 'Simple',
+                      "log_name": 'test',
+                      "log_dir": 'logs',
+                      "log_level": self.log_level,
+                      "log_format": '%(asctime)s - %(levelname)s - %(message)s',
+                      "log_to_console": True,
+                      "append_lo_log": False,
+                     }
+        for key in log_config.keys():
             value = self.queryVar(key)
             if value:
-                logConfig[key] = value
-        if self.queryVar("multiLog"):
-            self.logObj = MultiFileLogger(**logConfig)
+                log_config[key] = value
+        if self.queryVar("multi_log"):
+            self.log_obj = MultiFileLogger(**log_config)
         else:
-            self.logObj = SimpleFileLogger(**logConfig)
+            self.log_obj = SimpleFileLogger(**log_config)
 
 
 
 # __main__ {{{1
 if __name__ == '__main__':
-    obj = SimpleConfig(initialConfigFile=os.path.join('test', 'test.json'),
-                       logLevel="debug")
+    obj = SimpleConfig(initial_config_file=os.path.join('test', 'test.json'),
+                       log_level="debug")
     obj.setVar('additionalkey', 'additionalvalue')
     obj.setVar('key2', 'value2override')
     obj.dumpConfig()

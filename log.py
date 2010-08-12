@@ -78,7 +78,7 @@ class BasicFunctions(object):
         else:
             self.info("Already exists.")
 
-    def rmtree(self, path, errorLevel='error', exitCode=-1):
+    def rmtree(self, path, error_level='error', exit_code=-1):
         self.info("rmtree: %s" % path)
         if os.path.exists(path):
             if os.path.isdir(path):
@@ -86,39 +86,39 @@ class BasicFunctions(object):
             else:
                 os.remove(path)
             if os.path.exists(path):
-                self.log('Unable to remove %s!' % path, level=errorLevel,
-                         exitCode=exitCode)
+                self.log('Unable to remove %s!' % path, level=error_level,
+                         exit_code=exit_code)
         else:
             self.debug("%s doesn't exist." % path)
 
     # http://www.techniqal.com/blog/2008/07/31/python-file-read-write-with-urllib2/
-    def downloadFile(self, url, fileName=None, testOnly=False,
-                     errorLevel='error', exitCode=-1):
+    def downloadFile(self, url, file_name=None, test_only=False,
+                     error_level='error', exit_code=-1):
         """Python wget.
-        TODO: option to mkdir_p dirname(fileName) if it doesn't exist.
+        TODO: option to mkdir_p dirname(file_name) if it doesn't exist.
         """
-        if not fileName:
-            fileName = os.basename(url)
-        if testOnly:
-            self.info("Touching %s instead of downloading..." % fileName)
-            os.system("touch %s" % fileName)
-            return fileName
+        if not file_name:
+            file_name = os.basename(url)
+        if test_only:
+            self.info("Touching %s instead of downloading..." % file_name)
+            os.system("touch %s" % file_name)
+            return file_name
         req = urllib2.Request(url)
         try:
             self.info("Downloading %s" % url)
             f = urllib2.urlopen(req)
-            localFile = open(fileName, 'w')
-            localFile.write(f.read())
-            localFile.close()
+            local_file = open(file_name, 'w')
+            local_file.write(f.read())
+            local_file.close()
         except urllib2.HTTPError, e:
-            self.log("HTTP Error: %s %s" % (e.code, url), level=errorLevel,
-                     exitCode=exitCode)
+            self.log("HTTP Error: %s %s" % (e.code, url), level=error_level,
+                     exit_code=exit_code)
             return
         except urllib2.URLError, e:
-            self.log("URL Error: %s %s" % (e.code, url), level=errorLevel,
-                       exitCode=exitCode)
+            self.log("URL Error: %s %s" % (e.code, url), level=error_level,
+                       exit_code=exit_code)
             return
-        return fileName
+        return file_name
 
     def move(self, src, dest):
         self.info("Moving %s to %s" % (src, dest))
@@ -128,20 +128,20 @@ class BasicFunctions(object):
         self.info("Copying %s to %s" % (src, dest))
         shutil.copyfile(src, dest)
 
-    def chdir(self, dirName):
-        self.log("Changing directory to %s." % dirName)
-        os.chdir(dirName)
+    def chdir(self, dir_name):
+        self.log("Changing directory to %s." % dir_name)
+        os.chdir(dir_name)
 
-    def runCommand(self, command, cwd=None, errorRegexList=[], parseAtEnd=False,
-                   shell=True, haltOnFailure=False, successCodes=[0],
+    def runCommand(self, command, cwd=None, error_regex_list=[], parse_at_end=False,
+                   shell=True, halt_on_failure=False, success_codes=[0],
                    env=None, returnType='status'):
         """Run a command, with logging and error parsing.
 
-        TODO: parseAtEnd, contextLines
-        TODO: retryInterval?
-        TODO: errorLevelOverride?
+        TODO: parse_at_end, contextLines
+        TODO: retry_interval?
+        TODO: error_level_override?
 
-        errorRegexList example:
+        error_regex_list example:
         [{'regex': '^Error: LOL J/K', level='ignore'},
          {'regex': '^Error:', level='error', contextLines='5:5'},
          {'substr': 'THE WORLD IS ENDING', level='fatal', contextLines='20:'}
@@ -150,9 +150,9 @@ class BasicFunctions(object):
         if returnType != 'status':
             return self.getOutputFromCommand(command=command, cwd=cwd,
                                              shell=shell,
-                                             haltOnFailure=haltOnFailure,
+                                             halt_on_failure=halt_on_failure,
                                              env=env)
-        numErrors = 0
+        num_errors = 0
         if cwd:
             if not os.path.isdir(cwd):
                 self.error("Can't run command %s in non-existent directory %s!" % \
@@ -163,42 +163,43 @@ class BasicFunctions(object):
             self.info("Running command: %s" % command)
         p = subprocess.Popen(command, shell=shell, stdout=subprocess.PIPE,
                              cwd=cwd, stderr=subprocess.STDOUT, env=env)
+        # TODO fix
         stdout, stderr = p.communicate()
         lines = stdout.rstrip().splitlines()
         for line in lines:
             if not line or line.isspace():
                 continue
-            for errorCheck in errorRegexList:
+            for error_check in error_regex_list:
                 match = False
-                if 'substr' in errorCheck:
-                    if errorCheck['substr'] in line:
+                if 'substr' in error_check:
+                    if error_check['substr'] in line:
                         match = True
-                elif 'regex' in errorCheck:
-                    if re.search(errorCheck['regex'], line):
+                elif 'regex' in error_check:
+                    if re.search(error_check['regex'], line):
                         match = True
                 else:
-                    self.warn("errorRegexList: 'substr' and 'regex' not in %s" % \
-                              errorCheck)
+                    self.warn("error_regex_list: 'substr' and 'regex' not in %s" % \
+                              error_check)
                 if match:
-                    level=errorCheck.get('level', 'info')
+                    level=error_check.get('level', 'info')
                     self.log(' %s' % line, level=level)
                     if level in ('error', 'critical', 'fatal'):
-                        numErrors = numErrors + 1
+                        num_errors = num_errors + 1
                     break
             else:
                 self.info(' %s' % line)
-        returnLevel = 'info'
-        if p.returncode not in successCodes:
-            returnLevel = 'error'
-        self.log("Return code: %d" % p.returncode, level=returnLevel)
-        if haltOnFailure:
-            if numErrors or p.returncode not in successCodes:
+        return_level = 'info'
+        if p.returncode not in success_codes:
+            return_level = 'error'
+        self.log("Return code: %d" % p.returncode, level=return_level)
+        if halt_on_failure:
+            if num_errors or p.returncode not in success_codes:
                 self.fatal("Halting on failure while running %s" % command,
-                           exitCode=p.returncode)
+                           exit_code=p.returncode)
         return p.returncode
 
     def getOutputFromCommand(self, command, cwd=None, shell=True,
-                             haltOnFailure=False, env=None):
+                             halt_on_failure=False, env=None):
         """Similar to runCommand, but where runCommand is an
         os.system(command) analog, getOutputFromCommand is a `command`
         analog.
@@ -217,32 +218,32 @@ class BasicFunctions(object):
         p = subprocess.Popen(command, shell=shell, stdout=subprocess.PIPE,
                              cwd=cwd, stderr=subprocess.PIPE, env=env)
         stdout, stderr = p.communicate()
-        outputLines = stdout.rstrip().splitlines()
+        output_lines = stdout.rstrip().splitlines()
         errorLines = stderr.rstrip().splitlines()
-        returnLevel = 'error'
-        if outputLines:
-            returnLevel = 'info'
+        return_level = 'error'
+        if output_lines:
+            return_level = 'info'
             self.info("Output received:")
-            for line in outputLines:
+            for line in output_lines:
                 if not line or line.isspace():
                     continue
                 self.info(' %s' % line)
         if errorLines:
-            returnLevel = 'error'
+            return_level = 'error'
             self.error("Errors received:")
-            for line in outputLines:
+            for line in output_lines:
                 if not line or line.isspace():
                     continue
                 self.error(' %s' % line)
         elif p.returncode:
-            returnLevel = 'error'
-        self.log("Return code: %d" % p.returncode, level=returnLevel)
-        if haltOnFailure and returnLevel == 'error':
+            return_level = 'error'
+        self.log("Return code: %d" % p.returncode, level=return_level)
+        if halt_on_failure and return_level == 'error':
             self.fatal("Halting on failure while running %s" % command,
-                       exitCode=p.returncode)
+                       exit_code=p.returncode)
         # Hm, options on how to return this? I bet often we'll want
-        # outputLines[0] with no newline.
-        return '\n'.join(outputLines)
+        # output_lines[0] with no newline.
+        return '\n'.join(output_lines)
 
 
 
@@ -271,33 +272,33 @@ class BaseLogger(object):
               'fatal': FATAL
              }
 
-    def __init__(self, logLevel='info',
-                 logFormat='%(message)s',
-                 logDateFormat='%H:%M:%S',
-                 logName='test',
-                 logToConsole=True,
+    def __init__(self, log_level='info',
+                 log_format='%(message)s',
+                 log_date_format='%H:%M:%S',
+                 log_name='test',
+                 log_to_console=True,
                  log_dir='.',
-                 logToRaw=False,
-                 loggerName='',
-                 haltOnFailure=True,
-                 appendToLog=False,
+                 log_to_raw=False,
+                 logger_name='',
+                 halt_on_failure=True,
+                 append_to_log=False,
                 ):
-        self.haltOnFailure = haltOnFailure,
-        self.logFormat = logFormat
-        self.logDateFormat = logDateFormat
-        self.logToConsole = logToConsole
-        self.logToRaw = logToRaw
-        self.logLevel = logLevel
-        self.logName = logName
+        self.halt_on_failure = halt_on_failure,
+        self.log_format = log_format
+        self.log_date_format = log_date_format
+        self.log_to_console = log_to_console
+        self.log_to_raw = log_to_raw
+        self.log_level = log_level
+        self.log_name = log_name
         self.log_dir = log_dir
-        self.appendToLog = appendToLog
+        self.append_to_log = append_to_log
 
         # Not sure what I'm going to use this for; useless unless we
         # can have multiple logging objects that don't trample each other
-        self.loggerName = loggerName
+        self.logger_name = logger_name
 
-        self.allHandlers = []
-        self.logFiles = {}
+        self.all_handlers = []
+        self.log_files = {}
 
         self.createLogDir()
 
@@ -318,65 +319,65 @@ class BaseLogger(object):
 
     def getLoggerLevel(self, level=None):
         if not level:
-            level = self.logLevel
+            level = self.log_level
         return self.LEVELS.get(level, logging.NOTSET)
 
-    def getLogFormatter(self, logFormat=None, dateFormat=None):
-        if not logFormat:
-            logFormat = self.logFormat
-        if not dateFormat:
-            dateFormat = self.logDateFormat
-        return logging.Formatter(logFormat, dateFormat)
+    def getLogFormatter(self, log_format=None, date_format=None):
+        if not log_format:
+            log_format = self.log_format
+        if not date_format:
+            date_format = self.log_date_format
+        return logging.Formatter(log_format, date_format)
 
-    def newLogger(self, loggerName):
+    def newLogger(self, logger_name):
         """Create a new logger.
         By default there are no handlers.
         """
-        self.logger = logging.getLogger(loggerName)
+        self.logger = logging.getLogger(logger_name)
         self.logger.setLevel(self.getLoggerLevel())
         self._clearHandlers()
-        if self.logToConsole:
+        if self.log_to_console:
             self.addConsoleHandler()
-        if self.logToRaw:
-            self.logFiles['raw'] = '%s_raw.log' % self.logName
+        if self.log_to_raw:
+            self.log_files['raw'] = '%s_raw.log' % self.log_name
             self.addFileHandler(os.path.join(self.abs_log_dir,
-                                             self.logFiles['raw']),
-                                logFormat='%(message)s')
+                                             self.log_files['raw']),
+                                log_format='%(message)s')
 
     def _clearHandlers(self):
         """To prevent dups -- logging will preserve Handlers across
         objects :(
         """
         attrs = dir(self)
-        if 'allHandlers' in attrs and 'logger' in attrs:
-            for handler in self.allHandlers:
+        if 'all_handlers' in attrs and 'logger' in attrs:
+            for handler in self.all_handlers:
                 self.logger.removeHandler(handler)
-            self.allHandlers = []
+            self.all_handlers = []
 
     def __del__(self):
         self._clearHandlers()
 
-    def addConsoleHandler(self, logLevel=None, logFormat=None,
-                          dateFormat=None):
-        consoleHandler = logging.StreamHandler()
-        consoleHandler.setLevel(self.getLoggerLevel(logLevel))
-        consoleHandler.setFormatter(self.getLogFormatter(logFormat=logFormat,
-                                                         dateFormat=dateFormat))
-        self.logger.addHandler(consoleHandler)
-        self.allHandlers.append(consoleHandler)
+    def addConsoleHandler(self, log_level=None, log_format=None,
+                          date_format=None):
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(self.getLoggerLevel(log_level))
+        console_handler.setFormatter(self.getLogFormatter(log_format=log_format,
+                                                         date_format=date_format))
+        self.logger.addHandler(console_handler)
+        self.all_handlers.append(console_handler)
 
-    def addFileHandler(self, logPath, logLevel=None, logFormat=None,
-                       dateFormat=None):
-        if not self.appendToLog and os.path.exists(logPath):
-            os.remove(logPath)
-        fileHandler = logging.FileHandler(logPath)
-        fileHandler.setLevel(self.getLoggerLevel(logLevel))
-        fileHandler.setFormatter(self.getLogFormatter(logFormat=logFormat,
-                                                      dateFormat=dateFormat))
-        self.logger.addHandler(fileHandler)
-        self.allHandlers.append(fileHandler)
+    def addFileHandler(self, log_path, log_level=None, log_format=None,
+                       date_format=None):
+        if not self.append_to_log and os.path.exists(log_path):
+            os.remove(log_path)
+        file_handler = logging.FileHandler(log_path)
+        file_handler.setLevel(self.getLoggerLevel(log_level))
+        file_handler.setFormatter(self.getLogFormatter(log_format=log_format,
+                                                      date_format=date_format))
+        self.logger.addHandler(file_handler)
+        self.all_handlers.append(file_handler)
 
-    def log(self, message, level='info', exitCode=-1):
+    def log(self, message, level='info', exit_code=-1):
         """Generic log method.
         There should be more options here -- do or don't split by line,
         use os.linesep instead of assuming \n, be able to pass in log level
@@ -388,9 +389,9 @@ class BaseLogger(object):
             return
         for line in message.splitlines():
             self.logger.log(self.getLoggerLevel(level), line)
-        if level == 'fatal' and self.haltOnFailure:
-            self.logger.log(FATAL, 'Exiting %d' % exitCode)
-            sys.exit(exitCode)
+        if level == 'fatal' and self.halt_on_failure:
+            self.logger.log(FATAL, 'Exiting %d' % exit_code)
+            sys.exit(exit_code)
 
     def debug(self, message):
         self.log(message, level='debug')
@@ -410,8 +411,8 @@ class BaseLogger(object):
     def critical(self, message):
         self.log(message, level='critical')
 
-    def fatal(self, message, exitCode=-1):
-        self.log(message, level='fatal', exitCode=exitCode)
+    def fatal(self, message, exit_code=-1):
+        self.log(message, level='fatal', exit_code=exit_code)
 
 
 # SimpleFileLogger {{{1
@@ -420,18 +421,18 @@ class SimpleFileLogger(BaseLogger):
     the terminal and a raw log (no prepending of level or date)
     """
     def __init__(self,
-                 logFormat='%(asctime)s - %(levelname)s - %(message)s',
-                 loggerName='Simple', log_dir='logs', **kwargs):
-        BaseLogger.__init__(self, loggerName=loggerName, logFormat=logFormat,
+                 log_format='%(asctime)s - %(levelname)s - %(message)s',
+                 logger_name='Simple', log_dir='logs', **kwargs):
+        BaseLogger.__init__(self, logger_name=logger_name, log_format=log_format,
                             log_dir=log_dir, **kwargs)
-        self.newLogger(self.loggerName)
+        self.newLogger(self.logger_name)
         self.initMessage()
 
-    def newLogger(self, loggerName):
-        BaseLogger.newLogger(self, loggerName)
-        self.logPath = os.path.join(self.abs_log_dir, '%s.log' % self.logName)
-        self.logFiles['default'] = self.logPath
-        self.addFileHandler(self.logPath)
+    def newLogger(self, logger_name):
+        BaseLogger.newLogger(self, logger_name)
+        self.log_path = os.path.join(self.abs_log_dir, '%s.log' % self.log_name)
+        self.log_files['default'] = self.log_path
+        self.addFileHandler(self.log_path)
 
 
 
@@ -441,26 +442,26 @@ class MultiFileLogger(BaseLogger):
     """Create a log per log level in log_dir.  Possibly also output to
     the terminal and a raw log (no prepending of level or date)
     """
-    def __init__(self, loggerName='Multi',
-                 logFormat='%(asctime)s - %(levelname)s - %(message)s',
-                 log_dir='logs', logToRaw=True, **kwargs):
-        BaseLogger.__init__(self, loggerName=loggerName, logFormat=logFormat,
-                            logToRaw=logToRaw, log_dir=log_dir,
+    def __init__(self, logger_name='Multi',
+                 log_format='%(asctime)s - %(levelname)s - %(message)s',
+                 log_dir='logs', log_to_raw=True, **kwargs):
+        BaseLogger.__init__(self, logger_name=logger_name, log_format=log_format,
+                            log_to_raw=log_to_raw, log_dir=log_dir,
                             **kwargs)
 
-        self.newLogger(self.loggerName)
+        self.newLogger(self.logger_name)
         self.initMessage()
 
-    def newLogger(self, loggerName):
-        BaseLogger.newLogger(self, loggerName)
-        minLoggerLevel = self.getLoggerLevel(self.logLevel)
+    def newLogger(self, logger_name):
+        BaseLogger.newLogger(self, logger_name)
+        minLoggerLevel = self.getLoggerLevel(self.log_level)
         for level in self.LEVELS.keys():
             if self.getLoggerLevel(level) >= minLoggerLevel:
-                self.logFiles[level] = '%s_%s.log' % (self.logName,
+                self.log_files[level] = '%s_%s.log' % (self.log_name,
                                                       level)
                 self.addFileHandler(os.path.join(self.abs_log_dir,
-                                                 self.logFiles[level]),
-                                    logLevel=level)
+                                                 self.log_files[level]),
+                                    log_level=level)
 
 
 
@@ -484,10 +485,10 @@ if __name__ == '__main__':
             print "OH NO!"
 
     log_dir = 'test_logs'
-    obj = MultiFileLogger(logLevel='info', log_dir=log_dir,
-                          logToRaw=True)
+    obj = MultiFileLogger(log_level='info', log_dir=log_dir,
+                          log_to_raw=True)
     testLogger(obj)
-    obj.haltOnFailure=False
+    obj.halt_on_failure=False
     obj.log('test fatal -- you should *not* see an exit line after this.',
             level='fatal')
     obj = SimpleFileLogger(log_dir=log_dir)
