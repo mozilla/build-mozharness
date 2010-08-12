@@ -33,7 +33,7 @@ from config import SimpleConfig
 class MultiLocaleRepack(SimpleConfig):
     config_options = [[
      ["--locale",],
-     {"action": "append_split",
+     {"action": "extend",
       "dest": "locales",
       "type": "string",
       "help": "Specify the locale(s) to repack"

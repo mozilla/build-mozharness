@@ -15,7 +15,7 @@ TODO:
 """
 
 from copy import deepcopy
-from optparse import OptionParser
+from optparse import OptionParser, Option
 import os
 import pprint
 import sys
@@ -58,23 +58,39 @@ class MozOptionParser(OptionParser):
     TODO look at argparse and http://docs.python.org/library/optparse.html?highlight=optparse#adding-new-actions for other ways to do this.
     """
     def __init__(self, **kwargs):
+        kwargs['option_class'] = ExtendOption
         OptionParser.__init__(self, **kwargs)
         self.variables = []
         self.append_variables = []
 
     def add_option(self, *args, **kwargs):
+        temp_variable = False
         origAction = kwargs['action']
-        if origAction.endswith("_split"):
-            kwargs['action'] = kwargs['action'].replace("_split", "")
-        if origAction.startswith("temp_"):
-            kwargs['action'] = kwargs['action'].replace("temp_", "")
+        if 'temp' in kwargs:
+            temp_variable = kwargs['temp']
+            del(kwargs['temp']
         option = OptionParser.add_option(self, *args,
                                          **kwargs)
         if option.dest and option.dest not in self.variables:
-            if not origAction.startswith("temp_"):
+            if not temp_variable:
                 self.variables.append(option.dest)
             if origAction.endswith("_split"):
                 self.append_variables.append(option.dest)
+
+class ExtendOption(Option):
+    """from http://docs.python.org/library/optparse.html?highlight=optparse#adding-new-actions"""
+    ACTIONS = Option.ACTIONS + ("extend",)
+    STORE_ACTIONS = Option.STORE_ACTIONS + ("extend",)
+    TYPED_ACTIONS = Option.TYPED_ACTIONS + ("extend",)
+    ALWAYS_TYPED_ACTIONS = Option.ALWAYS_TYPED_ACTIONS + ("extend",)
+
+    def take_action(self, action, dest, opt, value, values, parser):
+        if action == "extend":
+            lvalue = value.split(",")
+            values.ensure_value(dest, []).extend(lvalue)
+        else:
+            Option.take_action(
+                self, action, dest, opt, value, values, parser)
 
 
 
@@ -142,28 +158,28 @@ class BaseConfig(object):
 
         # Actions
         self.configParser.add_option(
-         "--action", action="temp_append_split",
+         "--action", action="extend", temp=True,
          dest="only_actions", metavar="ACTIONS",
          help="Do action %s" % self.all_actions
         )
         self.configParser.add_option(
-         "--add-action", action="temp_append_split",
+         "--add-action", action="extend", temp=True,
          dest="add_actions", metavar="ACTIONS",
          help="Add action %s to the list of actions" % self.all_actions
         )
         self.configParser.add_option(
-         "--no-action", action="temp_append_split",
+         "--no-action", action="extend", temp=True,
          dest="no_actions", metavar="ACTIONS",
          help="Don't perform action"
         )
         for action in self.all_actions:
             self.configParser.add_option(
-             "--only-%s" % action, action="temp_append_const",
+             "--only-%s" % action, action="append_const", temp=True,
              dest="only_actions", const=action,
              help="Add %s to the limited list of actions" % action
             )
             self.configParser.add_option(
-             "--no-%s" % action, action="temp_append_const",
+             "--no-%s" % action, action="append_const", temp=True,
              dest="no_actions", const=action,
              help="Remove %s from the list of actions to perform" % action
             )

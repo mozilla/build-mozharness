@@ -36,14 +36,14 @@ class MaemoDebSigner(SimpleConfig):
         """
         config_options = [[
          ["--locale",],
-         {"action": "append_split",
+         {"action": "extend",
           "dest": "locales",
           "type": "string",
           "help": "Specify the locale(s) to repack"
          }
         ],[
          ["--platform",],
-         {"action": "append_split",
+         {"action": "extend",
           "dest": "platforms",
           "type": "string",
           "help": "Specify the platform(s) to repack"
