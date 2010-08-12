@@ -93,12 +93,12 @@ class MaemoDebSigner(SimpleConfig):
             self.info("Skipping clobber step.")
             return
         self.info("Clobbering repo dir.")
-        baseWorkDir = self.queryVar("baseWorkDir")
-        workDir = self.queryVar("workDir")
-        repoDir = self.queryVar("repoDir")
-        if not workDir or not baseWorkDir or not repoDir:
-            self.fatal("baseWorkDir, workDir, repoDir need to be set!")
-        repoPath = os.path.join(baseWorkDir, workDir, repoDir)
+        base_work_dir = self.queryVar("base_work_dir")
+        work_dir = self.queryVar("work_dir")
+        repo_dir = self.queryVar("repo_dir")
+        if not work_dir or not base_work_dir or not repo_dir:
+            self.fatal("base_work_dir, work_dir, repo_dir need to be set!")
+        repoPath = os.path.join(base_work_dir, work_dir, repo_dir)
         if os.path.exists(repoPath):
             self.rmtree(repoPath)
         else:
@@ -131,46 +131,46 @@ class MaemoDebSigner(SimpleConfig):
         return locales
 
     def _signRepo(self, repoName, platform):
-        baseWorkDir = self.queryVar("baseWorkDir")
-        repoDir = self.queryVar("repoDir")
+        base_work_dir = self.queryVar("base_work_dir")
+        repo_dir = self.queryVar("repo_dir")
         sboxPath = self.queryVar("sboxPath")
         section = self.queryVar("section")
-        workDir = self.queryVar("workDir")
-        sboxWorkDir = '%s/%s/%s' % (workDir, repoDir, repoName)
-        absWorkDir = '%s/%s' % (baseWorkDir, sboxWorkDir)
+        work_dir = self.queryVar("work_dir")
+        sbox_work_dir = '%s/%s/%s' % (work_dir, repo_dir, repoName)
+        abs_work_dir = '%s/%s' % (base_work_dir, sbox_work_dir)
 
         # TODO errorRegex
         errorRegexList = []
-        command = "%s -p -d %s apt-ftparchive packages " % (sboxPath, sboxWorkDir)
+        command = "%s -p -d %s apt-ftparchive packages " % (sboxPath, sbox_work_dir)
         command += "dists/%s/%s/binary-armel |" % (platform, section)
         command += "gzip -9c > %s/dists/%s/%s/binary-armel/Packages.gz" % \
-                   (absWorkDir, platform, section)
+                   (abs_work_dir, platform, section)
         status = self.runCommand(command, errorRegexList=errorRegexList)
         if status:
             self.error("Exiting signRepo.")
             return status
 
-        for subDir in ("dists/%s/%s/binary-armel" % (platform, section),
+        for sub_dir in ("dists/%s/%s/binary-armel" % (platform, section),
                        "dists/%s/%s" % (platform, section),
                        "dists/%s" % platform):
-            self.rmtree("%s/%s/Release.gpg" % (absWorkDir, subDir))
+            self.rmtree("%s/%s/Release.gpg" % (abs_work_dir, sub_dir))
             # Create Release file outside of the tree, then move in.
             # TODO errorRegexList
             errorRegexList=[]
-            command = "%s -p -d %s/%s " % (sboxPath, sboxWorkDir, subDir)
-            command += "apt-ftparchive release . > %s/Release.tmp" % absWorkDir
+            command = "%s -p -d %s/%s " % (sboxPath, sbox_work_dir, sub_dir)
+            command += "apt-ftparchive release . > %s/Release.tmp" % abs_work_dir
             if self.runCommand(command, errorRegexList=errorRegexList):
                 self.error("Exiting signRepo.")
                 return -2
-            self.move("%s/Release.tmp" % absWorkDir,
-                      "%s/%s/Release" % (absWorkDir, subDir))
+            self.move("%s/Release.tmp" % abs_work_dir,
+                      "%s/%s/Release" % (abs_work_dir, sub_dir))
 
             errorRegexList = [{'regex': 'command not found', 'level': 'error'},
                           {'regex': 'secret key not available', 'level': 'error'},
                          ]
             command = "gpg -abs -o Release.gpg Release"
             if self.runCommand(command, errorRegexList=errorRegexList,
-                               cwd='%s/%s' % (absWorkDir, subDir)):
+                               cwd='%s/%s' % (abs_work_dir, sub_dir)):
                 self.error("Exiting signRepo.")
                 return -3
         return 0
@@ -212,15 +212,15 @@ components = %(section)s
             self.info("Skipping create repo step.")
             return
         self.info("Creating repos.")
-        baseWorkDir = self.queryVar("baseWorkDir")
+        base_work_dir = self.queryVar("base_work_dir")
         hgMobileRepo = self.queryVar("hgMobileRepo")
         hgConfigRepo = self.queryVar("hgConfigRepo")
         platformConfig = self.queryVar("platformConfig")
         platforms = self.queryVar("platforms", default=platformConfig.keys())
-        repoDir = self.queryVar("repoDir")
+        repo_dir = self.queryVar("repo_dir")
         sboxPath = self.queryVar("sboxPath")
         section = self.queryVar("section")
-        workDir = self.queryVar("workDir")
+        work_dir = self.queryVar("work_dir")
 
         if hgMobileRepo is not None:
             if not os.path.exists('mobile'):
@@ -260,19 +260,19 @@ components = %(section)s
                 if not self.downloadFile(debUrl, debName):
                     self.warn("Skipping %s ..." % locale)
                     continue
-                binaryDir = '%s/%s/%s/dists/%s/%s/binary-armel' % \
-                            (workDir, repoDir, repoName, platform, section)
-                absBinaryDir = '%s/%s' % (baseWorkDir, binaryDir)
-                self.mkdir_p(absBinaryDir)
-                self.move(debName, absBinaryDir)
+                binary_dir = '%s/%s/%s/dists/%s/%s/binary-armel' % \
+                             (work_dir, repo_dir, repoName, platform, section)
+                abs_binary_dir = '%s/%s' % (base_work_dir, binary_dir)
+                self.mkdir_p(abs_binary_dir)
+                self.move(debName, abs_binary_dir)
 
                 if self._signRepo(repoName, platform) != 0:
                     self.error("Skipping %s %s" % (platform, locale))
                     self.failures.append('%s_%s' % (platform, locale))
                     continue
 
-                self._createInstallFile(os.path.join(baseWorkDir, workDir,
-                                                    repoDir, repoName,
+                self._createInstallFile(os.path.join(base_work_dir, work_dir,
+                                                    repo_dir, repoName,
                                                     installFile),
                                        locale, platform)
 
@@ -281,11 +281,11 @@ components = %(section)s
             self.info("Skipping upload step.")
             return
         self.info("Uploading repos.")
-        baseWorkDir = self.queryVar("baseWorkDir")
+        base_work_dir = self.queryVar("base_work_dir")
         platformConfig = self.queryVar("platformConfig")
         platforms = self.queryVar("platforms", default=platformConfig.keys())
-        repoDir = self.queryVar("repoDir")
-        workDir = self.queryVar("workDir")
+        repo_dir = self.queryVar("repo_dir")
+        work_dir = self.queryVar("work_dir")
         for platform in platforms:
             """This assumes the same deb name for each locale in a platform.
             """
@@ -297,16 +297,16 @@ components = %(section)s
                     replaceDict = {'locale': locale}
                     installFile = pf['installFile'] % replaceDict
                     repoName = self.queryVar('repoName') % replaceDict
-                    self._uploadRepo(os.path.join(baseWorkDir, workDir, repoDir),
+                    self._uploadRepo(os.path.join(base_work_dir, work_dir, repo_dir),
                                      repoName, platform, installFile)
 
-    def _uploadRepo(self, localRepoDir, repoName, platform, installFile):
+    def _uploadRepo(self, local_repo_dir, repoName, platform, installFile):
         remoteRepoPath = self.queryVar("remoteRepoPath")
         remoteUser = self.queryVar("remoteUser")
         remoteSshKey = self.queryVar("remoteSshKey")
         remoteHost = self.queryVar("remoteHost")
-        repoPath = os.path.join(localRepoDir, repoName, 'dists', platform)
-        installFilePath = os.path.join(localRepoDir, repoName, installFile)
+        repoPath = os.path.join(local_repo_dir, repoName, 'dists', platform)
+        installFilePath = os.path.join(local_repo_dir, repoName, installFile)
 
         if not os.path.isdir(repoPath):
             self.error("uploadRepo: %s isn't a valid repo!" % repoPath)

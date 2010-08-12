@@ -1,5 +1,5 @@
 {
-  "logName": "signdebs",
+  "log_name": "signdebs",
   "localesFile": "mobile/locales/all-locales",
   "hgMobileRepo": "http://hg.mozilla.org/releases/mobile-1.1",
   "packageName": "fennec",
@@ -10,9 +10,9 @@
   "remoteHost": "stage.mozilla.org",
   "section": "extras",
   "sboxPath": "/scratchbox/moz_scratchbox",
-  "repoDir": "repos",
+  "repo_dir": "repos",
   "baseRepoUrl": "http://ftp.mozilla.org/pub/mozilla.org/mobile/repos",
-  "baseWorkDir": "/scratchbox/users/cltbld/home/cltbld",
+  "base_work_dir": "/scratchbox/users/cltbld/home/cltbld",
   "platformConfig": {
 
     "chinook": {

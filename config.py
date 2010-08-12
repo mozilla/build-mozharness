@@ -124,12 +124,12 @@ class BaseConfig(object):
          help="Append to the log"
         )
         self.configParser.add_option(
-         "--workDir", action="store", dest="workDir",
-         type="string", default="workDir",
-         help="Specify the workDir (subdir of baseWorkDir)"
+         "--work-dir", action="store", dest="work_dir",
+         type="string", default="work_dir",
+         help="Specify the work_dir (subdir of base_work_dir)"
         )
         self.configParser.add_option(
-         "--baseWorkDir", action="store", dest="baseWorkDir",
+         "--base-work-dir", action="store", dest="base_work_dir",
          type="string", default=os.getcwd(),
          help="Specify the absolute path of the parent of the working directory"
         )
@@ -409,7 +409,7 @@ class SimpleConfig(BaseConfig, BasicFunctions):
     def newLogObj(self):
         logConfig = {"loggerName": 'Simple',
                      "logName": 'test',
-                     "logDir": 'logs',
+                     "log_dir": 'logs',
                      "logLevel": self.logLevel,
                      "logFormat": '%(asctime)s - %(levelname)s - %(message)s',
                      "logToConsole": True,

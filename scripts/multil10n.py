@@ -73,9 +73,9 @@ class MultiLocaleRepack(SimpleConfig):
       "help": "Specify the Mozilla tag"
      }
     ],[
-     ["--mozillaDir",],
+     ["--mozilla-dir",],
      {"action": "store",
-      "dest": "mozillaDir",
+      "dest": "mozilla_dir",
       "type": "string",
       "default": "mozilla",
       "help": "Specify the Mozilla dir name"
@@ -103,9 +103,9 @@ class MultiLocaleRepack(SimpleConfig):
       "help": "Specify the L10n tag"
      }
     ],[
-     ["--l10nDir",],
+     ["--l10n-dir",],
      {"action": "store",
-      "dest": "l10nDir",
+      "dest": "l10n_dir",
       "type": "string",
       "default": "l10n",
       "help": "Specify the l10n dir name"
@@ -153,9 +153,9 @@ class MultiLocaleRepack(SimpleConfig):
             self.info("Skipping clobber step.")
             return
         self.info("Clobbering.")
-        baseWorkDir = self.queryVar("baseWorkDir")
-        workDir = self.queryVar("workDir")
-        path = os.path.join(baseWorkDir, workDir)
+        base_work_dir = self.queryVar("base_work_dir")
+        work_dir = self.queryVar("work_dir")
+        path = os.path.join(base_work_dir, work_dir)
         if os.path.exists(path):
             self.rmtree(path, errorLevel='fatal')
 
@@ -166,9 +166,9 @@ class MultiLocaleRepack(SimpleConfig):
         ignoreLocales = self.queryVar("ignoreLocales")
         if not locales:
             locales = []
-            baseWorkDir = self.queryVar("baseWorkDir")
-            workDir = self.queryVar("workDir")
-            localesFile = os.path.join(baseWorkDir, workDir,
+            base_work_dir = self.queryVar("base_work_dir")
+            work_dir = self.queryVar("work_dir")
+            localesFile = os.path.join(base_work_dir, work_dir,
               self.queryVar("localesFile"))
             if localesFile.endswith(".json"):
                 localesJson = self.parseConfigFile(localesFile)
@@ -187,31 +187,31 @@ class MultiLocaleRepack(SimpleConfig):
             self.locales = locales
             return self.locales
 
-    def _hgPull(self, repo, parentDir, tag="default", dirName=None,
+    def _hgPull(self, repo, parent_dir, tag="default", dirName=None,
                 haltOnFailure=True):
         if not dirName:
             dirName = os.path.basename(repo)
-        if not os.path.exists(os.path.join(parentDir, dirName)):
+        if not os.path.exists(os.path.join(parent_dir, dirName)):
             command = "hg clone %s %s" % (repo, dirName)
         else:
             command = "hg --cwd %s pull" % (dirName)
-        self.runCommand(command, cwd=parentDir, haltOnFailure=haltOnFailure,
+        self.runCommand(command, cwd=parent_dir, haltOnFailure=haltOnFailure,
                         errorRegexList=HgErrorRegexList)
         command = "hg --cwd %s update -C -r %s" % (dirName, tag)
-        self.runCommand(command, cwd=parentDir, haltOnFailure=haltOnFailure,
+        self.runCommand(command, cwd=parent_dir, haltOnFailure=haltOnFailure,
                         errorRegexList=HgErrorRegexList)
 
     def pull(self, repos=None):
-        baseWorkDir = self.queryVar("baseWorkDir")
-        workDir = self.queryVar("workDir")
-        absWorkDir = os.path.join(baseWorkDir, workDir)
+        base_work_dir = self.queryVar("base_work_dir")
+        work_dir = self.queryVar("work_dir")
+        abs_work_dir = os.path.join(base_work_dir, work_dir)
         hgL10nBase = self.queryVar("hgL10nBase")
         hgL10nTag = self.queryVar("hgL10nTag")
-        l10nDir = self.queryVar("l10nDir")
+        l10n_dir = self.queryVar("l10n_dir")
         if not repos:
             hgMozillaRepo = self.queryVar("hgMozillaRepo")
             hgMozillaTag = self.queryVar("hgMozillaTag")
-            mozillaDir = self.queryVar("mozillaDir")
+            mozilla_dir = self.queryVar("mozilla_dir")
             hgCompareLocalesRepo = self.queryVar("hgCompareLocalesRepo")
             hgCompareLocalesTag = self.queryVar("hgCompareLocalesTag")
             hgConfigsRepo = self.queryVar("hgConfigsRepo")
@@ -219,7 +219,7 @@ class MultiLocaleRepack(SimpleConfig):
             repos = [{
                 'repo': hgMozillaRepo,
                 'tag': hgMozillaTag,
-                'dirName': mozillaDir,
+                'dirName': mozilla_dir,
             },{
                 'repo': hgCompareLocalesRepo,
                 'tag': hgCompareLocalesTag,
@@ -236,27 +236,27 @@ class MultiLocaleRepack(SimpleConfig):
             self.info("Skipping pull step.")
         else:
             self.info("Pulling.")
-            self.mkdir_p(absWorkDir)
+            self.mkdir_p(abs_work_dir)
             for repoDict in repos:
                 self._hgPull(
                  repo=repoDict['repo'],
                  tag=repoDict.get('tag', 'default'),
                  dirName=repoDict.get('dirName', None),
-                 parentDir=absWorkDir
+                 parent_dir=abs_work_dir
                 )
 
         if not self.queryAction('pullLocales'):
             self.info("Skipping pull locales step.")
         else:
             self.info("Pulling locales.")
-            absL10nDir = os.path.join(absWorkDir, l10nDir)
-            self.mkdir_p(absL10nDir)
+            abs_l10n_dir = os.path.join(abs_work_dir, l10n_dir)
+            self.mkdir_p(abs_l10n_dir)
             locales = self.queryLocales()
             for locale in locales:
                 self._hgPull(
                  repo=os.path.join(hgL10nBase, locale),
                  tag=hgL10nTag,
-                 parentDir=absL10nDir
+                 parent_dir=abs_l10n_dir
                 )
 
     def setup(self, checkAction=True):
@@ -266,38 +266,38 @@ class MultiLocaleRepack(SimpleConfig):
                 self.info("Skipping setup step.")
                 return
             self.info("Setting up.")
-        workDir = self.queryVar("workDir")
-        baseWorkDir = self.queryVar("baseWorkDir")
+        work_dir = self.queryVar("work_dir")
+        base_work_dir = self.queryVar("base_work_dir")
         mozconfig = self.queryVar("mozconfig")
-        localesDir = self.queryVar("localesDir")
+        locales_dir = self.queryVar("locales_dir")
         enUsBinaryUrl = self.queryVar("enUsBinaryUrl")
-        mozillaDir = self.queryVar("mozillaDir")
-        brandingDir = self.queryVar("brandingDir")
+        mozilla_dir = self.queryVar("mozilla_dir")
+        branding_dir = self.queryVar("branding_dir")
         objdir = self.queryVar("objdir")
-        absWorkDir = os.path.join(baseWorkDir, workDir)
-        absObjdir = os.path.join(absWorkDir, mozillaDir, objdir)
-        absLocalesDir = os.path.join(absObjdir, localesDir)
-        absBrandingDir = os.path.join(absObjdir, brandingDir)
+        abs_work_dir = os.path.join(base_work_dir, work_dir)
+        absObjdir = os.path.join(abs_work_dir, mozilla_dir, objdir)
+        abs_locales_dir = os.path.join(absObjdir, locales_dir)
+        abs_branding_dir = os.path.join(absObjdir, branding_dir)
 
-        self.chdir(absWorkDir)
-        self.copyfile(mozconfig, os.path.join(mozillaDir, ".mozconfig"))
+        self.chdir(abs_work_dir)
+        self.copyfile(mozconfig, os.path.join(mozilla_dir, ".mozconfig"))
 
-        self.rmtree(os.path.join(absWorkDir, mozillaDir, objdir, "dist"))
+        self.rmtree(os.path.join(abs_work_dir, mozilla_dir, objdir, "dist"))
 
         # TODO error checking
         command = "make -f client.mk configure"
-        self._processCommand(command=command, cwd=os.path.join(absWorkDir, mozillaDir))
+        self._processCommand(command=command, cwd=os.path.join(abs_work_dir, mozilla_dir))
         command = "make"
         self._processCommand(command=command, cwd=os.path.join(absObjdir, "config"))
         command = "make wget-en-US EN_US_BINARY_URL=%s" % enUsBinaryUrl
-        self._processCommand(command=command, cwd=absLocalesDir)
+        self._processCommand(command=command, cwd=abs_locales_dir)
 
         self._getInstaller()
         command = "make unpack"
-        self._processCommand(command=command, cwd=absLocalesDir)
+        self._processCommand(command=command, cwd=abs_locales_dir)
         self._updateRevisions()
         command = "make"
-        self._processCommand(command=command, cwd=absBrandingDir)
+        self._processCommand(command=command, cwd=abs_branding_dir)
 
     def _getInstaller(self):
         # TODO
@@ -312,18 +312,18 @@ class MultiLocaleRepack(SimpleConfig):
             self.info("Skipping repack step.")
             return
         self.info("Repacking.")
-        baseWorkDir = self.queryVar("baseWorkDir")
-        workDir = self.queryVar("workDir")
-        localesDir = self.queryVar("localesDir")
-        mozillaDir = self.queryVar("mozillaDir")
+        base_work_dir = self.queryVar("base_work_dir")
+        work_dir = self.queryVar("work_dir")
+        locales_dir = self.queryVar("locales_dir")
+        mozilla_dir = self.queryVar("mozilla_dir")
         objdir = self.queryVar("objdir")
-        l10nDir = self.queryVar("l10nDir")
+        l10n_dir = self.queryVar("l10n_dir")
         mergeLocales = self.queryVar("mergeLocales")
-        mergeDir = "merged"
-        absWorkDir = os.path.join(baseWorkDir, workDir)
-        absLocalesDir = os.path.join(absWorkDir, mozillaDir, objdir, localesDir)
-        absLocalesSrcDir = os.path.join(absWorkDir, mozillaDir, localesDir)
-        absMergeDir = os.path.join(absLocalesDir, mergeDir)
+        merge_dir = "merged"
+        abs_work_dir = os.path.join(base_work_dir, work_dir)
+        abs_locales_dir = os.path.join(abs_work_dir, mozilla_dir, objdir, locales_dir)
+        abs_locales_src_dir = os.path.join(abs_work_dir, mozilla_dir, locales_dir)
+        abs_merge_dir = os.path.join(abs_locales_dir, merge_dir)
         locales = self.queryLocales()
         compareLocalesScript = os.path.join("..", "..", "..",
                                             "compare-locales",
@@ -334,18 +334,18 @@ class MultiLocaleRepack(SimpleConfig):
         CompareLocalesErrorRegexList = list(PythonErrorRegexList)
 
         for locale in locales:
-            self.rmtree(os.path.join(absLocalesDir, mergeDir))
+            self.rmtree(os.path.join(abs_locales_dir, merge_dir))
             # TODO more error checking
             command = "python %s -m %s l10n.ini %s %s" % (
-              compareLocalesScript, absMergeDir,
-              os.path.join('..', '..', '..', l10nDir), locale)
+              compareLocalesScript, abs_merge_dir,
+              os.path.join('..', '..', '..', l10n_dir), locale)
             self.runCommand(command, errorRegexList=CompareLocalesErrorRegexList,
-                            cwd=absLocalesSrcDir, env=compareLocalesEnv)
+                            cwd=abs_locales_src_dir, env=compareLocalesEnv)
             for step in ("chrome", "libs"):
-                command = 'make %s-%s L10NBASEDIR=../../../../%s' % (step, locale, l10nDir)
+                command = 'make %s-%s L10NBASEDIR=../../../../%s' % (step, locale, l10n_dir)
                 if mergeLocales:
-                    command += " LOCALE_MERGEDIR=%s" % os.path.join(absLocalesDir, mergeDir)
-                self._processCommand(command=command, cwd=absLocalesDir)
+                    command += " LOCALE_MERGEDIR=%s" % os.path.join(abs_locales_dir, merge_dir)
+                self._processCommand(command=command, cwd=abs_locales_dir)
         self._repackage()
 
     def _repackage(self):
@@ -427,7 +427,7 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
     def pull(self):
         hgMozillaRepo = self.queryVar("hgMozillaRepo")
         hgMozillaTag = self.queryVar("hgMozillaTag")
-        mozillaDir = self.queryVar("mozillaDir")
+        mozilla_dir = self.queryVar("mozilla_dir")
         hgCompareLocalesRepo = self.queryVar("hgCompareLocalesRepo")
         hgCompareLocalesTag = self.queryVar("hgCompareLocalesTag")
         hgMobileRepo = self.queryVar("hgMobileRepo")
@@ -437,11 +437,11 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
         repos = [{
             'repo': hgMozillaRepo,
             'tag': hgMozillaTag,
-            'dirName': mozillaDir,
+            'dirName': mozilla_dir,
         },{
             'repo': hgMobileRepo,
             'tag': hgMobileTag,
-            'dirName': os.path.join(mozillaDir, 'mobile'),
+            'dirName': os.path.join(mozilla_dir, 'mobile'),
         },{
             'repo': hgCompareLocalesRepo,
             'tag': hgCompareLocalesTag,
@@ -467,17 +467,17 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
     def queryDebName(self):
         if self.debName:
             return self.debName
-        baseWorkDir = self.queryVar("baseWorkDir")
-        workDir = self.queryVar("workDir")
-        mozillaDir = self.queryVar("mozillaDir")
+        base_work_dir = self.queryVar("base_work_dir")
+        work_dir = self.queryVar("work_dir")
+        mozilla_dir = self.queryVar("mozilla_dir")
         objdir = self.queryVar("objdir")
-        localesDir = self.queryVar("localesDir")
-        absWorkDir = os.path.join(baseWorkDir, workDir)
-        absLocalesDir = os.path.join(absWorkDir, mozillaDir, objdir, localesDir)
+        locales_dir = self.queryVar("locales_dir")
+        abs_work_dir = os.path.join(base_work_dir, work_dir)
+        abs_locales_dir = os.path.join(abs_work_dir, mozilla_dir, objdir, locales_dir)
         enUsBinaryUrl = self.queryVar("enUsBinaryUrl")
 
         command = "make wget-DEB_PKG_NAME EN_US_BINARY_URL=%s" % enUsBinaryUrl
-        self.debName = self._processCommand(command=command, cwd=absLocalesDir,
+        self.debName = self._processCommand(command=command, cwd=abs_locales_dir,
                                             haltOnFailure=True,
                                             returnType='output')
         return self.debName
@@ -491,31 +491,31 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
         return self.debPackageVersion
 
     def _getInstaller(self):
-        baseWorkDir = self.queryVar("baseWorkDir")
-        workDir = self.queryVar("workDir")
-        mozillaDir = self.queryVar("mozillaDir")
+        base_work_dir = self.queryVar("base_work_dir")
+        work_dir = self.queryVar("work_dir")
+        mozilla_dir = self.queryVar("mozilla_dir")
         objdir = self.queryVar("objdir")
-        localesDir = self.queryVar("localesDir")
-        absWorkDir = os.path.join(baseWorkDir, workDir)
-        absLocalesDir = os.path.join(absWorkDir, mozillaDir, objdir, localesDir)
+        locales_dir = self.queryVar("locales_dir")
+        abs_work_dir = os.path.join(base_work_dir, work_dir)
+        abs_locales_dir = os.path.join(abs_work_dir, mozilla_dir, objdir, locales_dir)
         enUsBinaryUrl = self.queryVar("enUsBinaryUrl")
 
         debName = self.queryDebName()
 
         command = "make wget-deb EN_US_BINARY_URL=%s DEB_PKG_NAME=%s DEB_BUILD_ARCH=armel" % (enUsBinaryUrl, debName)
-        self._processCommand(command=command, cwd=absLocalesDir)
+        self._processCommand(command=command, cwd=abs_locales_dir)
 
     def _updateRevisions(self):
-        baseWorkDir = self.queryVar("baseWorkDir")
-        workDir = self.queryVar("workDir")
-        localesDir = self.queryVar("localesDir")
+        base_work_dir = self.queryVar("base_work_dir")
+        work_dir = self.queryVar("work_dir")
+        locales_dir = self.queryVar("locales_dir")
         objdir = self.queryVar("objdir")
-        mozillaDir = self.queryVar("mozillaDir")
-        absWorkDir = os.path.join(baseWorkDir, workDir)
-        absLocalesDir = os.path.join(absWorkDir, mozillaDir, objdir, localesDir)
+        mozilla_dir = self.queryVar("mozilla_dir")
+        abs_work_dir = os.path.join(base_work_dir, work_dir)
+        abs_locales_dir = os.path.join(abs_work_dir, mozilla_dir, objdir, locales_dir)
 
         command = "make ident"
-        output = self._processCommand(command=command, cwd=absLocalesDir,
+        output = self._processCommand(command=command, cwd=abs_locales_dir,
                                       returnType='output')
         for line in output.split('\n'):
             if line.startswith('gecko_revision '):
@@ -523,22 +523,22 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
             elif line.startswith('fennec_revision '):
                 fennec_revision = line.split(' ')[-1]
         command = "hg up -C -r %s" % gecko_revision
-        self.runCommand(command, cwd=os.path.join(absWorkDir, mozillaDir))
+        self.runCommand(command, cwd=os.path.join(abs_work_dir, mozilla_dir))
         command = "hg up -C -r %s" % fennec_revision
-        self.runCommand(command, cwd=os.path.join(absWorkDir, mozillaDir,
+        self.runCommand(command, cwd=os.path.join(abs_work_dir, mozilla_dir,
                                                   "mobile"))
 
     def _repackage(self):
-        baseWorkDir = self.queryVar("baseWorkDir")
-        workDir = self.queryVar("workDir")
-        mozillaDir = self.queryVar("mozillaDir")
+        base_work_dir = self.queryVar("base_work_dir")
+        work_dir = self.queryVar("work_dir")
+        mozilla_dir = self.queryVar("mozilla_dir")
         objdir = self.queryVar("objdir")
-        absWorkDir = os.path.join(baseWorkDir, workDir)
-        absObjdir = os.path.join(absWorkDir, mozillaDir, objdir)
+        abs_work_dir = os.path.join(base_work_dir, work_dir)
+        absObjdir = os.path.join(abs_work_dir, mozilla_dir, objdir)
         debName = self.queryDebName()
         debPackageVersion = self.queryDebPackageVersion()
-        tmpDebDir = os.path.join("dist", "tmp.deb")
-        absTmpDebDir = os.path.join(absObjdir, tmpDebDir)
+        tmp_deb_dir = os.path.join("dist", "tmp.deb")
+        abs_tmp_deb_dir = os.path.join(absObjdir, tmp_deb_dir)
 
         # TODO error checking
 #        command = "make package AB_CD=multi"
@@ -546,39 +546,39 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
         command = "make deb AB_CD=multi DEB_PKG_NAME=%s DEB_PKG_VERSION=%s" % (debName, debPackageVersion)
         self._processCommand(command=command, cwd=absObjdir)
 
-        self.rmtree(os.path.join(absTmpDebDir))
-        self.mkdir_p(os.path.join(absTmpDebDir, "DEBIAN"))
+        self.rmtree(os.path.join(abs_tmp_deb_dir))
+        self.mkdir_p(os.path.join(abs_tmp_deb_dir, "DEBIAN"))
         arErrorRegexList = [{
          'substr': 'No such file or directory', 'level': 'error'
         },{
          'substr': 'Cannot write: Broken pipe', 'level': 'error'
         }]
         command = "ar p mobile/locales/%s control.tar.gz | tar zxv -C %s/DEBIAN" % \
-          (debName, tmpDebDir)
+          (debName, tmp_deb_dir)
         self.runCommand(command=command, cwd=absObjdir,
                         errorRegexList=arErrorRegexList)
         command = "ar p mobile/locales/%s data.tar.gz | tar zxv -C %s" % \
-          (debName, tmpDebDir)
+          (debName, tmp_deb_dir)
         self.runCommand(command=command, cwd=absObjdir,
                         errorRegexList=arErrorRegexList)
         command = "ar p mobile/%s data.tar.gz | tar zxv -C %s" % \
-          (debName, tmpDebDir)
+          (debName, tmp_deb_dir)
         self.runCommand(command=command, cwd=absObjdir,
                         errorRegexList=arErrorRegexList)
 
         # fix DEBIAN/md5sums
         self.info("Creating md5sums file...")
         command = "find * -type f | grep -v DEBIAN"
-        fileList = self.getOutputFromCommand(command=command, cwd=absTmpDebDir).split('\n')
-        md5File = os.path.join(absTmpDebDir, "DEBIAN", "md5sums")
+        fileList = self.getOutputFromCommand(command=command, cwd=abs_tmp_deb_dir).split('\n')
+        md5File = os.path.join(abs_tmp_deb_dir, "DEBIAN", "md5sums")
         md5FH = open(md5File, 'w')
         for fileName in fileList:
-            contents = open(os.path.join(absTmpDebDir, fileName)).read()
+            contents = open(os.path.join(abs_tmp_deb_dir, fileName)).read()
             md5sum = hashlib.md5(contents).hexdigest()
             md5FH.write("%s  %s\n" % (md5sum, fileName))
         md5FH.close()
 
-        command = "dpkg-deb -b %s dist/%s" % (absTmpDebDir, debName)
+        command = "dpkg-deb -b %s dist/%s" % (abs_tmp_deb_dir, debName)
         self._processCommand(command=command, cwd=absObjdir)
 
     def _processCommand(self, **kwargs):

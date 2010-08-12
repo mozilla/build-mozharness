@@ -10,9 +10,9 @@
   "remoteHost": "stage.mozilla.org",
   "section": "extras",
   "sboxPath": "/scratchbox/moz_scratchbox",
-  "repoDir": "repos",
+  "repo_dir": "repos",
   "baseRepoUrl": "http://ftp.mozilla.org/pub/mozilla.org/mobile/repos",
-  "baseWorkDir": "/scratchbox/users/cltbld/home/cltbld",
+  "base_work_dir": "/scratchbox/users/cltbld/home/cltbld",
   "platformConfig": {
 
     "chinook": {

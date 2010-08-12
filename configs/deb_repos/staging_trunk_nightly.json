@@ -10,9 +10,9 @@
   "remoteHost": "staging-mobile-master.build.mozilla.org",
   "section": "extras",
   "sboxPath": "/scratchbox/moz_scratchbox",
-  "repoDir": "repos.staging",
+  "repo_dir": "repos.staging",
   "baseRepoUrl": "http://staging-mobile-master.build.mozilla.org/debtest",
-  "baseWorkDir": "/scratchbox/users/cltbld/home/cltbld",
+  "base_work_dir": "/scratchbox/users/cltbld/home/cltbld",
   "platformConfig": {
 
     "chinook": {

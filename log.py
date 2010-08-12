@@ -276,7 +276,7 @@ class BaseLogger(object):
                  logDateFormat='%H:%M:%S',
                  logName='test',
                  logToConsole=True,
-                 logDir='.',
+                 log_dir='.',
                  logToRaw=False,
                  loggerName='',
                  haltOnFailure=True,
@@ -289,7 +289,7 @@ class BaseLogger(object):
         self.logToRaw = logToRaw
         self.logLevel = logLevel
         self.logName = logName
-        self.logDir = logDir
+        self.log_dir = log_dir
         self.appendToLog = appendToLog
 
         # Not sure what I'm going to use this for; useless unless we
@@ -302,12 +302,12 @@ class BaseLogger(object):
         self.createLogDir()
 
     def createLogDir(self):
-        if os.path.exists(self.logDir):
-            if not os.path.isdir(self.logDir):
-                os.remove(self.logDir)
-        if not os.path.exists(self.logDir):
-            os.makedirs(self.logDir)
-        self.absLogDir = os.path.abspath(self.logDir)
+        if os.path.exists(self.log_dir):
+            if not os.path.isdir(self.log_dir):
+                os.remove(self.log_dir)
+        if not os.path.exists(self.log_dir):
+            os.makedirs(self.log_dir)
+        self.abs_log_dir = os.path.abspath(self.log_dir)
 
     def initMessage(self, name=None):
         if not name:
@@ -339,7 +339,7 @@ class BaseLogger(object):
             self.addConsoleHandler()
         if self.logToRaw:
             self.logFiles['raw'] = '%s_raw.log' % self.logName
-            self.addFileHandler(os.path.join(self.absLogDir,
+            self.addFileHandler(os.path.join(self.abs_log_dir,
                                              self.logFiles['raw']),
                                 logFormat='%(message)s')
 
@@ -421,15 +421,15 @@ class SimpleFileLogger(BaseLogger):
     """
     def __init__(self,
                  logFormat='%(asctime)s - %(levelname)s - %(message)s',
-                 loggerName='Simple', logDir='logs', **kwargs):
+                 loggerName='Simple', log_dir='logs', **kwargs):
         BaseLogger.__init__(self, loggerName=loggerName, logFormat=logFormat,
-                            logDir=logDir, **kwargs)
+                            log_dir=log_dir, **kwargs)
         self.newLogger(self.loggerName)
         self.initMessage()
 
     def newLogger(self, loggerName):
         BaseLogger.newLogger(self, loggerName)
-        self.logPath = os.path.join(self.absLogDir, '%s.log' % self.logName)
+        self.logPath = os.path.join(self.abs_log_dir, '%s.log' % self.logName)
         self.logFiles['default'] = self.logPath
         self.addFileHandler(self.logPath)
 
@@ -438,14 +438,14 @@ class SimpleFileLogger(BaseLogger):
 
 # MultiFileLogger {{{1
 class MultiFileLogger(BaseLogger):
-    """Create a log per log level in logDir.  Possibly also output to
+    """Create a log per log level in log_dir.  Possibly also output to
     the terminal and a raw log (no prepending of level or date)
     """
     def __init__(self, loggerName='Multi',
                  logFormat='%(asctime)s - %(levelname)s - %(message)s',
-                 logDir='logs', logToRaw=True, **kwargs):
+                 log_dir='logs', logToRaw=True, **kwargs):
         BaseLogger.__init__(self, loggerName=loggerName, logFormat=logFormat,
-                            logToRaw=logToRaw, logDir=logDir,
+                            logToRaw=logToRaw, log_dir=log_dir,
                             **kwargs)
 
         self.newLogger(self.loggerName)
@@ -458,7 +458,7 @@ class MultiFileLogger(BaseLogger):
             if self.getLoggerLevel(level) >= minLoggerLevel:
                 self.logFiles[level] = '%s_%s.log' % (self.logName,
                                                       level)
-                self.addFileHandler(os.path.join(self.absLogDir,
+                self.addFileHandler(os.path.join(self.abs_log_dir,
                                                  self.logFiles[level]),
                                     logLevel=level)
 
@@ -483,14 +483,14 @@ if __name__ == '__main__':
         else:
             print "OH NO!"
 
-    logDir = 'test_logs'
-    obj = MultiFileLogger(logLevel='info', logDir=logDir,
+    log_dir = 'test_logs'
+    obj = MultiFileLogger(logLevel='info', log_dir=log_dir,
                           logToRaw=True)
     testLogger(obj)
     obj.haltOnFailure=False
     obj.log('test fatal -- you should *not* see an exit line after this.',
             level='fatal')
-    obj = SimpleFileLogger(logDir=logDir)
+    obj = SimpleFileLogger(log_dir=log_dir)
     testLogger(obj)
     print "=========="
-    print "You should be able to examine %s." % logDir
+    print "You should be able to examine %s." % log_dir
