@@ -65,17 +65,13 @@ class MozOptionParser(OptionParser):
 
     def add_option(self, *args, **kwargs):
         temp_variable = False
-        origAction = kwargs['action']
         if 'temp' in kwargs:
             temp_variable = kwargs['temp']
             del(kwargs['temp'])
-        option = OptionParser.add_option(self, *args,
-                                         **kwargs)
+        option = OptionParser.add_option(self, *args, **kwargs)
         if option.dest and option.dest not in self.variables:
             if not temp_variable:
                 self.variables.append(option.dest)
-            if origAction.endswith("_split"):
-                self.append_variables.append(option.dest)
 
 class ExtendOption(Option):
     """from http://docs.python.org/library/optparse.html?highlight=optparse#adding-new-actions"""
@@ -329,8 +325,6 @@ class BaseConfig(object):
             # Don't override config_file defaults with configParser defaults
             if key in defaults and value == defaults[key] and self.existsVar(key):
                 continue
-            if value and key in self.configParser.append_variables:
-                value = ','.join(value).split(',')
             self.setVar(key, value)
 
         """Actions.
