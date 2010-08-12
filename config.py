@@ -121,60 +121,60 @@ class BaseConfig(object):
         self.parseArgs()
 
     def _createConfigParser(self, config_options, usage):
-        self.configParser = MozOptionParser(usage=usage)
-        self.configParser.add_option(
+        self.config_parser = MozOptionParser(usage=usage)
+        self.config_parser.add_option(
          "--log-level", action="store",
          type="choice", dest="log_level", default="info",
          choices=['debug', 'info', 'warning', 'error', 'critical', 'fatal'],
          help="Set log level (debug|info|warning|error|critical|fatal)"
         )
-        self.configParser.add_option(
+        self.config_parser.add_option(
          "-q", "--quiet", action="store_false", dest="log_to_console",
          default=True, help="Don't log to the console"
         )
-        self.configParser.add_option(
+        self.config_parser.add_option(
          "--append-to-log", action="store_true",
          dest="append_to_log", default=False,
          help="Append to the log"
         )
-        self.configParser.add_option(
+        self.config_parser.add_option(
          "--work-dir", action="store", dest="work_dir",
          type="string", default="work_dir",
          help="Specify the work_dir (subdir of base_work_dir)"
         )
-        self.configParser.add_option(
+        self.config_parser.add_option(
          "--base-work-dir", action="store", dest="base_work_dir",
          type="string", default=os.getcwd(),
          help="Specify the absolute path of the parent of the working directory"
         )
-        self.configParser.add_option(
+        self.config_parser.add_option(
          "--config-file", action="store", dest="config_file",
          type="string", help="Specify the config file (required)"
         )
 
         # Actions
-        self.configParser.add_option(
+        self.config_parser.add_option(
          "--action", action="extend", temp=True,
          dest="only_actions", metavar="ACTIONS",
          help="Do action %s" % self.all_actions
         )
-        self.configParser.add_option(
+        self.config_parser.add_option(
          "--add-action", action="extend", temp=True,
          dest="add_actions", metavar="ACTIONS",
          help="Add action %s to the list of actions" % self.all_actions
         )
-        self.configParser.add_option(
+        self.config_parser.add_option(
          "--no-action", action="extend", temp=True,
          dest="no_actions", metavar="ACTIONS",
          help="Don't perform action"
         )
         for action in self.all_actions:
-            self.configParser.add_option(
+            self.config_parser.add_option(
              "--only-%s" % action, action="append_const", temp=True,
              dest="only_actions", const=action,
              help="Add %s to the limited list of actions" % action
             )
-            self.configParser.add_option(
+            self.config_parser.add_option(
              "--no-%s" % action, action="append_const", temp=True,
              dest="no_actions", const=action,
              help="Remove %s from the list of actions to perform" % action
@@ -184,13 +184,13 @@ class BaseConfig(object):
         # TODO error checking for overlapping options
         if config_options:
             for option in config_options:
-                self.configParser.add_option(*option[0], **option[1])
+                self.config_parser.add_option(*option[0], **option[1])
 
         # Initial-config-specified options
         config_options = self.queryVar('config_options')
         if config_options:
             for option in config_options:
-                self.configParser.add_option(*option[0], **option[1])
+                self.config_parser.add_option(*option[0], **option[1])
 
     def parseConfigFile(self, file_name):
         """Read a config file and return a dictionary.
@@ -311,18 +311,18 @@ class BaseConfig(object):
         child objects can manipulate it.
         """
         self.command_line = ' '.join(sys.argv)
-        (options, args) = self.configParser.parse_args()
-        defaults = self.configParser.defaults.copy()
+        (options, args) = self.config_parser.parse_args()
+        defaults = self.config_parser.defaults.copy()
 
         if options.config_file:
             self.setConfig(self.parseConfigFile(options.config_file))
         elif self.require_config_file:
             self.fatal("You must specify --config-file!")
-        for key in self.configParser.variables:
+        for key in self.config_parser.variables:
             value = getattr(options, key)
             if value is None:
                 continue
-            # Don't override config_file defaults with configParser defaults
+            # Don't override config_file defaults with config_parser defaults
             if key in defaults and value == defaults[key] and self.existsVar(key):
                 continue
             self.setVar(key, value)
