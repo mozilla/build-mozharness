@@ -19,7 +19,7 @@ sys.path[0] = os.path.dirname(sys.path[0])
 
 import log
 reload(log)
-from log import SimpleFileLogger, BasicFunctions, SshErrorRegex, HgErrorRegex
+from log import SimpleFileLogger, BasicFunctions, SSHErrorRegexList, HgErrorRegexList
 
 import config
 reload(config)
@@ -140,12 +140,12 @@ class MaemoDebSigner(SimpleConfig):
         absWorkDir = '%s/%s' % (baseWorkDir, sboxWorkDir)
 
         # TODO errorRegex
-        errorRegex = []
+        errorRegexList = []
         command = "%s -p -d %s apt-ftparchive packages " % (sboxPath, sboxWorkDir)
         command += "dists/%s/%s/binary-armel |" % (platform, section)
         command += "gzip -9c > %s/dists/%s/%s/binary-armel/Packages.gz" % \
                    (absWorkDir, platform, section)
-        status = self.runCommand(command, errorRegex=errorRegex)
+        status = self.runCommand(command, errorRegexList=errorRegexList)
         if status:
             self.error("Exiting signRepo.")
             return status
@@ -155,21 +155,21 @@ class MaemoDebSigner(SimpleConfig):
                        "dists/%s" % platform):
             self.rmtree("%s/%s/Release.gpg" % (absWorkDir, subDir))
             # Create Release file outside of the tree, then move in.
-            # TODO errorRegex
-            errorRegex=[]
+            # TODO errorRegexList
+            errorRegexList=[]
             command = "%s -p -d %s/%s " % (sboxPath, sboxWorkDir, subDir)
             command += "apt-ftparchive release . > %s/Release.tmp" % absWorkDir
-            if self.runCommand(command, errorRegex=errorRegex):
+            if self.runCommand(command, errorRegexList=errorRegexList):
                 self.error("Exiting signRepo.")
                 return -2
             self.move("%s/Release.tmp" % absWorkDir,
                       "%s/%s/Release" % (absWorkDir, subDir))
 
-            errorRegex = [{'regex': 'command not found', 'level': 'error'},
+            errorRegexList = [{'regex': 'command not found', 'level': 'error'},
                           {'regex': 'secret key not available', 'level': 'error'},
                          ]
             command = "gpg -abs -o Release.gpg Release"
-            if self.runCommand(command, errorRegex=errorRegex,
+            if self.runCommand(command, errorRegexList=errorRegexList,
                                cwd='%s/%s' % (absWorkDir, subDir)):
                 self.error("Exiting signRepo.")
                 return -3
@@ -225,15 +225,15 @@ components = %(section)s
         if hgMobileRepo is not None:
             if not os.path.exists('mobile'):
                 self.runCommand("hg clone %s mobile" % hgMobileRepo,
-                                errorRegex=HgErrorRegex)
-            self.runCommand("hg --cwd mobile pull", errorRegex=HgErrorRegex)
-            self.runCommand("hg --cwd mobile update -C", errorRegex=HgErrorRegex)
+                                errorRegexList=HgErrorRegexList)
+            self.runCommand("hg --cwd mobile pull", errorRegexList=HgErrorRegexList)
+            self.runCommand("hg --cwd mobile update -C", errorRegexList=HgErrorRegexList)
         if hgConfigRepo is not None:
             if not os.path.exists('configs'):
                 self.runCommand("hg clone %s configs" % hgConfigRepo,
-                                errorRegex=HgErrorRegex)
-            self.runCommand("hg --cwd configs pull", errorRegex=HgErrorRegex)
-            self.runCommand("hg --cwd configs update -C", errorRegex=HgErrorRegex)
+                                errorRegexList=HgErrorRegexList)
+            self.runCommand("hg --cwd configs pull", errorRegexList=HgErrorRegexList)
+            self.runCommand("hg --cwd configs update -C", errorRegexList=HgErrorRegexList)
 
         for platform in platforms:
             """This assumes the same deb name for each locale in a platform.
@@ -317,17 +317,17 @@ components = %(section)s
         command = "ssh -i %s %s@%s mkdir -p %s/%s/dists/%s" % \
                   (remoteSshKey, remoteUser, remoteHost, remoteRepoPath,
                    repoName, platform)
-        self.runCommand(command, errorRegex=SshErrorRegex)
+        self.runCommand(command, errorRegexList=SSHErrorRegexList)
 
         command = 'rsync --rsh="ssh -i %s" -azv --delete %s %s@%s:%s/%s/dists/%s' % \
                   (remoteSshKey, os.path.join(repoPath, '.'),
                    remoteUser, remoteHost, remoteRepoPath, repoName, platform)
-        self.runCommand(command, errorRegex=SshErrorRegex)
+        self.runCommand(command, errorRegexList=SSHErrorRegexList)
 
         command = 'scp -i %s %s %s@%s:%s/%s/' % \
                   (remoteSshKey, installFilePath,
                    remoteUser, remoteHost, remoteRepoPath, repoName)
-        self.runCommand(command, errorRegex=SshErrorRegex)
+        self.runCommand(command, errorRegexList=SSHErrorRegexList)
 
 
 

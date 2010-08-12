@@ -21,7 +21,7 @@ sys.path[0] = os.path.dirname(sys.path[0])
 
 import log
 reload(log)
-from log import SimpleFileLogger, BasicFunctions, SshErrorRegex, HgErrorRegex, PythonErrorRegex
+from log import SimpleFileLogger, BasicFunctions, SSHErrorRegexList, HgErrorRegexList, PythonErrorRegexList
 
 import config
 reload(config)
@@ -196,10 +196,10 @@ class MultiLocaleRepack(SimpleConfig):
         else:
             command = "hg --cwd %s pull" % (dirName)
         self.runCommand(command, cwd=parentDir, haltOnFailure=haltOnFailure,
-                        errorRegex=HgErrorRegex)
+                        errorRegexList=HgErrorRegexList)
         command = "hg --cwd %s update -C -r %s" % (dirName, tag)
         self.runCommand(command, cwd=parentDir, haltOnFailure=haltOnFailure,
-                        errorRegex=HgErrorRegex)
+                        errorRegexList=HgErrorRegexList)
 
     def pull(self, repos=None):
         baseWorkDir = self.queryVar("baseWorkDir")
@@ -331,7 +331,7 @@ class MultiLocaleRepack(SimpleConfig):
         compareLocalesEnv = os.environ.copy()
         compareLocalesEnv['PYTHONPATH'] = os.path.join('..', '..', '..',
                                                        'compare-locales', 'lib')
-        CompareLocalesErrorRegex = list(PythonErrorRegex)
+        CompareLocalesErrorRegexList = list(PythonErrorRegexList)
 
         for locale in locales:
             self.rmtree(os.path.join(absLocalesDir, mergeDir))
@@ -339,7 +339,7 @@ class MultiLocaleRepack(SimpleConfig):
             command = "python %s -m %s l10n.ini %s %s" % (
               compareLocalesScript, absMergeDir,
               os.path.join('..', '..', '..', l10nDir), locale)
-            self.runCommand(command, errorRegex=CompareLocalesErrorRegex,
+            self.runCommand(command, errorRegexList=CompareLocalesErrorRegexList,
                             cwd=absLocalesSrcDir, env=compareLocalesEnv)
             for step in ("chrome", "libs"):
                 command = 'make %s-%s L10NBASEDIR=../../../../%s' % (step, locale, l10nDir)
@@ -548,7 +548,7 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
 
         self.rmtree(os.path.join(absTmpDebDir))
         self.mkdir_p(os.path.join(absTmpDebDir, "DEBIAN"))
-        arErrorRegex = [{
+        arErrorRegexList = [{
          'substr': 'No such file or directory', 'level': 'error'
         },{
          'substr': 'Cannot write: Broken pipe', 'level': 'error'
@@ -556,15 +556,15 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
         command = "ar p mobile/locales/%s control.tar.gz | tar zxv -C %s/DEBIAN" % \
           (debName, tmpDebDir)
         self.runCommand(command=command, cwd=absObjdir,
-                        errorRegex=arErrorRegex)
+                        errorRegexList=arErrorRegexList)
         command = "ar p mobile/locales/%s data.tar.gz | tar zxv -C %s" % \
           (debName, tmpDebDir)
         self.runCommand(command=command, cwd=absObjdir,
-                        errorRegex=arErrorRegex)
+                        errorRegexList=arErrorRegexList)
         command = "ar p mobile/%s data.tar.gz | tar zxv -C %s" % \
           (debName, tmpDebDir)
         self.runCommand(command=command, cwd=absObjdir,
-                        errorRegex=arErrorRegex)
+                        errorRegexList=arErrorRegexList)
 
         # fix DEBIAN/md5sums
         self.info("Creating md5sums file...")
@@ -593,10 +593,10 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
             del kwargs['cwd']
         kwargs['command'] = '%s "%s"' % (command, kwargs['command'].replace(sboxRoot, ''))
         if 'returnType' not in kwargs or kwargs['returnType'] != 'output':
-            if 'errorRegex' in kwargs:
-                kwargs['errorRegex'] = PythonErrorRegex + kwargs['errorRegex']
+            if 'errorRegexList' in kwargs:
+                kwargs['errorRegexList'] = PythonErrorRegexList + kwargs['errorRegexList']
             else:
-                kwargs['errorRegex'] = PythonErrorRegex
+                kwargs['errorRegexList'] = PythonErrorRegexList
             return self.runCommand(**kwargs)
         else:
             del(kwargs['returnType'])

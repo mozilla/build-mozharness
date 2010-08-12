@@ -33,34 +33,34 @@ logging.addLevelName(FATAL, 'FATAL')
 # ErrorRegexes {{{1
 
 # For ssh, scp, rsync over ssh
-SshErrorRegex=[{'substr': 'Name or service not known', 'level': 'error'},
-               {'substr': 'Could not resolve hostname', 'level': 'error'},
-               {'substr': 'POSSIBLE BREAK-IN ATTEMPT', 'level': 'warning'},
-               {'substr': 'Network error:', 'level': 'error'},
-               {'substr': 'Access denied', 'level': 'error'},
-               {'substr': 'Authentication refused', 'level': 'error'},
-               {'substr': 'Out of memory', 'level': 'error'},
-               {'substr': 'Connection reset by peer', 'level': 'warning'},
-               {'substr': 'Host key verification failed', 'level': 'error'},
-               {'substr': 'command not found', 'level': 'error'},
-               {'substr': 'WARNING:', 'level': 'warning'},
-               {'substr': 'rsync error:', 'level': 'error'},
-               {'substr': 'Broken pipe:', 'level': 'error'},
-               {'substr': 'connection unexpectedly closed:', 'level': 'error'},
-              ]
+SSHErrorRegexList=[{'substr': 'Name or service not known', 'level': 'error'},
+                   {'substr': 'Could not resolve hostname', 'level': 'error'},
+                   {'substr': 'POSSIBLE BREAK-IN ATTEMPT', 'level': 'warning'},
+                   {'substr': 'Network error:', 'level': 'error'},
+                   {'substr': 'Access denied', 'level': 'error'},
+                   {'substr': 'Authentication refused', 'level': 'error'},
+                   {'substr': 'Out of memory', 'level': 'error'},
+                   {'substr': 'Connection reset by peer', 'level': 'warning'},
+                   {'substr': 'Host key verification failed', 'level': 'error'},
+                   {'substr': 'command not found', 'level': 'error'},
+                   {'substr': 'WARNING:', 'level': 'warning'},
+                   {'substr': 'rsync error:', 'level': 'error'},
+                   {'substr': 'Broken pipe:', 'level': 'error'},
+                   {'substr': 'connection unexpectedly closed:', 'level': 'error'},
+                  ]
 
-HgErrorRegex=[{'regex': '^abort:', 'level': 'error'},
-              {'substr': 'command not found', 'level': 'error'},
-              {'substr': 'unknown exception encountered', 'level': 'error'},
-             ]
-
-PythonErrorRegex=[{'substr': 'Traceback (most recent call last)', 'level': 'error'},
-                  {'substr': 'SyntaxError: ', 'level': 'error'},
-                  {'substr': 'TypeError: ', 'level': 'error'},
-                  {'substr': 'NameError: ', 'level': 'error'},
-                  {'substr': 'ZeroDivisionError: ', 'level': 'error'},
+HgErrorRegexList=[{'regex': '^abort:', 'level': 'error'},
                   {'substr': 'command not found', 'level': 'error'},
+                  {'substr': 'unknown exception encountered', 'level': 'error'},
                  ]
+
+PythonErrorRegexList=[{'substr': 'Traceback (most recent call last)', 'level': 'error'},
+                      {'substr': 'SyntaxError: ', 'level': 'error'},
+                      {'substr': 'TypeError: ', 'level': 'error'},
+                      {'substr': 'NameError: ', 'level': 'error'},
+                      {'substr': 'ZeroDivisionError: ', 'level': 'error'},
+                      {'substr': 'command not found', 'level': 'error'},
+                     ]
 
 
 
@@ -132,7 +132,7 @@ class BasicFunctions(object):
         self.log("Changing directory to %s." % dirName)
         os.chdir(dirName)
 
-    def runCommand(self, command, cwd=None, errorRegex=[], parseAtEnd=False,
+    def runCommand(self, command, cwd=None, errorRegexList=[], parseAtEnd=False,
                    shell=True, haltOnFailure=False, successCodes=[0],
                    env=None, returnType='status'):
         """Run a command, with logging and error parsing.
@@ -141,7 +141,7 @@ class BasicFunctions(object):
         TODO: retryInterval?
         TODO: errorLevelOverride?
 
-        errorRegex example:
+        errorRegexList example:
         [{'regex': '^Error: LOL J/K', level='ignore'},
          {'regex': '^Error:', level='error', contextLines='5:5'},
          {'substr': 'THE WORLD IS ENDING', level='fatal', contextLines='20:'}
@@ -168,7 +168,7 @@ class BasicFunctions(object):
         for line in lines:
             if not line or line.isspace():
                 continue
-            for errorCheck in errorRegex:
+            for errorCheck in errorRegexList:
                 match = False
                 if 'substr' in errorCheck:
                     if errorCheck['substr'] in line:
@@ -177,7 +177,7 @@ class BasicFunctions(object):
                     if re.search(errorCheck['regex'], line):
                         match = True
                 else:
-                    self.warn("errorRegex: 'substr' and 'regex' not in %s" % \
+                    self.warn("errorRegexList: 'substr' and 'regex' not in %s" % \
                               errorCheck)
                 if match:
                     level=errorCheck.get('level', 'info')
