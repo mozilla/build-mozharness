@@ -414,7 +414,7 @@ class SimpleConfig(BaseConfig, BasicFunctions):
                       "log_level": self.log_level,
                       "log_format": '%(asctime)s - %(levelname)s - %(message)s',
                       "log_to_console": True,
-                      "append_lo_log": False,
+                      "append_to_log": False,
                      }
         for key in log_config.keys():
             value = self.queryVar(key)
