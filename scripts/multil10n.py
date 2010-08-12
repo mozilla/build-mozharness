@@ -19,13 +19,13 @@ import sys
 # load modules from parent dir
 sys.path[0] = os.path.dirname(sys.path[0])
 
-import Log
-reload(Log)
-from Log import SimpleFileLogger, BasicFunctions, SshErrorRegex, HgErrorRegex, PythonErrorRegex
+import log
+reload(log)
+from log import SimpleFileLogger, BasicFunctions, SshErrorRegex, HgErrorRegex, PythonErrorRegex
 
-import Config
-reload(Config)
-from Config import SimpleConfig
+import config
+reload(config)
+from config import SimpleConfig
 
 
 
