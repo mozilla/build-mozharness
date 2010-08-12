@@ -54,6 +54,8 @@ class MozOptionParser(OptionParser):
     then we get
         locales=["en-US", "multi", "fr"]
     which is nice for less commandline typing.
+
+    TODO look at argparse and http://docs.python.org/library/optparse.html?highlight=optparse#adding-new-actions for other ways to do this.
     """
     def __init__(self, **kwargs):
         OptionParser.__init__(self, **kwargs)
@@ -72,7 +74,7 @@ class MozOptionParser(OptionParser):
             if not origAction.startswith("temp_"):
                 self.variables.append(option.dest)
             if origAction.endswith("_split"):
-                self.appendVariables.append(option.dest)
+                self.append_variables.append(option.dest)
 
 
 
