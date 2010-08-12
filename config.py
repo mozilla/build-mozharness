@@ -68,7 +68,7 @@ class MozOptionParser(OptionParser):
         origAction = kwargs['action']
         if 'temp' in kwargs:
             temp_variable = kwargs['temp']
-            del(kwargs['temp']
+            del(kwargs['temp'])
         option = OptionParser.add_option(self, *args,
                                          **kwargs)
         if option.dest and option.dest not in self.variables:
