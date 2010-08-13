@@ -27,7 +27,7 @@ from log import SimpleFileLogger, MultiFileLogger, BasicFunctions
 
 
 
-# MozOptionParser {{{1
+# optparse {{{1
 class MozOptionParser(OptionParser):
     """Very slightly modified optparse.OptionParser, which assumes you know
     all the options you just add_option'ed, which is usually the case.
@@ -43,19 +43,7 @@ class MozOptionParser(OptionParser):
     frustrated.
 
     Adding a self.variables list seems like a fairly innocuous and easy
-    way to work around this problem
-
-    append_variables is a small hack to allow for things like
-        ./script --locale en-US,multi --locale fr
-    in which case we get
-        locales=["en-US,multi", "fr"]
-    If we then say
-        locales = ','.join(locales).split(',')
-    then we get
-        locales=["en-US", "multi", "fr"]
-    which is nice for less commandline typing.
-
-    TODO look at argparse and http://docs.python.org/library/optparse.html?highlight=optparse#adding-new-actions for other ways to do this.
+    way to work around this problem.
     """
     def __init__(self, **kwargs):
         kwargs['option_class'] = ExtendOption

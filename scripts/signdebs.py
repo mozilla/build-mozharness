@@ -57,7 +57,7 @@ class MaemoDebSigner(SimpleConfig):
          }
         ]]
         SimpleConfig.__init__(self, config_options=config_options,
-                              all_actions=['clobber', 'create-repos',
+                              all_actions=['clobber', 'pull', 'create-repos',
                                            'upload'],
                               require_config_file=require_config_file)
         self.failures = []

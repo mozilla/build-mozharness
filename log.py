@@ -22,6 +22,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import urllib2
 
 # Define our own FATAL
@@ -163,31 +164,34 @@ class BasicFunctions(object):
             self.info("Running command: %s" % command)
         p = subprocess.Popen(command, shell=shell, stdout=subprocess.PIPE,
                              cwd=cwd, stderr=subprocess.STDOUT, env=env)
-        # TODO fix
-        stdout, stderr = p.communicate()
-        lines = stdout.rstrip().splitlines()
-        for line in lines:
-            if not line or line.isspace():
-                continue
-            for error_check in error_regex_list:
-                match = False
-                if 'substr' in error_check:
-                    if error_check['substr'] in line:
-                        match = True
-                elif 'regex' in error_check:
-                    if re.search(error_check['regex'], line):
-                        match = True
+        loop = True
+        while loop:
+            if p.poll() is not None:
+                """Avoid losing the final lines of the log?"""
+                loop = False
+            for line in p.stdout:
+                if not line or line.isspace():
+                    continue
+                line = line.decode("utf-8").rstrip()
+                for error_check in error_regex_list:
+                    match = False
+                    if 'substr' in error_check:
+                        if error_check['substr'] in line:
+                            match = True
+                    elif 'regex' in error_check:
+                        if re.search(error_check['regex'], line):
+                            match = True
+                    else:
+                        self.warn("error_regex_list: 'substr' and 'regex' not in %s" % \
+                                  error_check)
+                    if match:
+                        level=error_check.get('level', 'info')
+                        self.log(' %s' % line, level=level)
+                        if level in ('error', 'critical', 'fatal'):
+                            num_errors = num_errors + 1
+                        break
                 else:
-                    self.warn("error_regex_list: 'substr' and 'regex' not in %s" % \
-                              error_check)
-                if match:
-                    level=error_check.get('level', 'info')
-                    self.log(' %s' % line, level=level)
-                    if level in ('error', 'critical', 'fatal'):
-                        num_errors = num_errors + 1
-                    break
-            else:
-                self.info(' %s' % line)
+                    self.info(' %s' % line)
         return_level = 'info'
         if p.returncode not in success_codes:
             return_level = 'error'
@@ -199,13 +203,19 @@ class BasicFunctions(object):
         return p.returncode
 
     def getOutputFromCommand(self, command, cwd=None, shell=True,
-                             halt_on_failure=False, env=None):
+                             halt_on_failure=False, env=None, silent=False):
         """Similar to runCommand, but where runCommand is an
         os.system(command) analog, getOutputFromCommand is a `command`
         analog.
 
         Less error checking by design, though if we figure out how to
         do it without borking the output, great.
+
+        TODO: binary mode? silent is kinda like that.
+        TODO: since p.wait() can take a long time, optionally log something
+        every N seconds?
+        TODO: optionally only keep the first or last (N) line(s) of output?
+        TODO: optionally only return the tmp_stdout_filename?
         """
         if cwd:
             if not os.path.isdir(cwd):
@@ -215,35 +225,53 @@ class BasicFunctions(object):
             self.info("Getting output from command: %s in %s" % (command, cwd))
         else:
             self.info("Getting output from command: %s" % command)
-        p = subprocess.Popen(command, shell=shell, stdout=subprocess.PIPE,
-                             cwd=cwd, stderr=subprocess.PIPE, env=env)
-        stdout, stderr = p.communicate()
-        output_lines = stdout.rstrip().splitlines()
-        errorLines = stderr.rstrip().splitlines()
+#aki
+        tmp_stdout = tempfile.NamedTemporaryFile(suffix="stdout", delete=False)
+        tmp_stdout_filename = tmp_stdout.name
+        tmp_stderr = tempfile.NamedTemporaryFile(suffix="stderr", delete=False)
+        tmp_stderr_filename = tmp_stderr.name
+        p = subprocess.Popen(command, shell=shell, stdout=tmp_stdout,
+                             cwd=cwd, stderr=tmp_stderr, env=env)
+        self.debug("Temporary files: %s and %s" % (tmp_stdout_filename, tmp_stderr_filename))
+        p.wait()
         return_level = 'error'
-        if output_lines:
-            return_level = 'info'
-            self.info("Output received:")
-            for line in output_lines:
-                if not line or line.isspace():
-                    continue
-                self.info(' %s' % line)
-        if errorLines:
+        output = None
+        if os.path.exists(tmp_stdout_filename) and os.path.getsize(tmp_stdout_filename):
+            if not return_level:
+                return_level = 'info'
+            fh = open(tmp_stdout_filename)
+            output = fh.read()
+            if not silent:
+                self.info("Output received:")
+                output_lines = output.rstrip().splitlines()
+                for line in output_lines:
+                    if not line or line.isspace():
+                        continue
+                    line = line.decode("utf-8")
+                    self.info(' %s' % line)
+                output = '\n'.join(output_lines)
+        if os.path.exists(tmp_stderr_filename) and os.path.getsize(tmp_stderr_filename):
             return_level = 'error'
             self.error("Errors received:")
-            for line in output_lines:
+            fh = open(tmp_stderr_filename)
+            errors = fh.read()
+            for line in errors.rstrip().splitlines():
                 if not line or line.isspace():
                     continue
+                line = line.decode("utf-8")
                 self.error(' %s' % line)
+            fh.close()
         elif p.returncode:
             return_level = 'error'
         self.log("Return code: %d" % p.returncode, level=return_level)
+        self.rmtree(tmp_stdout_filename)
+        self.rmtree(tmp_stderr_filename)
         if halt_on_failure and return_level == 'error':
             self.fatal("Halting on failure while running %s" % command,
                        exit_code=p.returncode)
         # Hm, options on how to return this? I bet often we'll want
         # output_lines[0] with no newline.
-        return '\n'.join(output_lines)
+        return output
 
 
 
