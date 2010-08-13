@@ -225,7 +225,6 @@ class BasicFunctions(object):
             self.info("Getting output from command: %s in %s" % (command, cwd))
         else:
             self.info("Getting output from command: %s" % command)
-#aki
         tmp_stdout = tempfile.NamedTemporaryFile(suffix="stdout", delete=False)
         tmp_stdout_filename = tmp_stdout.name
         tmp_stderr = tempfile.NamedTemporaryFile(suffix="stderr", delete=False)
