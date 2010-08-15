@@ -22,15 +22,16 @@ class BaseScript(BaseConfig):
     def __init__(self, config_options=[], default_log_level="info", **kwargs):
         config_options.extend([[
          ["--multi-log",],
-         {"action": "store_true",
-          "dest": "multi_log",
-          "default": True,
+         {"action": "store_const",
+          "const": "multi",
+          "dest": "log_type",
           "help": "Log using MultiFileLogger"
          }
         ],[
          ["--simple-log",],
-         {"action": "store_false",
-          "dest": "multi_log",
+         {"action": "store_const",
+          "const": "simple",
+          "dest": "log_type",
           "help": "Log using SimpleFileLogger"
          }
         ]])
@@ -48,13 +49,14 @@ class BaseScript(BaseConfig):
                       "log_to_console": True,
                       "append_to_log": False,
                      }
-        if self.queryVar("multi_log"):
+        log_type = self.queryVar("log_type")
+        if log_type == "multi":
             log_config['logger_name'] = 'Multi'
         for key in log_config.keys():
             value = self.queryVar(key)
             if value:
                 log_config[key] = value
-        if self.queryVar("multi_log"):
+        if log_type == "multi":
             self.log_obj = MultiFileLogger(**log_config)
         else:
             self.log_obj = SimpleFileLogger(**log_config)
