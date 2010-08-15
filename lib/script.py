@@ -266,6 +266,11 @@ class BaseScript(BaseConfig):
 source.py so script.py doesn't end up like factory.py.
 """
 class AbstractMercurialScript(object):
+    def __init__(self):
+        """Quick 'n' dirty "Don't clone me; inherit me"
+        """
+        assert None
+
     def scmCheckout(self, hg_repo, parent_dir='.', tag="default",
                      dir_name=None, clobber=False, halt_on_failure=True):
         if not dir_name:
