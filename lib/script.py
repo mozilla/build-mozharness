@@ -69,7 +69,7 @@ class BaseScript(BaseConfig):
         try:
             """Don't miss calling __del__ if we ever define it"""
             BaseConfig.__del__(self)
-        except:
+        except AttributeError:
             pass
 
     def mkdir_p(self, path):
