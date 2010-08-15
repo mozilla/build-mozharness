@@ -292,7 +292,7 @@ class AbstractMercurialScript(object):
 
     def scmUpdate(self, dir_path, tag="default", halt_on_failure=True):
         command = "hg --cwd %s update -C -r %s" % (dir_path, tag)
-        self.runCommand(command, cwd=parent_dir, halt_on_failure=halt_on_failure,
+        self.runCommand(command, halt_on_failure=halt_on_failure,
                         error_regex_list=HgErrorRegexList)
 
 class MercurialScript(BaseScript, AbstractMercurialScript):
