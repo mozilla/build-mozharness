@@ -290,11 +290,14 @@ class AbstractMercurialScript(object):
         assert None
 
     #TODO: num_retries
-    def scmCheckout(self, hg_repo, parent_dir='.', tag="default",
+    def scmCheckout(self, hg_repo, parent_dir=None, tag="default",
                      dir_name=None, clobber=False, halt_on_failure=True):
         if not dir_name:
             dir_name = os.path.basename(hg_repo)
-        dir_path = os.path.join(parent_dir, dir_name)
+        if parent_dir:
+            dir_path = os.path.join(parent_dir, dir_name)
+        else:
+            dir_path = dir_name
         if clobber and os.path.exists(dir_path):
             self.rmtree(dir_path)
         if not os.path.exists(dir_path):
