@@ -184,7 +184,8 @@ class BaseConfig(object):
         """Read a config file and return a dictionary.
         """
         file_path = None
-        search_path = ['.', os.path.join(sys.path[0], 'configs')]
+        search_path = ['.', os.path.join(sys.path[0], '..', 'configs'),
+                       os.path.join(sys.path[0], '..', '..', 'configs')]
         for path in search_path:
             if os.path.exists(os.path.join(path, file_name)):
                 file_path = os.path.join(path, file_name)

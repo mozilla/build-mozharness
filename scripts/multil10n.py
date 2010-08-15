@@ -17,7 +17,7 @@ import re
 import sys
 
 # load modules from parent dir
-sys.path[0] = os.path.dirname(sys.path[0])
+sys.path.insert(1, os.path.join(os.path.dirname(sys.path[0]), "lib"))
 
 import log
 reload(log)
