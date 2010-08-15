@@ -279,7 +279,7 @@ class AbstractMercurialScript(object):
         if clobber and os.path.exists(dir_path):
             self.rmtree(dir_path)
         if not os.path.exists(dir_path):
-            command = "hg clone %s %s" % (repo, dir_name)
+            command = "hg clone %s %s" % (hg_repo, dir_name)
         else:
             command = "hg --cwd %s pull" % (dir_name)
         self.runCommand(command, cwd=parent_dir, halt_on_failure=halt_on_failure,
