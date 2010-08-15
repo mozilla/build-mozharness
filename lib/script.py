@@ -34,6 +34,7 @@ class BaseScript(BaseConfig):
           "help": "Log using SimpleFileLogger"
          }
         ]])
+        self.failures = []
         BaseConfig.__init__(self, config_options=config_options, **kwargs)
         self.newLogObj(default_log_level=default_log_level)
         self.info("Run as %s" % self.command_line)
@@ -57,6 +58,19 @@ class BaseScript(BaseConfig):
             self.log_obj = MultiFileLogger(**log_config)
         else:
             self.log_obj = SimpleFileLogger(**log_config)
+
+    def checkFailures(self):
+        if self.failures:
+            self.error("%s failures: %s" % (self.__class__.__name__,
+                                            self.failures))
+
+    def __del__(self):
+        self.checkFailures()
+        try:
+            """Don't miss calling __del__ if we ever define it"""
+            BaseConfig.__del__(self)
+        except:
+            pass
 
     def mkdir_p(self, path):
         self.info("mkdir: %s" % path)
@@ -275,6 +289,7 @@ class AbstractMercurialScript(object):
         """
         assert None
 
+    #TODO: num_retries
     def scmCheckout(self, hg_repo, parent_dir='.', tag="default",
                      dir_name=None, clobber=False, halt_on_failure=True):
         if not dir_name:

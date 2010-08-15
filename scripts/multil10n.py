@@ -132,7 +132,6 @@ class MultiLocaleRepack(MercurialScript):
                                               'pull-locales',
                                               'setup', 'repack', 'upload'],
                                  require_config_file=require_config_file)
-        self.failures = []
         self.locales = None
 
     def run(self):
@@ -141,9 +140,6 @@ class MultiLocaleRepack(MercurialScript):
         self.setup()
         self.repack()
         self.upload()
-        if self.failures:
-            self.error("%s failures: %s" % (self.__class__.__name__,
-                                            self.failures))
 
     def clobber(self):
         if not self.queryAction('clobber'):

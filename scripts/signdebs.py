@@ -57,15 +57,11 @@ class MaemoDebSigner(MercurialScript):
                                               'create-repos',
                                               'upload'],
                                  require_config_file=require_config_file)
-        self.failures = []
 
     def run(self):
         self.clobberRepoDir()
         self.createRepos()
         self.uploadRepos()
-        if self.failures:
-            self.error("%s failures: %s" % (self.__class__.__name__,
-                                            self.failures))
 
     def _queryDebName(self, deb_name_url=None):
         deb_name = self.queryVar('deb_name')
@@ -247,7 +243,8 @@ components = %(section)s
                 deb_url += '/%s' % deb_name
                 self.debug(deb_url)
                 if not self.downloadFile(deb_url, deb_name):
-                    self.warn("Skipping %s ..." % locale)
+                    self.error("Skipping %s ..." % locale)
+                    self.failures.append('%s_%s' % (platform, locale))
                     continue
                 binary_dir = '%s/%s/%s/dists/%s/%s/binary-armel' % \
                              (work_dir, repo_dir, repo_name, platform, section)
@@ -263,7 +260,7 @@ components = %(section)s
                 self._createInstallFile(os.path.join(base_work_dir, work_dir,
                                                     repo_dir, repo_name,
                                                     install_file),
-                                       locale, platform)
+                                        locale, platform)
 
     def uploadRepos(self):
         if not self.queryAction('upload'):
