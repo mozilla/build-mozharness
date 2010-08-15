@@ -4,6 +4,7 @@
 
 import os
 import shutil
+import subprocess
 
 import config
 reload(config)
@@ -311,5 +312,5 @@ if __name__ == '__main__':
     obj.info("You should see an error here about a locked config:")
     if obj.setVar("foo", "bar"):
         obj.fatal("Something's broken in lockConfig()!")
-    obj.info("Things look good.")
+    obj.runCommand("find .")
     obj.rmtree("test_logs")
