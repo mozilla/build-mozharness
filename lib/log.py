@@ -18,12 +18,7 @@ TODO:
 from datetime import datetime
 import logging
 import os
-import re
-import shutil
-import subprocess
 import sys
-import tempfile
-import urllib2
 
 # Define our own FATAL
 FATAL = logging.CRITICAL + 10
