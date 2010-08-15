@@ -21,16 +21,16 @@ sys.path.insert(1, os.path.join(os.path.dirname(sys.path[0]), "lib"))
 
 import log
 reload(log)
-from log import SSHErrorRegexList, HgErrorRegexList, PythonErrorRegexList
+from log import SSHErrorRegexList, PythonErrorRegexList
 
 import script
 reload(script)
-from script import BaseScript
+from script import MercurialScript
 
 
 
 # MultiLocaleRepack {{{1
-class MultiLocaleRepack(BaseScript):
+class MultiLocaleRepack(MercurialScript):
     config_options = [[
      ["--locale",],
      {"action": "extend",
@@ -127,10 +127,11 @@ class MultiLocaleRepack(BaseScript):
     ]]
 
     def __init__(self, require_config_file=True):
-        BaseScript.__init__(self, config_options=self.config_options,
-                            all_actions=['clobber', 'pull', 'pull-locales',
-                                         'setup', 'repack', 'upload'],
-                            require_config_file=require_config_file)
+        MercurialScript.__init__(self, config_options=self.config_options,
+                                 all_actions=['clobber', 'pull',
+                                              'pull-locales',
+                                              'setup', 'repack', 'upload'],
+                                 require_config_file=require_config_file)
         self.failures = []
         self.locales = None
 
@@ -183,20 +184,6 @@ class MultiLocaleRepack(BaseScript):
             self.locales = locales
             return self.locales
 
-    def _hgPull(self, repo, parent_dir, tag="default", dir_name=None,
-                halt_on_failure=True):
-        if not dir_name:
-            dir_name = os.path.basename(repo)
-        if not os.path.exists(os.path.join(parent_dir, dir_name)):
-            command = "hg clone %s %s" % (repo, dir_name)
-        else:
-            command = "hg --cwd %s pull" % (dir_name)
-        self.runCommand(command, cwd=parent_dir, halt_on_failure=halt_on_failure,
-                        error_regex_list=HgErrorRegexList)
-        command = "hg --cwd %s update -C -r %s" % (dir_name, tag)
-        self.runCommand(command, cwd=parent_dir, halt_on_failure=halt_on_failure,
-                        error_regex_list=HgErrorRegexList)
-
     def pull(self, repos=None):
         base_work_dir = self.queryVar("base_work_dir")
         work_dir = self.queryVar("work_dir")
@@ -234,8 +221,8 @@ class MultiLocaleRepack(BaseScript):
             self.info("Pulling.")
             self.mkdir_p(abs_work_dir)
             for repo_dict in repos:
-                self._hgPull(
-                 repo=repo_dict['repo'],
+                self.scmCheckout(
+                 hg_repo=repo_dict['repo'],
                  tag=repo_dict.get('tag', 'default'),
                  dir_name=repo_dict.get('dir_name', None),
                  parent_dir=abs_work_dir
@@ -249,8 +236,8 @@ class MultiLocaleRepack(BaseScript):
             self.mkdir_p(abs_l10n_dir)
             locales = self.queryLocales()
             for locale in locales:
-                self._hgPull(
-                 repo=os.path.join(hg_l10n_base, locale),
+                self.scmCheckout(
+                 hg_repo=os.path.join(hg_l10n_base, locale),
                  tag=hg_l10n_tag,
                  parent_dir=abs_l10n_dir
                 )
@@ -518,11 +505,10 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
                 gecko_revision = line.split(' ')[-1]
             elif line.startswith('fennec_revision '):
                 fennec_revision = line.split(' ')[-1]
-        command = "hg up -C -r %s" % gecko_revision
-        self.runCommand(command, cwd=os.path.join(abs_work_dir, mozilla_dir))
-        command = "hg up -C -r %s" % fennec_revision
-        self.runCommand(command, cwd=os.path.join(abs_work_dir, mozilla_dir,
-                                                  "mobile"))
+        self.scmUpdate(os.path.join(abs_work_dir, mozilla_dir),
+                       tag=gecko_revision)
+        self.scmUpdate(os.path.join(abs_work_dir, mozilla_dir, "mobile"),
+                       tag=fennec_revision)
 
     def _repackage(self):
         base_work_dir = self.queryVar("base_work_dir")

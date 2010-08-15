@@ -12,6 +12,8 @@ TODO:
 * options with defaults are overwriting the defaults in the config
   files, which is good for some of 'em and bad for others.
 * queryExe() ?
+* checkRequiredSettings or something -- run at init, assert that
+  these settings are set.
 """
 
 from copy import deepcopy

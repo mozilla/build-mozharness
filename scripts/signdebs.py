@@ -19,16 +19,16 @@ sys.path.insert(1, os.path.join(os.path.dirname(sys.path[0]), "lib"))
 
 import log
 reload(log)
-from log import SSHErrorRegexList, HgErrorRegexList
+from log import SSHErrorRegexList
 
 import script
 reload(script)
-from script import BaseScript
+from script import MercurialScript
 
 
 
 # MaemoDebSigner {{{1
-class MaemoDebSigner(BaseScript):
+class MaemoDebSigner(MercurialScript):
     def __init__(self, require_config_file=True):
         config_options = [[
          ["--locale",],
@@ -52,10 +52,11 @@ class MaemoDebSigner(BaseScript):
           "help": "Specify the name of the deb"
          }
         ]]
-        BaseScript.__init__(self, config_options=config_options,
-                            all_actions=['clobber', 'pull', 'create-repos',
-                                         'upload'],
-                            require_config_file=require_config_file)
+        MercurialScript.__init__(self, config_options=config_options,
+                                 all_actions=['clobber', 'pull',
+                                              'create-repos',
+                                              'upload'],
+                                 require_config_file=require_config_file)
         self.failures = []
 
     def run(self):
@@ -100,7 +101,7 @@ class MaemoDebSigner(BaseScript):
         else:
             self.debug("%s doesn't exist." % repo_path)
 
-    def _queryLocales(self, platform, platform_config=None):
+    def queryLocales(self, platform, platform_config=None):
         locales = self.queryVar("locales")
         if not locales:
             locales = []
@@ -219,17 +220,9 @@ components = %(section)s
         work_dir = self.queryVar("work_dir")
 
         if hg_mobile_repo is not None:
-            if not os.path.exists('mobile'):
-                self.runCommand("hg clone %s mobile" % hg_mobile_repo,
-                                error_regex_list=HgErrorRegexList)
-            self.runCommand("hg --cwd mobile pull", error_regex_list=HgErrorRegexList)
-            self.runCommand("hg --cwd mobile update -C", error_regex_list=HgErrorRegexList)
+            self.scmCheckout(hg_mobile_repo, dir_name="mobile")
         if hg_config_repo is not None:
-            if not os.path.exists('configs'):
-                self.runCommand("hg clone %s configs" % hg_config_repo,
-                                error_regex_list=HgErrorRegexList)
-            self.runCommand("hg --cwd configs pull", error_regex_list=HgErrorRegexList)
-            self.runCommand("hg --cwd configs update -C", error_regex_list=HgErrorRegexList)
+            self.scmCheckout(hg_config_repo, dir_name="configs")
 
         for platform in platforms:
             """This assumes the same deb name for each locale in a platform.
@@ -239,7 +232,7 @@ components = %(section)s
             deb_name = self._queryDebName(deb_name_url=pf['deb_name_url'])
             if not deb_name:
                 continue
-            locales = self._queryLocales(platform, platform_config=platform_config)
+            locales = self.queryLocales(platform, platform_config=platform_config)
             for locale in locales:
                 replace_dict = {'locale': locale}
                 install_file = pf['install_file'] % replace_dict
@@ -287,7 +280,7 @@ components = %(section)s
             """
             self.info("%s" % platform)
             pf = platform_config[platform]
-            locales = self._queryLocales(platform, platform_config=platform_config)
+            locales = self.queryLocales(platform, platform_config=platform_config)
             for locale in locales:
                 if '%s_%s' % (platform, locale) not in self.failures:
                     replace_dict = {'locale': locale}
