@@ -19,21 +19,17 @@ sys.path.insert(1, os.path.join(os.path.dirname(sys.path[0]), "lib"))
 
 import log
 reload(log)
-from log import SimpleFileLogger, BasicFunctions, SSHErrorRegexList, HgErrorRegexList
+from log import SSHErrorRegexList, HgErrorRegexList
 
-import config
-reload(config)
-from config import SimpleConfig
+import script
+reload(script)
+from script import BaseScript
 
 
 
 # MaemoDebSigner {{{1
-class MaemoDebSigner(SimpleConfig):
+class MaemoDebSigner(BaseScript):
     def __init__(self, require_config_file=True):
-        """I wanted to inherit BasicFunctions in SimpleFileLogger but
-        that ends up not carrying down to this object since SimpleConfig
-        doesn't inherit the logger, just has a self.logObj.
-        """
         config_options = [[
          ["--locale",],
          {"action": "extend",
@@ -56,10 +52,10 @@ class MaemoDebSigner(SimpleConfig):
           "help": "Specify the name of the deb"
          }
         ]]
-        SimpleConfig.__init__(self, config_options=config_options,
-                              all_actions=['clobber', 'pull', 'create-repos',
-                                           'upload'],
-                              require_config_file=require_config_file)
+        BaseScript.__init__(self, config_options=config_options,
+                            all_actions=['clobber', 'pull', 'create-repos',
+                                         'upload'],
+                            require_config_file=require_config_file)
         self.failures = []
 
     def run(self):

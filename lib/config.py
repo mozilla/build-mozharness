@@ -23,7 +23,7 @@ try:
     import json
 except:
     import simplejson as json
-from log import SimpleFileLogger, MultiFileLogger, BasicFunctions
+from log import SimpleFileLogger, MultiFileLogger
 
 
 
@@ -387,57 +387,6 @@ class BaseConfig(object):
 
 
 
-# SimpleConfig {{{1
-class SimpleConfig(BaseConfig, BasicFunctions):
-    """Effectively BaseConfig with logging.
-    """
-    def __init__(self, config_options=[], log_level="info", **kwargs):
-        config_options.append([
-         ["--multi-log",],
-         {"action": "store_true",
-          "dest": "multi_log",
-          "default": False,
-          "help": "Log using MultiFileLogger"
-         }
-        ])
-        BaseConfig.__init__(self, config_options=config_options, **kwargs)
-        BasicFunctions.__init__(self)
-        self.log_level = log_level
-        self.newLogObj()
-        self.info("Run as %s" % self.command_line)
-
-    def newLogObj(self):
-        log_config = {"logger_name": 'Simple',
-                      "log_name": 'test',
-                      "log_dir": 'logs',
-                      "log_level": self.log_level,
-                      "log_format": '%(asctime)s - %(levelname)s - %(message)s',
-                      "log_to_console": True,
-                      "append_to_log": False,
-                     }
-        for key in log_config.keys():
-            value = self.queryVar(key)
-            if value:
-                log_config[key] = value
-        if self.queryVar("multi_log"):
-            self.log_obj = MultiFileLogger(**log_config)
-        else:
-            self.log_obj = SimpleFileLogger(**log_config)
-
-
-
 # __main__ {{{1
 if __name__ == '__main__':
-    obj = SimpleConfig(initial_config_file=os.path.join('test', 'test.json'),
-                       log_level="debug")
-    obj.setVar('additionalkey', 'additionalvalue')
-    obj.setVar('key2', 'value2override')
-    obj.dumpConfig()
-    obj.lockConfig()
-    if obj.queryVar('key1') != "value1":
-        obj.fatal("key1 isn't value1!")
-    obj.info("You should see an error here about a locked config:")
-    if obj.setVar("foo", "bar"):
-        obj.fatal("Something's broken in lockConfig()!")
-    obj.info("Things look good.")
-    obj.rmtree("test_logs")
+    pass

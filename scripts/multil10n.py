@@ -21,16 +21,16 @@ sys.path.insert(1, os.path.join(os.path.dirname(sys.path[0]), "lib"))
 
 import log
 reload(log)
-from log import SimpleFileLogger, BasicFunctions, SSHErrorRegexList, HgErrorRegexList, PythonErrorRegexList
+from log import SSHErrorRegexList, HgErrorRegexList, PythonErrorRegexList
 
-import config
-reload(config)
-from config import SimpleConfig
+import script
+reload(script)
+from script import BaseScript
 
 
 
 # MultiLocaleRepack {{{1
-class MultiLocaleRepack(SimpleConfig):
+class MultiLocaleRepack(BaseScript):
     config_options = [[
      ["--locale",],
      {"action": "extend",
@@ -127,14 +127,10 @@ class MultiLocaleRepack(SimpleConfig):
     ]]
 
     def __init__(self, require_config_file=True):
-        """I wanted to inherit BasicFunctions in SimpleFileLogger but
-        that ends up not carrying down to this object since SimpleConfig
-        doesn't inherit the logger, just has a self.logObj.
-        """
-        SimpleConfig.__init__(self, config_options=self.config_options,
-                              all_actions=['clobber', 'pull', 'pull-locales',
-                                           'setup', 'repack', 'upload'],
-                              require_config_file=require_config_file)
+        BaseScript.__init__(self, config_options=self.config_options,
+                            all_actions=['clobber', 'pull', 'pull-locales',
+                                         'setup', 'repack', 'upload'],
+                            require_config_file=require_config_file)
         self.failures = []
         self.locales = None
 
