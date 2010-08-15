@@ -63,8 +63,13 @@ class BaseScript(BaseConfig):
 
     def checkFailures(self):
         if self.failures:
-            self.error("%s failures: %s" % (self.__class__.__name__,
-                                            self.failures))
+            message = "%s failures: %s" % (self.__class__.__name__,
+                                           self.failures)
+            try:
+                self.error(message)
+            except ValueError:
+                """log is closed; print as a default"""
+                print message
 
     def __del__(self):
         self.checkFailures()
