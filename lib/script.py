@@ -35,7 +35,7 @@ class BaseScript(BaseConfig):
           "help": "Log using SimpleFileLogger"
          }
         ]])
-        self.summary = []
+        self.summaryList = []
         BaseConfig.__init__(self, config_options=config_options, **kwargs)
         self.newLogObj(default_log_level=default_log_level)
         self.info("Run as %s" % self.command_line)
@@ -62,9 +62,9 @@ class BaseScript(BaseConfig):
             self.log_obj = SimpleFileLogger(**log_config)
 
     def summary(self):
-        if self.summary:
+        if self.summaryList:
             self.info("#####\n##### %s summary:\n#####" % self.__class__.__name__)
-            for item in summary:
+            for item in self.summaryList:
                 try:
                     self.log(item['message'], level=item['level'])
                 except ValueError:
@@ -73,7 +73,7 @@ class BaseScript(BaseConfig):
                     print "### Log is closed! (%s)" % message
 
     def addSummary(self, message, level='info'):
-        self.summary.append({'message': message, 'level': level})
+        self.summaryList.append({'message': message, 'level': level})
         # TODO write to a summary-only log?
         self.log(message, level=level)
 
