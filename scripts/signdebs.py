@@ -52,6 +52,7 @@ class MaemoDebSigner(MercurialScript):
           "help": "Specify the name of the deb"
          }
         ]]
+        self.failures = []
         MercurialScript.__init__(self, config_options=config_options,
                                  all_actions=['clobber', 'pull',
                                               'create-repos',
@@ -62,6 +63,7 @@ class MaemoDebSigner(MercurialScript):
         self.clobberRepoDir()
         self.createRepos()
         self.uploadRepos()
+        self.summary()
 
     def _queryDebName(self, deb_name_url=None):
         deb_name = self.queryVar('deb_name')
@@ -243,7 +245,8 @@ components = %(section)s
                 deb_url += '/%s' % deb_name
                 self.debug(deb_url)
                 if not self.downloadFile(deb_url, deb_name):
-                    self.error("Skipping %s ..." % locale)
+                    self.addSummary("Can't download %s; skipping %s on %s" % \
+                                    (deb_url, locale, platform), level="error")
                     self.failures.append('%s_%s' % (platform, locale))
                     continue
                 binary_dir = '%s/%s/%s/dists/%s/%s/binary-armel' % \
@@ -253,7 +256,8 @@ components = %(section)s
                 self.move(deb_name, abs_binary_dir)
 
                 if self._signRepo(repo_name, platform) != 0:
-                    self.error("Skipping %s %s" % (platform, locale))
+                    self.addSummary("Can't sign %s; skipping %s on %s" % \
+                                    (repo_name, platform, locale), level="error")
                     self.failures.append('%s_%s' % (platform, locale))
                     continue
 
@@ -295,7 +299,8 @@ components = %(section)s
         install_file_path = os.path.join(local_repo_dir, repo_name, install_file)
 
         if not os.path.isdir(repo_path):
-            self.error("uploadRepo: %s isn't a valid repo!" % repo_path)
+            self.addSummary("Can't upload %s: not a valid repo!" % repo_path,
+                            level="error")
             return -1
         if not os.path.exists(install_file_path):
             self.error("uploadRepo: %s doesn't exist!" % install_file_path)

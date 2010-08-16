@@ -140,6 +140,7 @@ class MultiLocaleRepack(MercurialScript):
         self.setup()
         self.repack()
         self.upload()
+        self.summary()
 
     def clobber(self):
         if not self.queryAction('clobber'):

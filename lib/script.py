@@ -35,7 +35,7 @@ class BaseScript(BaseConfig):
           "help": "Log using SimpleFileLogger"
          }
         ]])
-        self.failures = []
+        self.summary = []
         BaseConfig.__init__(self, config_options=config_options, **kwargs)
         self.newLogObj(default_log_level=default_log_level)
         self.info("Run as %s" % self.command_line)
@@ -61,23 +61,21 @@ class BaseScript(BaseConfig):
         else:
             self.log_obj = SimpleFileLogger(**log_config)
 
-    def checkFailures(self):
-        if self.failures:
-            message = "%s failures: %s" % (self.__class__.__name__,
-                                           self.failures)
-            try:
-                self.error(message)
-            except ValueError:
-                """log is closed; print as a default"""
-                print message
+    def summary(self):
+        if self.summary:
+            self.info("#####\n##### %s summary:\n#####" % self.__class__.__name__)
+            for item in summary:
+                try:
+                    self.log(item['message'], level=item['level'])
+                except ValueError:
+                    """log is closed; print as a default. Ran into this
+                    when calling from __del__()"""
+                    print "### Log is closed! (%s)" % message
 
-    def __del__(self):
-        self.checkFailures()
-        try:
-            """Don't miss calling __del__ if we ever define it"""
-            BaseConfig.__del__(self)
-        except AttributeError:
-            pass
+    def addSummary(self, message, level='info'):
+        self.summary.append({'message': message, 'level': level})
+        # TODO write to a summary-only log?
+        self.log(message, level=level)
 
     def mkdir_p(self, path):
         self.info("mkdir: %s" % path)
