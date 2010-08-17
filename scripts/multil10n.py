@@ -19,9 +19,9 @@ import sys
 # load modules from parent dir
 sys.path.insert(1, os.path.join(os.path.dirname(sys.path[0]), "lib"))
 
-import log
-reload(log)
-from log import SSHErrorRegexList, PythonErrorRegexList
+import errors
+reload(errors)
+from errors import SSHErrorRegexList, PythonErrorRegexList
 
 import script
 reload(script)

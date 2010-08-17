@@ -15,7 +15,11 @@ from config import BaseConfig
 
 import log
 reload(log)
-from log import SimpleFileLogger, MultiFileLogger, HgErrorRegexList
+from log import SimpleFileLogger, MultiFileLogger
+
+import errors
+reload(errors)
+from errors import HgErrorRegexList
 
 # BaseScript {{{1
 class BaseScript(BaseConfig):

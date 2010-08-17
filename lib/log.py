@@ -26,41 +26,6 @@ logging.addLevelName(FATAL, 'FATAL')
 
 
 
-# ErrorRegexes {{{1
-
-# For ssh, scp, rsync over ssh
-SSHErrorRegexList=[{'substr': 'Name or service not known', 'level': 'error'},
-                   {'substr': 'Could not resolve hostname', 'level': 'error'},
-                   {'substr': 'POSSIBLE BREAK-IN ATTEMPT', 'level': 'warning'},
-                   {'substr': 'Network error:', 'level': 'error'},
-                   {'substr': 'Access denied', 'level': 'error'},
-                   {'substr': 'Authentication refused', 'level': 'error'},
-                   {'substr': 'Out of memory', 'level': 'error'},
-                   {'substr': 'Connection reset by peer', 'level': 'warning'},
-                   {'substr': 'Host key verification failed', 'level': 'error'},
-                   {'substr': 'command not found', 'level': 'error'},
-                   {'substr': 'WARNING:', 'level': 'warning'},
-                   {'substr': 'rsync error:', 'level': 'error'},
-                   {'substr': 'Broken pipe:', 'level': 'error'},
-                   {'substr': 'connection unexpectedly closed:', 'level': 'error'},
-                  ]
-
-HgErrorRegexList=[{'regex': '^abort:', 'level': 'error'},
-                  {'substr': 'command not found', 'level': 'error'},
-                  {'substr': 'unknown exception encountered', 'level': 'error'},
-                 ]
-
-PythonErrorRegexList=[{'substr': 'Traceback (most recent call last)', 'level': 'error'},
-                      {'substr': 'SyntaxError: ', 'level': 'error'},
-                      {'substr': 'TypeError: ', 'level': 'error'},
-                      {'substr': 'NameError: ', 'level': 'error'},
-                      {'substr': 'ZeroDivisionError: ', 'level': 'error'},
-                      {'substr': 'command not found', 'level': 'error'},
-                     ]
-
-
-
-
 # BaseLogger {{{1
 class BaseLogger(object):
     """Create a base logging class.
