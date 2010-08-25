@@ -1,5 +1,6 @@
 {
   "logName": "signdebs",
+  "locales": ["en-US"],
   "localesFile": "configs/mozilla2/l10n-changesets_mobile-2.0.json",
   "hgConfigRepo": "http://hg.mozilla.org/build/buildbot-configs",
   "packageName": "fennec",
@@ -19,20 +20,20 @@
       "longCatalogName": "Release Chinook",
       "shortCatalogName": "fennec",
       "installFile": "%(locale)s_chinook.install",
-      "debNameUrl": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/2.0a1-candidates/build2/maemo4/multi/deb_name.txt",
-      "multiDirUrl": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/2.0a1-candidates/build2/maemo4/multi",
-      "enUsDirUrl": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/2.0a1-candidates/build2/maemo4/en-US",
-      "l10nDirUrl": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/2.0a1-candidates/build2/maemo4"
+      "debNameUrl": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/2.0a1-candidates/build3/maemo4/multi/deb_name.txt",
+      "multiDirUrl": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/2.0a1-candidates/build3/maemo4/multi",
+      "enUsDirUrl": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/2.0a1-candidates/build3/maemo4/en-US",
+      "l10nDirUrl": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/2.0a1-candidates/build3/maemo4"
     },
 
     "fremantle": {
       "longCatalogName": "Release Fremantle",
       "shortCatalogName": "fennec",
       "installFile": "%(locale)s_fremantle.install",
-      "debNameUrl": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/2.0a1-candidates/build2/maemo5-gtk/multi/deb_name.txt",
-      "multiDirUrl": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/2.0a1-candidates/build2/maemo5-gtk/multi",
-      "enUsDirUrl": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/2.0a1-candidates/build2/maemo5-gtk/en-US",
-      "l10nDirUrl": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/2.0a1-candidates/build2/maemo5-gtk"
+      "debNameUrl": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/2.0a1-candidates/build3/maemo5-gtk/en-US/deb_name.txt",
+      "multiDirUrl": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/2.0a1-candidates/build3/maemo5-gtk/multi",
+      "enUsDirUrl": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/2.0a1-candidates/build3/maemo5-gtk/en-US",
+      "l10nDirUrl": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/2.0a1-candidates/build3/maemo5-gtk"
     }
 
   }
