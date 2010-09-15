@@ -9,16 +9,8 @@ import subprocess
 import tempfile
 import urllib2
 
-import config
-reload(config)
 from config import BaseConfig
-
-import log
-reload(log)
 from log import SimpleFileLogger, MultiFileLogger
-
-import errors
-reload(errors)
 from errors import HgErrorRegexList
 
 # BaseScript {{{1

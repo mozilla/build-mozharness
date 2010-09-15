@@ -17,12 +17,7 @@ from urllib2 import URLError, HTTPError
 # load modules from parent dir
 sys.path.insert(1, os.path.join(os.path.dirname(sys.path[0]), "lib"))
 
-import errors
-reload(errors)
 from errors import SSHErrorRegexList
-
-import script
-reload(script)
 from script import MercurialScript
 
 
