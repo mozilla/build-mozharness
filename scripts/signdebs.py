@@ -63,7 +63,7 @@ class MaemoDebSigner(MercurialScript):
 
     def _queryDebName(self, deb_name_url=None):
         if self.deb_name:
-            return deb_name
+            return self.deb_name
         if self.config.get('deb_name', None):
             self.deb_name = self.config['deb_name']
             return self.deb_name
@@ -76,7 +76,7 @@ class MaemoDebSigner(MercurialScript):
                 deb_name = fh.read().rstrip()
                 self.debug('Deb name is %s' % deb_name)
                 self.deb_name = deb_name
-                return deb_name
+                return self.deb_name
             except HTTPError, e:
                 self.error("HTTP Error: %s %s" % (e.code, deb_name_url))
             except URLError, e:
