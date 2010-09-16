@@ -16,16 +16,6 @@
   "base_work_dir": "/scratchbox/users/cltbld/home/cltbld",
   "platform_config": {
 
-    "chinook": {
-      "long_catalog_name": "Release Chinook",
-      "short_catalog_name": "fennec",
-      "install_file": "%(locale)s_chinook.install",
-      "deb_name_url": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/2.0a1-candidates/build2/maemo4/multi/deb_name.txt",
-      "multi_dir_url": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/2.0a1-candidates/build2/maemo4/multi",
-      "en_us_dir_url": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/2.0a1-candidates/build2/maemo4/en-US",
-      "l10n_dir_url": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/2.0a1-candidates/build2/maemo4"
-    },
-
     "fremantle": {
       "long_catalog_name": "Release Fremantle",
       "short_catalog_name": "fennec",
