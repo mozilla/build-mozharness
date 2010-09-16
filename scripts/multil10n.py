@@ -142,20 +142,21 @@ class MultiLocaleRepack(MercurialScript):
             self.info("Skipping clobber step.")
             return
         self.info("Clobbering.")
-        path = os.path.join(self.config['base_work_dir'], self.config['work_dir'])
+        c = self.config
+        path = os.path.join(c['base_work_dir'], c['work_dir'])
         if os.path.exists(path):
             self.rmtree(path, errorLevel='fatal')
 
     def queryLocales(self):
         if self.locales:
             return self.locales
-        locales = self.config.get("locales", None)
-        ignore_locales = self.config.get("ignore_locales", None)
+        c = self.config
+        locales = c.get("locales", None)
+        ignore_locales = c.get("ignore_locales", None)
         if not locales:
             locales = []
-            locales_file = os.path.join(self.config['base_work_dir'],
-                                        self.config['work_dir'],
-                                        self.config['locales_file'])
+            locales_file = os.path.join(c['base_work_dir'], c['work_dir'],
+                                        c['locales_file'])
             if locales_file.endswith(".json"):
                 locales_json = self.parseConfigFile(locales_file)
                 locales = locales_json.keys()
@@ -174,20 +175,21 @@ class MultiLocaleRepack(MercurialScript):
             return self.locales
 
     def pull(self, repos=None):
-        abs_work_dir = os.path.join(self.config['base_work_dir'],
-                                    self.config['work_dir'])
+        c = self.config
+        abs_work_dir = os.path.join(c['base_work_dir'],
+                                    c['work_dir'])
         if not repos:
             repos = [{
-                'repo': self.config['hg_mozilla_repo'],
-                'tag': self.config['hg_mozilla_tag'],
-                'dir_name': self.config['mozilla_dir'],
+                'repo': c['hg_mozilla_repo'],
+                'tag': c['hg_mozilla_tag'],
+                'dir_name': c['mozilla_dir'],
             },{
-                'repo': self.config['hg_compare_locales_repo'],
-                'tag': self.config['hg_compare_locales_tag'],
+                'repo': c['hg_compare_locales_repo'],
+                'tag': c['hg_compare_locales_tag'],
                 'dir_name': 'compare-locales',
             },{
-                'repo': self.config['hg_configs_repo'],
-                'tag': self.config['hg_configs_tag'],
+                'repo': c['hg_configs_repo'],
+                'tag': c['hg_configs_tag'],
                 'dir_name': 'configs',
             }]
 
@@ -210,13 +212,13 @@ class MultiLocaleRepack(MercurialScript):
             self.info("Skipping pull locales step.")
         else:
             self.info("Pulling locales.")
-            abs_l10n_dir = os.path.join(abs_work_dir, self.config['l10n_dir'])
+            abs_l10n_dir = os.path.join(abs_work_dir, c['l10n_dir'])
             self.mkdir_p(abs_l10n_dir)
             locales = self.queryLocales()
             for locale in locales:
                 self.scmCheckout(
-                 hg_repo=os.path.join(self.config['hg_l10n_base'], locale),
-                 tag=self.config['hg_l10n_tag'],
+                 hg_repo=os.path.join(c['hg_l10n_base'], locale),
+                 tag=c['hg_l10n_tag'],
                  parent_dir=abs_l10n_dir
                 )
 
