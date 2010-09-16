@@ -16,7 +16,6 @@ at a later time.
 TODO:
 
 * dumpConfig and loadConfig need to be seamless. And written.
-* queryExe() ?
 * env?
 * checkRequiredSettings or something -- run at init, assert that
   these settings are set.
@@ -57,17 +56,11 @@ class MozOptionParser(OptionParser):
         kwargs['option_class'] = ExtendOption
         OptionParser.__init__(self, **kwargs)
         self.variables = []
-        self.append_variables = []
 
     def add_option(self, *args, **kwargs):
-        temp_variable = False
-        if 'temp' in kwargs:
-            temp_variable = kwargs['temp']
-            del(kwargs['temp'])
         option = OptionParser.add_option(self, *args, **kwargs)
         if option.dest and option.dest not in self.variables:
-            if not temp_variable:
-                self.variables.append(option.dest)
+            self.variables.append(option.dest)
 
 class ExtendOption(Option):
     """from http://docs.python.org/library/optparse.html?highlight=optparse#adding-new-actions"""
@@ -138,6 +131,7 @@ class BaseConfig(object):
     """
     def __init__(self, config=None, initial_config_file=None, config_options=[],
                  all_actions=["clobber", "build"], default_actions=None,
+                 volatile_config_vars=None,
                  require_config_file=False, usage="usage: %prog [options]"):
         self._config = {}
         self.actions = []
@@ -151,12 +145,20 @@ class BaseConfig(object):
         else:
             self.default_actions = all_actions
 
+        if volatile_config_vars is None:
+            self.volatile_config_vars = []
+        else:
+            self.volatile_config_vars = volatile_config_vars
+
         if config:
             self.setConfig(config)
         if initial_config_file:
             self.setConfig(self.parseConfigFile(initial_config_file))
         self._createConfigParser(config_options, usage)
         self.parseArgs()
+
+    def getReadOnlyConfig(self):
+        return ReadOnlyDict(self._config)
 
     def _createConfigParser(self, config_options, usage):
         self.config_parser = MozOptionParser(usage=usage)
@@ -192,32 +194,33 @@ class BaseConfig(object):
 
         # Actions
         self.config_parser.add_option(
-         "--action", action="extend", temp=True,
+         "--action", action="extend",
          dest="only_actions", metavar="ACTIONS",
          help="Do action %s" % self.all_actions
         )
         self.config_parser.add_option(
-         "--add-action", action="extend", temp=True,
+         "--add-action", action="extend",
          dest="add_actions", metavar="ACTIONS",
          help="Add action %s to the list of actions" % self.all_actions
         )
         self.config_parser.add_option(
-         "--no-action", action="extend", temp=True,
+         "--no-action", action="extend",
          dest="no_actions", metavar="ACTIONS",
          help="Don't perform action"
         )
         for action in self.all_actions:
             self.config_parser.add_option(
-             "--only-%s" % action, action="append_const", temp=True,
+             "--only-%s" % action, action="append_const",
              dest="only_actions", const=action,
              help="Add %s to the limited list of actions" % action
             )
             self.config_parser.add_option(
-             "--no-%s" % action, action="append_const", temp=True,
+             "--no-%s" % action, action="append_const",
              dest="no_actions", const=action,
              help="Remove %s from the list of actions to perform" % action
             )
-
+        self.volatile_config_vars.extend(['only_actions', 'add_actions',
+                                          'no_actions'])
         # Child-specified options
         # TODO error checking for overlapping options
         if config_options:
@@ -225,7 +228,7 @@ class BaseConfig(object):
                 self.config_parser.add_option(*option[0], **option[1])
 
         # Initial-config-specified options
-        config_options = self.queryVar('config_options')
+        config_options = self._config.get('config_options', None)
         if config_options:
             for option in config_options:
                 self.config_parser.add_option(*option[0], **option[1])
@@ -241,7 +244,7 @@ class BaseConfig(object):
                 file_path = os.path.join(path, file_name)
                 break
         else:
-            self.error("Can't find %s in %s!" % (file_name, search_path))
+            print "ERROR: Can't find %s in %s!" % (file_name, search_path)
             return
         fh = open(file_path)
         config = {}
@@ -259,20 +262,8 @@ class BaseConfig(object):
         # TODO Return it here? Or set something?
         return config
 
-    def lockConfig(self):
-        self.info("Locking configuration.")
-        self.config_lock = True
-
-    def queryConfig(self, var_name=None):
-        return self._config
-
     def setConfig(self, config, overwrite=False):
-        """It would be good to detect if self._config is already set, and
-        if so, have settings as to how to determine what overrides what.
-        """
-        if self.config_lock:
-            self.error("Can't alter locked config!")
-            return
+        """This is probably doable some other way."""
         if self._config and not overwrite:
             for key, value in config.iteritems():
                 self._config[key] = value
@@ -280,36 +271,7 @@ class BaseConfig(object):
             self._config = config
         return self._config
 
-    def existsVar(self, var_name):
-        if var_name in self._config:
-            return True
-
-    def queryVar(self, var_name, default=None):
-        # TODO return self.queryVARNAME if var_name in self.specialVars ?
-        # if so, remember to update existsVar()
-        if var_name not in self._config or not self._config[var_name]:
-            return default
-        else:
-            return self._config[var_name]
-
-    def setVar(self, var_name, value):
-        if self.config_lock:
-            self.error("Can't alter locked config!")
-            return
-        self.debug("Setting %s to %s" % (var_name, value))
-        self._config[var_name] = value
-        return self.queryVar(var_name)
-
-    def setActions(self, actions):
-        self.actions = actions
-        return self.actions
-
-    def queryAction(self, action):
-        if action in self.actions:
-            return True
-        return False
-
-    def queryActions(self):
+    def getActions(self):
         return self.actions
 
     def dumpConfig(self, config=None, file_name=None):
@@ -321,7 +283,7 @@ class BaseConfig(object):
         config.
         """
         if not config:
-            config = self.queryConfig()
+            config = self._config
         if not file_name:
             pp = pprint.PrettyPrinter(indent=2, width=10)
             return pp.pformat(config)
@@ -331,17 +293,15 @@ class BaseConfig(object):
         Probably self._config = self.parseConfig(config_file)
         or something, but with more error checking.
         """
-        if self.config_lock:
-            self.error("Can't alter locked config!")
-            return
         pass
 
     def verifyActions(self, action_list):
         actions = ','.join(action_list).split(',')
         for action in actions:
             if action not in self.all_actions:
-                self.fatal("Invalid action %s not in %s!" % (action,
-                                                             self.all_actions))
+                print("Invalid action %s not in %s!" % (action,
+                                                        self.all_actions))
+                sys.exit(-1)
         return actions
 
     def parseArgs(self):
@@ -356,15 +316,18 @@ class BaseConfig(object):
         if options.config_file:
             self.setConfig(self.parseConfigFile(options.config_file))
         elif self.require_config_file:
-            self.fatal("You must specify --config-file!")
+            print "You must specify --config-file!"
+            sys.exit(-1)
         for key in self.config_parser.variables:
+            if key in self.volatile_config_vars:
+                continue
             value = getattr(options, key)
             if value is None:
                 continue
             # Don't override config_file defaults with config_parser defaults
-            if key in defaults and value == defaults[key] and self.existsVar(key):
+            if key in defaults and value == defaults[key] and key in self._config:
                 continue
-            self.setVar(key, value)
+            self._config[key] = value
 
         """Actions.
 
@@ -379,61 +342,20 @@ class BaseConfig(object):
         Finally, if we specify --no-BLAH, remove that from the list of
         actions to perform.
         """
-        actions_to_run = self.default_actions
+        self.actions = self.default_actions
         if options.only_actions:
             actions = self.verifyActions(options.only_actions)
-            actions_to_run = actions
+            self.actions = actions
         elif options.add_actions:
             actions = self.verifyActions(options.add_actions)
-            actions_to_run.extend(actions)
+            self.actions.extend(actions)
         if options.no_actions:
             actions = self.verifyActions(options.no_actions)
             for action in actions:
-                if action in actions_to_run:
-                    actions_to_run.remove(action)
-        self.setActions(actions_to_run)
+                if action in self.actions:
+                    self.actions.remove(action)
 
         return (options, args)
-
-    """There may be a better way of doing this, but I did this previously...
-    """
-    def log(self, message, level='info', exit_code=-1):
-        if self.log_obj:
-            return self.log_obj.log(message, level=level, exit_code=exit_code)
-        if level == 'info':
-            print message
-        elif level == 'debug':
-            print 'DEBUG: %s' % message
-        elif level in ('warning', 'error', 'critical'):
-            print >> sys.stderr, "%s: %s" % (level.upper(), message)
-        elif level == 'fatal':
-            print >> sys.stderr, "FATAL: %s" % message
-            sys.exit(exit_code)
-
-    def debug(self, message):
-        level = self.queryVar('log_level')
-        if not level:
-            level = self.queryVar('log_level')
-        if level and level == 'debug':
-            self.log(message, level='debug')
-
-    def info(self, message):
-        self.log(message, level='info')
-
-    def warning(self, message):
-        self.log(message, level='warning')
-
-    def warn(self, message):
-        self.log(message, level='warning')
-
-    def error(self, message):
-        self.log(message, level='error')
-
-    def critical(self, message):
-        self.log(message, level='critical')
-
-    def fatal(self, message, exit_code=-1):
-        self.log(message, level='fatal', exit_code=exit_code)
 
 
 

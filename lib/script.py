@@ -14,7 +14,7 @@ from log import SimpleFileLogger, MultiFileLogger
 from errors import HgErrorRegexList
 
 # BaseScript {{{1
-class BaseScript(BaseConfig):
+class BaseScript(object):
     def __init__(self, config_options=None, default_log_level="info", **kwargs):
         if config_options is None:
             config_options = []
@@ -35,9 +35,15 @@ class BaseScript(BaseConfig):
              }
             ]])
         self.summaryList = []
-        BaseConfig.__init__(self, config_options=config_options, **kwargs)
+        rw_config = BaseConfig(config_options=config_options, **kwargs)
+        self.config = rw_config.getReadOnlyConfig()
+        self.actions = rw_config.actions
         self.newLogObj(default_log_level=default_log_level)
-        self.info("Run as %s" % self.command_line)
+        self.__lockConfig()
+        self.info("Run as %s" % rw_config.command_line)
+
+    def __lockConfig(self):
+        self.config.lock()
 
     def newLogObj(self, default_log_level="info"):
         log_config = {"logger_name": 'Simple',
@@ -48,11 +54,11 @@ class BaseScript(BaseConfig):
                       "log_to_console": True,
                       "append_to_log": False,
                      }
-        log_type = self.queryVar("log_type")
+        log_type = self.config.get("log_type", None)
         if log_type == "multi":
             log_config['logger_name'] = 'Multi'
         for key in log_config.keys():
-            value = self.queryVar(key)
+            value = self.config.get(key, None)
             if value:
                 log_config[key] = value
         if log_type == "multi":
@@ -136,6 +142,44 @@ class BaseScript(BaseConfig):
     def chdir(self, dir_name):
         self.log("Changing directory to %s." % dir_name)
         os.chdir(dir_name)
+
+    """There may be a better way of doing this, but I did this previously...
+    """
+    def log(self, message, level='info', exit_code=-1):
+        if self.log_obj:
+            return self.log_obj.log(message, level=level, exit_code=exit_code)
+        if level == 'info':
+            print message
+        elif level == 'debug':
+            print 'DEBUG: %s' % message
+        elif level in ('warning', 'error', 'critical'):
+            print >> sys.stderr, "%s: %s" % (level.upper(), message)
+        elif level == 'fatal':
+            print >> sys.stderr, "FATAL: %s" % message
+            sys.exit(exit_code)
+
+    def debug(self, message):
+        level = self._config.get('log_level', None)
+        if level and level == 'debug':
+            self.log(message, level='debug')
+
+    def info(self, message):
+        self.log(message, level='info')
+
+    def warning(self, message):
+        self.log(message, level='warning')
+
+    def warn(self, message):
+        self.log(message, level='warning')
+
+    def error(self, message):
+        self.log(message, level='error')
+
+    def critical(self, message):
+        self.log(message, level='critical')
+
+    def fatal(self, message, exit_code=-1):
+        self.log(message, level='fatal', exit_code=exit_code)
 
 # runCommand and getOutputFromCommand {{{2
     """These are very special but very complex methods that, together with
@@ -328,14 +372,5 @@ class MercurialScript(BaseScript, AbstractMercurialScript):
 if __name__ == '__main__':
     obj = BaseScript(initial_config_file=os.path.join('test', 'test.json'),
                      default_log_level="debug")
-    obj.setVar('additionalkey', 'additionalvalue')
-    obj.setVar('key2', 'value2override')
-    obj.dumpConfig()
-    obj.lockConfig()
-    if obj.queryVar('key1') != "value1":
-        obj.fatal("key1 isn't value1!")
-    obj.info("You should see an error here about a locked config:")
-    if obj.setVar("foo", "bar"):
-        obj.fatal("Something's broken in lockConfig()!")
     obj.runCommand("find .")
     obj.rmtree("test_logs")
