@@ -202,8 +202,12 @@ components = %(section)s
         platform_config = c['platform_config']
         platforms = self.config.get("platforms", platform_config.keys())
 
-        self.scmCheckout(c['hg_mobile_repo'], dir_name="mobile")
-        self.scmCheckout(c['hg_config_repo'], dir_name="configs")
+        hg_mobile_repo = c.get('hg_mobile_repo')
+        if hg_mobile_repo:
+            self.scmCheckout(hg_mobile_repo, dir_name="mobile")
+        hg_config_repo = c.get('hg_config_repo')
+        if hg_config_repo:
+            self.scmCheckout(hg_config_repo, dir_name="configs")
 
         for platform in platforms:
             """This assumes the same deb name for each locale in a platform.
