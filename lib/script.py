@@ -15,22 +15,25 @@ from errors import HgErrorRegexList
 
 # BaseScript {{{1
 class BaseScript(BaseConfig):
-    def __init__(self, config_options=[], default_log_level="info", **kwargs):
-        config_options.extend([[
-         ["--multi-log",],
-         {"action": "store_const",
-          "const": "multi",
-          "dest": "log_type",
-          "help": "Log using MultiFileLogger"
-         }
-        ],[
-         ["--simple-log",],
-         {"action": "store_const",
-          "const": "simple",
-          "dest": "log_type",
-          "help": "Log using SimpleFileLogger"
-         }
-        ]])
+    def __init__(self, config_options=None, default_log_level="info", **kwargs):
+        if config_options is None:
+            config_options = []
+        else:
+            config_options.extend([[
+             ["--multi-log",],
+             {"action": "store_const",
+              "const": "multi",
+              "dest": "log_type",
+              "help": "Log using MultiFileLogger"
+             }
+            ],[
+             ["--simple-log",],
+             {"action": "store_const",
+              "const": "simple",
+              "dest": "log_type",
+              "help": "Log using SimpleFileLogger"
+             }
+            ]])
         self.summaryList = []
         BaseConfig.__init__(self, config_options=config_options, **kwargs)
         self.newLogObj(default_log_level=default_log_level)
