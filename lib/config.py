@@ -2,16 +2,22 @@
 """Generic config parsing and dumping, the way I remember it from scripts
 gone by.
 
-Ideally the config is loaded + mixed with command line options, then locked
-during runtime.  The config dump should be loadable and re-runnable for a
-duplicate run.
+The config should be built from script-level defaults, overlaid by
+config-file defaults, overlaid by command line options.
+
+  (For buildbot-analogues that would be factory-level defaults,
+   builder-level defaults, and build request/scheduler settings.)
+
+The config should then be locked (set to read-only, to prevent runtime
+alterations).  Afterwards we should dump the config to a file that is
+uploaded with the build, and can be used to debug or replicate the build
+at a later time.
 
 TODO:
 
 * dumpConfig and loadConfig need to be seamless. And written.
-* options with defaults are overwriting the defaults in the config
-  files, which is good for some of 'em and bad for others.
 * queryExe() ?
+* env?
 * checkRequiredSettings or something -- run at init, assert that
   these settings are set.
 """
@@ -77,6 +83,48 @@ class ExtendOption(Option):
         else:
             Option.take_action(
                 self, action, dest, opt, value, values, parser)
+
+
+
+# ReadOnlyDict {{{1
+class ReadOnlyDict(dict):
+    def __init__(self, dictionary):
+        self.__lock = False
+        self.update(dictionary)
+
+    def __checkLock__(self):
+        assert not self.__lock, "ReadOnlyDict is locked!"
+
+    def lock(self):
+        self.__lock = True
+
+    def __setitem__(self, obj, val):
+        self.__checkLock__()
+        return dict.__setitem__(self, obj, val)
+
+    def __delitem__(self, obj):
+        self.__checkLock__()
+        return dict.__delitem__(self, obj)
+
+    def clear(self, obj):
+        self.__checkLock__()
+        return dict.clear(self, obj)
+
+    def pop(self, key, default):
+        self.__checkLock__()
+        return dict.pop(self, key, default)
+
+    def popitem(self):
+        self.__checkLock__()
+        return dict.popitem(self)
+
+    def setdefault(self, obj):
+        self.__checkLock__()
+        return dict.setdefault(self, obj)
+
+    def update(self, obj):
+        self.__checkLock__()
+        return dict.update(self, obj)
 
 
 
@@ -391,4 +439,32 @@ class BaseConfig(object):
 
 # __main__ {{{1
 if __name__ == '__main__':
-    pass
+    # ReadOnlyDict tests {{{2
+    print """
+######################
+# ReadOnlyDict tests #
+######################"""
+    a = {
+     'b':'2',
+     'c':{'d': '4'},
+     'e':['f', 'g'],
+    }
+    foo = ReadOnlyDict(a)
+    if a == foo:
+        print "PASS was able to transfer a dict to ReadOnlyDict."
+    else:
+        print "FAIL: wasn't able to transfer a dict to ReadOnlyDict!"
+    print "Locking config..."
+    foo.lock()
+    try:
+        foo['e'] = 2
+    except:
+        print "PASS we can't set a var."
+    else:
+        print "FAIL: we can set foo['e'] after lock!"
+    try:
+        del foo['e']
+    except:
+        print "PASS we can't del a var."
+    else:
+        print "FAIL: we can del foo['e'] after lock!"
