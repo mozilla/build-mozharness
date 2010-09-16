@@ -138,27 +138,24 @@ class MultiLocaleRepack(MercurialScript):
         self.summary()
 
     def clobber(self):
-        if not self.queryAction('clobber'):
+        if 'clobber' not in self.actions:
             self.info("Skipping clobber step.")
             return
         self.info("Clobbering.")
-        base_work_dir = self.queryVar("base_work_dir")
-        work_dir = self.queryVar("work_dir")
-        path = os.path.join(base_work_dir, work_dir)
+        path = os.path.join(self.config['base_work_dir'], self.config['work_dir'])
         if os.path.exists(path):
             self.rmtree(path, errorLevel='fatal')
 
     def queryLocales(self):
         if self.locales:
             return self.locales
-        locales = self.queryVar("locales")
-        ignore_locales = self.queryVar("ignore_locales")
+        locales = self.config.get("locales", None)
+        ignore_locales = self.config.get("ignore_locales", None)
         if not locales:
             locales = []
-            base_work_dir = self.queryVar("base_work_dir")
-            work_dir = self.queryVar("work_dir")
-            locales_file = os.path.join(base_work_dir, work_dir,
-              self.queryVar("locales_file"))
+            locales_file = os.path.join(self.config['base_work_dir'],
+                                        self.config['work_dir'],
+                                        self.config['locales_file'])
             if locales_file.endswith(".json"):
                 locales_json = self.parseConfigFile(locales_file)
                 locales = locales_json.keys()
@@ -177,37 +174,26 @@ class MultiLocaleRepack(MercurialScript):
             return self.locales
 
     def pull(self, repos=None):
-        base_work_dir = self.queryVar("base_work_dir")
-        work_dir = self.queryVar("work_dir")
-        abs_work_dir = os.path.join(base_work_dir, work_dir)
-        hg_l10n_base = self.queryVar("hg_l10n_base")
-        hg_l10n_tag = self.queryVar("hg_l10n_tag")
-        l10n_dir = self.queryVar("l10n_dir")
+        abs_work_dir = os.path.join(self.config['base_work_dir'],
+                                    self.config['work_dir'])
         if not repos:
-            hg_mozilla_repo = self.queryVar("hg_mozilla_repo")
-            hg_mozilla_tag = self.queryVar("hg_mozilla_tag")
-            mozilla_dir = self.queryVar("mozilla_dir")
-            hg_compare_locales_repo = self.queryVar("hg_compare_locales_repo")
-            hg_compare_locales_tag = self.queryVar("hg_compare_locales_tag")
-            hg_configs_repo = self.queryVar("hg_configs_repo")
-            hg_configs_tag = self.queryVar("hg_configs_tag")
             repos = [{
-                'repo': hg_mozilla_repo,
-                'tag': hg_mozilla_tag,
-                'dir_name': mozilla_dir,
+                'repo': self.config['hg_mozilla_repo'],
+                'tag': self.config['hg_mozilla_tag'],
+                'dir_name': self.config['mozilla_dir'],
             },{
-                'repo': hg_compare_locales_repo,
-                'tag': hg_compare_locales_tag,
+                'repo': self.config['hg_compare_locales_repo'],
+                'tag': self.config['hg_compare_locales_tag'],
                 'dir_name': 'compare-locales',
             },{
-                'repo': hg_configs_repo,
-                'tag': hg_configs_tag,
+                'repo': self.config['hg_configs_repo'],
+                'tag': self.config['hg_configs_tag'],
                 'dir_name': 'configs',
             }]
 
         # Chicken/egg: need to pull repos to determine locales.
         # Solve by pulling non-locale repos first.
-        if not self.queryAction('pull'):
+        if 'pull' not in self.actions:
             self.info("Skipping pull step.")
         else:
             self.info("Pulling.")
@@ -215,56 +201,49 @@ class MultiLocaleRepack(MercurialScript):
             for repo_dict in repos:
                 self.scmCheckout(
                  hg_repo=repo_dict['repo'],
-                 tag=repo_dict.get('tag', 'default'),
+                 tag=repo_dict['tag'],
                  dir_name=repo_dict.get('dir_name', None),
                  parent_dir=abs_work_dir
                 )
 
-        if not self.queryAction('pull-locales'):
+        if 'pull-locales' not in self.actions:
             self.info("Skipping pull locales step.")
         else:
             self.info("Pulling locales.")
-            abs_l10n_dir = os.path.join(abs_work_dir, l10n_dir)
+            abs_l10n_dir = os.path.join(abs_work_dir, self.config['l10n_dir'])
             self.mkdir_p(abs_l10n_dir)
             locales = self.queryLocales()
             for locale in locales:
                 self.scmCheckout(
-                 hg_repo=os.path.join(hg_l10n_base, locale),
-                 tag=hg_l10n_tag,
+                 hg_repo=os.path.join(self.config['hg_l10n_base'], locale),
+                 tag=self.config['hg_l10n_tag'],
                  parent_dir=abs_l10n_dir
                 )
 
     def setup(self, check_action=True):
         if check_action:
             # We haven't been called from a child object.
-            if not self.queryAction("setup"):
+            if 'setup' not in self.actions:
                 self.info("Skipping setup step.")
                 return
             self.info("Setting up.")
-        work_dir = self.queryVar("work_dir")
-        base_work_dir = self.queryVar("base_work_dir")
-        mozconfig = self.queryVar("mozconfig")
-        locales_dir = self.queryVar("locales_dir")
-        en_us_binary_url = self.queryVar("en_us_binary_url")
-        mozilla_dir = self.queryVar("mozilla_dir")
-        branding_dir = self.queryVar("branding_dir")
-        objdir = self.queryVar("objdir")
-        abs_work_dir = os.path.join(base_work_dir, work_dir)
-        abs_objdir = os.path.join(abs_work_dir, mozilla_dir, objdir)
-        abs_locales_dir = os.path.join(abs_objdir, locales_dir)
-        abs_branding_dir = os.path.join(abs_objdir, branding_dir)
+        c = self.config
+        abs_work_dir = os.path.join(c['base_work_dir'], c['work_dir'])
+        abs_objdir = os.path.join(abs_work_dir, c['mozilla_dir'], c['objdir'])
+        abs_locales_dir = os.path.join(abs_objdir, c['locales_dir'])
+        abs_branding_dir = os.path.join(abs_objdir, c['branding_dir'])
 
         self.chdir(abs_work_dir)
-        self.copyfile(mozconfig, os.path.join(mozilla_dir, ".mozconfig"))
+        self.copyfile(c['mozconfig'], os.path.join(mozilla_dir, "mozconfig"))
 
-        self.rmtree(os.path.join(abs_work_dir, mozilla_dir, objdir, "dist"))
+        self.rmtree(os.path.join(abs_objdir, "dist"))
 
         # TODO error checking
         command = "make -f client.mk configure"
         self._processCommand(command=command, cwd=os.path.join(abs_work_dir, mozilla_dir))
         command = "make"
         self._processCommand(command=command, cwd=os.path.join(abs_objdir, "config"))
-        command = "make wget-en-US EN_US_BINARY_URL=%s" % en_us_binary_url
+        command = "make wget-en-US EN_US_BINARY_URL=%s" % c['en_us_binary_url']
         self._processCommand(command=command, cwd=abs_locales_dir)
 
         self._getInstaller()
@@ -283,21 +262,17 @@ class MultiLocaleRepack(MercurialScript):
         pass
 
     def repack(self):
-        if not self.queryAction("repack"):
+        if 'repack' not in self.actions:
             self.info("Skipping repack step.")
             return
         self.info("Repacking.")
-        base_work_dir = self.queryVar("base_work_dir")
-        work_dir = self.queryVar("work_dir")
-        locales_dir = self.queryVar("locales_dir")
-        mozilla_dir = self.queryVar("mozilla_dir")
-        objdir = self.queryVar("objdir")
-        l10n_dir = self.queryVar("l10n_dir")
-        merge_locales = self.queryVar("merge_locales")
+        c = self.config
         merge_dir = "merged"
-        abs_work_dir = os.path.join(base_work_dir, work_dir)
-        abs_locales_dir = os.path.join(abs_work_dir, mozilla_dir, objdir, locales_dir)
-        abs_locales_src_dir = os.path.join(abs_work_dir, mozilla_dir, locales_dir)
+        abs_work_dir = os.path.join(c['base_work_dir'], c['work_dir'])
+        abs_locales_dir = os.path.join(abs_work_dir, c['mozilla_dir'],
+                                       c['objdir'], c['locales_dir'])
+        abs_locales_src_dir = os.path.join(abs_work_dir, c['mozilla_dir'],
+                                           c['locales_dir'])
         abs_merge_dir = os.path.join(abs_locales_dir, merge_dir)
         locales = self.queryLocales()
         compare_locales_script = os.path.join("..", "..", "..",
@@ -328,10 +303,11 @@ class MultiLocaleRepack(MercurialScript):
         pass
 
     def upload(self):
-        if not self.queryAction("upload"):
+        if 'upload' not in self.actions:
             self.info("Skipping upload step.")
             return
         self.info("Uploading.")
+        # TODO
 
     def _processCommand(self, **kwargs):
         return self.runCommand(**kwargs)
@@ -400,58 +376,44 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
         self.deb_package_version = None
 
     def pull(self):
-        hg_mozilla_repo = self.queryVar("hg_mozilla_repo")
-        hg_mozilla_tag = self.queryVar("hg_mozilla_tag")
-        mozilla_dir = self.queryVar("mozilla_dir")
-        hg_compare_locales_repo = self.queryVar("hg_compare_locales_repo")
-        hg_compare_locales_tag = self.queryVar("hg_compare_locales_tag")
-        hg_mobile_repo = self.queryVar("hg_mobile_repo")
-        hg_mobile_tag = self.queryVar("hg_mobile_tag")
-        hg_configs_repo = self.queryVar("hg_configs_repo")
-        hg_configs_tag = self.queryVar("hg_configs_tag")
+        c = self.config
         repos = [{
-            'repo': hg_mozilla_repo,
-            'tag': hg_mozilla_tag,
-            'dir_name': mozilla_dir,
+            'repo': c['hg_mozilla_repo'],
+            'tag': c['hg_mozilla_tag'],
+            'dir_name': c['mozilla_dir'],
         },{
-            'repo': hg_mobile_repo,
-            'tag': hg_mobile_tag,
+            'repo': c['hg_mobile_repo'],
+            'tag': c['hg_mobile_tag'],
             'dir_name': os.path.join(mozilla_dir, 'mobile'),
         },{
-            'repo': hg_compare_locales_repo,
-            'tag': hg_compare_locales_tag,
+            'repo': c['hg_compare_locales_repo'],
+            'tag': c['hg_compare_locales_tag'],
             'dir_name': 'compare-locales',
         },{
-            'repo': hg_configs_repo,
-            'tag': hg_configs_tag,
+            'repo': c['hg_configs_repo'],
+            'tag': c['hg_configs_tag'],
             'dir_name': 'configs',
         }]
         MultiLocaleRepack.pull(self, repos=repos)
 
     def setup(self):
-        if not self.queryAction("setup"):
+        if 'setup' not in self.actions:
             self.info("Skipping setup step.")
             return
         self.info("Setting up.")
-        sbox_path = self.queryVar("sbox_path")
-        sbox_target = self.queryVar("sbox_target")
-        self.runCommand("%s -p sb-conf select %s" % (sbox_path, sbox_target))
-        self.runCommand("%s -p \"echo -n TinderboxPrint: && sb-conf current | sed 's/ARMEL// ; s/_// ; s/-//'\"" % sbox_path)
+        c = self.config
+        self.runCommand("%s -p sb-conf select %s" % (c['sbox_path'], c['sbox_target']))
+        self.runCommand("%s -p \"echo -n TinderboxPrint: && sb-conf current | sed 's/ARMEL// ; s/_// ; s/-//'\"" % c['sbox_path'])
         MultiLocaleRepack.setup(self, check_action=False)
 
     def queryDebName(self):
         if self.deb_name:
             return self.deb_name
-        base_work_dir = self.queryVar("base_work_dir")
-        work_dir = self.queryVar("work_dir")
-        mozilla_dir = self.queryVar("mozilla_dir")
-        objdir = self.queryVar("objdir")
-        locales_dir = self.queryVar("locales_dir")
-        abs_work_dir = os.path.join(base_work_dir, work_dir)
-        abs_locales_dir = os.path.join(abs_work_dir, mozilla_dir, objdir, locales_dir)
-        en_us_binary_url = self.queryVar("en_us_binary_url")
-
-        command = "make wget-DEB_PKG_NAME EN_US_BINARY_URL=%s" % en_us_binary_url
+        c = self.config
+        abs_work_dir = os.path.join(c['base_work_dir'], c['work_dir'])
+        abs_locales_dir = os.path.join(abs_work_dir, c['mozilla_dir'],
+                                      c['objdir'], c['locales_dir'])
+        command = "make wget-DEB_PKG_NAME EN_US_BINARY_URL=%s" % c['en_us_binary_url']
         self.deb_name = self._processCommand(command=command, cwd=abs_locales_dir,
                                             halt_on_failure=True,
                                             return_type='output')
@@ -466,29 +428,20 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
         return self.deb_package_version
 
     def _getInstaller(self):
-        base_work_dir = self.queryVar("base_work_dir")
-        work_dir = self.queryVar("work_dir")
-        mozilla_dir = self.queryVar("mozilla_dir")
-        objdir = self.queryVar("objdir")
-        locales_dir = self.queryVar("locales_dir")
-        abs_work_dir = os.path.join(base_work_dir, work_dir)
-        abs_locales_dir = os.path.join(abs_work_dir, mozilla_dir, objdir, locales_dir)
-        en_us_binary_url = self.queryVar("en_us_binary_url")
-
+        c = self.config
+        abs_work_dir = os.path.join(c['base_work_dir'], c['work_dir'])
+        abs_locales_dir = os.path.join(abs_work_dir, c['mozilla_dir'],
+                                       c['objdir'], c['locales_dir'])
         deb_name = self.queryDebName()
 
-        command = "make wget-deb EN_US_BINARY_URL=%s DEB_PKG_NAME=%s DEB_BUILD_ARCH=armel" % (en_us_binary_url, deb_name)
+        command = "make wget-deb EN_US_BINARY_URL=%s DEB_PKG_NAME=%s DEB_BUILD_ARCH=armel" % (c['en_us_binary_url'], deb_name)
         self._processCommand(command=command, cwd=abs_locales_dir)
 
     def _updateRevisions(self):
-        base_work_dir = self.queryVar("base_work_dir")
-        work_dir = self.queryVar("work_dir")
-        locales_dir = self.queryVar("locales_dir")
-        objdir = self.queryVar("objdir")
-        mozilla_dir = self.queryVar("mozilla_dir")
-        abs_work_dir = os.path.join(base_work_dir, work_dir)
-        abs_locales_dir = os.path.join(abs_work_dir, mozilla_dir, objdir, locales_dir)
-
+        c = self.config
+        abs_work_dir = os.path.join(c['base_work_dir'], c['work_dir'])
+        abs_locales_dir = os.path.join(abs_work_dir, c['mozilla_dir'],
+                                       c['objdir'], c['locales_dir'])
         command = "make ident"
         output = self._processCommand(command=command, cwd=abs_locales_dir,
                                       return_type='output')
@@ -497,18 +450,15 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
                 gecko_revision = line.split(' ')[-1]
             elif line.startswith('fennec_revision '):
                 fennec_revision = line.split(' ')[-1]
-        self.scmUpdate(os.path.join(abs_work_dir, mozilla_dir),
-                       tag=gecko_revision)
-        self.scmUpdate(os.path.join(abs_work_dir, mozilla_dir, "mobile"),
-                       tag=fennec_revision)
+        self.scmUpdate(os.path.join(abs_work_dir, c['mozilla_dir']),
+                       tag=c['gecko_revision'])
+        self.scmUpdate(os.path.join(abs_work_dir, c['mozilla_dir'], "mobile"),
+                       tag=c['fennec_revision'])
 
     def _repackage(self):
-        base_work_dir = self.queryVar("base_work_dir")
-        work_dir = self.queryVar("work_dir")
-        mozilla_dir = self.queryVar("mozilla_dir")
-        objdir = self.queryVar("objdir")
-        abs_work_dir = os.path.join(base_work_dir, work_dir)
-        abs_objdir = os.path.join(abs_work_dir, mozilla_dir, objdir)
+        c = self.config
+        abs_work_dir = os.path.join(c['base_work_dir'], c['work_dir'])
+        abs_objdir = os.path.join(abs_work_dir, c['mozilla_dir'], c['objdir'])
         deb_name = self.queryDebName()
         deb_package_version = self.queryDebPackageVersion()
         tmp_deb_dir = os.path.join("dist", "tmp.deb")
@@ -556,16 +506,14 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
         self._processCommand(command=command, cwd=abs_objdir)
 
     def _processCommand(self, **kwargs):
-        sbox_path = self.queryVar("sbox_path")
-        sbox_home = self.queryVar("sbox_home")
-        sbox_root = self.queryVar("sbox_root")
-        command = '%s ' % sbox_path
+        c = self.config
+        command = '%s ' % c['sbox_path']
         if 'return_type' not in kwargs or kwargs['return_type'] != 'output':
             command += '-p '
         if 'cwd' in kwargs:
-            command += '-d %s ' % kwargs['cwd'].replace(sbox_home, '')
+            command += '-d %s ' % kwargs['cwd'].replace(c['sbox_home'], '')
             del kwargs['cwd']
-        kwargs['command'] = '%s "%s"' % (command, kwargs['command'].replace(sbox_root, ''))
+        kwargs['command'] = '%s "%s"' % (command, kwargs['command'].replace(c['sbox_root'], ''))
         if 'return_type' not in kwargs or kwargs['return_type'] != 'output':
             if 'error_regex_list' in kwargs:
                 kwargs['error_regex_list'] = PythonErrorRegexList + kwargs['error_regex_list']

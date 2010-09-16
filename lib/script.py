@@ -37,7 +37,7 @@ class BaseScript(object):
         self.summaryList = []
         rw_config = BaseConfig(config_options=config_options, **kwargs)
         self.config = rw_config.getReadOnlyConfig()
-        self.actions = rw_config.actions
+        self.actions = tuple(rw_config.actions)
         self.newLogObj(default_log_level=default_log_level)
         self.__lockConfig()
         self.info("Run as %s" % rw_config.command_line)
@@ -159,8 +159,7 @@ class BaseScript(object):
             sys.exit(exit_code)
 
     def debug(self, message):
-        level = self._config.get('log_level', None)
-        if level and level == 'debug':
+        if self._config.get('log_level', None) == 'debug':
             self.log(message, level='debug')
 
     def info(self, message):
