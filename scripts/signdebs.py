@@ -125,7 +125,7 @@ class MaemoDebSigner(MercurialScript):
         sbox_path = c['sbox_path']
         section = c['section']
         sbox_work_dir = '%s/%s/%s' % (c['work_dir'], c['repo_dir'], c['repo_name'])
-        abs_work_dir = '%s/%s' % (c['base_work_dir'], ['sbox_work_dir'])
+        abs_work_dir = '%s/%s' % (c['base_work_dir'], sbox_work_dir)
 
         # TODO errorRegex
         error_regex_list = []
