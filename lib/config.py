@@ -90,7 +90,7 @@ class ExtendOption(Option):
 class ReadOnlyDict(dict):
     def __init__(self, dictionary):
         self.__lock = False
-        self.update(dictionary)
+        self.update(dictionary.copy())
 
     def __checkLock__(self):
         assert not self.__lock, "ReadOnlyDict is locked!"
@@ -98,33 +98,33 @@ class ReadOnlyDict(dict):
     def lock(self):
         self.__lock = True
 
-    def __setitem__(self, obj, val):
+    def __setitem__(self, *args):
         self.__checkLock__()
-        return dict.__setitem__(self, obj, val)
+        return dict.__setitem__(self, *args)
 
-    def __delitem__(self, obj):
+    def __delitem__(self, *args):
         self.__checkLock__()
-        return dict.__delitem__(self, obj)
+        return dict.__delitem__(self, *args)
 
-    def clear(self, obj):
+    def clear(self, *args):
         self.__checkLock__()
-        return dict.clear(self, obj)
+        return dict.clear(self, *args)
 
-    def pop(self, key, default):
+    def pop(self, *args):
         self.__checkLock__()
-        return dict.pop(self, key, default)
+        return dict.pop(self, *args)
 
-    def popitem(self):
+    def popitem(self, *args):
         self.__checkLock__()
-        return dict.popitem(self)
+        return dict.popitem(self, *args)
 
-    def setdefault(self, obj):
+    def setdefault(self, *args):
         self.__checkLock__()
-        return dict.setdefault(self, obj)
+        return dict.setdefault(self, *args)
 
-    def update(self, obj):
+    def update(self, *args):
         self.__checkLock__()
-        return dict.update(self, obj)
+        dict.update(self, *args)
 
 
 
@@ -440,10 +440,7 @@ class BaseConfig(object):
 # __main__ {{{1
 if __name__ == '__main__':
     # ReadOnlyDict tests {{{2
-    print """
-######################
-# ReadOnlyDict tests #
-######################"""
+    print "##### ReadOnlyDict tests"
     a = {
      'b':'2',
      'c':{'d': '4'},
@@ -451,20 +448,88 @@ if __name__ == '__main__':
     }
     foo = ReadOnlyDict(a)
     if a == foo:
-        print "PASS was able to transfer a dict to ReadOnlyDict."
+        print "PASS: was able to transfer a dict to ReadOnlyDict."
     else:
         print "FAIL: wasn't able to transfer a dict to ReadOnlyDict!"
-    print "Locking config..."
+    foo.popitem()
+    if len(foo) == len(a) - 1:
+        print "PASS: can popitem() when unlocked.."
+    else:
+        print "FAIL can't popitem() when unlocked!"
+    foo = ReadOnlyDict(a)
+    foo.pop('e')
+    if len(foo) == len(a) - 1:
+        print "PASS: can pop() when unlocked."
+    else:
+        print "FAIL can't pop() when unlocked."
+    foo = ReadOnlyDict(a)
+    foo['e'] = 'yarrr'
+    if foo['e'] == 'yarrr':
+        print "PASS: can set var when unlocked."
+    else:
+        print "FAIL: can't set var when unlocked."
+    del foo['e']
+    if len(foo) == len(a) - 1:
+        print "PASS: can del when unlocked."
+    else:
+        print "FAIL: can't del when unlocked."
+    foo.clear()
+    if foo == {}:
+        print "PASS: can clear() when unlocked."
+    else:
+        print "FAIL: can't clear() when unlocked!"
+    for key in a.keys():
+        foo.setdefault(key, a[key])
+    if a == foo:
+        print "PASS: can setdefault() when unlocked."
+    else:
+        print "FAIL: can't setdefault() when unlocked!"
+    foo = ReadOnlyDict(a)
     foo.lock()
     try:
         foo['e'] = 2
     except:
-        print "PASS we can't set a var."
+        print "PASS: can't set a var when locked."
     else:
-        print "FAIL: we can set foo['e'] after lock!"
+        print "FAIL: can set foo['e'] when locked."
     try:
         del foo['e']
     except:
-        print "PASS we can't del a var."
+        print "PASS: can't del a var when locked."
     else:
-        print "FAIL: we can del foo['e'] after lock!"
+        print "FAIL: can del foo['e'] when locked."
+    try:
+        foo.popitem()
+    except:
+        print "PASS: can't popitem() when locked."
+    else:
+        print "FAIL: can popitem() when locked."
+        print foo
+    try:
+        foo.update({})
+    except:
+        print "PASS: can't update() when locked."
+    else:
+        print "FAIL: can update() when locked."
+        print foo
+    try:
+        foo.setdefault({'arr': 'yarr'})
+    except:
+        print "PASS: can't setdefault() when locked."
+    else:
+        print "FAIL: can setdefault() when locked."
+        print foo
+    try:
+        foo.pop()
+    except:
+        print "PASS: can't pop() when locked."
+    else:
+        print "FAIL: can pop() when locked."
+        print foo
+    try:
+        foo.clear()
+    except:
+        print "PASS: can't clear() when locked."
+    else:
+        print "FAIL: can clear() when locked."
+        print foo
