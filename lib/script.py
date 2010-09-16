@@ -159,7 +159,7 @@ class BaseScript(object):
             sys.exit(exit_code)
 
     def debug(self, message):
-        if self._config.get('log_level', None) == 'debug':
+        if self.config.get('log_level', None) == 'debug':
             self.log(message, level='debug')
 
     def info(self, message):
