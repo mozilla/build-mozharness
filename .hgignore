@@ -3,3 +3,6 @@ syntax: glob
 *.log
 *.pyc
 test.py
+.DS_Store
+.coverage
+htmlcov
