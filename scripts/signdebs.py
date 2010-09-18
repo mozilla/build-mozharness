@@ -17,6 +17,7 @@ from urllib2 import URLError, HTTPError
 # load modules from parent dir
 sys.path.insert(1, os.path.join(os.path.dirname(sys.path[0]), "lib"))
 
+from config import parseConfigFile
 from errors import SSHErrorRegexList
 from script import MercurialScript
 
@@ -112,7 +113,7 @@ class MaemoDebSigner(MercurialScript):
                 for matching platforms.
                 """
                 if locales_file.endswith(".json"):
-                    locales_json = self.parseConfigFile(locales_file)
+                    locales_json = parseConfigFile(locales_file)
                     locales.extend(locales_json.keys())
                 else:
                     fh = open(locales_file)

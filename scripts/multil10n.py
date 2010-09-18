@@ -19,7 +19,7 @@ import sys
 # load modules from parent dir
 sys.path.insert(1, os.path.join(os.path.dirname(sys.path[0]), "lib"))
 
-from config import BaseConfig
+from config import parseConfigFile
 from errors import SSHErrorRegexList, PythonErrorRegexList
 from script import MercurialScript
 
@@ -159,7 +159,7 @@ class MultiLocaleRepack(MercurialScript):
             locales_file = os.path.join(c['base_work_dir'], c['work_dir'],
                                         c['locales_file'])
             if locales_file.endswith(".json"):
-                locales_json = BaseConfig.parseConfigFile(locales_file)
+                locales_json = parseConfigFile(locales_file)
                 locales = locales_json.keys()
             else:
                 fh = open(locales_file)
@@ -237,13 +237,13 @@ class MultiLocaleRepack(MercurialScript):
         abs_branding_dir = os.path.join(abs_objdir, c['branding_dir'])
 
         self.chdir(abs_work_dir)
-        self.copyfile(c['mozconfig'], os.path.join(mozilla_dir, "mozconfig"))
+        self.copyfile(c['mozconfig'], os.path.join(c['mozilla_dir'], "mozconfig"))
 
         self.rmtree(os.path.join(abs_objdir, "dist"))
 
         # TODO error checking
         command = "make -f client.mk configure"
-        self._processCommand(command=command, cwd=os.path.join(abs_work_dir, mozilla_dir))
+        self._processCommand(command=command, cwd=os.path.join(abs_work_dir, c['mozilla_dir']))
         command = "make"
         self._processCommand(command=command, cwd=os.path.join(abs_objdir, "config"))
         command = "make wget-en-US EN_US_BINARY_URL=%s" % c['en_us_binary_url']
@@ -291,12 +291,12 @@ class MultiLocaleRepack(MercurialScript):
             # TODO more error checking
             command = "python %s -m %s l10n.ini %s %s" % (
               compare_locales_script, abs_merge_dir,
-              os.path.join('..', '..', '..', l10n_dir), locale)
+              os.path.join('..', '..', '..', c['l10n_dir']), locale)
             self.runCommand(command, error_regex_list=compare_locales_error_regex_list,
                             cwd=abs_locales_src_dir, env=compare_locales_env)
             for step in ("chrome", "libs"):
-                command = 'make %s-%s L10NBASEDIR=../../../../%s' % (step, locale, l10n_dir)
-                if merge_locales:
+                command = 'make %s-%s L10NBASEDIR=../../../../%s' % (step, locale, c['l10n_dir'])
+                if c['merge_locales']:
                     command += " LOCALE_MERGEDIR=%s" % os.path.join(abs_locales_dir, merge_dir)
                 self._processCommand(command=command, cwd=abs_locales_dir)
         self._repackage()
@@ -387,7 +387,7 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
         },{
             'repo': c['hg_mobile_repo'],
             'tag': c['hg_mobile_tag'],
-            'dir_name': os.path.join(mozilla_dir, 'mobile'),
+            'dir_name': os.path.join(c['mozilla_dir'], 'mobile'),
         },{
             'repo': c['hg_compare_locales_repo'],
             'tag': c['hg_compare_locales_tag'],

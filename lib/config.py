@@ -120,6 +120,37 @@ class ReadOnlyDict(dict):
 
 
 
+# parseConfigFile {{{1
+def parseConfigFile(file_name):
+    """Read a config file and return a dictionary.
+    """
+    file_path = None
+    search_path = ['.', os.path.join(sys.path[0], '..', 'configs'),
+                   os.path.join(sys.path[0], '..', '..', 'configs')]
+    for path in search_path:
+        if os.path.exists(os.path.join(path, file_name)):
+            file_path = os.path.join(path, file_name)
+            break
+    else:
+        print "ERROR: Can't find %s in %s!" % (file_name, search_path)
+        return
+    fh = open(file_path)
+    config = {}
+    if file_name.endswith('.json'):
+        jsonConfig = json.load(fh)
+        config = dict(jsonConfig)
+    else:
+        contents = []
+        for line in fh:
+            line = line[:-1]
+            contents.append(line)
+            config = dict(contents)
+    fh.close()
+
+    return config
+
+
+
 # BaseConfig {{{1
 class BaseConfig(object):
     """Basic config setting/getting.
@@ -151,7 +182,7 @@ class BaseConfig(object):
         if config:
             self.setConfig(config)
         if initial_config_file:
-            self.setConfig(self.parseConfigFile(initial_config_file))
+            self.setConfig(parseConfigFile(initial_config_file))
         self._createConfigParser(config_options, usage)
         self.parseArgs()
 
@@ -231,35 +262,6 @@ class BaseConfig(object):
             for option in config_options:
                 self.config_parser.add_option(*option[0], **option[1])
 
-    def parseConfigFile(self, file_name):
-        """Read a config file and return a dictionary.
-        """
-        file_path = None
-        search_path = ['.', os.path.join(sys.path[0], '..', 'configs'),
-                       os.path.join(sys.path[0], '..', '..', 'configs')]
-        for path in search_path:
-            if os.path.exists(os.path.join(path, file_name)):
-                file_path = os.path.join(path, file_name)
-                break
-        else:
-            print "ERROR: Can't find %s in %s!" % (file_name, search_path)
-            return
-        fh = open(file_path)
-        config = {}
-        if file_name.endswith('.json'):
-            jsonConfig = json.load(fh)
-            config = dict(jsonConfig)
-        else:
-            contents = []
-            for line in fh:
-                line = line[:-1]
-                contents.append(line)
-                config = dict(contents)
-        fh.close()
-
-        # TODO Return it here? Or set something?
-        return config
-
     def setConfig(self, config, overwrite=False):
         """This is probably doable some other way."""
         if self._config and not overwrite:
@@ -288,7 +290,7 @@ class BaseConfig(object):
 
     def loadConfig(self, config_file):
         """TODO: Write Me, Test Me
-        Probably self._config = self.parseConfig(config_file)
+        Probably self._config = parseConfigFile(config_file)
         or something, but with more error checking.
         """
         pass
@@ -312,7 +314,7 @@ class BaseConfig(object):
         defaults = self.config_parser.defaults.copy()
 
         if options.config_file:
-            self.setConfig(self.parseConfigFile(options.config_file))
+            self.setConfig(parseConfigFile(options.config_file))
         elif self.require_config_file:
             print "You must specify --config-file!"
             sys.exit(-1)
