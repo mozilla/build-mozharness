@@ -30,7 +30,6 @@ try:
     import json
 except:
     import simplejson as json
-from log import SimpleFileLogger, MultiFileLogger
 
 
 
@@ -135,7 +134,6 @@ class BaseConfig(object):
                  require_config_file=False, usage="usage: %prog [options]"):
         self._config = {}
         self.actions = []
-        self.log_obj = None
         self.config_lock = False
         self.require_config_file = require_config_file
 

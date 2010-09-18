@@ -6,6 +6,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 import urllib2
 
@@ -84,7 +85,7 @@ class BaseScript(object):
                 except ValueError:
                     """log is closed; print as a default. Ran into this
                     when calling from __del__()"""
-                    print "### Log is closed! (%s)" % message
+                    print "### Log is closed! (%s)" % item['message']
 
     def addSummary(self, message, level='info'):
         self.summaryList.append({'message': message, 'level': level})
@@ -118,7 +119,7 @@ class BaseScript(object):
         TODO: option to mkdir_p dirname(file_name) if it doesn't exist.
         """
         if not file_name:
-            file_name = os.basename(url)
+            file_name = os.path.basename(url)
         if test_only:
             self.info("Touching %s instead of downloading..." % file_name)
             os.system("touch %s" % file_name)
@@ -340,10 +341,15 @@ class BaseScript(object):
 source.py so script.py doesn't end up like factory.py.
 """
 class AbstractMercurialScript(object):
+    """This should eventually just use catlee's hg libs."""
     def __init__(self):
         """Quick 'n' dirty "Don't clone me; inherit me"
         """
         assert None
+
+    def rmtree(self, **kwargs):
+        """For pylint."""
+        pass
 
     #TODO: num_retries
     def scmCheckout(self, hg_repo, parent_dir=None, tag="default",
