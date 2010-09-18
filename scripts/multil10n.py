@@ -19,6 +19,7 @@ import sys
 # load modules from parent dir
 sys.path.insert(1, os.path.join(os.path.dirname(sys.path[0]), "lib"))
 
+from config import BaseConfig
 from errors import SSHErrorRegexList, PythonErrorRegexList
 from script import MercurialScript
 
@@ -158,7 +159,7 @@ class MultiLocaleRepack(MercurialScript):
             locales_file = os.path.join(c['base_work_dir'], c['work_dir'],
                                         c['locales_file'])
             if locales_file.endswith(".json"):
-                locales_json = self.parseConfigFile(locales_file)
+                locales_json = BaseConfig.parseConfigFile(locales_file)
                 locales = locales_json.keys()
             else:
                 fh = open(locales_file)

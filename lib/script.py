@@ -347,7 +347,11 @@ class AbstractMercurialScript(object):
         """
         assert None
 
-    def rmtree(self, **kwargs):
+    def rmtree(self, *args):
+        """For pylint."""
+        pass
+
+    def runCommand(self, *args, **kwargs):
         """For pylint."""
         pass
 
