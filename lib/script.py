@@ -34,6 +34,13 @@ class BaseScript(object):
               "dest": "log_type",
               "help": "Log using SimpleFileLogger"
              }
+            ],[
+             ["--noop", "--dry-run"],
+             {"action": "store_true",
+              "default": False,
+              "dest": "noop",
+              "help": "Echo commands without executing them."
+             }
             ]])
         self.summaryList = []
         rw_config = BaseConfig(config_options=config_options, **kwargs)
@@ -95,34 +102,36 @@ class BaseScript(object):
     def mkdir_p(self, path):
         self.info("mkdir: %s" % path)
         if not os.path.exists(path):
-            os.makedirs(path)
+            if not self.config['noop']:
+                os.makedirs(path)
         else:
             self.info("Already exists.")
 
     def rmtree(self, path, error_level='error', exit_code=-1):
         self.info("rmtree: %s" % path)
         if os.path.exists(path):
-            if os.path.isdir(path):
-                shutil.rmtree(path)
-            else:
-                os.remove(path)
-            if os.path.exists(path):
-                self.log('Unable to remove %s!' % path, level=error_level,
-                         exit_code=exit_code)
+            if not self.config['noop']:
+                if os.path.isdir(path):
+                    shutil.rmtree(path)
+                else:
+                    os.remove(path)
+                if os.path.exists(path):
+                    self.log('Unable to remove %s!' % path, level=error_level,
+                             exit_code=exit_code)
         else:
             self.debug("%s doesn't exist." % path)
 
     # http://www.techniqal.com/blog/2008/07/31/python-file-read-write-with-urllib2/
-    def downloadFile(self, url, file_name=None, test_only=False,
+    def downloadFile(self, url, file_name=None,
                      error_level='error', exit_code=-1):
         """Python wget.
         TODO: option to mkdir_p dirname(file_name) if it doesn't exist.
+        TODO: should noop touch the filename? seems counter-noop.
         """
         if not file_name:
             file_name = os.path.basename(url)
-        if test_only:
-            self.info("Touching %s instead of downloading..." % file_name)
-            os.system("touch %s" % file_name)
+        if self.config['noop']:
+            self.info("Downloading %s" % url)
             return file_name
         req = urllib2.Request(url)
         try:
@@ -143,15 +152,18 @@ class BaseScript(object):
 
     def move(self, src, dest):
         self.info("Moving %s to %s" % (src, dest))
-        shutil.move(src, dest)
+        if not self.config['noop']:
+            shutil.move(src, dest)
 
     def copyfile(self, src, dest):
         self.info("Copying %s to %s" % (src, dest))
-        shutil.copyfile(src, dest)
+        if not self.config['noop']:
+            shutil.copyfile(src, dest)
 
     def chdir(self, dir_name):
         self.log("Changing directory to %s." % dir_name)
-        os.chdir(dir_name)
+        if not self.config['noop']:
+            os.chdir(dir_name)
 
     """There may be a better way of doing this, but I did this previously...
     """
@@ -223,6 +235,8 @@ class BaseScript(object):
             self.info("Running command: %s in %s" % (command, cwd))
         else:
             self.info("Running command: %s" % command)
+        if self.config['noop']:
+            return
         p = subprocess.Popen(command, shell=shell, stdout=subprocess.PIPE,
                              cwd=cwd, stderr=subprocess.STDOUT, env=env)
         loop = True
@@ -286,6 +300,9 @@ class BaseScript(object):
             self.info("Getting output from command: %s in %s" % (command, cwd))
         else:
             self.info("Getting output from command: %s" % command)
+        # This could potentially return something?
+        if self.config['noop']:
+            return
         tmp_stdout = tempfile.NamedTemporaryFile(suffix="stdout", delete=False)
         tmp_stdout_filename = tmp_stdout.name
         tmp_stderr = tempfile.NamedTemporaryFile(suffix="stderr", delete=False)
