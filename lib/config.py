@@ -15,7 +15,6 @@ at a later time.
 
 TODO:
 
-* dumpConfig and loadConfig need to be seamless. And written.
 * env?
 * checkRequiredSettings or something -- run at init, assert that
   these settings are set.
@@ -218,6 +217,7 @@ class BaseConfig(object):
         )
         self.config_parser.add_option(
          "--config-file", action="store", dest="config_file",
+         default="localconfig.json",
          type="string", help="Specify the config file (required)"
         )
 
@@ -284,16 +284,14 @@ class BaseConfig(object):
         """
         if not config:
             config = self._config
+        json_config = json.dumps(config, sort_keys=True)
         if not file_name:
             pp = pprint.PrettyPrinter(indent=2, width=10)
-            return pp.pformat(config)
-
-    def loadConfig(self, config_file):
-        """TODO: Write Me, Test Me
-        Probably self._config = parseConfigFile(config_file)
-        or something, but with more error checking.
-        """
-        pass
+            return pp.pformat(json_config)
+        else:
+            fh = open(file_name, 'w')
+            fh.write(pp.pformat(json_config))
+            fh.close()
 
     def verifyActions(self, action_list):
         actions = ','.join(action_list).split(',')
@@ -313,11 +311,7 @@ class BaseConfig(object):
         (options, args) = self.config_parser.parse_args()
         defaults = self.config_parser.defaults.copy()
 
-        if options.config_file:
-            self.setConfig(parseConfigFile(options.config_file))
-        elif self.require_config_file:
-            print "You must specify --config-file!"
-            sys.exit(-1)
+        self.setConfig(parseConfigFile(options.config_file))
         for key in self.config_parser.variables:
             if key in self.volatile_config_vars:
                 continue

@@ -46,6 +46,9 @@ class BaseScript(object):
         rw_config = BaseConfig(config_options=config_options, **kwargs)
         self.config = rw_config.getReadOnlyConfig()
         self.actions = tuple(rw_config.actions)
+        if os.path.exists("localconfig.py"):
+            self.move("localconfig.py", "localconfig.py.bak")
+        rw_config.dumpConfig(file_name="localconfig.py")
         self.newLogObj(default_log_level=default_log_level)
         """I can definitely see wanting to get more runtime info before
         locking -- what's my hg revision? What's the latest ____
