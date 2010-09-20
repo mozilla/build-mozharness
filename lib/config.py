@@ -289,6 +289,7 @@ class BaseConfig(object):
             pp = pprint.PrettyPrinter(indent=2, width=10)
             return pp.pformat(json_config)
         else:
+            pp = pprint.PrettyPrinter(indent=2, width=10)
             fh = open(file_name, 'w')
             fh.write(pp.pformat(json_config))
             fh.close()
