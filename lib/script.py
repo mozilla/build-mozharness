@@ -17,6 +17,7 @@ from errors import HgErrorRegexList
 # BaseScript {{{1
 class BaseScript(object):
     def __init__(self, config_options=None, default_log_level="info", **kwargs):
+        self.log_obj = None
         if config_options is None:
             config_options = []
         else:
