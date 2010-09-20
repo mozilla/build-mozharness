@@ -222,6 +222,11 @@ class BaseConfig(object):
 
         # Actions
         self.config_parser.add_option(
+         "--list-actions", action="store_true",
+         dest="list_actions",
+         help="List all available actions, then exit"
+        )
+        self.config_parser.add_option(
          "--action", action="extend",
          dest="only_actions", metavar="ACTIONS",
          help="Do action %s" % self.all_actions
@@ -248,7 +253,7 @@ class BaseConfig(object):
              help="Remove %s from the list of actions to perform" % action
             )
         self.volatile_config_vars.extend(['only_actions', 'add_actions',
-                                          'no_actions'])
+                                          'no_actions', 'list_actions'])
         # Child-specified options
         # TODO error checking for overlapping options
         if config_options:
@@ -307,6 +312,10 @@ class BaseConfig(object):
         """
         self.command_line = ' '.join(sys.argv)
         (options, args) = self.config_parser.parse_args()
+        if options.list_actions:
+            print "Actions available: " + ', '.join(self.all_actions)
+            sys.exit(0)
+
         defaults = self.config_parser.defaults.copy()
 
         self.setConfig(parseConfigFile(options.config_file))
