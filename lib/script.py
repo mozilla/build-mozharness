@@ -87,8 +87,8 @@ class BaseScript(object):
             self.log_obj = SimpleFileLogger(**log_config)
 
     def summary(self):
+        self.info("#####\n##### %s summary:\n#####" % self.__class__.__name__)
         if self.summaryList:
-            self.info("#####\n##### %s summary:\n#####" % self.__class__.__name__)
             for item in self.summaryList:
                 try:
                     self.log(item['message'], level=item['level'])
@@ -211,7 +211,7 @@ class BaseScript(object):
     """
     def runCommand(self, command, cwd=None, error_regex_list=[], parse_at_end=False,
                    shell=True, halt_on_failure=False, success_codes=[0],
-                   env=None, returnType='status'):
+                   env=None, return_type='status'):
         """Run a command, with logging and error parsing.
 
         TODO: parse_at_end, contextLines
@@ -224,7 +224,7 @@ class BaseScript(object):
          {'substr': 'THE WORLD IS ENDING', level='fatal', contextLines='20:'}
         ]
         """
-        if returnType != 'status':
+        if return_type == 'output':
             return self.getOutputFromCommand(command=command, cwd=cwd,
                                              shell=shell,
                                              halt_on_failure=halt_on_failure,
@@ -278,6 +278,8 @@ class BaseScript(object):
             if num_errors or p.returncode not in success_codes:
                 self.fatal("Halting on failure while running %s" % command,
                            exit_code=p.returncode)
+        if return_type == 'num_errors':
+            return num_errors
         return p.returncode
 
     def getOutputFromCommand(self, command, cwd=None, shell=True,

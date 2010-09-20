@@ -278,10 +278,13 @@ components = %(section)s
                     replace_dict = {'locale': locale}
                     install_file = pf['install_file'] % replace_dict
                     repo_name = c['repo_name'] % replace_dict
-                    self._uploadRepo(os.path.join(c['base_work_dir'],
-                                                  c['work_dir'],
-                                                  c['repo_dir']),
-                                     repo_name, platform, install_file)
+                    status = self._uploadRepo(os.path.join(c['base_work_dir'],
+                                                           c['work_dir'],
+                                                           c['repo_dir']),
+                                              repo_name, platform, install_file)
+                    if status == 0:
+                        self.addSummary("Uploaded %s on %s successfully." % \
+                                        (locale, platform))
 
     def _uploadRepo(self, local_repo_dir, repo_name, platform, install_file):
         c = self.config
@@ -291,6 +294,7 @@ components = %(section)s
         remote_host = c['remote_host']
         repo_path = os.path.join(local_repo_dir, repo_name, 'dists', platform)
         install_file_path = os.path.join(local_repo_dir, repo_name, install_file)
+        num_errors = 0
 
         if not os.path.isdir(repo_path):
             self.addSummary("Can't upload %s: not a valid repo!" % repo_path,
@@ -302,17 +306,21 @@ components = %(section)s
         command = "ssh -i %s %s@%s mkdir -p %s/%s/dists/%s" % \
                   (c['remote_ssh_key'], c['remote_user'], c['remote_host'],
                    c['remote_repo_path'], repo_name, platform)
-        self.runCommand(command, error_regex_list=SSHErrorRegexList)
+        num_errors += self.runCommand(command, return_type='num_errors',
+                                      error_regex_list=SSHErrorRegexList)
 
         command = 'rsync --rsh="ssh -i %s" -azv --delete %s %s@%s:%s/%s/dists/%s' % \
                   (remote_ssh_key, os.path.join(repo_path, '.'),
                    remote_user, remote_host, remote_repo_path, repo_name, platform)
-        self.runCommand(command, error_regex_list=SSHErrorRegexList)
+        num_errors += self.runCommand(command, return_type='num_errors',
+                                      error_regex_list=SSHErrorRegexList)
 
         command = 'scp -i %s %s %s@%s:%s/%s/' % \
                   (remote_ssh_key, install_file_path,
                    remote_user, remote_host, remote_repo_path, repo_name)
-        self.runCommand(command, error_regex_list=SSHErrorRegexList)
+        num_errors += self.runCommand(command, return_type='num_errors',
+                                      error_regex_list=SSHErrorRegexList)
+        return num_errors
 
 
 
