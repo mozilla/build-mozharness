@@ -23,7 +23,6 @@ TODO:
 from copy import deepcopy
 from optparse import OptionParser, Option
 import os
-import pprint
 import sys
 try:
     import json
@@ -284,14 +283,12 @@ class BaseConfig(object):
         """
         if not config:
             config = self._config
-        json_config = json.dumps(config, sort_keys=True)
+        json_config = json.dumps(config, sort_keys=True, indent=4)
         if not file_name:
-            pp = pprint.PrettyPrinter(indent=2, width=10)
-            return pp.pformat(json_config)
+            return json_config
         else:
-            pp = pprint.PrettyPrinter(indent=2, width=10)
             fh = open(file_name, 'w')
-            fh.write(pp.pformat(json_config))
+            fh.write(json_config)
             fh.close()
 
     def verifyActions(self, action_list):
