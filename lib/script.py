@@ -44,7 +44,9 @@ class BaseScript(object):
              }
             ]])
         self.summaryList = []
-        rw_config = BaseConfig(config_options=config_options, **kwargs)
+        rw_config = BaseConfig(config_options=config_options,
+                               volatile_config_vars=['noop'],
+                               **kwargs)
         self.config = rw_config.getReadOnlyConfig()
         self.actions = tuple(rw_config.actions)
         if os.path.exists("localconfig.json"):
