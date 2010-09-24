@@ -274,7 +274,7 @@ class BaseScript(object):
                         break
                 else:
                     self.info(' %s' % line)
-        return_level = 'info'
+        return_level = 'debug'
         if p.returncode not in success_codes:
             return_level = 'error'
         self.log("Return code: %d" % p.returncode, level=return_level)
@@ -321,11 +321,9 @@ class BaseScript(object):
                              cwd=cwd, stderr=tmp_stderr, env=env)
         self.debug("Temporary files: %s and %s" % (tmp_stdout_filename, tmp_stderr_filename))
         p.wait()
-        return_level = 'error'
+        return_level = 'debug'
         output = None
         if os.path.exists(tmp_stdout_filename) and os.path.getsize(tmp_stdout_filename):
-            if not return_level:
-                return_level = 'info'
             fh = open(tmp_stdout_filename)
             output = fh.read()
             if not silent:
