@@ -200,7 +200,7 @@ class SimpleFileLogger(BaseLogger):
     the terminal and a raw log (no prepending of level or date)
     """
     def __init__(self,
-                 log_format='%(asctime)s - %(levelname)s - %(message)s',
+                 log_format='%(asctime)s - %(levelname)7s - %(message)s',
                  logger_name='Simple', log_dir='logs', **kwargs):
         BaseLogger.__init__(self, logger_name=logger_name, log_format=log_format,
                             log_dir=log_dir, **kwargs)
@@ -222,7 +222,7 @@ class MultiFileLogger(BaseLogger):
     the terminal and a raw log (no prepending of level or date)
     """
     def __init__(self, logger_name='Multi',
-                 log_format='%(asctime)s - %(levelname)s - %(message)s',
+                 log_format='%(asctime)s - %(levelname)7s - %(message)s',
                  log_dir='logs', log_to_raw=True, **kwargs):
         BaseLogger.__init__(self, logger_name=logger_name, log_format=log_format,
                             log_to_raw=log_to_raw, log_dir=log_dir,
