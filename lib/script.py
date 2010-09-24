@@ -240,6 +240,7 @@ class BaseScript(object):
         else:
             self.info("Running command: %s" % command)
         if self.config['noop']:
+            self.info("(Dry run; skipping)")
             return
         p = subprocess.Popen(command, shell=shell, stdout=subprocess.PIPE,
                              cwd=cwd, stderr=subprocess.STDOUT, env=env)
@@ -308,6 +309,7 @@ class BaseScript(object):
             self.info("Getting output from command: %s" % command)
         # This could potentially return something?
         if self.config['noop']:
+            self.info("(Dry run; skipping)")
             return
         tmp_stdout = tempfile.NamedTemporaryFile(suffix="stdout", delete=False)
         tmp_stdout_filename = tmp_stdout.name
