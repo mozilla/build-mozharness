@@ -54,7 +54,6 @@ class MaemoDebSigner(MercurialScript):
                                               'create-repos',
                                               'upload'],
                                  require_config_file=require_config_file)
-        self.deb_name = None
 
     def run(self):
         self.clobberRepoDir()
@@ -63,11 +62,8 @@ class MaemoDebSigner(MercurialScript):
         self.summary()
 
     def _queryDebName(self, deb_name_url=None):
-        if self.deb_name:
-            return self.deb_name
         if self.config.get('deb_name', None):
-            self.deb_name = self.config['deb_name']
-            return self.deb_name
+            return self.config['deb_name']
         if deb_name_url:
             self.info('Getting deb_name from %s' % deb_name_url)
             # TODO belongs in downloadFile or equivalent?
@@ -76,8 +72,7 @@ class MaemoDebSigner(MercurialScript):
                 fh = ul.open(deb_name_url)
                 deb_name = fh.read().rstrip()
                 self.debug('Deb name is %s' % deb_name)
-                self.deb_name = deb_name
-                return self.deb_name
+                return deb_name
             except HTTPError, e:
                 self.error("HTTP Error: %s %s" % (e.code, deb_name_url))
             except URLError, e:
