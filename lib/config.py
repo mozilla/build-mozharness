@@ -119,7 +119,7 @@ class ReadOnlyDict(dict):
 
 
 # parseConfigFile {{{1
-def parseConfigFile(file_name):
+def parseConfigFile(file_name, quiet=False):
     """Read a config file and return a dictionary.
     """
     file_path = None
@@ -130,7 +130,8 @@ def parseConfigFile(file_name):
             file_path = os.path.join(path, file_name)
             break
     else:
-        print "ERROR: Can't find %s in %s!" % (file_name, search_path)
+        if not quiet:
+            print "ERROR: Can't find %s in %s!" % (file_name, search_path)
         return
     fh = open(file_path)
     config = {}
@@ -216,7 +217,6 @@ class BaseConfig(object):
         )
         self.config_parser.add_option(
          "--config-file", action="store", dest="config_file",
-         default="localconfig.json",
          type="string", help="Specify the config file (required)"
         )
 
@@ -287,7 +287,10 @@ class BaseConfig(object):
         config.
         """
         if not config:
-            config = self._config
+            config = {}
+            for key in self._config.keys():
+                if key not in self.volatile_config_vars:
+                    config[key] = self._config[key]
         json_config = json.dumps(config, sort_keys=True, indent=4)
         if not file_name:
             return json_config
@@ -318,10 +321,16 @@ class BaseConfig(object):
 
         defaults = self.config_parser.defaults.copy()
 
-        self.setConfig(parseConfigFile(options.config_file))
+        if not options.config_file:
+            c = parseConfigFile('localconfig.json', quiet=True)
+            if c:
+                self.setConfig(c)
+            elif self.require_config_file:
+                print("Required config file not set!")
+                sys.exit(-1)
+        else:
+            self.setConfig(parseConfigFile(options.config_file))
         for key in self.config_parser.variables:
-            if key in self.volatile_config_vars:
-                continue
             value = getattr(options, key)
             if value is None:
                 continue

@@ -6,4 +6,5 @@ test.py
 unit.sh
 .DS_Store
 .coverage
+coverage
 htmlcov
