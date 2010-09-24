@@ -73,7 +73,7 @@ class BaseScript(object):
                       "log_name": 'test',
                       "log_dir": 'logs',
                       "log_level": default_log_level,
-                      "log_format": '%(asctime)s - %(levelname)7s - %(message)s',
+                      "log_format": '%(asctime)s %(levelname)7s - %(message)s',
                       "log_to_console": True,
                       "append_to_log": False,
                      }
