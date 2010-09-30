@@ -200,7 +200,7 @@ class SimpleFileLogger(BaseLogger):
     the terminal and a raw log (no prepending of level or date)
     """
     def __init__(self,
-                 log_format='%(asctime)s %(levelname)7s - %(message)s',
+                 log_format='%(asctime)s %(levelname)8s - %(message)s',
                  logger_name='Simple', log_dir='logs', **kwargs):
         BaseLogger.__init__(self, logger_name=logger_name, log_format=log_format,
                             log_dir=log_dir, **kwargs)
@@ -222,7 +222,7 @@ class MultiFileLogger(BaseLogger):
     the terminal and a raw log (no prepending of level or date)
     """
     def __init__(self, logger_name='Multi',
-                 log_format='%(asctime)s %(levelname)7s - %(message)s',
+                 log_format='%(asctime)s %(levelname)8s - %(message)s',
                  log_dir='logs', log_to_raw=True, **kwargs):
         BaseLogger.__init__(self, logger_name=logger_name, log_format=log_format,
                             log_to_raw=log_to_raw, log_dir=log_dir,
@@ -247,30 +247,4 @@ class MultiFileLogger(BaseLogger):
 # __main__ {{{1
 
 if __name__ == '__main__':
-    """Quick 'n' dirty unit tests.
-    Ideally, this would be parsed automatically, too, and wouldn't leave
-    cruft behind.
-    """
-    def testLogger(obj):
-        obj.log('YOU SHOULD NOT SEE THIS LINE', level='debug')
-        for level in ('info', 'warning', 'error', 'critical'):
-            obj.log('test %s' % level, level=level)
-        try:
-            obj.log('test fatal -- you should see an exit line after this.',
-                    level='fatal')
-        except:
-            print "Yay, that's good."
-        else:
-            print "OH NO!"
-
-    log_dir = 'test_logs'
-    obj = MultiFileLogger(log_level='info', log_dir=log_dir,
-                          log_to_raw=True)
-    testLogger(obj)
-    obj.halt_on_failure=False
-    obj.log('test fatal -- you should *not* see an exit line after this.',
-            level='fatal')
-    obj = SimpleFileLogger(log_dir=log_dir)
-    testLogger(obj)
-    print "=========="
-    print "You should be able to examine %s." % log_dir
+    pass
