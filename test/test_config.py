@@ -35,7 +35,7 @@ class TestConfig(unittest.TestCase):
             self.assertEqual(content_dict[key], dump_config_dict[key])
 
     def testReadOnlyDict(self):
-        # ReadOnlyDict {{{2
+        # ReadOnlyDict {{{
         control_dict = {
          'b':'2',
          'c':{'d': '4'},
@@ -96,7 +96,7 @@ class TestConfig(unittest.TestCase):
             pass
         else:
             self.assertIsNotNone(None, msg="verifyActions() didn't die on invalid action")
-        actions = ['clobber']
+        actions = c.getActions()
         returned_actions = c.verifyActions(actions)
         self.assertEqual(actions, returned_actions,
                          msg="returned actions from verifyActions() changed")
