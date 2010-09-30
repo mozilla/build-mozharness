@@ -35,6 +35,7 @@ class TestConfig(unittest.TestCase):
             self.assertEqual(content_dict[key], dump_config_dict[key])
 
     def testReadOnlyDict(self):
+        # ReadOnlyDict {{{2
         control_dict = {
          'b':'2',
          'c':{'d': '4'},
@@ -85,3 +86,17 @@ class TestConfig(unittest.TestCase):
         self.assertRaises(AssertionError, r.setdefault, {})
         self.assertRaises(AssertionError, r.pop)
         self.assertRaises(AssertionError, r.clear)
+        # End ReadOnlyDict }}}
+
+    def testVerifyActions(self):
+        c = config.BaseConfig(initial_config_file='test/test.json')
+        try:
+            c.verifyActions(['not_a_real_action'])
+        except:
+            pass
+        else:
+            self.assertIsNotNone(None, msg="verifyActions() didn't die on invalid action")
+        actions = ['clobber']
+        returned_actions = c.verifyActions(actions)
+        self.assertEqual(actions, returned_actions,
+                         msg="returned actions from verifyActions() changed")
