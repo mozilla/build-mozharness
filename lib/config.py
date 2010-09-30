@@ -176,7 +176,7 @@ class BaseConfig(object):
         if volatile_config_vars is None:
             self.volatile_config_vars = []
         else:
-            self.volatile_config_vars = volatile_config_vars
+            self.volatile_config_vars = volatile_config_vars[:]
 
         if config:
             self.setConfig(config)
@@ -241,6 +241,11 @@ class BaseConfig(object):
          dest="no_actions", metavar="ACTIONS",
          help="Don't perform action"
         )
+        self.config_parser.add_option(
+         "--noop", "--dry-run", action="store_true", default=False,
+         dest="noop",
+         help="Echo commands without executing them."
+        )
         for action in self.all_actions:
             self.config_parser.add_option(
              "--only-%s" % action, action="append_const",
@@ -253,7 +258,8 @@ class BaseConfig(object):
              help="Remove %s from the list of actions to perform" % action
             )
         self.volatile_config_vars.extend(['only_actions', 'add_actions',
-                                          'no_actions', 'list_actions'])
+                                          'no_actions', 'list_actions',
+                                          'noop'])
         # Child-specified options
         # TODO error checking for overlapping options
         if config_options:

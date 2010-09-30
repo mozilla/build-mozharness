@@ -35,17 +35,9 @@ class BaseScript(object):
               "dest": "log_type",
               "help": "Log using SimpleFileLogger"
              }
-            ],[
-             ["--noop", "--dry-run"],
-             {"action": "store_true",
-              "default": False,
-              "dest": "noop",
-              "help": "Echo commands without executing them."
-             }
             ]])
         self.summaryList = []
         rw_config = BaseConfig(config_options=config_options,
-                               volatile_config_vars=['noop'],
                                **kwargs)
         self.config = rw_config.getReadOnlyConfig()
         self.actions = tuple(rw_config.actions)
@@ -417,3 +409,4 @@ if __name__ == '__main__':
                      default_log_level="debug")
     obj.runCommand("find .")
     obj.rmtree("test_logs")
+    obj.rmtree("localconfig.json")
