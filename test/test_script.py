@@ -132,3 +132,24 @@ class TestScript(unittest.TestCase):
                          msg="chdir noop noignore error")
         s.chdir(cwd)
         self.cleanup()
+
+    def testLog(self):
+        self.cleanup()
+        s = script.BaseScript(config={'log_type': 'multi'},
+                              initial_config_file='test/test.json')
+        s.log_obj=None
+        s2 = script.BaseScript(config={'log_type': 'multi'},
+                              initial_config_file='test/test.json')
+        for obj in (s, s2):
+            obj.debug("DEBUG: This shouldn't appear")
+            obj.warning("Testing WARNING")
+            obj.warn("Testing WARNING 2")
+            obj.error("Testing ERROR")
+            obj.critical("Testing CRITICAL")
+            try:
+                obj.fatal("Testing FATAL")
+            except:
+                pass
+            else:
+                self.assertTrue(False, msg="fatal() didn't!")
+        self.cleanup()
