@@ -32,6 +32,13 @@ class TestScript(unittest.TestCase):
         s.downloadFile("http://www.google.com", file_name="test_dir/google",
                        error_level="ignore")
         self.assertTrue(os.path.exists('test_dir/google'))
+        contents1 = s.getOutputFromCommand("cat test_dir/google")
+        fh = open("test_dir/google")
+        contents2 = fh.read()
+        fh.close()
+        self.assertEqual(contents1, contents2)
+        s.runCommand("rm test_dir/google")
+        self.assertFalse(os.path.exists('test_dir/google'))
         s.rmtree('test_dir')
         self.assertFalse(os.path.exists('test_dir'))
         self.cleanup()
