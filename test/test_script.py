@@ -37,6 +37,7 @@ class TestScript(unittest.TestCase):
         contents2 = fh.read()
         fh.close()
         self.assertEqual(contents1, contents2)
+        self.assertEqual(s.runCommand("cat google", cwd="test_dir"), 0)
         s.runCommand("rm test_dir/google")
         self.assertFalse(os.path.exists('test_dir/google'))
         s.rmtree('test_dir')
@@ -45,10 +46,22 @@ class TestScript(unittest.TestCase):
 
     def testSummary(self):
         self.cleanup()
-        s = script.BaseScript(initial_config_file='test/test.json')
+        s = script.BaseScript(config={'log_type': 'multi'},
+                              initial_config_file='test/test.json')
+        info_logsize = os.path.getsize("test_logs/test_info.log")
+        self.assertTrue(info_logsize > 0)
         s.addSummary('one')
+        info_logsize2 = os.path.getsize("test_logs/test_info.log")
+        self.assertTrue(info_logsize < info_logsize2)
+        warning_logsize = os.path.getsize("test_logs/test_warning.log")
         s.addSummary('two', level="warning")
-        s.addSummary('three')
+        warning_logsize2 = os.path.getsize("test_logs/test_warning.log")
+        self.assertTrue(warning_logsize < warning_logsize2)
+        info_logsize = os.path.getsize("test_logs/test_info.log")
+        warning_logsize = os.path.getsize("test_logs/test_warning.log")
         s.summary()
-        # TODO add actual test
+        info_logsize2 = os.path.getsize("test_logs/test_info.log")
+        warning_logsize2 = os.path.getsize("test_logs/test_warning.log")
+        self.assertTrue(info_logsize < info_logsize2)
+        self.assertTrue(warning_logsize < warning_logsize2)
         self.cleanup()

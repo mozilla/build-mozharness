@@ -404,8 +404,4 @@ class MercurialScript(BaseScript, AbstractMercurialScript):
 
 # __main__ {{{1
 if __name__ == '__main__':
-    obj = BaseScript(initial_config_file=os.path.join('test', 'test.json'),
-                     default_log_level="debug")
-    obj.runCommand("find .")
-    obj.rmtree("test_logs")
-    obj.rmtree("localconfig.json")
+    pass
