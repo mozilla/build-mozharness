@@ -33,7 +33,14 @@ class TestConfig(unittest.TestCase):
         dump_config_dict = json.loads(dump_config_output)
         content_dict = self._getJsonConfig()
         for key in content_dict.keys():
-            self.assertEqual(content_dict[key], dump_config_dict[key])
+            self.assertEqual(content_dict[key], dump_config_dict[key],
+                             msg="dumped config not equal for key %s" % key)
+        c.dumpConfig(config=content_dict, file_name='tmp_file')
+        fh = open('tmp_file')
+        contents = json.load(fh)
+        fh.close()
+        self.assertEqual(content_dict, dict(contents),
+                         msg="dumped config file differs from config")
 
     def testReadOnlyDict(self):
         # ReadOnlyDict {{{
@@ -111,6 +118,12 @@ class TestConfig(unittest.TestCase):
                               initial_config_file='test/test.json')
         self.assertEqual(default_actions, c.getActions(),
                          msg="default_actions broken")
+        c = config.BaseConfig(default_actions=default_actions,
+                              all_actions=all_actions,
+                              initial_config_file='test/test.json')
+        c.parseArgs(args=['foo', '--no-action', 'a'])
+        self.assertEqual(default_actions, c.getActions(),
+                         msg="--no-ACTION broken")
         c = config.BaseConfig(default_actions=default_actions,
                               all_actions=all_actions,
                               initial_config_file='test/test.json')
