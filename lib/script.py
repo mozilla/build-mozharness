@@ -20,22 +20,21 @@ class BaseScript(object):
         self.log_obj = None
         if config_options is None:
             config_options = []
-        else:
-            config_options.extend([[
-             ["--multi-log",],
-             {"action": "store_const",
-              "const": "multi",
-              "dest": "log_type",
-              "help": "Log using MultiFileLogger"
-             }
-            ],[
-             ["--simple-log",],
-             {"action": "store_const",
-              "const": "simple",
-              "dest": "log_type",
-              "help": "Log using SimpleFileLogger"
-             }
-            ]])
+        config_options.extend([[
+         ["--multi-log",],
+         {"action": "store_const",
+          "const": "multi",
+          "dest": "log_type",
+          "help": "Log using MultiFileLogger"
+         }
+        ],[
+         ["--simple-log",],
+         {"action": "store_const",
+          "const": "simple",
+          "dest": "log_type",
+          "help": "Log using SimpleFileLogger"
+         }
+        ]])
         self.summaryList = []
         rw_config = BaseConfig(config_options=config_options,
                                **kwargs)
@@ -74,7 +73,7 @@ class BaseScript(object):
             log_config['logger_name'] = 'Multi'
         for key in log_config.keys():
             value = self.config.get(key, None)
-            if value:
+            if value is not None:
                 log_config[key] = value
         if log_type == "multi":
             self.log_obj = MultiFileLogger(**log_config)
