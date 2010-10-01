@@ -1,4 +1,4 @@
-import pprint
+import os
 import subprocess
 import sys
 import unittest
@@ -41,6 +41,7 @@ class TestConfig(unittest.TestCase):
         fh.close()
         self.assertEqual(content_dict, dict(contents),
                          msg="dumped config file differs from config")
+        os.remove('tmp_file')
 
     def testReadOnlyDict(self):
         # ReadOnlyDict {{{

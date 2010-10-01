@@ -21,6 +21,9 @@ class TestLog(unittest.TestCase):
 
     def testLogDir(self):
         self.cleanLogDir()
+        fh = open(tmp_dir, 'w')
+        fh.write("foo")
+        fh.close()
         l = log.SimpleFileLogger(log_dir=tmp_dir, log_name=log_name,
                                  log_to_console=False)
         self.assertTrue(os.path.exists(tmp_dir))
@@ -32,7 +35,9 @@ class TestLog(unittest.TestCase):
         self.cleanLogDir()
         l = log.MultiFileLogger(log_dir=tmp_dir, log_name=log_name,
                                 log_to_console=False)
-        level_dict = {'info':     ['info'],
+        level_dict = {'debug':    [],
+                      'ignore':   [],
+                      'info':     ['info'],
                       'warning':  ['info', 'warning'],
                       'error':    ['info', 'warning', 'error'],
                       'critical': ['info', 'warning', 'error', 'critical'],
@@ -56,10 +61,9 @@ class TestLog(unittest.TestCase):
                 filesize_dict[log_path] = filesize
         self.cleanLogDir()
 
-    def testMultiLogDebug(self):
+    def testConsoleLog(self):
         self.cleanLogDir()
-        l = log.MultiFileLogger(log_dir=tmp_dir, log_name=log_name,
-                                log_to_console=False)
-        l.debug('debug message')
-        self.assertFalse(os.path.exists(self.getLogFilePath(level='debug')))
+        l = log.SimpleFileLogger(log_dir=tmp_dir, log_name=log_name,
+                                 log_to_console=True)
+        l.warning("This test warning should go to the console.")
         self.cleanLogDir()
