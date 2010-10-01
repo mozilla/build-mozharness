@@ -83,3 +83,16 @@ class TestScript(unittest.TestCase):
         self.assertTrue(warning_logsize < warning_logsize2,
                         msg="summary() with warning didn't log to warning")
         self.cleanup()
+
+    def testMercurial(self):
+        self.cleanup()
+        s = script.MercurialScript(initial_config_file='test/test.json')
+        s.mkdir_p('test_dir')
+        s.runCommand("touch test_dir/tools")
+        s.scmCheckout("http://hg.mozilla.org/build/tools",
+                      parent_dir="test_dir", clobber=True)
+        self.assertTrue(os.path.isdir("test_dir/tools"))
+        s.scmCheckout("http://hg.mozilla.org/build/tools",
+                      dir_name="test_dir/tools", halt_on_failure=False)
+        s.rmtree('test_dir')
+        self.cleanup()
