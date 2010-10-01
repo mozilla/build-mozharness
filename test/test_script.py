@@ -96,3 +96,29 @@ class TestScript(unittest.TestCase):
                       dir_name="test_dir/tools", halt_on_failure=False)
         s.rmtree('test_dir')
         self.cleanup()
+
+    def testNoop(self):
+        self.cleanup()
+        s = script.MercurialScript(config={'noop': True},
+                                   initial_config_file='test/test.json')
+        if os.path.exists('test_dir'):
+            if os.path.isdir('test_dir'):
+                shutil.rmtree('test_dir')
+            else:
+                os.remove('test_dir')
+        self.assertFalse(os.path.exists('test_dir'),
+                         msg="testNoop() cleanup failed")
+        s.mkdir_p('test_dir/foo/bar/baz')
+        self.assertFalse(os.path.exists('test_dir'),
+                        msg="mkdir_p noop error")
+        s.downloadFile("http://www.google.com", file_name="test_logs/google",
+                       error_level="ignore")
+        self.assertFalse(os.path.exists('test_logs/google'),
+                        msg="downloadFile noop error")
+        contents1 = s.getOutputFromCommand("cat configs/test/test.json")
+        self.assertEqual(contents1, None,
+                         msg="getOutputFromCommand noop error")
+        s.runCommand("touch test_logs/foo")
+        self.assertFalse(os.path.exists('test_logs/foo'),
+                         msg="runCommand noop error")
+        self.cleanup()

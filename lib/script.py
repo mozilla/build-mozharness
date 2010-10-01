@@ -157,9 +157,11 @@ class BaseScript(object):
         if not self.config['noop']:
             shutil.copyfile(src, dest)
 
-    def chdir(self, dir_name):
+    def chdir(self, dir_name, ignore_if_noop=False):
         self.log("Changing directory to %s." % dir_name)
-        if not self.config['noop']:
+        if self.config['noop'] and ignore_if_noop:
+            self.info("noop: not changing dir")
+        else:
             os.chdir(dir_name)
 
     """There may be a better way of doing this, but I did this previously...
