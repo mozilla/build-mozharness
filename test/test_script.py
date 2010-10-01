@@ -15,8 +15,9 @@ class TestScript(unittest.TestCase):
     def cleanup(self):
         if os.path.exists('test_logs'):
             shutil.rmtree('test_logs')
-        if os.path.exists('localconfig.json'):
-            os.remove('localconfig.json')
+        for filename in ('localconfig.json', 'localconfig.json.bak'):
+            if os.path.exists(filename):
+                os.remove(filename)
 
     def testHelperFunctions(self):
         self.cleanup()
@@ -46,7 +47,15 @@ class TestScript(unittest.TestCase):
                          msg="getOutputFromCommand('cat file') differs from fh.read")
         self.assertEqual(s.runCommand("cat google", cwd="test_dir"), 0,
                          msg="runCommand('cat file') did not exit 0")
-        s.runCommand("rm test_dir/google")
+        s.move('test_dir/google', 'test_dir/google2')
+        self.assertFalse(os.path.exists('test_dir/google'),
+                         msg="test_dir/google still exists after move()")
+        self.assertTrue(os.path.exists('test_dir/google2'),
+                        msg="test_dir/google2 doesn't exist after move()")
+        s.copyfile('test_dir/google2', 'test_dir/google')
+        self.assertTrue(os.path.exists('test_dir/google'),
+                         msg="test_dir/google doesn't exist after copyfile()")
+        s.runCommand("rm test_dir/google test_dir/google2")
         self.assertFalse(os.path.exists('test_dir/google'),
                          msg="runCommand('rm file') did not remove file")
         s.rmtree('test_dir')
@@ -135,13 +144,14 @@ class TestScript(unittest.TestCase):
 
     def testLog(self):
         self.cleanup()
-        s = script.BaseScript(config={'log_type': 'multi'},
+        s = script.BaseScript(config={'log_type': 'multi',
+                                       'log_level': 'debug'},
                               initial_config_file='test/test.json')
         s.log_obj=None
         s2 = script.BaseScript(config={'log_type': 'multi'},
-                              initial_config_file='test/test.json')
+                               initial_config_file='test/test.json')
         for obj in (s, s2):
-            obj.debug("DEBUG: This shouldn't appear")
+            obj.debug("Testing DEBUG")
             obj.warning("Testing WARNING")
             obj.warn("Testing WARNING 2")
             obj.error("Testing ERROR")
