@@ -158,7 +158,7 @@ class BaseConfig(object):
     it, as I did elsewhere to lock down the config during runtime, but
     that's a little heavy handed to go with as the default.
     """
-    def __init__(self, config=None, initial_config_file=None, config_options=[],
+    def __init__(self, config=None, initial_config_file=None, config_options=None,
                  all_actions=None, default_actions=None,
                  volatile_config_vars=None,
                  require_config_file=False, usage="usage: %prog [options]"):
@@ -174,8 +174,7 @@ class BaseConfig(object):
         if default_actions:
             self.default_actions = default_actions[:]
         else:
-            self.default_actions = all_actions
-
+            self.default_actions = self.all_actions
         if volatile_config_vars is None:
             self.volatile_config_vars = []
         else:
@@ -185,6 +184,8 @@ class BaseConfig(object):
             self.setConfig(config)
         if initial_config_file:
             self.setConfig(parseConfigFile(initial_config_file))
+        if config_options is None:
+            config_options = []
         self._createConfigParser(config_options, usage)
         self.parseArgs()
 
