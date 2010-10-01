@@ -115,10 +115,20 @@ class TestScript(unittest.TestCase):
                        error_level="ignore")
         self.assertFalse(os.path.exists('test_logs/google'),
                         msg="downloadFile noop error")
-        contents1 = s.getOutputFromCommand("cat configs/test/test.json")
+        contents1 = s.runCommand("cat test/test.json", cwd="configs",
+                                 return_type="output")
         self.assertEqual(contents1, None,
                          msg="getOutputFromCommand noop error")
         s.runCommand("touch test_logs/foo")
         self.assertFalse(os.path.exists('test_logs/foo'),
                          msg="runCommand noop error")
+        cwd = os.getcwd()
+        s.chdir('test_logs', ignore_if_noop=True)
+        self.assertEqual(cwd, os.getcwd(),
+                         msg="chdir noop error")
+        os.chdir(cwd)
+        s.chdir('test_logs')
+        self.assertEqual('%s/test_logs' % cwd, os.getcwd(),
+                         msg="chdir noop noignore error")
+        s.chdir(cwd)
         self.cleanup()
