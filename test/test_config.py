@@ -1,3 +1,4 @@
+import pprint
 import subprocess
 import sys
 import unittest
@@ -74,13 +75,13 @@ class TestConfig(unittest.TestCase):
         except:
             pass
         else:
-            self.assertIsNotNone(None, msg="can set r['e'] when locked")
+            self.assertEqual(0, 1, msg="can set r['e'] when locked")
         try:
             del r['e']
         except:
             pass
         else:
-            self.assertIsNotNone(None, "can del r['e'] when locked")
+            self.assertEqual(0, 1, "can del r['e'] when locked")
         self.assertRaises(AssertionError, r.popitem)
         self.assertRaises(AssertionError, r.update, {})
         self.assertRaises(AssertionError, r.setdefault, {})
@@ -90,13 +91,41 @@ class TestConfig(unittest.TestCase):
 
     def testVerifyActions(self):
         c = config.BaseConfig(initial_config_file='test/test.json')
+        c.dumpConfig()
         try:
             c.verifyActions(['not_a_real_action'])
         except:
             pass
         else:
             self.assertIsNotNone(None, msg="verifyActions() didn't die on invalid action")
-        actions = c.getActions()
-        returned_actions = c.verifyActions(actions)
-        self.assertEqual(actions, returned_actions,
+        c = config.BaseConfig(initial_config_file='test/test.json')
+        returned_actions = c.verifyActions(c.all_actions)
+        self.assertEqual(c.all_actions, returned_actions,
                          msg="returned actions from verifyActions() changed")
+
+    def testActions(self):
+        all_actions=['a', 'b', 'c', 'd', 'e']
+        default_actions = ['b', 'c', 'd']
+        c = config.BaseConfig(default_actions=default_actions,
+                              all_actions=all_actions,
+                              initial_config_file='test/test.json')
+        self.assertEqual(default_actions, c.getActions(),
+                         msg="default_actions broken")
+        c = config.BaseConfig(default_actions=default_actions,
+                              all_actions=all_actions,
+                              initial_config_file='test/test.json')
+        c.parseArgs(args=['foo', '--no-c'])
+        self.assertEqual(['b', 'd'], c.getActions(),
+                         msg="--no-ACTION broken")
+        c = config.BaseConfig(default_actions=default_actions,
+                              all_actions=all_actions,
+                              initial_config_file='test/test.json')
+        c.parseArgs(args=['foo', '--add-action', 'e'])
+        self.assertEqual(['b', 'c', 'd', 'e'], c.getActions(),
+                         msg="--add-action ACTION broken")
+        c = config.BaseConfig(default_actions=default_actions,
+                              all_actions=all_actions,
+                              initial_config_file='test/test.json')
+        c.parseArgs(args=['foo', '--only-a', '--only-e'])
+        self.assertEqual(['a', 'e'], c.getActions(),
+                         msg="--only-ACTION broken")

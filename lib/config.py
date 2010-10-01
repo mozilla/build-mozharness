@@ -159,7 +159,7 @@ class BaseConfig(object):
     that's a little heavy handed to go with as the default.
     """
     def __init__(self, config=None, initial_config_file=None, config_options=[],
-                 all_actions=["clobber", "build"], default_actions=None,
+                 all_actions=None, default_actions=None,
                  volatile_config_vars=None,
                  require_config_file=False, usage="usage: %prog [options]"):
         self._config = {}
@@ -167,9 +167,12 @@ class BaseConfig(object):
         self.config_lock = False
         self.require_config_file = require_config_file
 
-        self.all_actions = all_actions
+        if all_actions:
+            self.all_actions = all_actions[:]
+        else:
+            self.all_actions = ['clobber', 'build']
         if default_actions:
-            self.default_actions = default_actions
+            self.default_actions = default_actions[:]
         else:
             self.default_actions = all_actions
 
@@ -305,22 +308,24 @@ class BaseConfig(object):
             fh.write(json_config)
             fh.close()
 
-    def verifyActions(self, action_list):
-        actions = ','.join(action_list).split(',')
-        for action in actions:
+    def verifyActions(self, action_list, quiet=False):
+        for action in action_list:
             if action not in self.all_actions:
-                print("Invalid action %s not in %s!" % (action,
-                                                        self.all_actions))
+                if not quiet:
+                    print("Invalid action %s not in %s!" % (action,
+                                                            self.all_actions))
                 sys.exit(-1)
-        return actions
+        return action_list
 
-    def parseArgs(self):
+    def parseArgs(self, args=None):
         """Parse command line arguments in a generic way.
         Return the parser object after adding the basic options, so
         child objects can manipulate it.
         """
         self.command_line = ' '.join(sys.argv)
-        (options, args) = self.config_parser.parse_args()
+        if not args:
+            args = sys.argv[:]
+        (options, args) = self.config_parser.parse_args(args)
         if options.list_actions:
             print "Actions available: " + ', '.join(self.all_actions)
             sys.exit(0)
