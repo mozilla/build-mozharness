@@ -47,7 +47,7 @@ class TestLog(unittest.TestCase):
                 except:
                     pass
                 else:
-                    self.assertIsNotNone(None, msg="fatal() doesn't exit")
+                    self.assertEqual(0, 1, msg="fatal() doesn't exit")
             for level in level_dict[log_level]:
                 log_path = self.getLogFilePath(level=level)
                 self.assertTrue(os.path.exists(log_path))

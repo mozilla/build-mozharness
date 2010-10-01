@@ -97,7 +97,7 @@ class TestConfig(unittest.TestCase):
         except:
             pass
         else:
-            self.assertIsNotNone(None, msg="verifyActions() didn't die on invalid action")
+            self.assertEqual(0, 1, msg="verifyActions() didn't die on invalid action")
         c = config.BaseConfig(initial_config_file='test/test.json')
         returned_actions = c.verifyActions(c.all_actions)
         self.assertEqual(c.all_actions, returned_actions,
