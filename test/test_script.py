@@ -176,6 +176,22 @@ class TestScript(unittest.TestCase):
                      env={'GARBLE': 'FARG'},
                      error_regex_list=errors.PythonErrorRegexList)
         error_logsize2 = os.path.getsize("test_logs/test_error.log")
+        error_logsize = error_logsize2
+        s.runCommand(command="ls",
+                     cwd='/this_dir_should_not_exist',
+                     error_regex_list=errors.PythonErrorRegexList)
+        error_logsize2 = os.path.getsize("test_logs/test_error.log")
+        self.assertTrue(error_logsize2 > error_logsize,
+                   msg="command not found error not hit")
+        error_logsize = error_logsize2
+        output = s.getOutputFromCommand(command="ls",
+                     cwd='/this_dir_should_not_exist')
+        error_logsize2 = os.path.getsize("test_logs/test_error.log")
+        self.assertTrue(error_logsize2 > error_logsize,
+                   msg="command not found error not hit")
+        error_logsize = error_logsize2
+        output = s.getOutputFromCommand(command="ls /this_file_should_not_exist")
+        error_logsize2 = os.path.getsize("test_logs/test_error.log")
         self.assertTrue(error_logsize2 > error_logsize,
                    msg="command not found error not hit")
         self.cleanup()
