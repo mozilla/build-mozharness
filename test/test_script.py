@@ -194,4 +194,16 @@ class TestScript(unittest.TestCase):
         error_logsize2 = os.path.getsize("test_logs/test_error.log")
         self.assertTrue(error_logsize2 > error_logsize,
                    msg="command not found error not hit")
+        error_logsize = error_logsize2
+        s.runCommand(command="cat lib/errors.py",
+                     error_regex_list=[{
+                      'substr': "error", 'level': "error"
+                     },{
+                      'regex': ',$', 'level': "ignore",
+                     },{
+                      'substr': ']$', 'level': "warning",
+                     }])
+        error_logsize2 = os.path.getsize("test_logs/test_error.log")
+        self.assertTrue(error_logsize2 > error_logsize,
+                   msg="command not found error not hit")
         self.cleanup()
