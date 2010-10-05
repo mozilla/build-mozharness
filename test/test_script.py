@@ -9,6 +9,7 @@ try:
 except:
     import simplejson as json
 
+import errors
 import script
 
 class TestScript(unittest.TestCase):
@@ -67,6 +68,7 @@ class TestScript(unittest.TestCase):
         self.cleanup()
 
     def testSummary(self):
+        """I need a log watcher helper function, here and in test_log."""
         self.cleanup()
         s = script.BaseScript(config={'log_type': 'multi'},
                               initial_config_file='test/test.json')
@@ -162,4 +164,18 @@ class TestScript(unittest.TestCase):
                 pass
             else:
                 self.assertTrue(False, msg="fatal() didn't!")
+        self.cleanup()
+
+    def testRunCommand(self):
+        self.cleanup()
+        s = script.BaseScript(config={'log_type': 'multi',
+                                       'log_level': 'debug'},
+                              initial_config_file='test/test.json')
+        error_logsize = os.path.getsize("test_logs/test_error.log")
+        s.runCommand(command="this_cmd_should_not_exist --help",
+                     env={'GARBLE': 'FARG'},
+                     error_regex_list=errors.PythonErrorRegexList)
+        error_logsize2 = os.path.getsize("test_logs/test_error.log")
+        self.assertTrue(error_logsize2 > error_logsize,
+                   msg="command not found error not hit")
         self.cleanup()
