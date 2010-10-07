@@ -20,10 +20,10 @@
       "long_catalog_name": "Release Fremantle",
       "short_catalog_name": "fennec",
       "install_file": "%(locale)s_fremantle.install",
-      "deb_name_url": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/4.0b1-candidates/build2/maemo5-gtk/deb_name.txt",
-      "multi_dir_url": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/4.0b1-candidates/build2/maemo5-gtk/multi",
-      "en_us_dir_url": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/4.0b1-candidates/build2/maemo5-gtk/",
-      "l10n_dir_url": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/4.0b1-candidates/build2/maemo5-gtk"
+      "deb_name_url": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/4.0b1-candidates/build3/maemo5-gtk/deb_name.txt",
+      "multi_dir_url": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/4.0b1-candidates/build3/maemo5-gtk/multi",
+      "en_us_dir_url": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/4.0b1-candidates/build3/maemo5-gtk/",
+      "l10n_dir_url": "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/4.0b1-candidates/build3/maemo5-gtk"
     }
 
   }
