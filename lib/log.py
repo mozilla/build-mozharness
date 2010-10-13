@@ -9,10 +9,7 @@ TODO:
   - i hope i'm mistaken here
   - would love to do instance-based settings so we can have multiple
     objects that can each have their own logger
-- ability to queryConfig/queryVar from here
-  - log rotation config
-  - general "echo-don't-execute" flag that gets every destructive method in
-    BasicFunctions to echo only
+- log rotation config
 """
 
 from datetime import datetime
