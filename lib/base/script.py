@@ -216,6 +216,16 @@ class BaseScript(object):
         TODO: parse_at_end, contextLines
         TODO: retry_interval?
         TODO: error_level_override?
+        TODO: command should be able to be a list or a string.
+              If it's a list, I would want a copy-pasteable version of it
+              output in the log at some point; this would need to be
+              properly formatted (so ['echo', 'foo'] would not be
+                INFO - Running Command: echo foo
+              but
+                INFO - Running Command: 'echo' 'foo'
+              )
+              This'll be even trickier if the contents of the list have
+              single quotes in them.
 
         error_regex_list example:
         [{'regex': '^Error: LOL J/K', level='ignore'},
