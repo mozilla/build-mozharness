@@ -270,7 +270,7 @@ class BaseScript(object):
                         break
                 else:
                     self.info(' %s' % line)
-        return_level = 'debug'
+        return_level = 'info'
         if p.returncode not in success_codes:
             return_level = 'error'
         self.log("Return code: %d" % p.returncode, level=return_level)
