@@ -363,20 +363,8 @@ source.py or source/mercurial.py so script.py doesn't end up like factory.py.
 
 This should be rewritten to work closely with Catlee's hgtool.
 """
-class AbstractMercurialScript(object):
+class MercurialMixin(object):
     """This should eventually just use catlee's hg libs."""
-    def __init__(self):
-        """Quick 'n' dirty "Don't clone me; inherit me"
-        """
-        assert None
-
-    def rmtree(self, *args):
-        """For pylint."""
-        pass
-
-    def runCommand(self, *args, **kwargs):
-        """For pylint."""
-        pass
 
     #TODO: num_retries
     def scmCheckout(self, hg_repo, parent_dir=None, tag="default",
@@ -402,7 +390,7 @@ class AbstractMercurialScript(object):
         self.runCommand(command, halt_on_failure=halt_on_failure,
                         error_regex_list=HgErrorRegexList)
 
-class MercurialScript(BaseScript, AbstractMercurialScript):
+class MercurialScript(MercurialMixin, BaseScript):
     def __init__(self, **kwargs):
         BaseScript.__init__(self, **kwargs)
         
