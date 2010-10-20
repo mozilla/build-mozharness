@@ -9,8 +9,8 @@ try:
 except:
     import simplejson as json
 
-import errors
-import script
+import base.errors as errors
+import base.script as script
 
 class TestScript(unittest.TestCase):
     def cleanup(self):

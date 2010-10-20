@@ -3,7 +3,6 @@ syntax: glob
 *.log
 *.pyc
 test.py
-unit.sh
 .DS_Store
 .coverage
 coverage

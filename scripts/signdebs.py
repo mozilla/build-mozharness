@@ -17,9 +17,9 @@ from urllib2 import URLError, HTTPError
 # load modules from parent dir
 sys.path.insert(1, os.path.join(os.path.dirname(sys.path[0]), "lib"))
 
-from config import parseConfigFile
-from errors import SSHErrorRegexList
-from script import MercurialScript
+from base.config import parseConfigFile
+from base.errors import SSHErrorRegexList
+from base.script import MercurialScript
 
 
 

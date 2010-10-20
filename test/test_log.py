@@ -3,7 +3,7 @@ import shutil
 import subprocess
 import unittest
 
-import log
+import base.log as log
 
 tmp_dir = "test_log_dir"
 log_name = "test"

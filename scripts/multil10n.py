@@ -19,9 +19,9 @@ import sys
 # load modules from parent dir
 sys.path.insert(1, os.path.join(os.path.dirname(sys.path[0]), "lib"))
 
-from config import parseConfigFile
-from errors import SSHErrorRegexList, PythonErrorRegexList
-from script import MercurialScript
+from base.config import parseConfigFile
+from base.errors import SSHErrorRegexList, PythonErrorRegexList
+from base.script import MercurialScript
 
 
 
