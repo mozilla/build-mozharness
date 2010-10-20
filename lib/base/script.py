@@ -10,9 +10,11 @@ import sys
 import tempfile
 import urllib2
 
-from config import BaseConfig
-from log import SimpleFileLogger, MultiFileLogger
-from errors import HgErrorRegexList
+sys.path.insert(1, os.path.dirname(sys.path[0]))
+
+from base.config import BaseConfig
+from base.log import SimpleFileLogger, MultiFileLogger
+from base.errors import HgErrorRegexList
 
 # BaseScript {{{1
 class BaseScript(object):
@@ -94,6 +96,7 @@ class BaseScript(object):
     def addSummary(self, message, level='info'):
         self.summaryList.append({'message': message, 'level': level})
         # TODO write to a summary-only log?
+        # Summaries need a lot more love.
         self.log(message, level=level)
 
     def mkdir_p(self, path):
@@ -356,7 +359,9 @@ class BaseScript(object):
 
 # Mercurial {{{1
 """If we ever support multiple vcs, this could potentially go into a
-source.py so script.py doesn't end up like factory.py.
+source.py or source/mercurial.py so script.py doesn't end up like factory.py.
+
+This should be rewritten to work closely with Catlee's hgtool.
 """
 class AbstractMercurialScript(object):
     """This should eventually just use catlee's hg libs."""
