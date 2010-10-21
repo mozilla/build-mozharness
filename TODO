@@ -106,3 +106,22 @@ link.
 Extra special bonus points for making that annotation
 revision-control-system-agnostic; this would be one start to the
 lib/source/{mercurial,git,svn,etc.}.py modules.
+
+
+Action pre-flight and post-flight checks
+========================================
+
+Mozharness splits scripts up into actions.  By default these will behave
+in the pre-defined manner, but you can also skip actions and run certain
+actions individually multiple times, or out of order if the script is called
+multiple times.
+
+This is very powerful, but can also lead to breakage if, say, the setup
+action needs to be run before the do-everything-else action, but isn't.
+Or if an action is destructive, but is then run a second time.
+
+What I'd like is to be able to define pre-flight and post-flight checks
+for actions.  If I'm going to package up my build, are there things I
+can check for to make sure a compiled build is there to package?
+Once I finish my packaging, are there things I can check for to make sure
+that my packaging action was successful?
