@@ -329,6 +329,8 @@ class BaseConfig(object):
         (options, args) = self.config_parser.parse_args(args)
         if options.list_actions:
             print "Actions available: " + ', '.join(self.all_actions)
+            if self.default_actions != self.all_actions:
+                print "Default actions: " + ', '.join(self.default_actions)
             sys.exit(0)
 
         defaults = self.config_parser.defaults.copy()
