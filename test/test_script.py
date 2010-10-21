@@ -174,12 +174,12 @@ class TestScript(unittest.TestCase):
         error_logsize = os.path.getsize("test_logs/test_error.log")
         s.runCommand(command="this_cmd_should_not_exist --help",
                      env={'GARBLE': 'FARG'},
-                     error_regex_list=errors.PythonErrorRegexList)
+                     error_list=errors.PythonErrorList)
         error_logsize2 = os.path.getsize("test_logs/test_error.log")
         error_logsize = error_logsize2
         s.runCommand(command="ls",
                      cwd='/this_dir_should_not_exist',
-                     error_regex_list=errors.PythonErrorRegexList)
+                     error_list=errors.PythonErrorList)
         error_logsize2 = os.path.getsize("test_logs/test_error.log")
         self.assertTrue(error_logsize2 > error_logsize,
                    msg="command not found error not hit")
@@ -196,7 +196,7 @@ class TestScript(unittest.TestCase):
                    msg="command not found error not hit")
         error_logsize = error_logsize2
         s.runCommand(command="cat lib/errors.py",
-                     error_regex_list=[{
+                     error_list=[{
                       'substr': "error", 'level': "error"
                      },{
                       'regex': ',$', 'level': "ignore",

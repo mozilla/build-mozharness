@@ -18,7 +18,7 @@ from urllib2 import URLError, HTTPError
 sys.path.insert(1, os.path.join(os.path.dirname(sys.path[0]), "lib"))
 
 from base.config import parseConfigFile
-from base.errors import SSHErrorRegexList
+from base.errors import SSHErrorList
 from base.script import MercurialScript
 
 
@@ -123,13 +123,13 @@ class MaemoDebSigner(MercurialScript):
         sbox_work_dir = '%s/%s/%s' % (c['work_dir'], c['repo_dir'], repo_name)
         abs_work_dir = '%s/%s' % (c['base_work_dir'], sbox_work_dir)
 
-        # TODO errorRegex
-        error_regex_list = []
+        # TODO error_list
+        error_list = []
         command = "%s -p -d %s apt-ftparchive packages " % (sbox_path, sbox_work_dir)
         command += "dists/%s/%s/binary-armel |" % (platform, section)
         command += "gzip -9c > %s/dists/%s/%s/binary-armel/Packages.gz" % \
                    (abs_work_dir, platform, section)
-        status = self.runCommand(command, error_regex_list=error_regex_list)
+        status = self.runCommand(command, error_list=error_list)
         if status:
             self.error("Exiting signRepo.")
             return status
@@ -139,21 +139,21 @@ class MaemoDebSigner(MercurialScript):
                        "dists/%s" % platform):
             self.rmtree("%s/%s/Release.gpg" % (abs_work_dir, sub_dir))
             # Create Release file outside of the tree, then move in.
-            # TODO error_regex_list
-            error_regex_list=[]
+            # TODO error_list
+            error_list=[]
             command = "%s -p -d %s/%s " % (sbox_path, sbox_work_dir, sub_dir)
             command += "apt-ftparchive release . > %s/Release.tmp" % abs_work_dir
-            if self.runCommand(command, error_regex_list=error_regex_list):
+            if self.runCommand(command, error_list=error_list):
                 self.error("Exiting signRepo.")
                 return -2
             self.move("%s/Release.tmp" % abs_work_dir,
                       "%s/%s/Release" % (abs_work_dir, sub_dir))
 
-            error_regex_list = [{'regex': 'command not found', 'level': 'error'},
+            error_list = [{'regex': 'command not found', 'level': 'error'},
                                 {'regex': 'secret key not available', 'level': 'error'},
                                ]
             command = "gpg -abs -o Release.gpg Release"
-            if self.runCommand(command, error_regex_list=error_regex_list,
+            if self.runCommand(command, error_list=error_list,
                                cwd='%s/%s' % (abs_work_dir, sub_dir)):
                 self.error("Exiting signRepo.")
                 return -3
@@ -302,19 +302,19 @@ components = %(section)s
                   (c['remote_ssh_key'], c['remote_user'], c['remote_host'],
                    c['remote_repo_path'], repo_name, platform)
         num_errors += self.runCommand(command, return_type='num_errors',
-                                      error_regex_list=SSHErrorRegexList)
+                                      error_list=SSHErrorList)
 
         command = 'rsync --rsh="ssh -i %s" -azv --delete %s %s@%s:%s/%s/dists/%s' % \
                   (remote_ssh_key, os.path.join(repo_path, '.'),
                    remote_user, remote_host, remote_repo_path, repo_name, platform)
         num_errors += self.runCommand(command, return_type='num_errors',
-                                      error_regex_list=SSHErrorRegexList)
+                                      error_list=SSHErrorList)
 
         command = 'scp -i %s %s %s@%s:%s/%s/' % \
                   (remote_ssh_key, install_file_path,
                    remote_user, remote_host, remote_repo_path, repo_name)
         num_errors += self.runCommand(command, return_type='num_errors',
-                                      error_regex_list=SSHErrorRegexList)
+                                      error_list=SSHErrorList)
         return num_errors
 
 

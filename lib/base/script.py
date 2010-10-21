@@ -14,7 +14,7 @@ sys.path.insert(1, os.path.dirname(sys.path[0]))
 
 from base.config import BaseConfig
 from base.log import SimpleFileLogger, MultiFileLogger
-from base.errors import HgErrorRegexList
+from base.errors import HgErrorList
 
 # BaseScript {{{1
 class BaseScript(object):
@@ -213,7 +213,7 @@ class BaseScript(object):
     """These are very special but very complex methods that, together with
     logging and config, provide the base for all scripts in this harness.
     """
-    def runCommand(self, command, cwd=None, error_regex_list=[], parse_at_end=False,
+    def runCommand(self, command, cwd=None, error_list=[], parse_at_end=False,
                    shell=True, halt_on_failure=False, success_codes=[0],
                    env=None, return_type='status'):
         """Run a command, with logging and error parsing.
@@ -232,7 +232,7 @@ class BaseScript(object):
               This'll be even trickier if the contents of the list have
               single quotes in them.
 
-        error_regex_list example:
+        error_list example:
         [{'regex': '^Error: LOL J/K', level='ignore'},
          {'regex': '^Error:', level='error', contextLines='5:5'},
          {'substr': 'THE WORLD IS ENDING', level='fatal', contextLines='20:'}
@@ -266,7 +266,7 @@ class BaseScript(object):
                 if not line or line.isspace():
                     continue
                 line = line.decode("utf-8").rstrip()
-                for error_check in error_regex_list:
+                for error_check in error_list:
                     match = False
                     if 'substr' in error_check:
                         if error_check['substr'] in line:
@@ -275,7 +275,7 @@ class BaseScript(object):
                         if re.search(error_check['regex'], line):
                             match = True
                     else:
-                        self.warn("error_regex_list: 'substr' and 'regex' not in %s" % \
+                        self.warn("error_list: 'substr' and 'regex' not in %s" % \
                                   error_check)
                     if match:
                         level=error_check.get('level', 'info')
@@ -397,13 +397,13 @@ class MercurialMixin(object):
         else:
             command = "hg --cwd %s pull" % (dir_name)
         self.runCommand(command, cwd=parent_dir, halt_on_failure=halt_on_failure,
-                        error_regex_list=HgErrorRegexList)
+                        error_list=HgErrorList)
         self.scmUpdate(dir_path, tag=tag, halt_on_failure=halt_on_failure)
 
     def scmUpdate(self, dir_path, tag="default", halt_on_failure=True):
         command = "hg --cwd %s update -C -r %s" % (dir_path, tag)
         self.runCommand(command, halt_on_failure=halt_on_failure,
-                        error_regex_list=HgErrorRegexList)
+                        error_list=HgErrorList)
 
 class MercurialScript(MercurialMixin, BaseScript):
     def __init__(self, **kwargs):

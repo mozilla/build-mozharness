@@ -5,16 +5,16 @@ We could also create classes that generate these, but with the appropriate
 level (please don't die on any errors; please die on any warning; etc.)
 """
 
-# ErrorRegexes {{{1
+# ErrorLists {{{1
 """ TODO: more of these.
 
-We could have a generic shell command regex list (e.g. File not found,
-permission denied) that others could copy (or [:] as it were)
+We could have a generic shell command error list (e.g. File not found,
+permission denied) that others could be based on.
 
 """
 
 # For ssh, scp, rsync over ssh
-SSHErrorRegexList=[
+SSHErrorList=[
  {'substr': 'Name or service not known', 'level': 'error'},
  {'substr': 'Could not resolve hostname', 'level': 'error'},
  {'substr': 'POSSIBLE BREAK-IN ATTEMPT', 'level': 'warning'},
@@ -31,13 +31,13 @@ SSHErrorRegexList=[
  {'substr': 'connection unexpectedly closed:', 'level': 'error'},
 ]
 
-HgErrorRegexList=[
+HgErrorList=[
  {'regex': '^abort:', 'level': 'error'},
  {'substr': 'command not found', 'level': 'error'},
  {'substr': 'unknown exception encountered', 'level': 'error'},
 ]
 
-PythonErrorRegexList=[
+PythonErrorList=[
  {'substr': 'Traceback (most recent call last)', 'level': 'error'},
  {'substr': 'SyntaxError: ', 'level': 'error'},
  {'substr': 'TypeError: ', 'level': 'error'},
@@ -48,7 +48,7 @@ PythonErrorRegexList=[
 
 # TODO determine if I've got enough from
 #  http://www.gnu.org/software/automake/manual/make/Error-Messages.html
-MakefileErrorRegexList = [
+MakefileErrorList = [
  {'substr': 'No rule to make target ', 'level': 'error'},
  {'regex': 'akefile.*was not found\.', 'level': 'error'},
  {'regex': 'Stop\.$', 'level': 'error'},

@@ -24,7 +24,7 @@ import sys
 sys.path.insert(1, os.path.join(os.path.dirname(sys.path[0]), "lib"))
 
 from base.config import parseConfigFile
-from base.errors import SSHErrorRegexList, PythonErrorRegexList
+from base.errors import SSHErrorList, PythonErrorList
 from base.script import MercurialScript
 
 
@@ -288,7 +288,7 @@ class MultiLocaleRepack(MercurialScript):
         compare_locales_env = os.environ.copy()
         compare_locales_env['PYTHONPATH'] = os.path.join('..', '..', '..',
                                                          'compare-locales', 'lib')
-        compare_locales_error_regex_list = list(PythonErrorRegexList)
+        compare_locales_error_list = list(PythonErrorList)
 
         for locale in locales:
             self.rmtree(os.path.join(abs_locales_dir, merge_dir))
@@ -296,7 +296,7 @@ class MultiLocaleRepack(MercurialScript):
             command = "python %s -m %s l10n.ini %s %s" % (
               compare_locales_script, abs_merge_dir,
               os.path.join('..', '..', '..', c['l10n_dir']), locale)
-            self.runCommand(command, error_regex_list=compare_locales_error_regex_list,
+            self.runCommand(command, error_list=compare_locales_error_list,
                             cwd=abs_locales_src_dir, env=compare_locales_env)
             for step in ("chrome", "libs"):
                 command = 'make %s-%s L10NBASEDIR=../../../../%s' % (step, locale, c['l10n_dir'])
@@ -479,7 +479,7 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
 
         self.rmtree(os.path.join(abs_tmp_deb_dir))
         self.mkdir_p(os.path.join(abs_tmp_deb_dir, "DEBIAN"))
-        ar_error_regex_list = [{
+        ar_error_list = [{
          'substr': 'No such file or directory', 'level': 'error'
         },{
          'substr': 'Cannot write: Broken pipe', 'level': 'error'
@@ -487,15 +487,15 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
         command = "ar p mobile/locales/%s control.tar.gz | tar zxv -C %s/DEBIAN" % \
           (deb_name, tmp_deb_dir)
         self.runCommand(command=command, cwd=abs_objdir,
-                        error_regex_list=ar_error_regex_list)
+                        error_list=ar_error_list)
         command = "ar p mobile/locales/%s data.tar.gz | tar zxv -C %s" % \
           (deb_name, tmp_deb_dir)
         self.runCommand(command=command, cwd=abs_objdir,
-                        error_regex_list=ar_error_regex_list)
+                        error_list=ar_error_list)
         command = "ar p mobile/%s data.tar.gz | tar zxv -C %s" % \
           (deb_name, tmp_deb_dir)
         self.runCommand(command=command, cwd=abs_objdir,
-                        error_regex_list=ar_error_regex_list)
+                        error_list=ar_error_list)
 
         # fix DEBIAN/md5sums
         self.info("Creating md5sums file...")
@@ -522,10 +522,10 @@ class MaemoMultiLocaleRepack(MultiLocaleRepack):
             del kwargs['cwd']
         kwargs['command'] = '%s "%s"' % (command, kwargs['command'].replace(c['sbox_root'], ''))
         if 'return_type' not in kwargs or kwargs['return_type'] != 'output':
-            if 'error_regex_list' in kwargs:
-                kwargs['error_regex_list'] = PythonErrorRegexList + kwargs['error_regex_list']
+            if 'error_list' in kwargs:
+                kwargs['error_list'] = PythonErrorList + kwargs['error_list']
             else:
-                kwargs['error_regex_list'] = PythonErrorRegexList
+                kwargs['error_list'] = PythonErrorList
             return self.runCommand(**kwargs)
         else:
             del(kwargs['return_type'])
