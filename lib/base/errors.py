@@ -46,13 +46,12 @@ PythonErrorRegexList=[
  {'substr': 'command not found', 'level': 'error'},
 ]
 
-# TODO I haven't scratched the surface here.
-# TODO populate from
+# TODO determine if I've got enough from
 #  http://www.gnu.org/software/automake/manual/make/Error-Messages.html
-# This will probably be more regexes than substrs.
 MakefileErrorRegexList = [
- {'substr': 'make: *** No rule to make target ', 'level': 'error'},
- {'substr': 'missing separator.  Stop.', 'level': 'error'},
+ {'substr': 'No rule to make target ', 'level': 'error'},
+ {'regex': 'akefile.*was not found\.', 'level': 'error'},
+ {'regex': 'Stop\.$', 'level': 'error'},
 ]
 
 
