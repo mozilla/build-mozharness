@@ -50,13 +50,6 @@ class MultiLocaleRepack(MercurialScript):
       "help": "Do not allow missing strings"
      }
     ],[
-     ["--en-us-binary-url",],
-     {"action": "store",
-      "dest": "en_us_binary_url",
-      "type": "string",
-      "help": "Specify the en-US binary url"
-     }
-    ],[
      ["--mozilla-repo",],
      {"action": "store",
       "dest": "hg_mozilla_repo",
@@ -242,21 +235,6 @@ class MultiLocaleRepack(MercurialScript):
         self.copyfile(c['mozconfig'], os.path.join(c['mozilla_dir'], "mozconfig"))
 
         self.rmtree(os.path.join(abs_objdir, "dist"))
-
-        # TODO error checking
-        command = "make -f client.mk configure"
-        self._processCommand(command=command, cwd=os.path.join(abs_work_dir, c['mozilla_dir']))
-        command = "make"
-        self._processCommand(command=command, cwd=os.path.join(abs_objdir, "config"))
-        command = "make wget-en-US EN_US_BINARY_URL=%s" % c['en_us_binary_url']
-        self._processCommand(command=command, cwd=abs_locales_dir)
-
-        self._getInstaller()
-        command = "make unpack"
-        self._processCommand(command=command, cwd=abs_locales_dir)
-        self._updateRevisions()
-        command = "make"
-        self._processCommand(command=command, cwd=abs_branding_dir)
 
     def _getInstaller(self):
         # TODO

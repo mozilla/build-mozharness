@@ -8,3 +8,16 @@ We need to verify that the configs that go into configs/ are:
  c) are acceptable for the script(s) they're designed for (this will require
     more info, like a config dtd equivalent, for what's optional and what's
     required and what format they will be.)
+
+Cross-platform tests
+====================
+
+I'm developing on OSX and running pretty much on linux.
+I want mozharness to be usable on Windows, however.
+
+That doesn't mean that every single script needs to be runnable on Windows;
+linux- or osx- specific scripts can be as platform-specific as they want
+to be.
+
+What I want x-platform tests for is lib/base/* and anything else where we
+want to support Windows.
