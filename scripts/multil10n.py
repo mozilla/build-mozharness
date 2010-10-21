@@ -121,6 +121,9 @@ class MultiLocaleRepack(MercurialScript):
         MercurialScript.__init__(self, config_options=self.config_options,
                                  all_actions=['clobber', 'pull-build-source',
                                               'pull-locale-source',
+# TODO no package-en-US or upload-en-US here.
+# which is fine; that'll be handled by buildbot factories for now, but we
+# should add it later for completeness.
                                               'build', 'package-en-US',
                                               'upload-en-US',
                                               'add-locales', 'package-multi',
@@ -139,6 +142,11 @@ class MultiLocaleRepack(MercurialScript):
             'repo': c['hg_configs_repo'],
             'tag': c['hg_configs_tag'],
             'dir_name': 'configs',
+        },{
+# TODO currently only needed for Android?
+            'repo': c['hg_tools_repo'],
+            'tag': c['hg_tools_tag'],
+            'dir_name': 'tools',
         }]
         # TODO: this references is_mobile, but we don't actually add any
         # of the --mobile-repo options.
@@ -156,8 +164,11 @@ class MultiLocaleRepack(MercurialScript):
         self.clobber()
         self.pull()
         self.build()
+        self.package(package_type='en-US')
+#        self.upload(package_type='en-US')
         self.addLocales()
-#        self.summary()
+        self.package(package_type='multi')
+#        self.upload(package_type='multi')
 
     def clobber(self):
         if 'clobber' not in self.actions:
@@ -256,7 +267,6 @@ class MultiLocaleRepack(MercurialScript):
         env = c['java_env']
         if 'PATH' in env:
             env['PATH'] = env['PATH'] % {'PATH': os.environ['PATH']}
-        # TODO error checking
         status = self.runCommand(command, cwd=abs_mozilla_dir, env=env,
                                  error_list=MakefileErrorList)
 
@@ -295,6 +305,29 @@ class MultiLocaleRepack(MercurialScript):
                 command += " LOCALE_MERGEDIR=%s" % abs_merge_dir
                 self.runCommand(command, cwd=abs_locales_dir,
                                 error_list=MakefileErrorList)
+
+    def package(self, package_type='en-US'):
+        if 'package-%s' % package_type not in self.actions:
+            self.actionMessage("Skipping package-%s." % package_type)
+            return
+        self.actionMessage("Packaging %s." % packaging_type)
+        c = self.config
+        abs_work_dir = os.path.join(c['base_work_dir'],
+                                    c['work_dir'])
+        abs_objdir = os.path.join(abs_work_dir, c['mozilla_dir'], c['objdir'])
+        command = "make package"
+        # only a little ugly?
+        env = c['java_env']
+        if 'PATH' in env:
+            env['PATH'] = env['PATH'] % {'PATH': os.environ['PATH']}
+        # TODO this is totally Android specific and needs to be either
+        # moved into a child object or special cased. However, as this
+        # class is currently Android only, here we go.
+        if 'jarsigner' in c:
+            # hm, this is pretty mozpass.py specific
+            env['JARSIGNER'] = os.path.join(abs_work_dir, c['jarsigner'])
+        status = self.runCommand(command, cwd=abs_objdir, env=env,
+                                 error_list=MakefileErrorList)
 
 # __main__ {{{1
 if __name__ == '__main__':

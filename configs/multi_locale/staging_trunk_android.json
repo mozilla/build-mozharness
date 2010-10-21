@@ -11,6 +11,8 @@
   "hg_mobile_tag": "default",
   "hg_configs_repo": "http://hg.mozilla.org/build/buildbot-configs",
   "hg_configs_tag": "default",
+  "hg_tools_repo": "http://hg.mozilla.org/build/tools",
+  "hg_tools_tag": "default",
   "hg_l10n_base": "http://hg.mozilla.org/l10n-central",
   "hg_l10n_tag": "default",
   "l10n_dir": "l10n-central",
@@ -26,4 +28,5 @@
   "merge_locales": true,
   "mozilla_dir": "mozilla-central",
   "mozconfig": "configs/mozilla2/mobile/android/mobile-browser/nightly/mozconfig"
+  "jarsigner": "tools/release/signing/mozpass.py",
 }
