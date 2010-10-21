@@ -50,7 +50,7 @@ class MaemoDebSigner(MercurialScript):
         ]]
         self.failures = []
         MercurialScript.__init__(self, config_options=config_options,
-                                 all_actions=['clobber', 'pull',
+                                 all_actions=['clobber',
                                               'create-repos',
                                               'upload'],
                                  require_config_file=require_config_file)
@@ -80,9 +80,9 @@ class MaemoDebSigner(MercurialScript):
 
     def clobberRepoDir(self):
         if 'clobber' not in self.actions:
-            self.info("Skipping clobber step.")
+            self.actionMessage("Skipping clobber step.")
             return
-        self.info("Clobbering repo dir.")
+        self.actionMessage("Clobbering repo dir.")
         c = self.config
         repo_path = os.path.join(c['base_work_dir'], c['work_dir'], c['repo_dir'])
         if os.path.exists(repo_path):
@@ -194,9 +194,9 @@ components = %(section)s
 
     def createRepos(self):
         if 'create-repos' not in self.actions:
-            self.info("Skipping create repo step.")
+            self.actionMessage("Skipping create repo step.")
             return
-        self.info("Creating repos.")
+        self.actionMessage("Creating repos.")
         c = self.config
         platform_config = c['platform_config']
         platforms = self.config.get("platforms", platform_config.keys())
@@ -256,9 +256,9 @@ components = %(section)s
 
     def uploadRepos(self):
         if 'upload' not in self.actions:
-            self.info("Skipping upload step.")
+            self.actionMessage("Skipping upload step.")
             return
-        self.info("Uploading repos.")
+        self.actionMessage("Uploading repos.")
         c = self.config
         platform_config = c['platform_config']
         platforms = self.config.get("platforms", platform_config.keys())

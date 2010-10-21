@@ -140,6 +140,11 @@ class MultiLocaleRepack(MercurialScript):
             'tag': c['hg_configs_tag'],
             'dir_name': 'configs',
         }]
+        # TODO: this references is_mobile, but we don't actually add any
+        # of the --mobile-repo options.
+        # I might need to subclass MultiLocaleRepack into
+        # MobileMultiLocaleRepack, or make it able to do mobile
+        # out of the box.
         if self.config['is_mobile']:
             self.repos.append({
                 'repo': c['hg_mobile_repo'],
@@ -157,9 +162,9 @@ class MultiLocaleRepack(MercurialScript):
 
     def clobber(self):
         if 'clobber' not in self.actions:
-            self.info("Skipping clobber step.")
+            self.actionMessage("Skipping clobber step.")
             return
-        self.info("Clobbering.")
+        self.actionMessage("Clobbering.")
         c = self.config
         path = os.path.join(c['base_work_dir'], c['work_dir'])
         if os.path.exists(path):
@@ -199,9 +204,9 @@ class MultiLocaleRepack(MercurialScript):
         # Chicken/egg: need to pull repos to determine locales.
         # Solve by pulling non-locale repos first.
         if 'pull-build-source' not in self.actions:
-            self.info("Skipping pull step.")
+            self.actionMessage("Skipping pull step.")
         else:
-            self.info("Pulling.")
+            self.actionMessage("Pulling.")
             self.mkdir_p(abs_work_dir)
             for repo_dict in repos:
                 self.scmCheckout(
@@ -212,9 +217,9 @@ class MultiLocaleRepack(MercurialScript):
                 )
 
         if 'pull-locale-source' not in self.actions:
-            self.info("Skipping pull locale source step.")
+            self.actionMessage("Skipping pull locale source step.")
         else:
-            self.info("Pulling locale source.")
+            self.actionMessage("Pulling locale source.")
             # compare-locales
             self.scmCheckout(
              hg_repo=c['hg_compare_locales_repo'],
@@ -237,9 +242,9 @@ class MultiLocaleRepack(MercurialScript):
         if check_action:
             # We haven't been called from a child object.
             if 'setup' not in self.actions:
-                self.info("Skipping setup step.")
+                self.actionMessage("Skipping setup step.")
                 return
-            self.info("Setting up.")
+            self.actionMessage("Setting up.")
         c = self.config
         abs_work_dir = os.path.join(c['base_work_dir'], c['work_dir'])
         abs_objdir = os.path.join(abs_work_dir, c['mozilla_dir'], c['objdir'])
@@ -261,9 +266,9 @@ class MultiLocaleRepack(MercurialScript):
 
     def repack(self):
         if 'repack' not in self.actions:
-            self.info("Skipping repack step.")
+            self.actionMessage("Skipping repack step.")
             return
-        self.info("Repacking.")
+        self.actionMessage("Repacking.")
         c = self.config
         merge_dir = "merged"
         abs_work_dir = os.path.join(c['base_work_dir'], c['work_dir'])
@@ -302,9 +307,9 @@ class MultiLocaleRepack(MercurialScript):
 
     def upload(self):
         if 'upload' not in self.actions:
-            self.info("Skipping upload step.")
+            self.actionMessage("Skipping upload step.")
             return
-        self.info("Uploading.")
+        self.actionMessage("Uploading.")
         # TODO
 
     def _processCommand(self, **kwargs):

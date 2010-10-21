@@ -204,6 +204,11 @@ class BaseScript(object):
     def fatal(self, message, exit_code=-1):
         self.log(message, level='fatal', exit_code=exit_code)
 
+    def actionMessage(self, message):
+        self.info("#############################")
+        self.info(message)
+        self.info("#############################")
+
 # runCommand and getOutputFromCommand {{{2
     """These are very special but very complex methods that, together with
     logging and config, provide the base for all scripts in this harness.
