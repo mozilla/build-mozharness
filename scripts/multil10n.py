@@ -119,19 +119,41 @@ class MultiLocaleRepack(MercurialScript):
 
     def __init__(self, require_config_file=True):
         MercurialScript.__init__(self, config_options=self.config_options,
-                                 all_actions=['clobber', 'pull',
-                                              'pull-locales',
-                                              'setup', 'repack', 'upload'],
+                                 all_actions=['clobber', 'pull-build-source',
+                                              'pull-locale-source',
+                                              'build', 'package-en-US',
+                                              'upload-en-US',
+                                              'add-locales', 'package-multi',
+                                              'upload-multi'],
+                                 default_actions=['pull-locale-source',
+                                                  'add-locales',
+                                                  'package-multi'],
                                  require_config_file=require_config_file)
         self.locales = None
+        c = self.config
+        self.repos = [{
+            'repo': c['hg_mozilla_repo'],
+            'tag': c['hg_mozilla_tag'],
+            'dir_name': c['mozilla_dir'],
+        },{
+            'repo': c['hg_configs_repo'],
+            'tag': c['hg_configs_tag'],
+            'dir_name': 'configs',
+        }]
+        if self.config['is_mobile']:
+            self.repos.append({
+                'repo': c['hg_mobile_repo'],
+                'tag': c['hg_mobile_tag'],
+                'dir_name': os.path.join(c['mozilla_dir'], 'mobile'),
+            })
 
     def run(self):
         self.clobber()
         self.pull()
-        self.setup()
-        self.repack()
-        self.upload()
-        self.summary()
+#        self.setup()
+#        self.repack()
+#        self.upload()
+#        self.summary()
 
     def clobber(self):
         if 'clobber' not in self.actions:
@@ -170,28 +192,13 @@ class MultiLocaleRepack(MercurialScript):
             self.locales = locales
             return self.locales
 
-    def pull(self, repos=None):
+    def pull(self):
         c = self.config
         abs_work_dir = os.path.join(c['base_work_dir'],
                                     c['work_dir'])
-        if not repos:
-            repos = [{
-                'repo': c['hg_mozilla_repo'],
-                'tag': c['hg_mozilla_tag'],
-                'dir_name': c['mozilla_dir'],
-            },{
-                'repo': c['hg_compare_locales_repo'],
-                'tag': c['hg_compare_locales_tag'],
-                'dir_name': 'compare-locales',
-            },{
-                'repo': c['hg_configs_repo'],
-                'tag': c['hg_configs_tag'],
-                'dir_name': 'configs',
-            }]
-
         # Chicken/egg: need to pull repos to determine locales.
         # Solve by pulling non-locale repos first.
-        if 'pull' not in self.actions:
+        if 'pull-build-source' not in self.actions:
             self.info("Skipping pull step.")
         else:
             self.info("Pulling.")
@@ -204,10 +211,18 @@ class MultiLocaleRepack(MercurialScript):
                  parent_dir=abs_work_dir
                 )
 
-        if 'pull-locales' not in self.actions:
-            self.info("Skipping pull locales step.")
+        if 'pull-locale-source' not in self.actions:
+            self.info("Skipping pull locale source step.")
         else:
-            self.info("Pulling locales.")
+            self.info("Pulling locale source.")
+            # compare-locales
+            self.scmCheckout(
+             hg_repo=c['hg_compare_locales_repo'],
+             tag=c['hg_compare_locales_tag'],
+             dir_name='compare-locales',
+             parent_dir=abs_work_dir
+            )
+            # locale repos
             abs_l10n_dir = os.path.join(abs_work_dir, c['l10n_dir'])
             self.mkdir_p(abs_l10n_dir)
             locales = self.queryLocales()
