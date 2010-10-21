@@ -156,7 +156,7 @@ class MultiLocaleRepack(MercurialScript):
         self.clobber()
         self.pull()
         self.build()
-        self.addLocales()
+#        self.addLocales()
 #        self.summary()
 
     def clobber(self):
