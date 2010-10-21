@@ -249,10 +249,12 @@ class MultiLocaleRepack(MercurialScript):
         self.copyfile(os.path.join(abs_work_dir, c['mozconfig']),
                       os.path.join(abs_work_dir, c['mozilla_dir'], 'mozconfig'))
         command = "make -f client.mk build"
-        env = {'JAVA_HOME': '/tools/jdk6',
-               'PATH': '%s:/tools/jdk6/bin' % os.environ['PATH']}
+#        env = {'JAVA_HOME': '/tools/jdk6',
+#               'PATH': '%s:/tools/jdk6/bin' % os.environ['PATH']}
+        # only a little ugly?
+        env = c['java_env']
+        env['PATH'] = env['PATH'] % {'PATH': os.environ['PATH']}
         # TODO error checking
-        # TODO env in config
         status = self.runCommand(command, cwd=os.path.join(abs_work_dir,
                                                            c['mozilla_dir']),
                                  env=env)
