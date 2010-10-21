@@ -168,7 +168,7 @@ class MultiLocaleRepack(MercurialScript):
         c = self.config
         path = os.path.join(c['base_work_dir'], c['work_dir'])
         if os.path.exists(path):
-            self.rmtree(path, errorLevel='fatal')
+            self.rmtree(path, error_level='fatal')
 
     def queryLocales(self):
         if self.locales:
