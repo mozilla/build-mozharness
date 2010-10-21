@@ -47,7 +47,7 @@ that or subclass it (or w/e) to tally up whenever one of the config dict's
 keys/values are referenced.
 
 
-auto-run
+Auto-run
 ========
 
 This should be simple, but I haven't figured it out yet.
@@ -61,3 +61,19 @@ and self.summary() in every child script.
 
 I'm hoping for an elegant solution but will not be surprised if there isn't
 one.
+
+
+Style fascist
+=============
+
+We should be able to write a unit test that parses all python and config
+files for coding style, shouldn't we?
+
+ * four space indents
+ * variable/action/function name styles
+ * no trailing whitespace !!!
+  * no dos line endings !!!
+ * vim fold markers as appropriate
+
+This could both be written in mozharness and used to keep mozharness'
+coding style uniform.
