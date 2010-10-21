@@ -125,3 +125,20 @@ for actions.  If I'm going to package up my build, are there things I
 can check for to make sure a compiled build is there to package?
 Once I finish my packaging, are there things I can check for to make sure
 that my packaging action was successful?
+
+
+Automatic self.actionName() calls
+=================================
+
+If self.actions == ["action1", "action2"], we should be able to figure out
+run() all by ourselves, shouldn't we?
+
+Maybe for each actionName in self.actions, we should call self.actionName?
+(or self.preFlightActionName, self.actionName, self.postFlightActionName,
+ after checking to make sure each one of those exist?)
+
+(Here's where we go ugh, there are underscores, dashes, *and* camel case!
+ We'll either need to make an educated decision to change that, or a
+ helper function to translate between them.)
+
+(Where does the automatic final self.summary() fit in?)
