@@ -19,7 +19,7 @@
   "hg_compare_locales_tag": "RELEASE_AUTOMATION",
   "hg_mozilla_repo": "http://hg.mozilla.org/mozilla-central",
   "hg_mozilla_tag": "default",
-  "merge_locales": "True",
+  "merge_locales": true,
   "mozilla_dir": "mozilla-central",
-  "mozconfig": "configs/mozilla2/mobile/android/mobile-browser/nightly/mozconfig",
+  "mozconfig": "configs/mozilla2/mobile/android/mobile-browser/nightly/mozconfig"
 }
