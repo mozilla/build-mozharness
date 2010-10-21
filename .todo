@@ -30,7 +30,8 @@ self.config audit
 You can end up putting stuff into your configs that ends up being orphaned,
 and you never know without a lot of digging.
 
-"Will changing config['option1'] do what I want? Will it break anything?"
+"Will changing config['option1'] do what I want? Will it break anything?
+ Will it *do* anything? What actually uses this config?"
 
 Something I want is a self.config audit.  Basically:
 
