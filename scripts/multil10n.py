@@ -121,8 +121,8 @@ class MultiLocaleRepack(MercurialScript):
         MercurialScript.__init__(self, config_options=self.config_options,
                                  all_actions=['clobber', 'pull-build-source',
                                               'pull-locale-source',
-                                              'build', 'package-en-US',
-                                              'upload-en-US',
+#                                              'build', 'package-en-US',
+#                                              'upload-en-US',
                                               'add-locales', 'package-multi',
                                               'upload-multi'],
                                  default_actions=['pull-locale-source',
@@ -155,9 +155,8 @@ class MultiLocaleRepack(MercurialScript):
     def run(self):
         self.clobber()
         self.pull()
-#        self.setup()
-#        self.repack()
-#        self.upload()
+        self.build()
+        self.addLocales()
 #        self.summary()
 
     def clobber(self):
@@ -237,6 +236,22 @@ class MultiLocaleRepack(MercurialScript):
                  tag=c['hg_l10n_tag'],
                  parent_dir=abs_l10n_dir
                 )
+
+    def build(self):
+        if 'build' not in self.actions:
+            self.actionMessage("Skipping build step.")
+            return
+        self.actionMessage("Building.")
+        c = self.config
+        abs_work_dir = os.path.join(c['base_work_dir'],
+                                    c['work_dir'])
+        # TODO fatal if this doesn't happen?
+        self.copyfile(os.path.join(abs_work_dir, c['mozconfig']),
+                      os.path.join(abs_work_dir, c['mozilla_dir'], 'mozconfig'))
+        command = "make -f client.mk build"
+        # TODO error checking
+        status = self.runCommand(command, cwd=os.path.join(abs_work_dir,
+                                                           c['mozilla_dir']))
 
 # __main__ {{{1
 if __name__ == '__main__':

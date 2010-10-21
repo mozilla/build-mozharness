@@ -10,6 +10,8 @@ level (please don't die on any errors; please die on any warning; etc.)
 
 We could have a generic shell command regex list (e.g. File not found,
 permission denied) that others could copy (or [:] as it were)
+
+TODO: MakefileErrorRegexList
 """
 
 # For ssh, scp, rsync over ssh
