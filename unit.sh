@@ -1,4 +1,10 @@
 #!/bin/sh
+###########################################################################
+# This requires coverage and nosetests:
+#
+#  easy_install nose
+#  easy_install coverage
+###########################################################################
 
 export PYTHONPATH=lib:../lib:$PYTHONPATH
 pylint -E -e F -f parseable `find lib -name [a-z]\*.py` `find scripts -name [a-z]\*.py`
