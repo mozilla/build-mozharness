@@ -310,7 +310,7 @@ class MultiLocaleRepack(MercurialScript):
         if 'package-%s' % package_type not in self.actions:
             self.actionMessage("Skipping package-%s." % package_type)
             return
-        self.actionMessage("Packaging %s." % packaging_type)
+        self.actionMessage("Packaging %s." % package_type)
         c = self.config
         abs_work_dir = os.path.join(c['base_work_dir'],
                                     c['work_dir'])
