@@ -20,13 +20,6 @@
   "hg_mozilla_tag": "default",
   "merge_locales": "True",
   "mozilla_dir": "mozilla-central",
-
-  "mozconfig": "configs/mozilla2/mobile/maemo5-gtk/mobile-browser/nightly/mozconfig",
-
-  "en_us_binary_url": "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mozilla-central-maemo5-gtk/en-US",
-
-  "repack_type": "deb",
-  "sbox_target": "FREMANTLE_ARMEL",
+  "mozconfig": "configs/mozilla2/mobile/android/mobile-browser/nightly/mozconfig",
   "configure_application": "mobile",
-  "configure_target": "arm-linux-gnueabi"
 }
