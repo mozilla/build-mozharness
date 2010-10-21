@@ -9,6 +9,7 @@ We need to verify that the configs that go into configs/ are:
     more info, like a config dtd equivalent, for what's optional and what's
     required and what format they will be.)
 
+
 Cross-platform tests
 ====================
 
@@ -21,3 +22,25 @@ to be.
 
 What I want x-platform tests for is lib/base/* and anything else where we
 want to support Windows.
+
+
+self.config audit
+=================
+
+You can end up putting stuff into your configs that ends up being orphaned,
+and you never know without a lot of digging.
+
+"Will changing config['option1'] do what I want? Will it break anything?"
+
+Something I want is a self.config audit.  Basically:
+
+a) these are the list of all configs that get set by either script-defaults,
+   command line, or config files for this family of scripts and config files.
+b) this is how often each one gets called, and by which scripts
+   (and what method?)
+c) look at the list and prune the unneeded config options.
+
+There may be a python tool that can do this that I don't know about.
+Also, since self.config is always a ReadOnlyDict, we could either modify
+that or subclass it (or w/e) to tally up whenever one of the config dict's
+keys/values are referenced.
