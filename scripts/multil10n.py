@@ -208,7 +208,7 @@ class MultiLocaleRepack(MercurialScript):
         else:
             self.actionMessage("Pulling.")
             self.mkdir_p(abs_work_dir)
-            for repo_dict in repos:
+            for repo_dict in self.repos:
                 self.scmCheckout(
                  hg_repo=repo_dict['repo'],
                  tag=repo_dict['tag'],
