@@ -1,5 +1,5 @@
 {
-  "base_work_dir": "/scratchbox/users/cltbld/home/cltbld/build",
+  "base_work_dir": "/builds/multilocale/tmp",
   "is_mobile": true,
   "work_dir": "multilocale",
   "log_name": "multilocale",
