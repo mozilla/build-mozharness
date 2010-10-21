@@ -22,7 +22,7 @@ import sys
 sys.path.insert(1, os.path.join(os.path.dirname(sys.path[0]), "lib"))
 
 from base.config import parseConfigFile
-from base.errors import SSHErrorRegexList, PythonErrorRegexList
+from base.errors import SSHErrorRegexList, PythonErrorRegexList, MakefileErrorRegexList
 from base.script import MercurialScript
 
 
@@ -247,18 +247,18 @@ class MultiLocaleRepack(MercurialScript):
         c = self.config
         abs_work_dir = os.path.join(c['base_work_dir'],
                                     c['work_dir'])
+        abs_mozilla_dir = os.path.join(abs_work_dir, c['mozilla_dir'])
         # TODO fatal if this doesn't happen?
         self.copyfile(os.path.join(abs_work_dir, c['mozconfig']),
-                      os.path.join(abs_work_dir, c['mozilla_dir'], 'mozconfig'))
+                      os.path.join(abs_mozilla_dir, 'mozconfig'))
         command = "make -f client.mk build"
         # only a little ugly?
         env = c['java_env']
         if 'PATH' in env:
             env['PATH'] = env['PATH'] % {'PATH': os.environ['PATH']}
         # TODO error checking
-        status = self.runCommand(command, cwd=os.path.join(abs_work_dir,
-                                                           c['mozilla_dir']),
-                                 env=env)
+        status = self.runCommand(command, cwd=abs_mozilla_dir, env=env,
+                                 error_regex_list=MakefileErrorRegexList)
 
     def addLocales(self):
         if 'add-locales' not in self.actions:
@@ -293,7 +293,8 @@ class MultiLocaleRepack(MercurialScript):
             command = 'make chrome-%s L10NBASEDIR=%s' % (locale, abs_l10n_dir)
             if c['merge_locales']:
                 command += " LOCALE_MERGEDIR=%s" % abs_merge_dir
-                self.runCommand(command, cwd=abs_locales_dir)
+                self.runCommand(command, cwd=abs_locales_dir,
+                                error_regex_list=MakefileErrorRegexList)
 
 # __main__ {{{1
 if __name__ == '__main__':
