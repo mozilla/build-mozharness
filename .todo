@@ -1,0 +1,10 @@
+config/* tests:
+==============
+
+We need to verify that the configs that go into configs/ are:
+
+ a) syntactically good json (or python, eventually).
+ b) present a well-formed config
+ c) are acceptable for the script(s) they're designed for (this will require
+    more info, like a config dtd equivalent, for what's optional and what's
+    required and what format they will be.)
