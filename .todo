@@ -45,3 +45,19 @@ There may be a python tool that can do this that I don't know about.
 Also, since self.config is always a ReadOnlyDict, we could either modify
 that or subclass it (or w/e) to tally up whenever one of the config dict's
 keys/values are referenced.
+
+
+auto-run
+========
+
+This should be simple, but I haven't figured it out yet.
+How do I get every script to automatically self.run() then self.summary()?
+I'd usually put it in BaseScript.__init__() at the end, but then I can't
+fix things in child __init__() functions.
+
+Maybe BaseScript.__init__() needs to self.additionalConfiguration(),
+self.run(), self.summary().  Kinda ugly.  So is calling self.run()
+and self.summary() in every child script.
+
+I'm hoping for an elegant solution but will not be surprised if there isn't
+one.

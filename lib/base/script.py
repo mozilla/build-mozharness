@@ -83,7 +83,7 @@ class BaseScript(object):
             self.log_obj = SimpleFileLogger(**log_config)
 
     def summary(self):
-        self.info("#####\n##### %s summary:\n#####" % self.__class__.__name__)
+        self.actionMessage("%s summary:" % self.__class__.__name__)
         if self.summaryList:
             for item in self.summaryList:
                 try:
@@ -205,9 +205,9 @@ class BaseScript(object):
         self.log(message, level='fatal', exit_code=exit_code)
 
     def actionMessage(self, message):
-        self.info("#############################")
-        self.info(message)
-        self.info("#############################")
+        self.info("#####")
+        self.info("##### %s" % message)
+        self.info("#####")
 
 # runCommand and getOutputFromCommand {{{2
     """These are very special but very complex methods that, together with
