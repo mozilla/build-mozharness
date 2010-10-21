@@ -29,8 +29,8 @@ want to support Windows.
 self.config audit
 =================
 
-You can end up putting stuff into your configs that ends up being orphaned,
-and you never know without a lot of digging.
+We can end up putting stuff into our configs that ends up being orphaned,
+and we'll never know without a lot of digging.
 
 "Will changing config['option1'] do what I want? Will it break anything?
  Will it *do* anything? What script(s) actually use this config key/value
@@ -83,7 +83,7 @@ coding style uniform.  If this is config-file driven, then config files
 could be written for other code projects for their specific coding style
 rules.
 
-You probably need to be wary of binary files and have options for allowing
+We probably need to be wary of binary files and have options for allowing
 for certain brokenness in style in specific files.
 
 
@@ -94,8 +94,8 @@ There's this file, and then there are TODOs sprinkled throughout this and
 many other projects.
 
 A simple project could be to gather all of those up into one TODO report,
-via script.  You probably need to be able to differentiate a comment from
-a non-comment in the filetype you're reading, currently text and python,
+via script.  We probably need to be able to differentiate a comment from
+a non-comment in the filetype we're reading, currently text and python,
 but could eventually be something else.
 
 Bonus points for linking to bugs (config-driven, of course).
@@ -112,7 +112,7 @@ Action pre-flight and post-flight checks
 ========================================
 
 Mozharness splits scripts up into actions.  By default these will behave
-in the pre-defined manner, but you can also skip actions and run certain
+in the pre-defined manner, but we can also skip actions and run certain
 actions individually multiple times, or out of order if the script is called
 multiple times.
 
