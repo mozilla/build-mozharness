@@ -156,7 +156,7 @@ class MultiLocaleRepack(MercurialScript):
         self.clobber()
         self.pull()
         self.build()
-#        self.addLocales()
+        self.addLocales()
 #        self.summary()
 
     def clobber(self):
@@ -165,9 +165,11 @@ class MultiLocaleRepack(MercurialScript):
             return
         self.actionMessage("Clobbering.")
         c = self.config
-        path = os.path.join(c['base_work_dir'], c['work_dir'])
-        if os.path.exists(path):
-            self.rmtree(path, error_level='fatal')
+        if c['work_dir'] != '.':
+            path = os.path.join(c['base_work_dir'], c['work_dir'])
+            if os.path.exists(path):
+                self.rmtree(path, error_level='fatal')
+        # TODO what to do otherwise?
 
     def queryLocales(self):
         if self.locales:
@@ -249,15 +251,49 @@ class MultiLocaleRepack(MercurialScript):
         self.copyfile(os.path.join(abs_work_dir, c['mozconfig']),
                       os.path.join(abs_work_dir, c['mozilla_dir'], 'mozconfig'))
         command = "make -f client.mk build"
-#        env = {'JAVA_HOME': '/tools/jdk6',
-#               'PATH': '%s:/tools/jdk6/bin' % os.environ['PATH']}
         # only a little ugly?
         env = c['java_env']
-        env['PATH'] = env['PATH'] % {'PATH': os.environ['PATH']}
+        if 'PATH' in env:
+            env['PATH'] = env['PATH'] % {'PATH': os.environ['PATH']}
         # TODO error checking
         status = self.runCommand(command, cwd=os.path.join(abs_work_dir,
                                                            c['mozilla_dir']),
                                  env=env)
+
+    def addLocales(self):
+        if 'add-locales' not in self.actions:
+            self.actionMessage("Skipping add-locales step.")
+            return
+        self.actionMessage("Adding locales to the apk.")
+        c = self.config
+        locales = self.queryLocales()
+        abs_work_dir = os.path.join(c['base_work_dir'],
+                                    c['work_dir'])
+        merge_dir = "merged"
+        abs_merge_dir = os.path.join(abs_work_dir, c['objdir'], merge_dir)
+        abs_locales_dir = os.path.join(abs_work_dir, c['mozilla_dir'],
+                                       c['objdir'], c['locales_dir'])
+        abs_locales_src_dir = os.path.join(abs_work_dir, c['mozilla_dir'],
+                                           c['locales_dir'])
+        abs_l10n_dir = os.path.join(abs_work_dir, c['l10n_dir'])
+        abs_compare_locales_dir = os.path.join(abs_work_dir, 'compare-locales')
+        compare_locales_script = os.path.join(abs_compare_locales_dir, 'scripts',
+                                              'compare-locales')
+        compare_locales_env = os.environ.copy()
+        compare_locales_env['PYTHON{ATH'] = os.path.join(abs_compare_locales_dir,
+                                                         'lib')
+        compare_locales_error_regex_list = list(PythonErrorRegexList)
+
+        for locale in locales:
+            self.rmtree(abs_merge_dir)
+            command = "python %s -m %s l10n.ini %s %s" % (compare_locales_script,
+                      abs_merge_dir, abs_l10n_dir, locale)
+            self.runCommand(command, error_regex_list=compare_locales_error_regex_list,
+                            cwd=abs_locales_src_dir, env=compare_locales_env)
+            command = 'make chrome-%s L10NBASEDIR=%s' % (locale, abs_l10n_dir)
+            if c['merge_locales']:
+                command += " LOCALE_MERGEDIR=%s" % abs_merge_dir
+                self.runCommand(command, cwd=abs_locales_dir)
 
 # __main__ {{{1
 if __name__ == '__main__':

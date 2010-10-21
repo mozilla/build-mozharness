@@ -17,7 +17,7 @@
   "l10n_dir": "l10n-central",
   "java_env": {
     "JAVA_HOME": "/tools/jdk",
-    "PATH": "%(PATH)s:/tools/jdk/bin",
+    "PATH": "%(PATH)s:/tools/jdk/bin"
   },
   "hg_compare_locales_repo": "http://hg.mozilla.org/build/compare-locales",
   "hg_compare_locales_tag": "RELEASE_AUTOMATION",
