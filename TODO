@@ -1,3 +1,5 @@
+(See also: embedded TODO items in each file.)
+
 config/* tests:
 ==============
 
@@ -31,7 +33,8 @@ You can end up putting stuff into your configs that ends up being orphaned,
 and you never know without a lot of digging.
 
 "Will changing config['option1'] do what I want? Will it break anything?
- Will it *do* anything? What actually uses this config?"
+ Will it *do* anything? What script(s) actually use this config key/value
+ pair?"
 
 Something I want is a self.config audit.  Basically:
 
@@ -76,4 +79,30 @@ files for coding style, shouldn't we?
  * vim fold markers as appropriate
 
 This could both be written in mozharness and used to keep mozharness'
-coding style uniform.
+coding style uniform.  If this is config-file driven, then config files
+could be written for other code projects for their specific coding style
+rules.
+
+You probably need to be wary of binary files and have options for allowing
+for certain brokenness in style in specific files.
+
+
+TODO collator
+=============
+
+There's this file, and then there are TODOs sprinkled throughout this and
+many other projects.
+
+A simple project could be to gather all of those up into one TODO report,
+via script.  You probably need to be able to differentiate a comment from
+a non-comment in the filetype you're reading, currently text and python,
+but could eventually be something else.
+
+Bonus points for linking to bugs (config-driven, of course).
+
+Extra bonus points for hg annotating the TODO comments by date/author/commit
+link.
+
+Extra special bonus points for making that annotation
+revision-control-system-agnostic; this would be one start to the
+lib/source/{mercurial,git,svn,etc.}.py modules.
