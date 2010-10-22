@@ -290,7 +290,7 @@ class MultiLocaleRepack(MercurialScript):
         compare_locales_script = os.path.join(abs_compare_locales_dir, 'scripts',
                                               'compare-locales')
         compare_locales_env = os.environ.copy()
-        compare_locales_env['PYTHON{ATH'] = os.path.join(abs_compare_locales_dir,
+        compare_locales_env['PYTHONPATH'] = os.path.join(abs_compare_locales_dir,
                                                          'lib')
         compare_locales_error_list = list(PythonErrorList)
 
