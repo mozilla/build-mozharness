@@ -1,9 +1,8 @@
 {
   "is_mobile": true,
-  "work_dir": "multilocale",
+  "work_dir": ".",
   "log_name": "multilocale",
   "objdir": "objdir",
-  "branding_dir": "mobile/branding/nightly",
   "locales_file": "mozilla-central/mobile/locales/maemo-locales",
   "locales_dir": "mobile/locales",
   "ignore_locales": ["en-US", "multi"],
@@ -15,7 +14,6 @@
   "hg_tools_tag": "default",
   "hg_l10n_base": "http://hg.mozilla.org/l10n-central",
   "hg_l10n_tag": "default",
-  "l10n_dir": "l10n-central",
   "l10n_dir": "l10n-central",
   "java_env": {
     "JAVA_HOME": "/tools/jdk",
