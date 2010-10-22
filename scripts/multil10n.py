@@ -259,16 +259,17 @@ class MultiLocaleRepack(MercurialScript):
         abs_work_dir = os.path.join(c['base_work_dir'],
                                     c['work_dir'])
         abs_mozilla_dir = os.path.join(abs_work_dir, c['mozilla_dir'])
-        # TODO fatal if this doesn't happen?
         self.copyfile(os.path.join(abs_work_dir, c['mozconfig']),
-                      os.path.join(abs_mozilla_dir, 'mozconfig'))
+                      os.path.join(abs_mozilla_dir, 'mozconfig'),
+                      error_level='fatal')
         command = "make -f client.mk build"
         # only a little ugly?
         env = c['java_env']
         if 'PATH' in env:
             env['PATH'] = env['PATH'] % {'PATH': os.environ['PATH']}
-        status = self.runCommand(command, cwd=abs_mozilla_dir, env=env,
-                                 error_list=MakefileErrorList)
+        self.runCommand(command, cwd=abs_mozilla_dir, env=env,
+                        error_list=MakefileErrorList,
+                        halt_on_failure=True)
 
     def addLocales(self):
         if 'add-locales' not in self.actions:
@@ -299,12 +300,14 @@ class MultiLocaleRepack(MercurialScript):
             command = "python %s -m %s l10n.ini %s %s" % (compare_locales_script,
                       abs_merge_dir, abs_l10n_dir, locale)
             self.runCommand(command, error_list=compare_locales_error_list,
-                            cwd=abs_locales_src_dir, env=compare_locales_env)
+                            cwd=abs_locales_src_dir, env=compare_locales_env,
+                            halt_on_failure=True)
             command = 'make chrome-%s L10NBASEDIR=%s' % (locale, abs_l10n_dir)
             if c['merge_locales']:
                 command += " LOCALE_MERGEDIR=%s" % abs_merge_dir
                 self.runCommand(command, cwd=abs_locales_dir,
-                                error_list=MakefileErrorList)
+                                error_list=MakefileErrorList,
+                                halt_on_failure=True)
 
     def package(self, package_type='en-US'):
         if 'package-%s' % package_type not in self.actions:
@@ -327,7 +330,8 @@ class MultiLocaleRepack(MercurialScript):
             # hm, this is pretty mozpass.py specific
             env['JARSIGNER'] = os.path.join(abs_work_dir, c['jarsigner'])
         status = self.runCommand(command, cwd=abs_objdir, env=env,
-                                 error_list=MakefileErrorList)
+                                 error_list=MakefileErrorList,
+                                 halt_on_failure=True)
 
 # __main__ {{{1
 if __name__ == '__main__':

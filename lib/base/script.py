@@ -155,10 +155,15 @@ class BaseScript(object):
         if not self.config['noop']:
             shutil.move(src, dest)
 
-    def copyfile(self, src, dest):
+    def copyfile(self, src, dest, error_level='error'):
         self.info("Copying %s to %s" % (src, dest))
         if not self.config['noop']:
-            shutil.copyfile(src, dest)
+            try:
+                shutil.copyfile(src, dest)
+            except:
+                # TODO say why
+                self.log("Can't copy %s to %s!" % (src, dest),
+                         level=error_level)
 
     def chdir(self, dir_name, ignore_if_noop=False):
         self.log("Changing directory to %s." % dir_name)
