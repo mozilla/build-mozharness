@@ -195,6 +195,7 @@ class MultiLocaleRepack(MercurialScript):
             locales_file = os.path.join(c['base_work_dir'], c['work_dir'],
                                         c['locales_file'])
             if locales_file.endswith(".json"):
+                # TODO this belongs in a shared function for releases.
                 locales_json = parseConfigFile(locales_file)
                 self.localeDict = {}
                 for locale in locales_json.keys():
@@ -288,6 +289,10 @@ class MultiLocaleRepack(MercurialScript):
         self.actionMessage("Adding locales to the apk.")
         c = self.config
         locales = self.queryLocales()
+        # TODO a lot of the lines of code here are determining paths.
+        # Each of these action methods should be able to call a single
+        # function that returns a dictionary of these that we can use
+        # so we don't have to keep redefining them.
         abs_work_dir = os.path.join(c['base_work_dir'],
                                     c['work_dir'])
         merge_dir = "merged"
