@@ -257,7 +257,7 @@ class MultiLocaleRepack(MercurialScript):
                     tag = self.locale_dict[locale]
                 self.scmCheckout(
                  hg_repo=os.path.join(c['hg_l10n_base'], locale),
-                 tag=c['hg_l10n_tag'],
+                 tag=tag,
                  parent_dir=abs_l10n_dir
                 )
 
