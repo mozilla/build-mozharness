@@ -1,0 +1,31 @@
+{
+  "is_mobile": true,
+  "work_dir": ".",
+  "log_name": "multilocale",
+  "objdir": "objdir",
+  "locales_file": "configs/mozilla2-staging/l10n-changesets_mobile-2.0.json",
+  "locales_platform": "android-multilocale",
+  "locales_dir": "mobile/locales",
+  "ignore_locales": ["en-US", "multi"],
+  "hg_mobile_repo": "http://hg.mozilla.org/mobile-browser",
+  "hg_mobile_tag": "default",
+  "hg_configs_repo": "http://hg.mozilla.org/users/asasaki_mozilla.com/4.0b2-configs",
+  "hg_configs_tag": "default",
+  "hg_tools_repo": "http://hg.mozilla.org/users/asasaki_mozilla.com/4.0b2-tools",
+  "hg_tools_tag": "default",
+  "hg_l10n_base": "http://hg.mozilla.org/l10n-central",
+  "hg_l10n_tag": "default",
+  "l10n_dir": "l10n-central",
+  "java_env": {
+    "JAVA_HOME": "/tools/jdk",
+    "PATH": "%(PATH)s:/tools/jdk/bin"
+  },
+  "hg_compare_locales_repo": "http://hg.mozilla.org/build/compare-locales",
+  "hg_compare_locales_tag": "RELEASE_AUTOMATION",
+  "hg_mozilla_repo": "http://hg.mozilla.org/mozilla-central",
+  "hg_mozilla_tag": "default",
+  "merge_locales": true,
+  "mozilla_dir": "mozilla-central",
+  "mozconfig": "configs/mozilla2/mobile/android/mobile-browser/nightly/mozconfig",
+  "jarsigner": "../tools/release/signing/mozpass.py"
+}

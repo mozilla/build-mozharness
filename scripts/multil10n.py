@@ -11,6 +11,8 @@ To improve things, we're moving the logic slave-side where a dedicated
 slave can use its cycles determining which locales to repack.
 
 Currently oriented towards Android multilocale, bug 563382.
+
+TODO: finish work to make this a standalone runnable script.
 """
 
 import hashlib
@@ -194,7 +196,12 @@ class MultiLocaleRepack(MercurialScript):
                                         c['locales_file'])
             if locales_file.endswith(".json"):
                 locales_json = parseConfigFile(locales_file)
-                locales = locales_json.keys()
+                self.localeDict = {}
+                for locale in locales_json.keys():
+                    if c['locales_platform'] in locales_json['locale']['platforms']:
+                        locales.append(locale)
+                        self.locale_dict[locale] = locales_json['locale']['revision']
+
             else:
                 fh = open(locales_file)
                 locales = fh.read().split()
@@ -244,6 +251,9 @@ class MultiLocaleRepack(MercurialScript):
             self.mkdir_p(abs_l10n_dir)
             locales = self.queryLocales()
             for locale in locales:
+                tag = c['hg_l10n_tag']
+                if hasattr(self, 'locale_dict'):
+                    tag = self.locale_dict[locale]
                 self.scmCheckout(
                  hg_repo=os.path.join(c['hg_l10n_base'], locale),
                  tag=c['hg_l10n_tag'],
