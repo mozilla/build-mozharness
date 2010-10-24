@@ -199,9 +199,9 @@ class MultiLocaleRepack(MercurialScript):
                 locales_json = parseConfigFile(locales_file)
                 self.localeDict = {}
                 for locale in locales_json.keys():
-                    if c['locales_platform'] in locales_json['locale']['platforms']:
+                    if c['locales_platform'] in locales_json[locale]['platforms']:
                         locales.append(locale)
-                        self.locale_dict[locale] = locales_json['locale']['revision']
+                        self.locale_dict[locale] = locales_json[locale]['revision']
 
             else:
                 fh = open(locales_file)
