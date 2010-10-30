@@ -206,7 +206,7 @@ components = %(section)s
             self.scmCheckout(hg_mobile_repo, dir_name="mobile")
         hg_config_repo = c.get('hg_config_repo')
         if hg_config_repo:
-            self.scmCheckout(hg_config_repo, dir_name="configs")
+            self.scmCheckout(hg_config_repo, dir_name="buildbot-configs")
 
         for platform in platforms:
             """This assumes the same deb name for each locale in a platform.
