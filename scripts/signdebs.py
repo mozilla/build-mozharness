@@ -188,7 +188,7 @@ components = %(section)s
             print contents
             return
         fh = open(file_path, 'w')
-        print >> fh, contents
+        fh.write("%s\n" % contents)
         fh.close()
         
 

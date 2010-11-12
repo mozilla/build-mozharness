@@ -46,19 +46,19 @@ class BaseScript(object):
             self.move("localconfig.json", "localconfig.json.bak")
         rw_config.dumpConfig(file_name="localconfig.json")
         self.newLogObj(default_log_level=default_log_level)
-        """I can definitely see wanting to get more runtime info before
-        locking -- what's my hg revision? What's the latest ____
-        in this json feed?  ... that you might want to save for later
-        for a respin.  But as I think of what I'd want to add
-        to this list, I keep thinking of more and more things.
+        # I can definitely see wanting to get more runtime info before
+        # locking -- what's my hg revision? What's the latest ____
+        # in this json feed?  ... that you might want to save for later
+        # for a respin.  But as I think of what I'd want to add
+        # to this list, I keep thinking of more and more things.
 
-        Now I'm thinking it's two steps: 1) figure out runtime details;
-        2) set up configs and run.  (2) can be iterated over multiple
-        times during respins. (1) should be external to that."""
-        self.__lockConfig()
+        # Now I'm thinking it's two steps: 1) figure out runtime details;
+        # 2) set up configs and run.  (2) can be iterated over multiple
+        # times during respins. (1) should be external to that.
+        self._lockConfig()
         self.info("Run as %s" % rw_config.command_line)
 
-    def __lockConfig(self):
+    def _lockConfig(self):
         self.config.lock()
 
     def newLogObj(self, default_log_level="info"):

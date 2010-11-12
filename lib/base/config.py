@@ -79,41 +79,41 @@ class ExtendOption(Option):
 # ReadOnlyDict {{{1
 class ReadOnlyDict(dict):
     def __init__(self, dictionary):
-        self.__lock = False
+        self._lock = False
         self.update(dictionary.copy())
 
-    def __checkLock__(self):
-        assert not self.__lock, "ReadOnlyDict is locked!"
+    def _checkLock(self):
+        assert not self._lock, "ReadOnlyDict is locked!"
 
     def lock(self):
-        self.__lock = True
+        self._lock = True
 
     def __setitem__(self, *args):
-        self.__checkLock__()
+        self._checkLock()
         return dict.__setitem__(self, *args)
 
     def __delitem__(self, *args):
-        self.__checkLock__()
+        self._checkLock()
         return dict.__delitem__(self, *args)
 
     def clear(self, *args):
-        self.__checkLock__()
+        self._checkLock()
         return dict.clear(self, *args)
 
     def pop(self, *args):
-        self.__checkLock__()
+        self._checkLock()
         return dict.pop(self, *args)
 
     def popitem(self, *args):
-        self.__checkLock__()
+        self._checkLock()
         return dict.popitem(self, *args)
 
     def setdefault(self, *args):
-        self.__checkLock__()
+        self._checkLock()
         return dict.setdefault(self, *args)
 
     def update(self, *args):
-        self.__checkLock__()
+        self._checkLock()
         dict.update(self, *args)
 
 
@@ -153,10 +153,6 @@ def parseConfigFile(file_name, quiet=False):
 # BaseConfig {{{1
 class BaseConfig(object):
     """Basic config setting/getting.
-    Debating whether to be paranoid about this stuff and put it all in
-    self._config+rand(10000) and forcing everyone to use methods to access
-    it, as I did elsewhere to lock down the config during runtime, but
-    that's a little heavy handed to go with as the default.
     """
     def __init__(self, config=None, initial_config_file=None, config_options=None,
                  all_actions=None, default_actions=None,
