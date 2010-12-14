@@ -338,12 +338,22 @@ class MultiLocaleRepack(MercurialScript):
         env = c['java_env']
         if 'PATH' in env:
             env['PATH'] = env['PATH'] % {'PATH': os.environ['PATH']}
+        if package_type == 'multi':
+            command += " AB_CD=multi"
+            env['MOZ_CHROME_MULTILOCALE'] = ' '.join(self.locales)
+            self.info("MOZ_CHROME_MULTILOCALE is %s" % env['MOZ_CHROME_MULTILOCALE'])
         # TODO this is totally Android specific and needs to be either
         # moved into a child object or special cased. However, as this
         # class is currently Android only, here we go.
         if 'jarsigner' in c:
             # hm, this is pretty mozpass.py specific
             env['JARSIGNER'] = os.path.join(abs_work_dir, c['jarsigner'])
+        status = self.runCommand(command, cwd=abs_objdir, env=env,
+                                 error_list=MakefileErrorList,
+                                 halt_on_failure=True)
+        command = "make package-tests"
+        if package_type == 'multi':
+            command += " AB_CD=multi"
         status = self.runCommand(command, cwd=abs_objdir, env=env,
                                  error_list=MakefileErrorList,
                                  halt_on_failure=True)
