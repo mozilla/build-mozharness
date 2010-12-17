@@ -6,12 +6,12 @@
 #  easy_install coverage
 ###########################################################################
 
-export PYTHONPATH=lib:../lib:$PYTHONPATH
-pylint -E -e F -f parseable `find lib -name [a-z]\*.py` `find scripts -name [a-z]\*.py`
+export PYTHONPATH=.:..:$PYTHONPATH
+pylint -E -e F -f parseable `find mozharness -name [a-z]\*.py` `find scripts -name [a-z]\*.py`
 
 if [ -e localconfig.json ] ; then rm localconfig.json; fi
 coverage run -a --branch --omit='/Library/*,/usr/*,/opt/*' `which nosetests`
-for filename in `find lib -name [a-z]\*.py`; do
+for filename in `find mozharness -name [a-z]\*.py`; do
   coverage run -a --branch --omit='/Library/*,/usr/*,/opt/*' $filename
 done
 for filename in `find scripts -name [a-z]\*.py` ; do

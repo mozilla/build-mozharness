@@ -8,7 +8,7 @@ try:
 except:
     import simplejson as json
 
-import base.config as config
+import mozharness.base.config as config
 
 class TestConfig(unittest.TestCase):
     def _getJsonConfig(self, filename="configs/test/test.json",

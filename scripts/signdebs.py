@@ -15,11 +15,11 @@ import urllib2
 from urllib2 import URLError, HTTPError
 
 # load modules from parent dir
-sys.path.insert(1, os.path.join(os.path.dirname(sys.path[0]), "lib"))
+sys.path.insert(1, os.path.dirname(sys.path[0]))
 
-from base.config import parseConfigFile
-from base.errors import SSHErrorList
-from base.script import MercurialScript
+from mozharness.base.config import parseConfigFile
+from mozharness.base.errors import SSHErrorList
+from mozharness.base.script import MercurialScript
 
 
 

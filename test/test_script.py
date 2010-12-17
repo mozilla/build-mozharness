@@ -9,8 +9,8 @@ try:
 except:
     import simplejson as json
 
-import base.errors as errors
-import base.script as script
+import mozharness.base.errors as errors
+import mozharness.base.script as script
 
 class TestScript(unittest.TestCase):
     def cleanup(self):
@@ -195,7 +195,7 @@ class TestScript(unittest.TestCase):
         self.assertTrue(error_logsize2 > error_logsize,
                    msg="command not found error not hit")
         error_logsize = error_logsize2
-        s.runCommand(command="cat lib/errors.py",
+        s.runCommand(command="cat mozharness/base/errors.py",
                      error_list=[{
                       'substr': "error", 'level': "error"
                      },{

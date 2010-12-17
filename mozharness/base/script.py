@@ -10,11 +10,9 @@ import sys
 import tempfile
 import urllib2
 
-sys.path.insert(1, os.path.dirname(sys.path[0]))
-
-from base.config import BaseConfig
-from base.log import SimpleFileLogger, MultiFileLogger
-from base.errors import HgErrorList
+from mozharness.base.config import BaseConfig
+from mozharness.base.log import SimpleFileLogger, MultiFileLogger
+from mozharness.base.errors import HgErrorList
 
 # BaseScript {{{1
 class BaseScript(object):
