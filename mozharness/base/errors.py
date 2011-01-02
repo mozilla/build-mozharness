@@ -52,6 +52,9 @@ MakefileErrorList = [
  {'substr': 'No rule to make target ', 'level': 'error'},
  {'regex': 'akefile.*was not found\.', 'level': 'error'},
  {'regex': 'Stop\.$', 'level': 'error'},
+ {'regex': ':\d+: error:', 'level': 'error'},
+ {'regex': 'make\[\d+\]: \*\*\* \[.*\] Error \d+', 'level': 'error'},
+ {'substr': 'Warning: ', 'level': 'warning'},
 ]
 
 
