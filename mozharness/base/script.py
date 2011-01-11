@@ -410,7 +410,7 @@ class MercurialMixin(object):
 
 class MercurialScript(MercurialMixin, BaseScript):
     def __init__(self, **kwargs):
-        BaseScript.__init__(self, **kwargs)
+        super(MercurialScript, self).__init__(**kwargs)
         
         
 

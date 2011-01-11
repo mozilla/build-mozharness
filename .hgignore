@@ -2,6 +2,7 @@ syntax: glob
 
 *.log
 *.pyc
+*.swp
 test.py
 .DS_Store
 .coverage

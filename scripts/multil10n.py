@@ -23,14 +23,14 @@ import sys
 # load modules from parent dir
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
-from mozharness.base.config import parseConfigFile
 from mozharness.base.errors import SSHErrorList, PythonErrorList, MakefileErrorList
 from mozharness.base.script import MercurialScript
+from mozharness.l10n import LocalesMixin
 
 
 
 # MultiLocaleRepack {{{1
-class MultiLocaleRepack(MercurialScript):
+class MultiLocaleRepack(LocalesMixin, MercurialScript):
     config_options = [[
      ["--locale",],
      {"action": "extend",
@@ -120,6 +120,7 @@ class MultiLocaleRepack(MercurialScript):
     ]]
 
     def __init__(self, require_config_file=True):
+        LocalesMixin.__init__(self)
         MercurialScript.__init__(self, config_options=self.config_options,
                                  all_actions=['clobber', 'pull-build-source',
                                               'pull-locale-source',
@@ -134,33 +135,6 @@ class MultiLocaleRepack(MercurialScript):
                                                   'add-locales',
                                                   'package-multi'],
                                  require_config_file=require_config_file)
-        self.locales = None
-        c = self.config
-        self.repos = [{
-            'repo': c['hg_mozilla_repo'],
-            'tag': c['hg_mozilla_tag'],
-            'dir_name': c['mozilla_dir'],
-        },{
-            'repo': c['hg_configs_repo'],
-            'tag': c['hg_configs_tag'],
-            'dir_name': 'configs',
-        },{
-# TODO currently only needed for Android?
-            'repo': c['hg_tools_repo'],
-            'tag': c['hg_tools_tag'],
-            'dir_name': 'tools',
-        }]
-        # TODO: this references is_mobile, but we don't actually add any
-        # of the --mobile-repo options.
-        # I might need to subclass MultiLocaleRepack into
-        # MobileMultiLocaleRepack, or make it able to do mobile
-        # out of the box.
-        if self.config['is_mobile']:
-            self.repos.append({
-                'repo': c['hg_mobile_repo'],
-                'tag': c['hg_mobile_tag'],
-                'dir_name': os.path.join(c['mozilla_dir'], 'mobile'),
-            })
 
     def run(self):
         self.clobber()
@@ -184,39 +158,6 @@ class MultiLocaleRepack(MercurialScript):
                 self.rmtree(path, error_level='fatal')
         # TODO what to do otherwise?
 
-    def queryLocales(self):
-        if self.locales:
-            return self.locales
-        c = self.config
-        locales = c.get("locales", None)
-        ignore_locales = c.get("ignore_locales", None)
-        if not locales:
-            locales = []
-            locales_file = os.path.join(c['base_work_dir'], c['work_dir'],
-                                        c['locales_file'])
-            if locales_file.endswith(".json"):
-                # TODO this belongs in a shared function for releases.
-                locales_json = parseConfigFile(locales_file)
-                self.locale_dict = {}
-                for locale in locales_json.keys():
-                    if c['locales_platform'] in locales_json[locale]['platforms']:
-                        locales.append(locale)
-                        self.locale_dict[locale] = locales_json[locale]['revision']
-
-            else:
-                fh = open(locales_file)
-                locales = fh.read().split()
-                fh.close()
-            self.debug("Found the locales %s in %s." % (locales, locales_file))
-        if ignore_locales:
-            for locale in ignore_locales:
-                if locale in locales:
-                    self.debug("Ignoring locale %s." % locale)
-                    locales.remove(locale)
-        if locales:
-            self.locales = locales
-            return self.locales
-
     def pull(self):
         c = self.config
         abs_work_dir = os.path.join(c['base_work_dir'],
@@ -228,12 +169,12 @@ class MultiLocaleRepack(MercurialScript):
         else:
             self.actionMessage("Pulling.")
             self.mkdir_p(abs_work_dir)
-            for repo_dict in self.repos:
+            for repo_dict in c['repos']:
                 self.scmCheckout(
-                 hg_repo=repo_dict['repo'],
-                 tag=repo_dict['tag'],
-                 dir_name=repo_dict.get('dir_name', None),
-                 parent_dir=abs_work_dir
+                    hg_repo=repo_dict['repo'],
+                    tag=repo_dict.get('tag', 'default'),
+                    dir_name=repo_dict.get('dir_name', None),
+                    parent_dir=abs_work_dir
                 )
 
         if 'pull-locale-source' not in self.actions:
@@ -250,7 +191,7 @@ class MultiLocaleRepack(MercurialScript):
             # locale repos
             abs_l10n_dir = os.path.join(abs_work_dir, c['l10n_dir'])
             self.mkdir_p(abs_l10n_dir)
-            locales = self.queryLocales()
+            locales = self.query_locales()
             for locale in locales:
                 tag = c['hg_l10n_tag']
                 if hasattr(self, 'locale_dict'):
@@ -288,7 +229,7 @@ class MultiLocaleRepack(MercurialScript):
             return
         self.actionMessage("Adding locales to the apk.")
         c = self.config
-        locales = self.queryLocales()
+        locales = self.query_locales()
         # TODO a lot of the lines of code here are determining paths.
         # Each of these action methods should be able to call a single
         # function that returns a dictionary of these that we can use
@@ -335,16 +276,15 @@ class MultiLocaleRepack(MercurialScript):
         abs_objdir = os.path.join(abs_work_dir, c['mozilla_dir'], c['objdir'])
         command = "make package"
         # only a little ugly?
+        # TODO c['package_env'] that automatically replaces %(PATH),
+        # %(abs_work_dir)
         env = c['java_env']
         if 'PATH' in env:
             env['PATH'] = env['PATH'] % {'PATH': os.environ['PATH']}
         if package_type == 'multi':
             command += " AB_CD=multi"
-            env['MOZ_CHROME_MULTILOCALE'] = ' '.join(self.locales)
+            env['MOZ_CHROME_MULTILOCALE'] = "en-US " + ' '.join(self.locales)
             self.info("MOZ_CHROME_MULTILOCALE is %s" % env['MOZ_CHROME_MULTILOCALE'])
-        # TODO this is totally Android specific and needs to be either
-        # moved into a child object or special cased. However, as this
-        # class is currently Android only, here we go.
         if 'jarsigner' in c:
             # hm, this is pretty mozpass.py specific
             env['JARSIGNER'] = os.path.join(abs_work_dir, c['jarsigner'])

@@ -20,11 +20,12 @@ sys.path.insert(1, os.path.dirname(sys.path[0]))
 from mozharness.base.config import parseConfigFile
 from mozharness.base.errors import SSHErrorList
 from mozharness.base.script import MercurialScript
+from mozharness.l10n import LocalesMixin
 
 
 
 # MaemoDebSigner {{{1
-class MaemoDebSigner(MercurialScript):
+class MaemoDebSigner(LocalesMixin, MercurialScript):
     def __init__(self, require_config_file=True):
         config_options = [[
          ["--locale",],
@@ -91,6 +92,7 @@ class MaemoDebSigner(MercurialScript):
             self.debug("%s doesn't exist." % repo_path)
 
     def queryLocales(self, platform, platform_config=None):
+        # TODO get this working with LocalesMixin
         locales = self.config.get("locales", None)
         if not locales:
             locales = []

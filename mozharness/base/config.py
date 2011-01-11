@@ -119,12 +119,13 @@ class ReadOnlyDict(dict):
 
 
 # parseConfigFile {{{1
-def parseConfigFile(file_name, quiet=False):
+def parseConfigFile(file_name, quiet=False, search_path=None):
     """Read a config file and return a dictionary.
     """
     file_path = None
-    search_path = ['.', os.path.join(sys.path[0], '..', 'configs'),
-                   os.path.join(sys.path[0], '..', '..', 'configs')]
+    if not search_path:
+        search_path = ['.', os.path.join(sys.path[0], '..', 'configs'),
+                       os.path.join(sys.path[0], '..', '..', 'configs')]
     for path in search_path:
         if os.path.exists(os.path.join(path, file_name)):
             file_path = os.path.join(path, file_name)
