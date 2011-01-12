@@ -269,7 +269,7 @@ class MultiLocaleRepack(LocalesMixin, MercurialScript):
             env['PATH'] = env['PATH'] % {'PATH': os.environ['PATH']}
         if package_type == 'multi':
             command += " AB_CD=multi"
-            env['MOZ_CHROME_MULTILOCALE'] = "en-US " + ' '.join(self.locales)
+            env['MOZ_CHROME_MULTILOCALE'] = "en-US " + ' '.join(self.query_locales())
             self.info("MOZ_CHROME_MULTILOCALE is %s" % env['MOZ_CHROME_MULTILOCALE'])
         if 'jarsigner' in c:
             # hm, this is pretty mozpass.py specific
