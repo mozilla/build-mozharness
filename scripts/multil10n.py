@@ -215,7 +215,7 @@ class MultiLocaleRepack(LocalesMixin, MercurialScript):
                       os.path.join(dirs['abs_mozilla_dir'], 'mozconfig'),
                       error_level='fatal')
         command = "make -f client.mk build"
-        # only a little ugly?
+        # TODO a better way to do envs
         env = c['java_env']
         if 'PATH' in env:
             env['PATH'] = env['PATH'] % {'PATH': os.environ['PATH']}
@@ -233,8 +233,7 @@ class MultiLocaleRepack(LocalesMixin, MercurialScript):
         locales = self.query_locales()
         compare_locales_script = os.path.join(dirs['abs_compare_locales_dir'],
                                               'scripts', 'compare-locales')
-#aki
-#        compare_locales_env = os.environ.copy()
+        compare_locales_env = os.environ.copy()
         compare_locales_env['PYTHONPATH'] = os.path.join(dirs['abs_compare_locales_dir'],
                                                          'lib')
         compare_locales_error_list = list(PythonErrorList)
