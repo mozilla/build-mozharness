@@ -52,28 +52,6 @@ class MultiLocaleRepack(LocalesMixin, MercurialScript):
       "help": "Do not allow missing strings"
      }
     ],[
-     ["--mozilla-repo",],
-     {"action": "store",
-      "dest": "hg_mozilla_repo",
-      "type": "string",
-      "help": "Specify the Mozilla repo"
-     }
-    ],[
-     ["--mozilla-tag",],
-     {"action": "store",
-      "dest": "hg_mozilla_tag",
-      "type": "string",
-      "help": "Specify the Mozilla tag"
-     }
-    ],[
-     ["--mozilla-dir",],
-     {"action": "store",
-      "dest": "mozilla_dir",
-      "type": "string",
-      "default": "mozilla",
-      "help": "Specify the Mozilla dir name"
-     }
-    ],[
      ["--objdir",],
      {"action": "store",
       "dest": "objdir",
@@ -131,9 +109,9 @@ class MultiLocaleRepack(LocalesMixin, MercurialScript):
                                               'upload-en-US',
                                               'add-locales', 'package-multi',
                                               'upload-multi'],
-                                 default_actions=['pull-locale-source',
-                                                  'add-locales',
-                                                  'package-multi'],
+#                                 default_actions=['pull-locale-source',
+#                                                  'add-locales',
+#                                                  'package-multi'],
                                  require_config_file=require_config_file)
 
     def run(self):
@@ -145,6 +123,32 @@ class MultiLocaleRepack(LocalesMixin, MercurialScript):
         self.addLocales()
         self.package(package_type='multi')
 #        self.upload(package_type='multi')
+
+    def query_abs_dirs(self):
+        if hasattr(self, "abs_dirs"):
+            return self.abs_dirs
+        c = self.config
+        dirs = {}
+        dirs['abs_work_dir'] = os.path.join(c['base_work_dir'],
+                                            c['work_dir'])
+        dirs['abs_l10n_dir'] = os.path.join(dirs['abs_work_dir'],
+                                            c['l10n_dir'])
+        dirs['abs_mozilla_dir'] = os.path.join(dirs['abs_work_dir'],
+                                               c['mozilla_dir'])
+        dirs['abs_objdir'] = os.path.join(dirs['abs_mozilla_dir'],
+                                          c['objdir'])
+        dirs['abs_merge_dir'] = os.path.join(dirs['abs_objdir'],
+                                             "merged")
+        dirs['abs_locales_dir'] = os.path.join(dirs['abs_objdir'],
+                                               c['locales_dir'])
+        dirs['abs_locales_src_dir'] = os.path.join(dirs['abs_mozilla_dir'],
+                                                   c['locales_dir'])
+        dirs['abs_l10n_dir'] = os.path.join(dirs['abs_work_dir'],
+                                            c['l10n_dir'])
+        dirs['abs_compare_locales_dir'] = os.path.join(dirs['abs_work_dir'],
+                                                       'compare-locales')
+        self.abs_dirs = dirs
+        return self.abs_dirs
 
     def clobber(self):
         if 'clobber' not in self.actions:
@@ -160,21 +164,20 @@ class MultiLocaleRepack(LocalesMixin, MercurialScript):
 
     def pull(self):
         c = self.config
-        abs_work_dir = os.path.join(c['base_work_dir'],
-                                    c['work_dir'])
+        dirs = self.query_abs_dirs()
         # Chicken/egg: need to pull repos to determine locales.
         # Solve by pulling non-locale repos first.
         if 'pull-build-source' not in self.actions:
-            self.actionMessage("Skipping pull step.")
+            self.actionMessage("Skipping pull build source step.")
         else:
             self.actionMessage("Pulling.")
-            self.mkdir_p(abs_work_dir)
+            self.mkdir_p(dirs['abs_work_dir'])
             for repo_dict in c['repos']:
                 self.scmCheckout(
                     hg_repo=repo_dict['repo'],
                     tag=repo_dict.get('tag', 'default'),
                     dir_name=repo_dict.get('dir_name', None),
-                    parent_dir=abs_work_dir
+                    parent_dir=dirs['abs_work_dir']
                 )
 
         if 'pull-locale-source' not in self.actions:
@@ -183,23 +186,22 @@ class MultiLocaleRepack(LocalesMixin, MercurialScript):
             self.actionMessage("Pulling locale source.")
             # compare-locales
             self.scmCheckout(
-             hg_repo=c['hg_compare_locales_repo'],
-             tag=c['hg_compare_locales_tag'],
-             dir_name='compare-locales',
-             parent_dir=abs_work_dir
+                hg_repo=c['hg_compare_locales_repo'],
+                tag=c['hg_compare_locales_tag'],
+                dir_name='compare-locales',
+                parent_dir=dirs['abs_work_dir']
             )
             # locale repos
-            abs_l10n_dir = os.path.join(abs_work_dir, c['l10n_dir'])
-            self.mkdir_p(abs_l10n_dir)
+            self.mkdir_p(dirs['abs_l10n_dir'])
             locales = self.query_locales()
             for locale in locales:
                 tag = c['hg_l10n_tag']
                 if hasattr(self, 'locale_dict'):
                     tag = self.locale_dict[locale]
                 self.scmCheckout(
-                 hg_repo=os.path.join(c['hg_l10n_base'], locale),
-                 tag=tag,
-                 parent_dir=abs_l10n_dir
+                    hg_repo=os.path.join(c['hg_l10n_base'], locale),
+                    tag=tag,
+                    parent_dir=dirs['abs_l10n_dir']
                 )
 
     def build(self):
@@ -208,18 +210,16 @@ class MultiLocaleRepack(LocalesMixin, MercurialScript):
             return
         self.actionMessage("Building.")
         c = self.config
-        abs_work_dir = os.path.join(c['base_work_dir'],
-                                    c['work_dir'])
-        abs_mozilla_dir = os.path.join(abs_work_dir, c['mozilla_dir'])
-        self.copyfile(os.path.join(abs_work_dir, c['mozconfig']),
-                      os.path.join(abs_mozilla_dir, 'mozconfig'),
+        dirs = self.query_abs_dirs()
+        self.copyfile(os.path.join(dirs['abs_work_dir'], c['mozconfig']),
+                      os.path.join(dirs['abs_mozilla_dir'], 'mozconfig'),
                       error_level='fatal')
         command = "make -f client.mk build"
         # only a little ugly?
         env = c['java_env']
         if 'PATH' in env:
             env['PATH'] = env['PATH'] % {'PATH': os.environ['PATH']}
-        self.runCommand(command, cwd=abs_mozilla_dir, env=env,
+        self.runCommand(command, cwd=dirs['abs_mozilla_dir'], env=env,
                         error_list=MakefileErrorList,
                         halt_on_failure=True)
 
@@ -229,39 +229,27 @@ class MultiLocaleRepack(LocalesMixin, MercurialScript):
             return
         self.actionMessage("Adding locales to the apk.")
         c = self.config
+        dirs = self.query_abs_dirs()
         locales = self.query_locales()
-        # TODO a lot of the lines of code here are determining paths.
-        # Each of these action methods should be able to call a single
-        # function that returns a dictionary of these that we can use
-        # so we don't have to keep redefining them.
-        abs_work_dir = os.path.join(c['base_work_dir'],
-                                    c['work_dir'])
-        merge_dir = "merged"
-        abs_merge_dir = os.path.join(abs_work_dir, c['objdir'], merge_dir)
-        abs_locales_dir = os.path.join(abs_work_dir, c['mozilla_dir'],
-                                       c['objdir'], c['locales_dir'])
-        abs_locales_src_dir = os.path.join(abs_work_dir, c['mozilla_dir'],
-                                           c['locales_dir'])
-        abs_l10n_dir = os.path.join(abs_work_dir, c['l10n_dir'])
-        abs_compare_locales_dir = os.path.join(abs_work_dir, 'compare-locales')
-        compare_locales_script = os.path.join(abs_compare_locales_dir, 'scripts',
-                                              'compare-locales')
-        compare_locales_env = os.environ.copy()
-        compare_locales_env['PYTHONPATH'] = os.path.join(abs_compare_locales_dir,
+        compare_locales_script = os.path.join(dirs['abs_compare_locales_dir'],
+                                              'scripts', 'compare-locales')
+#aki
+#        compare_locales_env = os.environ.copy()
+        compare_locales_env['PYTHONPATH'] = os.path.join(dirs['abs_compare_locales_dir'],
                                                          'lib')
         compare_locales_error_list = list(PythonErrorList)
 
         for locale in locales:
-            self.rmtree(abs_merge_dir)
+            self.rmtree(dirs['abs_merge_dir'])
             command = "python %s -m %s l10n.ini %s %s" % (compare_locales_script,
-                      abs_merge_dir, abs_l10n_dir, locale)
+                      dirs['abs_merge_dir'], dirs['abs_l10n_dir'], locale)
             self.runCommand(command, error_list=compare_locales_error_list,
-                            cwd=abs_locales_src_dir, env=compare_locales_env,
+                            cwd=dirs['abs_locales_src_dir'], env=compare_locales_env,
                             halt_on_failure=True)
-            command = 'make chrome-%s L10NBASEDIR=%s' % (locale, abs_l10n_dir)
+            command = 'make chrome-%s L10NBASEDIR=%s' % (locale, dirs['abs_l10n_dir'])
             if c['merge_locales']:
-                command += " LOCALE_MERGEDIR=%s" % abs_merge_dir
-                self.runCommand(command, cwd=abs_locales_dir,
+                command += " LOCALE_MERGEDIR=%s" % dirs['abs_merge_dir']
+                self.runCommand(command, cwd=dirs['abs_locales_dir'],
                                 error_list=MakefileErrorList,
                                 halt_on_failure=True)
 
@@ -271,9 +259,8 @@ class MultiLocaleRepack(LocalesMixin, MercurialScript):
             return
         self.actionMessage("Packaging %s." % package_type)
         c = self.config
-        abs_work_dir = os.path.join(c['base_work_dir'],
-                                    c['work_dir'])
-        abs_objdir = os.path.join(abs_work_dir, c['mozilla_dir'], c['objdir'])
+        dirs = self.query_abs_dirs()
+
         command = "make package"
         # only a little ugly?
         # TODO c['package_env'] that automatically replaces %(PATH),
@@ -287,14 +274,15 @@ class MultiLocaleRepack(LocalesMixin, MercurialScript):
             self.info("MOZ_CHROME_MULTILOCALE is %s" % env['MOZ_CHROME_MULTILOCALE'])
         if 'jarsigner' in c:
             # hm, this is pretty mozpass.py specific
-            env['JARSIGNER'] = os.path.join(abs_work_dir, c['jarsigner'])
-        status = self.runCommand(command, cwd=abs_objdir, env=env,
+            env['JARSIGNER'] = os.path.join(dirs['abs_work_dir'],
+                                            c['jarsigner'])
+        status = self.runCommand(command, cwd=dirs['abs_objdir'], env=env,
                                  error_list=MakefileErrorList,
                                  halt_on_failure=True)
         command = "make package-tests"
         if package_type == 'multi':
             command += " AB_CD=multi"
-        status = self.runCommand(command, cwd=abs_objdir, env=env,
+        status = self.runCommand(command, cwd=dirs['abs_objdir'], env=env,
                                  error_list=MakefileErrorList,
                                  halt_on_failure=True)
 

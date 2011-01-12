@@ -1,17 +1,17 @@
 #!/usr/bin/env python
 """Generic error regexes.
-
-We could also create classes that generate these, but with the appropriate
-level (please don't die on any errors; please die on any warning; etc.)
 """
+
+# TODO: We could also create classes that generate these, but with the
+# appropriate level (please don't die on any errors; please die on any
+# warning; etc.) or platform or language or whatever.
+#
+# TODO: Context lines (requires work on the runCommand side)
+#
+# TODO:  We could have a generic shell command error list
+# (e.g. File not found, permission denied) that others could be based on.
 
 # ErrorLists {{{1
-""" TODO: more of these.
-
-We could have a generic shell command error list (e.g. File not found,
-permission denied) that others could be based on.
-
-"""
 
 # For ssh, scp, rsync over ssh
 SSHErrorList=[
@@ -46,14 +46,15 @@ PythonErrorList=[
  {'substr': 'command not found', 'level': 'error'},
 ]
 
-# TODO determine if I've got enough from
-#  http://www.gnu.org/software/automake/manual/make/Error-Messages.html
+# We may need to have various MakefileErrorLists for differing amounts of
+# warning-ignoring-ness.
 MakefileErrorList = [
  {'substr': 'No rule to make target ', 'level': 'error'},
  {'regex': 'akefile.*was not found\.', 'level': 'error'},
  {'regex': 'Stop\.$', 'level': 'error'},
  {'regex': ':\d+: error:', 'level': 'error'},
  {'regex': 'make\[\d+\]: \*\*\* \[.*\] Error \d+', 'level': 'error'},
+ {'regex': ':\d+: warning:', 'level': 'warning'},
  {'substr': 'Warning: ', 'level': 'warning'},
 ]
 
