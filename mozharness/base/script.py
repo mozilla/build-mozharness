@@ -3,6 +3,7 @@
 """
 
 import os
+import pprint
 import re
 import shutil
 import subprocess
@@ -68,7 +69,7 @@ class BaseScript(object):
                       "log_to_console": True,
                       "append_to_log": False,
                      }
-        log_type = self.config.get("log_type", None)
+        log_type = self.config.get("log_type", "multi")
         if log_type == "multi":
             log_config['logger_name'] = 'Multi'
         for key in log_config.keys():
@@ -153,6 +154,14 @@ class BaseScript(object):
         if not self.config['noop']:
             shutil.move(src, dest)
 
+    def chmod(self, path, mode):
+        self.info("Chmoding %s to %s" % (path, mode))
+        os.chmod(path, mode)
+
+    def chown(self, path, uid, guid):
+        self.info("Chowning %s to uid %s guid %s" % (path, uid, guid))
+        os.chown(path, uid, guid)
+
     def copyfile(self, src, dest, error_level='error'):
         self.info("Copying %s to %s" % (src, dest))
         if not self.config['noop']:
@@ -216,6 +225,26 @@ class BaseScript(object):
     """These are very special but very complex methods that, together with
     logging and config, provide the base for all scripts in this harness.
     """
+
+    def _fix_env(self, env, replace_dict=None):
+        if replace_dict:
+            for key in env.keys():
+                print key, env[key]
+                env[key] = env[key] % replace_dict
+        return env
+
+    def generate_env(self, partial_env=None, override_env=None,
+                     replace_dict=None):
+        if override_env:
+            env = self._fix_env(override_env, replace_dict)
+        else:
+            env = os.environ.copy()
+            partial_env = self._fix_env(partial_env, replace_dict)
+            for key in partial_env.keys():
+                env[key] = partial_env[key]
+        self.debug("Generated env: %s" % pprint.pformat(env))
+        return env
+
     def runCommand(self, command, cwd=None, error_list=[], parse_at_end=False,
                    shell=True, halt_on_failure=False, success_codes=[0],
                    env=None, return_type='status'):

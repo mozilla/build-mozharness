@@ -138,7 +138,7 @@ class MultiLocaleRepack(LocalesMixin, MercurialScript):
         dirs['abs_objdir'] = os.path.join(dirs['abs_mozilla_dir'],
                                           c['objdir'])
         dirs['abs_merge_dir'] = os.path.join(dirs['abs_objdir'],
-                                             "merged")
+                                             'merged')
         dirs['abs_locales_dir'] = os.path.join(dirs['abs_objdir'],
                                                c['locales_dir'])
         dirs['abs_locales_src_dir'] = os.path.join(dirs['abs_mozilla_dir'],
@@ -216,9 +216,8 @@ class MultiLocaleRepack(LocalesMixin, MercurialScript):
                       error_level='fatal')
         command = "make -f client.mk build"
         # TODO a better way to do envs
-        env = c['java_env']
-        if 'PATH' in env:
-            env['PATH'] = env['PATH'] % {'PATH': os.environ['PATH']}
+        env = self.generate_env(partial_env=c['java_env'],
+                                replace_dict={'PATH': os.environ['PATH']})
         self.runCommand(command, cwd=dirs['abs_mozilla_dir'], env=env,
                         error_list=MakefileErrorList,
                         halt_on_failure=True)
@@ -233,9 +232,9 @@ class MultiLocaleRepack(LocalesMixin, MercurialScript):
         locales = self.query_locales()
         compare_locales_script = os.path.join(dirs['abs_compare_locales_dir'],
                                               'scripts', 'compare-locales')
-        compare_locales_env = os.environ.copy()
-        compare_locales_env['PYTHONPATH'] = os.path.join(dirs['abs_compare_locales_dir'],
-                                                         'lib')
+        env = self.generate_env(partial_env={'PYTHONPATH':
+                                os.path.join(dirs['abs_compare_locales_dir'],
+                                             'lib')})
         compare_locales_error_list = list(PythonErrorList)
 
         for locale in locales:
@@ -243,7 +242,7 @@ class MultiLocaleRepack(LocalesMixin, MercurialScript):
             command = "python %s -m %s l10n.ini %s %s" % (compare_locales_script,
                       dirs['abs_merge_dir'], dirs['abs_l10n_dir'], locale)
             self.runCommand(command, error_list=compare_locales_error_list,
-                            cwd=dirs['abs_locales_src_dir'], env=compare_locales_env,
+                            cwd=dirs['abs_locales_src_dir'], env=env,
                             halt_on_failure=True)
             command = 'make chrome-%s L10NBASEDIR=%s' % (locale, dirs['abs_l10n_dir'])
             if c['merge_locales']:
@@ -264,17 +263,18 @@ class MultiLocaleRepack(LocalesMixin, MercurialScript):
         # only a little ugly?
         # TODO c['package_env'] that automatically replaces %(PATH),
         # %(abs_work_dir)
-        env = c['java_env']
-        if 'PATH' in env:
-            env['PATH'] = env['PATH'] % {'PATH': os.environ['PATH']}
+        partial_env = c['java_env'].copy()
+        env = self.generate_env(partial_env=c['java_env'],
+                                replace_dict={'PATH': os.environ['PATH']})
         if package_type == 'multi':
             command += " AB_CD=multi"
-            env['MOZ_CHROME_MULTILOCALE'] = "en-US " + ' '.join(self.query_locales())
-            self.info("MOZ_CHROME_MULTILOCALE is %s" % env['MOZ_CHROME_MULTILOCALE'])
+            partial_env['MOZ_CHROME_MULTILOCALE'] = "en-US " + \
+                                                   ' '.join(self.query_locales())
+            self.info("MOZ_CHROME_MULTILOCALE is %s" % partial_env['MOZ_CHROME_MULTILOCALE'])
         if 'jarsigner' in c:
             # hm, this is pretty mozpass.py specific
-            env['JARSIGNER'] = os.path.join(dirs['abs_work_dir'],
-                                            c['jarsigner'])
+            partial_env['JARSIGNER'] = os.path.join(dirs['abs_work_dir'],
+                                                    c['jarsigner'])
         status = self.runCommand(command, cwd=dirs['abs_objdir'], env=env,
                                  error_list=MakefileErrorList,
                                  halt_on_failure=True)
