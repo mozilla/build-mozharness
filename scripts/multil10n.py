@@ -29,8 +29,8 @@ from mozharness.l10n import LocalesMixin
 
 
 
-# MultiLocaleRepack {{{1
-class MultiLocaleRepack(LocalesMixin, MercurialScript):
+# MultiLocaleBuild {{{1
+class MultiLocaleBuild(LocalesMixin, MercurialScript):
     config_options = [[
      ["--locale",],
      {"action": "extend",
@@ -120,7 +120,7 @@ class MultiLocaleRepack(LocalesMixin, MercurialScript):
         self.build()
         self.package(package_type='en-US')
 #        self.upload(package_type='en-US')
-        self.addLocales()
+        self.add_locales()
         self.package(package_type='multi')
 #        self.upload(package_type='multi')
 
@@ -222,7 +222,7 @@ class MultiLocaleRepack(LocalesMixin, MercurialScript):
                         error_list=MakefileErrorList,
                         halt_on_failure=True)
 
-    def addLocales(self):
+    def add_locales(self):
         if 'add-locales' not in self.actions:
             self.actionMessage("Skipping add-locales step.")
             return
@@ -287,5 +287,5 @@ class MultiLocaleRepack(LocalesMixin, MercurialScript):
 
 # __main__ {{{1
 if __name__ == '__main__':
-    multiLocaleRepack = MultiLocaleRepack()
-    multiLocaleRepack.run()
+    multi_locale_build = MultiLocaleBuild()
+    multi_locale_build.run()

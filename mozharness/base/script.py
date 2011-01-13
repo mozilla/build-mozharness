@@ -36,7 +36,7 @@ class BaseScript(object):
           "help": "Log using SimpleFileLogger"
          }
         ]])
-        self.summaryList = []
+        self.summary_list = []
         rw_config = BaseConfig(config_options=config_options,
                                **kwargs)
         self.config = rw_config.getReadOnlyConfig()
@@ -83,8 +83,8 @@ class BaseScript(object):
 
     def summary(self):
         self.actionMessage("%s summary:" % self.__class__.__name__)
-        if self.summaryList:
-            for item in self.summaryList:
+        if self.summary_list:
+            for item in self.summary_list:
                 try:
                     self.log(item['message'], level=item['level'])
                 except ValueError:
@@ -93,7 +93,7 @@ class BaseScript(object):
                     print "### Log is closed! (%s)" % item['message']
 
     def addSummary(self, message, level='info'):
-        self.summaryList.append({'message': message, 'level': level})
+        self.summary_list.append({'message': message, 'level': level})
         # TODO write to a summary-only log?
         # Summaries need a lot more love.
         self.log(message, level=level)
