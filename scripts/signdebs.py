@@ -27,7 +27,7 @@ from mozharness.l10n import LocalesMixin
 
 # MaemoDebSigner {{{1
 class MaemoDebSigner(LocalesMixin, MercurialScript):
-    def __init__(self, require_config_file=True):
+    def __init__(self, require_config_file=True, **kwargs):
         config_options = [[
          ["--locale",],
          {"action": "extend",
@@ -51,6 +51,7 @@ class MaemoDebSigner(LocalesMixin, MercurialScript):
          }
         ]]
         self.failures = []
+        LocalesMixin.__init__(self)
         MercurialScript.__init__(self, config_options=config_options,
                                  all_actions=['clobber',
                                               'create-repos',
@@ -92,31 +93,18 @@ class MaemoDebSigner(LocalesMixin, MercurialScript):
         else:
             self.debug("%s doesn't exist." % repo_path)
 
-    def query_locales(self, platform, platform_config=None):
-        # TODO get this working with LocalesMixin
-        locales = self.config.get("locales", None)
+    def query_locales(self):
+        if self.locales:
+            return self.locales
+        c = self.config
+        locales = c.get("locales", None)
         if not locales:
             locales = []
-            if not platform_config:
-                platform_config = self.config['platform_config']
-            pf = platform_config[platform]
-            locales_file = self.config['locales_file']
-            if "multi_dir_url" in pf:
-                locales.append("multi")
-            if "en_us_dir_url" in pf:
-                locales.append("en-US")
-            if "l10n_dir_url" in pf and locales_file:
-                """This assumes all locales in the l10n json file
-                are applicable. If not, we'll have to parse the json
-                for matching platforms.
-                """
-                if locales_file.endswith(".json"):
-                    locales_json = parse_config_file(locales_file)
-                    locales.extend(locales_json.keys())
-                else:
-                    fh = open(locales_file)
-                    additional_locales = fh.read().split()
-                    locales.extend(additional_locales)
+            if c.get("locales", True):
+                locales = super(MaemoDebSigner, self).query_locales()
+            if c.get("multi_locale", True):
+                locales = ["multi"] + locales
+            locales = ["en-US"] + locales
         return locales
 
     def _sign_repo(self, repo_name, platform):
@@ -203,13 +191,17 @@ components = %(section)s
         c = self.config
         platform_config = c['platform_config']
         platforms = c.get("platforms", platform_config.keys())
+        abs_work_dir = os.path.join(c['base_work_dir'], c['work_dir'])
+        self.mkdir_p(abs_work_dir)
 
         hg_mobile_repo = c.get('hg_mobile_repo')
         if hg_mobile_repo:
-            self.scm_checkout(hg_mobile_repo, dir_name="mobile")
+            self.scm_checkout(hg_mobile_repo, dir_name="mobile",
+                              parent_dir=abs_work_dir)
         hg_config_repo = c.get('hg_config_repo')
         if hg_config_repo:
-            self.scm_checkout(hg_config_repo, dir_name="buildbot-configs")
+            self.scm_checkout(hg_config_repo, dir_name="buildbot-configs",
+                              parent_dir=abs_work_dir)
 
         for platform in platforms:
             """This assumes the same deb name for each locale in a platform.
@@ -219,8 +211,7 @@ components = %(section)s
             deb_name = self._query_deb_name(deb_name_url=pf['deb_name_url'])
             if not deb_name:
                 continue
-            locales = self.query_locales(platform,
-                                         platform_config=platform_config)
+            locales = self.query_locales()
             for locale in locales:
                 replace_dict = {'locale': locale}
                 install_file = pf['install_file'] % replace_dict
@@ -274,7 +265,7 @@ components = %(section)s
             """
             self.info("%s" % platform)
             pf = platform_config[platform]
-            locales = self.query_locales(platform, platform_config=platform_config)
+            locales = self.query_locales()
             for locale in locales:
                 if '%s_%s' % (platform, locale) not in self.failures:
                     replace_dict = {'locale': locale}

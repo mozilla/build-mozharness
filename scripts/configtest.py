@@ -111,7 +111,7 @@ class ConfigTest(BaseScript):
             self.add_summary("%d of %d json config files were good." %
                              (filecount[1], filecount[0]))
         else:
-            self.info("No json config files to test.")
+            self.add_summary("No json config files to test.")
 
     def test_python_configs(self):
         """Currently only "will this give me a config dictionary?"
@@ -146,7 +146,7 @@ class ConfigTest(BaseScript):
             self.add_summary("%d of %d python config files were good." %
                              (filecount[1], filecount[0]))
         else:
-            self.info("No python config files to test.")
+            self.add_summary("No python config files to test.")
 
 # __main__ {{{1
 if __name__ == '__main__':

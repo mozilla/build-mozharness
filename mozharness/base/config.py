@@ -135,7 +135,7 @@ def parse_config_file(file_name, quiet=False, search_path=None):
     else:
         if not quiet:
             print "ERROR: Can't find %s in %s!" % (file_name, search_path)
-        return
+            return
     if file_name.endswith('.py'):
         global_dict = {}
         local_dict = {}
@@ -342,10 +342,7 @@ class BaseConfig(object):
         defaults = self.config_parser.defaults.copy()
 
         if not options.config_file:
-            c = parse_config_file('localconfig.json', quiet=True)
-            if c:
-                self.set_config(c)
-            elif self.require_config_file:
+            if self.require_config_file:
                 print("Required config file not set!")
                 sys.exit(-1)
         else:
