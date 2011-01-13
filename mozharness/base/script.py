@@ -229,7 +229,6 @@ class BaseScript(object):
     def _fix_env(self, env, replace_dict=None):
         if replace_dict:
             for key in env.keys():
-                print key, env[key]
                 env[key] = env[key] % replace_dict
         return env
 

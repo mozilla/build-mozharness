@@ -122,6 +122,8 @@ class ReadOnlyDict(dict):
 def parseConfigFile(file_name, quiet=False, search_path=None):
     """Read a config file and return a dictionary.
     """
+    # TODO error checking.  Does this need to be part of an object with
+    # self.log() functions?
     file_path = None
     if not search_path:
         search_path = ['.', os.path.join(sys.path[0], '..', 'configs'),
@@ -134,17 +136,24 @@ def parseConfigFile(file_name, quiet=False, search_path=None):
         if not quiet:
             print "ERROR: Can't find %s in %s!" % (file_name, search_path)
         return
-    fh = open(file_path)
-    config = {}
-    if file_name.endswith('.json'):
-        jsonConfig = json.load(fh)
-        config = dict(jsonConfig)
+    if file_name.endswith('.py'):
+        global_dict = {}
+        local_dict = {}
+        execfile(file_path, global_dict, local_dict)
+        config = local_dict['config']
     else:
-        contents = []
-        for line in fh:
-            line = line[:-1]
-            contents.append(line)
-            config = dict(contents)
+        fh = open(file_path)
+        config = {}
+        if file_name.endswith('.json'):
+            jsonConfig = json.load(fh)
+            config = dict(jsonConfig)
+        else:
+            # TODO better default? I'd self.fatal if it were available here.
+            contents = []
+            for line in fh:
+                line = line[:-1]
+                contents.append(line)
+                config = dict(contents)
     fh.close()
 
     return config
