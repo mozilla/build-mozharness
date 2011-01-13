@@ -28,7 +28,7 @@ class ConfigTest(BaseScript):
     ]]
 
     def __init__(self, require_config_file=False):
-        self.test_files = []
+        self.config_files = []
         BaseScript.__init__(self, config_options=self.config_options,
                             all_actions=['list-config-files',
                                          'test-json-configs',
@@ -44,11 +44,20 @@ class ConfigTest(BaseScript):
 #        self.test_python_configs()
 #        self.summary()
 
+    def query_config_files(self):
+        if self.config_files:
+            return self.config_files
+        c = self.config
+        if c['test_files']:
+            self.config_files = c['test_files']
+            return self.config_files
+        # TODO find all .json and .py files in mozharness/configs
+
     def list_config_files(self):
         if 'list-config-files' not in self.actions:
-            self.actionMessage("Skipping list config files step.")
+            self.action_message("Skipping list config files step.")
             return
-        self.actionMessage("Listing config files.")
+        self.action_message("Listing config files.")
         c = self.config
 
 # __main__ {{{1

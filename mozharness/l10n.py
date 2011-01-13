@@ -7,7 +7,7 @@ import sys
 
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
-from mozharness.base.config import parseConfigFile
+from mozharness.base.config import parse_config_file
 
 # LocalesMixin {{{1
 
@@ -41,7 +41,7 @@ class LocalesMixin(object):
         ignore_locales = c.get("ignore_locales", None)
 
         if locales_file.endswith('json'):
-            locales_json = parseConfigFile(locales_file)
+            locales_json = parse_config_file(locales_file)
             self.locale_dict = {}
             for locale in locales_json.keys():
                 if platform and platform not in locales_json[locale]['platforms']:

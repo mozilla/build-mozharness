@@ -39,12 +39,12 @@ class BaseScript(object):
         self.summary_list = []
         rw_config = BaseConfig(config_options=config_options,
                                **kwargs)
-        self.config = rw_config.getReadOnlyConfig()
+        self.config = rw_config.get_read_only_config()
         self.actions = tuple(rw_config.actions)
         if os.path.exists("localconfig.json"):
             self.move("localconfig.json", "localconfig.json.bak")
-        rw_config.dumpConfig(file_name="localconfig.json")
-        self.newLogObj(default_log_level=default_log_level)
+        rw_config.dump_config(file_name="localconfig.json")
+        self.new_log_obj(default_log_level=default_log_level)
         # I can definitely see wanting to get more runtime info before
         # locking -- what's my hg revision? What's the latest ____
         # in this json feed?  ... that you might want to save for later
@@ -54,13 +54,13 @@ class BaseScript(object):
         # Now I'm thinking it's two steps: 1) figure out runtime details;
         # 2) set up configs and run.  (2) can be iterated over multiple
         # times during respins. (1) should be external to that.
-        self._lockConfig()
+        self._lock_config()
         self.info("Run as %s" % rw_config.command_line)
 
-    def _lockConfig(self):
+    def _lock_config(self):
         self.config.lock()
 
-    def newLogObj(self, default_log_level="info"):
+    def new_log_obj(self, default_log_level="info"):
         log_config = {"logger_name": 'Simple',
                       "log_name": 'test',
                       "log_dir": 'logs',
@@ -82,7 +82,7 @@ class BaseScript(object):
             self.log_obj = SimpleFileLogger(**log_config)
 
     def summary(self):
-        self.actionMessage("%s summary:" % self.__class__.__name__)
+        self.action_message("%s summary:" % self.__class__.__name__)
         if self.summary_list:
             for item in self.summary_list:
                 try:
@@ -92,7 +92,7 @@ class BaseScript(object):
                     when calling from __del__()"""
                     print "### Log is closed! (%s)" % item['message']
 
-    def addSummary(self, message, level='info'):
+    def add_summary(self, message, level='info'):
         self.summary_list.append({'message': message, 'level': level})
         # TODO write to a summary-only log?
         # Summaries need a lot more love.
@@ -121,7 +121,7 @@ class BaseScript(object):
             self.debug("%s doesn't exist." % path)
 
     # http://www.techniqal.com/blog/2008/07/31/python-file-read-write-with-urllib2/
-    def downloadFile(self, url, file_name=None,
+    def download_file(self, url, file_name=None,
                      error_level='error', exit_code=-1):
         """Python wget.
         TODO: option to mkdir_p dirname(file_name) if it doesn't exist.
@@ -156,11 +156,13 @@ class BaseScript(object):
 
     def chmod(self, path, mode):
         self.info("Chmoding %s to %s" % (path, mode))
-        os.chmod(path, mode)
+        if not self.config['noop']:
+            os.chmod(path, mode)
 
     def chown(self, path, uid, guid):
         self.info("Chowning %s to uid %s guid %s" % (path, uid, guid))
-        os.chown(path, uid, guid)
+        if not self.config['noop']:
+            os.chown(path, uid, guid)
 
     def copyfile(self, src, dest, error_level='error'):
         self.info("Copying %s to %s" % (src, dest))
@@ -216,12 +218,12 @@ class BaseScript(object):
     def fatal(self, message, exit_code=-1):
         self.log(message, level='fatal', exit_code=exit_code)
 
-    def actionMessage(self, message):
+    def action_message(self, message):
         self.info("#####")
         self.info("##### %s" % message)
         self.info("#####")
 
-# runCommand and getOutputFromCommand {{{2
+# run_command and get_output_from_command {{{2
     """These are very special but very complex methods that, together with
     logging and config, provide the base for all scripts in this harness.
     """
@@ -244,9 +246,9 @@ class BaseScript(object):
         self.debug("Generated env: %s" % pprint.pformat(env))
         return env
 
-    def runCommand(self, command, cwd=None, error_list=[], parse_at_end=False,
-                   shell=True, halt_on_failure=False, success_codes=[0],
-                   env=None, return_type='status'):
+    def run_command(self, command, cwd=None, error_list=[], parse_at_end=False,
+                    shell=True, halt_on_failure=False, success_codes=[0],
+                    env=None, return_type='status'):
         """Run a command, with logging and error parsing.
 
         TODO: parse_at_end, contextLines
@@ -270,10 +272,10 @@ class BaseScript(object):
         ]
         """
         if return_type == 'output':
-            return self.getOutputFromCommand(command=command, cwd=cwd,
-                                             shell=shell,
-                                             halt_on_failure=halt_on_failure,
-                                             env=env)
+            return self.get_output_from_command(command=command, cwd=cwd,
+                                                shell=shell,
+                                                halt_on_failure=halt_on_failure,
+                                                env=env)
         num_errors = 0
         if cwd:
             if not os.path.isdir(cwd):
@@ -328,10 +330,11 @@ class BaseScript(object):
             return num_errors
         return p.returncode
 
-    def getOutputFromCommand(self, command, cwd=None, shell=True,
-                             halt_on_failure=False, env=None, silent=False):
-        """Similar to runCommand, but where runCommand is an
-        os.system(command) analog, getOutputFromCommand is a `command`
+    def get_output_from_command(self, command, cwd=None, shell=True,
+                                halt_on_failure=False, env=None,
+                                silent=False):
+        """Similar to run_command, but where run_command is an
+        os.system(command) analog, get_output_from_command is a `command`
         analog.
 
         Less error checking by design, though if we figure out how to
@@ -399,7 +402,7 @@ class BaseScript(object):
         # Hm, options on how to return this? I bet often we'll want
         # output_lines[0] with no newline.
         return output
-# End runCommand and getOutputFromCommand 2}}}
+# End run_command and get_output_from_command 2}}}
 
 
 
@@ -413,10 +416,10 @@ class MercurialMixin(object):
     """This should eventually just use catlee's hg libs."""
 
     #TODO: num_retries
-    def scmCheckout(self, hg_repo, parent_dir=None, tag="default",
+    def scm_checkout(self, repo, parent_dir=None, tag="default",
                      dir_name=None, clobber=False, halt_on_failure=True):
         if not dir_name:
-            dir_name = os.path.basename(hg_repo)
+            dir_name = os.path.basename(repo)
         if parent_dir:
             dir_path = os.path.join(parent_dir, dir_name)
         else:
@@ -424,16 +427,16 @@ class MercurialMixin(object):
         if clobber and os.path.exists(dir_path):
             self.rmtree(dir_path)
         if not os.path.exists(dir_path):
-            command = "hg clone %s %s" % (hg_repo, dir_name)
+            command = "hg clone %s %s" % (repo, dir_name)
         else:
             command = "hg --cwd %s pull" % (dir_name)
-        self.runCommand(command, cwd=parent_dir, halt_on_failure=halt_on_failure,
+        self.run_command(command, cwd=parent_dir, halt_on_failure=halt_on_failure,
                         error_list=HgErrorList)
-        self.scmUpdate(dir_path, tag=tag, halt_on_failure=halt_on_failure)
+        self.scm_update(dir_path, tag=tag, halt_on_failure=halt_on_failure)
 
-    def scmUpdate(self, dir_path, tag="default", halt_on_failure=True):
+    def scm_update(self, dir_path, tag="default", halt_on_failure=True):
         command = "hg --cwd %s update -C -r %s" % (dir_path, tag)
-        self.runCommand(command, halt_on_failure=halt_on_failure,
+        self.run_command(command, halt_on_failure=halt_on_failure,
                         error_list=HgErrorList)
 
 class MercurialScript(MercurialMixin, BaseScript):

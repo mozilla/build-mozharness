@@ -4,7 +4,8 @@
 Usage:
     signdebs.py [args]
 
-TODO: make createRepos and signRepo(s) more standalone for discrete actions
+TODO: make create_repos and sign_repo(s) more standalone for discrete
+      actions
 """
 
 import os
@@ -17,7 +18,7 @@ from urllib2 import URLError, HTTPError
 # load modules from parent dir
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
-from mozharness.base.config import parseConfigFile
+from mozharness.base.config import parse_config_file
 from mozharness.base.errors import SSHErrorList
 from mozharness.base.script import MercurialScript
 from mozharness.l10n import LocalesMixin
@@ -57,17 +58,17 @@ class MaemoDebSigner(LocalesMixin, MercurialScript):
                                  require_config_file=require_config_file)
 
     def run(self):
-        self.clobberRepoDir()
-        self.createRepos()
-        self.uploadRepos()
+        self.clobber_repo_dir()
+        self.create_repos()
+        self.upload_repos()
         self.summary()
 
-    def _queryDebName(self, deb_name_url=None):
+    def _query_deb_name(self, deb_name_url=None):
         if self.config.get('deb_name', None):
             return self.config['deb_name']
         if deb_name_url:
             self.info('Getting deb_name from %s' % deb_name_url)
-            # TODO belongs in downloadFile or equivalent?
+            # TODO belongs in download_file or equivalent?
             try:
                 ul = urllib2.build_opener()
                 fh = ul.open(deb_name_url)
@@ -79,11 +80,11 @@ class MaemoDebSigner(LocalesMixin, MercurialScript):
             except URLError, e:
                 self.error("URL Error: %s %s" % (e.code, deb_name_url))
 
-    def clobberRepoDir(self):
+    def clobber_repo_dir(self):
         if 'clobber' not in self.actions:
-            self.actionMessage("Skipping clobber step.")
+            self.action_message("Skipping clobber step.")
             return
-        self.actionMessage("Clobbering repo dir.")
+        self.action_message("Clobbering repo dir.")
         c = self.config
         repo_path = os.path.join(c['base_work_dir'], c['work_dir'], c['repo_dir'])
         if os.path.exists(repo_path):
@@ -91,7 +92,7 @@ class MaemoDebSigner(LocalesMixin, MercurialScript):
         else:
             self.debug("%s doesn't exist." % repo_path)
 
-    def queryLocales(self, platform, platform_config=None):
+    def query_locales(self, platform, platform_config=None):
         # TODO get this working with LocalesMixin
         locales = self.config.get("locales", None)
         if not locales:
@@ -110,7 +111,7 @@ class MaemoDebSigner(LocalesMixin, MercurialScript):
                 for matching platforms.
                 """
                 if locales_file.endswith(".json"):
-                    locales_json = parseConfigFile(locales_file)
+                    locales_json = parse_config_file(locales_file)
                     locales.extend(locales_json.keys())
                 else:
                     fh = open(locales_file)
@@ -118,7 +119,7 @@ class MaemoDebSigner(LocalesMixin, MercurialScript):
                     locales.extend(additional_locales)
         return locales
 
-    def _signRepo(self, repo_name, platform):
+    def _sign_repo(self, repo_name, platform):
         c = self.config
         sbox_path = c['sbox_path']
         section = c['section']
@@ -131,9 +132,9 @@ class MaemoDebSigner(LocalesMixin, MercurialScript):
         command += "dists/%s/%s/binary-armel |" % (platform, section)
         command += "gzip -9c > %s/dists/%s/%s/binary-armel/Packages.gz" % \
                    (abs_work_dir, platform, section)
-        status = self.runCommand(command, error_list=error_list)
+        status = self.run_command(command, error_list=error_list)
         if status:
-            self.error("Exiting signRepo.")
+            self.error("Exiting sign_repo.")
             return status
 
         for sub_dir in ("dists/%s/%s/binary-armel" % (platform, section),
@@ -145,8 +146,8 @@ class MaemoDebSigner(LocalesMixin, MercurialScript):
             error_list=[]
             command = "%s -p -d %s/%s " % (sbox_path, sbox_work_dir, sub_dir)
             command += "apt-ftparchive release . > %s/Release.tmp" % abs_work_dir
-            if self.runCommand(command, error_list=error_list):
-                self.error("Exiting signRepo.")
+            if self.run_command(command, error_list=error_list):
+                self.error("Exiting sign_repo.")
                 return -2
             self.move("%s/Release.tmp" % abs_work_dir,
                       "%s/%s/Release" % (abs_work_dir, sub_dir))
@@ -155,13 +156,13 @@ class MaemoDebSigner(LocalesMixin, MercurialScript):
                                 {'regex': 'secret key not available', 'level': 'error'},
                                ]
             command = "gpg -abs -o Release.gpg Release"
-            if self.runCommand(command, error_list=error_list,
-                               cwd='%s/%s' % (abs_work_dir, sub_dir)):
-                self.error("Exiting signRepo.")
+            if self.run_command(command, error_list=error_list,
+                                cwd='%s/%s' % (abs_work_dir, sub_dir)):
+                self.error("Exiting sign_repo.")
                 return -3
         return 0
 
-    def _createInstallFile(self, file_path, locale, platform):
+    def _create_install_file(self, file_path, locale, platform):
         c = self.config
         platform_config = c['platform_config']
         pf = platform_config[platform]
@@ -194,31 +195,32 @@ components = %(section)s
         fh.close()
         
 
-    def createRepos(self):
+    def create_repos(self):
         if 'create-repos' not in self.actions:
-            self.actionMessage("Skipping create repo step.")
+            self.action_message("Skipping create repo step.")
             return
-        self.actionMessage("Creating repos.")
+        self.action_message("Creating repos.")
         c = self.config
         platform_config = c['platform_config']
-        platforms = self.config.get("platforms", platform_config.keys())
+        platforms = c.get("platforms", platform_config.keys())
 
         hg_mobile_repo = c.get('hg_mobile_repo')
         if hg_mobile_repo:
-            self.scmCheckout(hg_mobile_repo, dir_name="mobile")
+            self.scm_checkout(hg_mobile_repo, dir_name="mobile")
         hg_config_repo = c.get('hg_config_repo')
         if hg_config_repo:
-            self.scmCheckout(hg_config_repo, dir_name="buildbot-configs")
+            self.scm_checkout(hg_config_repo, dir_name="buildbot-configs")
 
         for platform in platforms:
             """This assumes the same deb name for each locale in a platform.
             """
             self.info("%s" % platform)
             pf = platform_config[platform]
-            deb_name = self._queryDebName(deb_name_url=pf['deb_name_url'])
+            deb_name = self._query_deb_name(deb_name_url=pf['deb_name_url'])
             if not deb_name:
                 continue
-            locales = self.queryLocales(platform, platform_config=platform_config)
+            locales = self.query_locales(platform,
+                                         platform_config=platform_config)
             for locale in locales:
                 replace_dict = {'locale': locale}
                 install_file = pf['install_file'] % replace_dict
@@ -232,35 +234,38 @@ components = %(section)s
                     deb_url = '%s/%s' % (pf['l10n_dir_url'], locale)
                 deb_url += '/%s' % deb_name
                 self.debug(deb_url)
-                if not self.downloadFile(deb_url, deb_name):
-                    self.addSummary("Can't download %s; skipping %s on %s" % \
-                                    (deb_url, locale, platform), level="error")
+                if not self.download_file(deb_url, deb_name):
+                    self.add_summary("Can't download %s; skipping %s on %s" % \
+                                     (deb_url, locale, platform),
+                                     level="error")
                     self.failures.append('%s_%s' % (platform, locale))
                     continue
                 binary_dir = '%s/%s/%s/dists/%s/%s/binary-armel' % \
-                             (c['work_dir'], c['repo_dir'], repo_name, platform, c['section'])
+                             (c['work_dir'], c['repo_dir'], repo_name,
+                              platform, c['section'])
                 abs_binary_dir = '%s/%s' % (c['base_work_dir'], binary_dir)
                 self.mkdir_p(abs_binary_dir)
                 self.move(deb_name, abs_binary_dir)
 
-                if self._signRepo(repo_name, platform) != 0:
-                    self.addSummary("Can't sign %s; skipping %s on %s" % \
-                                    (repo_name, platform, locale), level="error")
+                if self._sign_repo(repo_name, platform) != 0:
+                    self.add_summary("Can't sign %s; skipping %s on %s" % \
+                                     (repo_name, platform, locale),
+                                     level="error")
                     self.failures.append('%s_%s' % (platform, locale))
                     continue
 
-                self._createInstallFile(os.path.join(c['base_work_dir'],
-                                                     c['work_dir'],
-                                                     c['repo_dir'],
-                                                     repo_name,
-                                                     install_file),
-                                        locale, platform)
+                self._create_install_file(os.path.join(c['base_work_dir'],
+                                                       c['work_dir'],
+                                                       c['repo_dir'],
+                                                       repo_name,
+                                                       install_file),
+                                          locale, platform)
 
-    def uploadRepos(self):
+    def upload_repos(self):
         if 'upload' not in self.actions:
-            self.actionMessage("Skipping upload step.")
+            self.action_message("Skipping upload step.")
             return
-        self.actionMessage("Uploading repos.")
+        self.action_message("Uploading repos.")
         c = self.config
         platform_config = c['platform_config']
         platforms = self.config.get("platforms", platform_config.keys())
@@ -269,21 +274,21 @@ components = %(section)s
             """
             self.info("%s" % platform)
             pf = platform_config[platform]
-            locales = self.queryLocales(platform, platform_config=platform_config)
+            locales = self.query_locales(platform, platform_config=platform_config)
             for locale in locales:
                 if '%s_%s' % (platform, locale) not in self.failures:
                     replace_dict = {'locale': locale}
                     install_file = pf['install_file'] % replace_dict
                     repo_name = c['repo_name'] % replace_dict
-                    status = self._uploadRepo(os.path.join(c['base_work_dir'],
-                                                           c['work_dir'],
-                                                           c['repo_dir']),
-                                              repo_name, platform, install_file)
+                    status = self._upload_repo(os.path.join(c['base_work_dir'],
+                                                            c['work_dir'],
+                                                            c['repo_dir']),
+                                               repo_name, platform, install_file)
                     if status == 0:
-                        self.addSummary("Uploaded %s on %s successfully." % \
-                                        (locale, platform))
+                        self.add_summary("Uploaded %s on %s successfully." % \
+                                         (locale, platform))
 
-    def _uploadRepo(self, local_repo_dir, repo_name, platform, install_file):
+    def _upload_repo(self, local_repo_dir, repo_name, platform, install_file):
         c = self.config
         remote_repo_path = c['remote_repo_path']
         remote_user = c['remote_user']
@@ -294,7 +299,7 @@ components = %(section)s
         num_errors = 0
 
         if not os.path.isdir(repo_path):
-            self.addSummary("Can't upload %s: not a valid repo!" % repo_path,
+            self.add_summary("Can't upload %s: not a valid repo!" % repo_path,
                             level="error")
             return -1
         if not os.path.exists(install_file_path):
@@ -303,20 +308,20 @@ components = %(section)s
         command = "ssh -i %s %s@%s mkdir -p %s/%s/dists/%s" % \
                   (c['remote_ssh_key'], c['remote_user'], c['remote_host'],
                    c['remote_repo_path'], repo_name, platform)
-        num_errors += self.runCommand(command, return_type='num_errors',
-                                      error_list=SSHErrorList)
+        num_errors += self.run_command(command, return_type='num_errors',
+                                       error_list=SSHErrorList)
 
         command = 'rsync --rsh="ssh -i %s" -azv --delete %s %s@%s:%s/%s/dists/%s' % \
                   (remote_ssh_key, os.path.join(repo_path, '.'),
                    remote_user, remote_host, remote_repo_path, repo_name, platform)
-        num_errors += self.runCommand(command, return_type='num_errors',
-                                      error_list=SSHErrorList)
+        num_errors += self.run_command(command, return_type='num_errors',
+                                       error_list=SSHErrorList)
 
         command = 'scp -i %s %s %s@%s:%s/%s/' % \
                   (remote_ssh_key, install_file_path,
                    remote_user, remote_host, remote_repo_path, repo_name)
-        num_errors += self.runCommand(command, return_type='num_errors',
-                                      error_list=SSHErrorList)
+        num_errors += self.run_command(command, return_type='num_errors',
+                                       error_list=SSHErrorList)
         return num_errors
 
 

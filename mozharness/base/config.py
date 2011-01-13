@@ -41,7 +41,7 @@ class MozOptionParser(OptionParser):
     but options.verbose) so I could set those directly in the config.
 
     The options and parser objects in
-        (options, args) = parser.parseArgs()
+        (options, args) = parser.parse_args()
     don't give an easy way of doing that; dir(options) is pretty ugly and
     I was playing with dict() and str() in ways that made me pretty
     frustrated.
@@ -82,44 +82,44 @@ class ReadOnlyDict(dict):
         self._lock = False
         self.update(dictionary.copy())
 
-    def _checkLock(self):
+    def _check_lock(self):
         assert not self._lock, "ReadOnlyDict is locked!"
 
     def lock(self):
         self._lock = True
 
     def __setitem__(self, *args):
-        self._checkLock()
+        self._check_lock()
         return dict.__setitem__(self, *args)
 
     def __delitem__(self, *args):
-        self._checkLock()
+        self._check_lock()
         return dict.__delitem__(self, *args)
 
     def clear(self, *args):
-        self._checkLock()
+        self._check_lock()
         return dict.clear(self, *args)
 
     def pop(self, *args):
-        self._checkLock()
+        self._check_lock()
         return dict.pop(self, *args)
 
     def popitem(self, *args):
-        self._checkLock()
+        self._check_lock()
         return dict.popitem(self, *args)
 
     def setdefault(self, *args):
-        self._checkLock()
+        self._check_lock()
         return dict.setdefault(self, *args)
 
     def update(self, *args):
-        self._checkLock()
+        self._check_lock()
         dict.update(self, *args)
 
 
 
-# parseConfigFile {{{1
-def parseConfigFile(file_name, quiet=False, search_path=None):
+# parse_config_file {{{1
+def parse_config_file(file_name, quiet=False, search_path=None):
     """Read a config file and return a dictionary.
     """
     # TODO error checking.  Does this need to be part of an object with
@@ -145,8 +145,8 @@ def parseConfigFile(file_name, quiet=False, search_path=None):
         fh = open(file_path)
         config = {}
         if file_name.endswith('.json'):
-            jsonConfig = json.load(fh)
-            config = dict(jsonConfig)
+            json_config = json.load(fh)
+            config = dict(json_config)
         else:
             # TODO better default? I'd self.fatal if it were available here.
             contents = []
@@ -187,18 +187,18 @@ class BaseConfig(object):
             self.volatile_config_vars = volatile_config_vars[:]
 
         if config:
-            self.setConfig(config)
+            self.set_config(config)
         if initial_config_file:
-            self.setConfig(parseConfigFile(initial_config_file))
+            self.set_config(parse_config_file(initial_config_file))
         if config_options is None:
             config_options = []
-        self._createConfigParser(config_options, usage)
-        self.parseArgs()
+        self._create_config_parser(config_options, usage)
+        self.parse_args()
 
-    def getReadOnlyConfig(self):
+    def get_read_only_config(self):
         return ReadOnlyDict(self._config)
 
-    def _createConfigParser(self, config_options, usage):
+    def _create_config_parser(self, config_options, usage):
         self.config_parser = MozOptionParser(usage=usage)
         self.config_parser.add_option(
          "--log-level", action="store",
@@ -282,7 +282,7 @@ class BaseConfig(object):
             for option in config_options:
                 self.config_parser.add_option(*option[0], **option[1])
 
-    def setConfig(self, config, overwrite=False):
+    def set_config(self, config, overwrite=False):
         """This is probably doable some other way."""
         if self._config and not overwrite:
             for key, value in config.iteritems():
@@ -291,10 +291,10 @@ class BaseConfig(object):
             self._config = config
         return self._config
 
-    def getActions(self):
+    def get_actions(self):
         return self.actions
 
-    def dumpConfig(self, config=None, file_name=None):
+    def dump_config(self, config=None, file_name=None):
         """Dump the configuration somewhere, default to STDOUT.
         Be nice to be able to write a .py or .json file according to
         filename.
@@ -315,7 +315,7 @@ class BaseConfig(object):
             fh.write(json_config)
             fh.close()
 
-    def verifyActions(self, action_list, quiet=False):
+    def verify_actions(self, action_list, quiet=False):
         for action in action_list:
             if action not in self.all_actions:
                 if not quiet:
@@ -324,7 +324,7 @@ class BaseConfig(object):
                 sys.exit(-1)
         return action_list
 
-    def parseArgs(self, args=None):
+    def parse_args(self, args=None):
         """Parse command line arguments in a generic way.
         Return the parser object after adding the basic options, so
         child objects can manipulate it.
@@ -342,14 +342,14 @@ class BaseConfig(object):
         defaults = self.config_parser.defaults.copy()
 
         if not options.config_file:
-            c = parseConfigFile('localconfig.json', quiet=True)
+            c = parse_config_file('localconfig.json', quiet=True)
             if c:
-                self.setConfig(c)
+                self.set_config(c)
             elif self.require_config_file:
                 print("Required config file not set!")
                 sys.exit(-1)
         else:
-            self.setConfig(parseConfigFile(options.config_file))
+            self.set_config(parse_config_file(options.config_file))
         for key in self.config_parser.variables:
             value = getattr(options, key)
             if value is None:
@@ -374,13 +374,13 @@ class BaseConfig(object):
         """
         self.actions = self.default_actions
         if options.only_actions:
-            actions = self.verifyActions(options.only_actions)
+            actions = self.verify_actions(options.only_actions)
             self.actions = actions
         elif options.add_actions:
-            actions = self.verifyActions(options.add_actions)
+            actions = self.verify_actions(options.add_actions)
             self.actions.extend(actions)
         if options.no_actions:
-            actions = self.verifyActions(options.no_actions)
+            actions = self.verify_actions(options.no_actions)
             for action in actions:
                 if action in self.actions:
                     self.actions.remove(action)

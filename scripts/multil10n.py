@@ -152,9 +152,9 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
 
     def clobber(self):
         if 'clobber' not in self.actions:
-            self.actionMessage("Skipping clobber step.")
+            self.action_message("Skipping clobber step.")
             return
-        self.actionMessage("Clobbering.")
+        self.action_message("Clobbering.")
         c = self.config
         if c['work_dir'] != '.':
             path = os.path.join(c['base_work_dir'], c['work_dir'])
@@ -168,25 +168,25 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
         # Chicken/egg: need to pull repos to determine locales.
         # Solve by pulling non-locale repos first.
         if 'pull-build-source' not in self.actions:
-            self.actionMessage("Skipping pull build source step.")
+            self.action_message("Skipping pull build source step.")
         else:
-            self.actionMessage("Pulling.")
+            self.action_message("Pulling.")
             self.mkdir_p(dirs['abs_work_dir'])
             for repo_dict in c['repos']:
-                self.scmCheckout(
-                    hg_repo=repo_dict['repo'],
+                self.scm_checkout(
+                    repo=repo_dict['repo'],
                     tag=repo_dict.get('tag', 'default'),
                     dir_name=repo_dict.get('dir_name', None),
                     parent_dir=dirs['abs_work_dir']
                 )
 
         if 'pull-locale-source' not in self.actions:
-            self.actionMessage("Skipping pull locale source step.")
+            self.action_message("Skipping pull locale source step.")
         else:
-            self.actionMessage("Pulling locale source.")
+            self.action_message("Pulling locale source.")
             # compare-locales
-            self.scmCheckout(
-                hg_repo=c['hg_compare_locales_repo'],
+            self.scm_checkout(
+                repo=c['hg_compare_locales_repo'],
                 tag=c['hg_compare_locales_tag'],
                 dir_name='compare-locales',
                 parent_dir=dirs['abs_work_dir']
@@ -198,17 +198,17 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
                 tag = c['hg_l10n_tag']
                 if hasattr(self, 'locale_dict'):
                     tag = self.locale_dict[locale]
-                self.scmCheckout(
-                    hg_repo=os.path.join(c['hg_l10n_base'], locale),
+                self.scm_checkout(
+                    repo=os.path.join(c['hg_l10n_base'], locale),
                     tag=tag,
                     parent_dir=dirs['abs_l10n_dir']
                 )
 
     def build(self):
         if 'build' not in self.actions:
-            self.actionMessage("Skipping build step.")
+            self.action_message("Skipping build step.")
             return
-        self.actionMessage("Building.")
+        self.action_message("Building.")
         c = self.config
         dirs = self.query_abs_dirs()
         self.copyfile(os.path.join(dirs['abs_work_dir'], c['mozconfig']),
@@ -218,15 +218,15 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
         # TODO a better way to do envs
         env = self.generate_env(partial_env=c['java_env'],
                                 replace_dict={'PATH': os.environ['PATH']})
-        self.runCommand(command, cwd=dirs['abs_mozilla_dir'], env=env,
-                        error_list=MakefileErrorList,
-                        halt_on_failure=True)
+        self.run_command(command, cwd=dirs['abs_mozilla_dir'], env=env,
+                         error_list=MakefileErrorList,
+                         halt_on_failure=True)
 
     def add_locales(self):
         if 'add-locales' not in self.actions:
-            self.actionMessage("Skipping add-locales step.")
+            self.action_message("Skipping add-locales step.")
             return
-        self.actionMessage("Adding locales to the apk.")
+        self.action_message("Adding locales to the apk.")
         c = self.config
         dirs = self.query_abs_dirs()
         locales = self.query_locales()
@@ -241,21 +241,21 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
             self.rmtree(dirs['abs_merge_dir'])
             command = "python %s -m %s l10n.ini %s %s" % (compare_locales_script,
                       dirs['abs_merge_dir'], dirs['abs_l10n_dir'], locale)
-            self.runCommand(command, error_list=compare_locales_error_list,
-                            cwd=dirs['abs_locales_src_dir'], env=env,
-                            halt_on_failure=True)
+            self.run_command(command, error_list=compare_locales_error_list,
+                             cwd=dirs['abs_locales_src_dir'], env=env,
+                             halt_on_failure=True)
             command = 'make chrome-%s L10NBASEDIR=%s' % (locale, dirs['abs_l10n_dir'])
             if c['merge_locales']:
                 command += " LOCALE_MERGEDIR=%s" % dirs['abs_merge_dir']
-                self.runCommand(command, cwd=dirs['abs_locales_dir'],
-                                error_list=MakefileErrorList,
-                                halt_on_failure=True)
+                self.run_command(command, cwd=dirs['abs_locales_dir'],
+                                 error_list=MakefileErrorList,
+                                 halt_on_failure=True)
 
     def package(self, package_type='en-US'):
         if 'package-%s' % package_type not in self.actions:
-            self.actionMessage("Skipping package-%s." % package_type)
+            self.action_message("Skipping package-%s." % package_type)
             return
-        self.actionMessage("Packaging %s." % package_type)
+        self.action_message("Packaging %s." % package_type)
         c = self.config
         dirs = self.query_abs_dirs()
 
@@ -275,15 +275,15 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
             # hm, this is pretty mozpass.py specific
             partial_env['JARSIGNER'] = os.path.join(dirs['abs_work_dir'],
                                                     c['jarsigner'])
-        status = self.runCommand(command, cwd=dirs['abs_objdir'], env=env,
-                                 error_list=MakefileErrorList,
-                                 halt_on_failure=True)
+        status = self.run_command(command, cwd=dirs['abs_objdir'], env=env,
+                                  error_list=MakefileErrorList,
+                                  halt_on_failure=True)
         command = "make package-tests"
         if package_type == 'multi':
             command += " AB_CD=multi"
-        status = self.runCommand(command, cwd=dirs['abs_objdir'], env=env,
-                                 error_list=MakefileErrorList,
-                                 halt_on_failure=True)
+        status = self.run_command(command, cwd=dirs['abs_objdir'], env=env,
+                                  error_list=MakefileErrorList,
+                                  halt_on_failure=True)
 
 # __main__ {{{1
 if __name__ == '__main__':

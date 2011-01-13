@@ -76,9 +76,9 @@ class BaseLogger(object):
         self.all_handlers = []
         self.log_files = {}
 
-        self.createLogDir()
+        self.create_log_dir()
 
-    def createLogDir(self):
+    def create_log_dir(self):
         if os.path.exists(self.log_dir):
             if not os.path.isdir(self.log_dir):
                 os.remove(self.log_dir)
@@ -86,41 +86,41 @@ class BaseLogger(object):
             os.makedirs(self.log_dir)
         self.abs_log_dir = os.path.abspath(self.log_dir)
 
-    def initMessage(self, name=None):
+    def init_message(self, name=None):
         if not name:
             name = self.__class__.__name__
         self.info("%s online at %s in %s" % \
                   (name, datetime.now().strftime("%Y%m%d %H:%M:%S"),
                    os.getcwd()))
 
-    def getLoggerLevel(self, level=None):
+    def get_logger_level(self, level=None):
         if not level:
             level = self.log_level
         return self.LEVELS.get(level, logging.NOTSET)
 
-    def getLogFormatter(self, log_format=None, date_format=None):
+    def get_log_formatter(self, log_format=None, date_format=None):
         if not log_format:
             log_format = self.log_format
         if not date_format:
             date_format = self.log_date_format
         return logging.Formatter(log_format, date_format)
 
-    def newLogger(self, logger_name):
+    def new_logger(self, logger_name):
         """Create a new logger.
         By default there are no handlers.
         """
         self.logger = logging.getLogger(logger_name)
-        self.logger.setLevel(self.getLoggerLevel())
-        self._clearHandlers()
+        self.logger.setLevel(self.get_logger_level())
+        self._clear_handlers()
         if self.log_to_console:
-            self.addConsoleHandler()
+            self.add_console_handler()
         if self.log_to_raw:
             self.log_files['raw'] = '%s_raw.log' % self.log_name
-            self.addFileHandler(os.path.join(self.abs_log_dir,
-                                             self.log_files['raw']),
-                                log_format='%(message)s')
+            self.add_file_handler(os.path.join(self.abs_log_dir,
+                                               self.log_files['raw']),
+                                 log_format='%(message)s')
 
-    def _clearHandlers(self):
+    def _clear_handlers(self):
         """To prevent dups -- logging will preserve Handlers across
         objects :(
         """
@@ -131,25 +131,25 @@ class BaseLogger(object):
             self.all_handlers = []
 
     def __del__(self):
-        self._clearHandlers()
+        self._clear_handlers()
 
-    def addConsoleHandler(self, log_level=None, log_format=None,
+    def add_console_handler(self, log_level=None, log_format=None,
                           date_format=None):
         console_handler = logging.StreamHandler()
-        console_handler.setLevel(self.getLoggerLevel(log_level))
-        console_handler.setFormatter(self.getLogFormatter(log_format=log_format,
-                                                         date_format=date_format))
+        console_handler.setLevel(self.get_logger_level(log_level))
+        console_handler.setFormatter(self.get_log_formatter(log_format=log_format,
+                                                            date_format=date_format))
         self.logger.addHandler(console_handler)
         self.all_handlers.append(console_handler)
 
-    def addFileHandler(self, log_path, log_level=None, log_format=None,
+    def add_file_handler(self, log_path, log_level=None, log_format=None,
                        date_format=None):
         if not self.append_to_log and os.path.exists(log_path):
             os.remove(log_path)
         file_handler = logging.FileHandler(log_path)
-        file_handler.setLevel(self.getLoggerLevel(log_level))
-        file_handler.setFormatter(self.getLogFormatter(log_format=log_format,
-                                                      date_format=date_format))
+        file_handler.setLevel(self.get_logger_level(log_level))
+        file_handler.setFormatter(self.get_log_formatter(log_format=log_format,
+                                                         date_format=date_format))
         self.logger.addHandler(file_handler)
         self.all_handlers.append(file_handler)
 
@@ -164,7 +164,7 @@ class BaseLogger(object):
         if level == "ignore":
             return
         for line in message.splitlines():
-            self.logger.log(self.getLoggerLevel(level), line)
+            self.logger.log(self.get_logger_level(level), line)
         if level == 'fatal' and self.halt_on_failure:
             self.logger.log(FATAL, 'Exiting %d' % exit_code)
             sys.exit(exit_code)
@@ -201,14 +201,14 @@ class SimpleFileLogger(BaseLogger):
                  logger_name='Simple', log_dir='logs', **kwargs):
         BaseLogger.__init__(self, logger_name=logger_name, log_format=log_format,
                             log_dir=log_dir, **kwargs)
-        self.newLogger(self.logger_name)
-        self.initMessage()
+        self.new_logger(self.logger_name)
+        self.init_message()
 
-    def newLogger(self, logger_name):
-        BaseLogger.newLogger(self, logger_name)
+    def new_logger(self, logger_name):
+        BaseLogger.new_logger(self, logger_name)
         self.log_path = os.path.join(self.abs_log_dir, '%s.log' % self.log_name)
         self.log_files['default'] = self.log_path
-        self.addFileHandler(self.log_path)
+        self.add_file_handler(self.log_path)
 
 
 
@@ -221,23 +221,24 @@ class MultiFileLogger(BaseLogger):
     def __init__(self, logger_name='Multi',
                  log_format='%(asctime)s %(levelname)8s - %(message)s',
                  log_dir='logs', log_to_raw=True, **kwargs):
-        BaseLogger.__init__(self, logger_name=logger_name, log_format=log_format,
+        BaseLogger.__init__(self, logger_name=logger_name,
+                            log_format=log_format,
                             log_to_raw=log_to_raw, log_dir=log_dir,
                             **kwargs)
 
-        self.newLogger(self.logger_name)
-        self.initMessage()
+        self.new_logger(self.logger_name)
+        self.init_message()
 
-    def newLogger(self, logger_name):
-        BaseLogger.newLogger(self, logger_name)
-        minLoggerLevel = self.getLoggerLevel(self.log_level)
+    def new_logger(self, logger_name):
+        BaseLogger.new_logger(self, logger_name)
+        min_logger_level = self.get_logger_level(self.log_level)
         for level in self.LEVELS.keys():
-            if self.getLoggerLevel(level) >= minLoggerLevel:
+            if self.get_logger_level(level) >= min_logger_level:
                 self.log_files[level] = '%s_%s.log' % (self.log_name,
-                                                      level)
-                self.addFileHandler(os.path.join(self.abs_log_dir,
-                                                 self.log_files[level]),
-                                    log_level=level)
+                                                       level)
+                self.add_file_handler(os.path.join(self.abs_log_dir,
+                                                   self.log_files[level]),
+                                      log_level=level)
 
 
 
