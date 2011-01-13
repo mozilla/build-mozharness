@@ -17,12 +17,8 @@ done
 for filename in `find scripts -name [a-z]\*.py` ; do
   coverage run -a --branch --omit='/Library/*,/usr/*,/opt/*' $filename --list-actions
 done
-for filename in `find configs -name [a-z]\*.json`; do
-  cat $filename | python -mjson.tool > /dev/null
-  if [ $? -ne 0 ] ; then
-    echo "!!!!! $filename is not valid JSON!"
-  fi
-done
+if [ -e localconfig.json ] ; then rm localconfig.json; fi
+coverage run -a --branch --omit='/Library/*,/usr/*,/opt/*' scripts/configtest.py --log-level warning
 if [ -e localconfig.json ] ; then rm localconfig.json; fi
 
 coverage html --omit="/Library/*,/usr/*,/opt/*" -d coverage.new
