@@ -15,7 +15,7 @@ for filename in `find mozharness -name [a-z]\*.py`; do
   coverage run -a --branch --omit='/Library/*,/usr/*,/opt/*' $filename
 done
 for filename in `find scripts -name [a-z]\*.py` ; do
-  coverage run -a --branch --omit='/Library/*,/usr/*,/opt/*' $filename --list-actions
+  coverage run -a --branch --omit='/Library/*,/usr/*,/opt/*' $filename --list-actions | grep -v "Actions available" | grep -v "Default actions"
 done
 if [ -e localconfig.json ] ; then rm localconfig.json; fi
 coverage run -a --branch --omit='/Library/*,/usr/*,/opt/*' scripts/configtest.py --log-level warning
