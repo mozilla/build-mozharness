@@ -1,7 +1,9 @@
 {
     "log_name": "signdebs",
     "locales_file": "buildbot-configs/mozilla2/l10n-changesets_mobile-1.1.json",
-    "hg_config_repo": "http://hg.mozilla.org/build/buildbot-configs",
+    "hg_repos": [{
+        "repo": "http://hg.mozilla.org/build/buildbot-configs"
+    }],
     "package_name": "fennec",
     "repo_name": "%(locale)s",
     "remote_repo_path": "/home/ftp/pub/mozilla.org/mobile/candidates/1.1rc1-candidates/repos",

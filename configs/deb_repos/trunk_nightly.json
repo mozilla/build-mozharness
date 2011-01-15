@@ -1,7 +1,10 @@
 {
     "log_name": "signdebs",
     "locales_file": "mobile/locales/all-locales",
-    "hg_mobile_repo": "http://hg.mozilla.org/mobile-browser",
+    "hg_repos": [{
+        "repo": "http://hg.mozilla.org/mobile-browser",
+        "dir_name": "mobile"
+    }],
     "package_name": "fennec",
     "repo_name": "trunk_%(locale)s",
     "remote_repo_path": "/home/ftp/pub/mozilla.org/mobile/repos",

@@ -194,14 +194,7 @@ components = %(section)s
         abs_work_dir = os.path.join(c['base_work_dir'], c['work_dir'])
         self.mkdir_p(abs_work_dir)
 
-        hg_mobile_repo = c.get('hg_mobile_repo')
-        if hg_mobile_repo:
-            self.scm_checkout(hg_mobile_repo, dir_name="mobile",
-                              parent_dir=abs_work_dir)
-        hg_config_repo = c.get('hg_config_repo')
-        if hg_config_repo:
-            self.scm_checkout(hg_config_repo, dir_name="buildbot-configs",
-                              parent_dir=abs_work_dir)
+        self.scm_checkout_repos(c['hg_repos'])
 
         for platform in platforms:
             """This assumes the same deb name for each locale in a platform.

@@ -439,6 +439,18 @@ class MercurialMixin(object):
         self.run_command(command, halt_on_failure=halt_on_failure,
                         error_list=HgErrorList)
 
+    def scm_checkout_repos(self, repo_list, parent_dir=None,
+                           clobber=False, halt_on_failure=True):
+        c = self.config
+        if not parent_dir:
+            parent_dir = os.path.join(c['base_work_dir'], c['work_dir'])
+        for repo_dict in repo_list:
+            kwargs = repo_dict.copy()
+            kwargs['parent_dir'] = parent_dir
+            kwargs['clobber'] = clobber
+            kwargs['halt_on_failure'] = halt_on_failure
+            self.scm_checkout(**kwargs)
+
 class MercurialScript(MercurialMixin, BaseScript):
     def __init__(self, **kwargs):
         super(MercurialScript, self).__init__(**kwargs)
