@@ -99,12 +99,12 @@ class BaseScript(object):
         self.log(message, level=level)
 
     def mkdir_p(self, path):
-        self.info("mkdir: %s" % path)
         if not os.path.exists(path):
+            self.info("mkdir: %s" % path)
             if not self.config['noop']:
                 os.makedirs(path)
         else:
-            self.info("Already exists.")
+            self.debug("mkdir_p: %s Already exists." % path)
 
     def rmtree(self, path, error_level='error', exit_code=-1):
         self.info("rmtree: %s" % path)
@@ -422,6 +422,7 @@ class MercurialMixin(object):
             dir_name = os.path.basename(repo)
         if parent_dir:
             dir_path = os.path.join(parent_dir, dir_name)
+            self.mkdir_p(parent_dir)
         else:
             dir_path = dir_name
         if clobber and os.path.exists(dir_path):
@@ -444,6 +445,7 @@ class MercurialMixin(object):
         c = self.config
         if not parent_dir:
             parent_dir = os.path.join(c['base_work_dir'], c['work_dir'])
+        self.mkdir_p(parent_dir)
         for repo_dict in repo_list:
             kwargs = repo_dict.copy()
             kwargs['parent_dir'] = parent_dir

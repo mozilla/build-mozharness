@@ -165,44 +165,32 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
     def pull(self):
         c = self.config
         dirs = self.query_abs_dirs()
-        # Chicken/egg: need to pull repos to determine locales.
-        # Solve by pulling non-locale repos first.
         if 'pull-build-source' not in self.actions:
             self.action_message("Skipping pull build source step.")
         else:
             self.action_message("Pulling.")
-            self.mkdir_p(dirs['abs_work_dir'])
-            for repo_dict in c['repos']:
-                self.scm_checkout(
-                    repo=repo_dict['repo'],
-                    tag=repo_dict.get('tag', 'default'),
-                    dir_name=repo_dict.get('dir_name', None),
-                    parent_dir=dirs['abs_work_dir']
-                )
+            self.scm_checkout_repos(c['repos'])
 
         if 'pull-locale-source' not in self.actions:
             self.action_message("Skipping pull locale source step.")
         else:
             self.action_message("Pulling locale source.")
-            # compare-locales
-            self.scm_checkout(
-                repo=c['hg_compare_locales_repo'],
-                tag=c['hg_compare_locales_tag'],
-                dir_name='compare-locales',
-                parent_dir=dirs['abs_work_dir']
-            )
-            # locale repos
             self.mkdir_p(dirs['abs_l10n_dir'])
             locales = self.query_locales()
+            locale_repos = []
             for locale in locales:
+                locale_dict = {
+                    
+                }
                 tag = c['hg_l10n_tag']
                 if hasattr(self, 'locale_dict'):
                     tag = self.locale_dict[locale]
-                self.scm_checkout(
-                    repo=os.path.join(c['hg_l10n_base'], locale),
-                    tag=tag,
-                    parent_dir=dirs['abs_l10n_dir']
-                )
+                locale_repos.append({
+                    'repo': "%s/%s" % (c['hg_l10n_base'], locale),
+                    'tag': tag
+                })
+            self.scm_checkout_repos(repo_list=locale_repos,
+                                    parent_dir=dirs['abs_l10n_dir'])
 
     def build(self):
         if 'build' not in self.actions:

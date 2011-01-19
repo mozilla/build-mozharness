@@ -24,14 +24,15 @@
         "repo": "http://hg.mozilla.org/mobile-browser",
         "tag": "default",
         "dir_name": "mozilla-central/mobile"
+    },{
+        "repo": "http://hg.mozilla.org/build/compare-locales",
+        "tag": "RELEASE_AUTOMATION"
     }],
     "l10n_dir": "l10n-central",
     "java_env": {
         "JAVA_HOME": "/tools/jdk",
         "PATH": "%(PATH)s:/tools/jdk/bin"
     },
-    "hg_compare_locales_repo": "http://hg.mozilla.org/build/compare-locales",
-    "hg_compare_locales_tag": "RELEASE_AUTOMATION",
     "merge_locales": true,
     "mozilla_dir": "mozilla-central",
     "mozconfig": "buildbot-configs/mozilla2/mobile/android/mobile-browser/nightly/mozconfig",
