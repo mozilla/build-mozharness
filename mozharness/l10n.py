@@ -8,6 +8,7 @@ import sys
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
 from mozharness.base.config import parse_config_file
+from mozharness.base.errors import PythonErrorList
 
 # LocalesMixin {{{1
 
@@ -60,6 +61,34 @@ class LocalesMixin(object):
         if locales:
             self.locales = locales
             return self.locales
+
+    def run_compare_locales(self, locale, abs_compare_locales_dir=None,
+                            abs_merge_dir=None, abs_l10n_dir=None,
+                            abs_locales_src_dir=None, halt_on_failure=False):
+        c = self.config
+        # Making query_abs_dirs() an expected method
+        dirs = self.query_abs_dirs()
+        if not abs_compare_locales_dir:
+            abs_compare_locales_dir = dirs['abs_compare_locales_dir']
+        if not abs_merge_dir:
+            abs_merge_dir = dirs['abs_merge_dir']
+        if not abs_l10n_dir:
+            abs_l10n_dir = dirs['abs_l10n_dir']
+        if not abs_l10n_dir:
+            abs_locales_src_dir = dirs['abs_locales_src_dir']
+        compare_locales_script = os.path.join(abs_compare_locales_dir,
+                                              'scripts', 'compare-locales')
+        env = self.generate_env(partial_env={'PYTHONPATH':
+                                os.path.join(abs_compare_locales_dir,
+                                             'lib')})
+        compare_locales_error_list = list(PythonErrorList)
+        self.rmtree(abs_merge_dir)
+        command = "python %s -m %s l10n.ini %s %s" % (compare_locales_script,
+                  abs_merge_dir, abs_l10n_dir, locale)
+        status = self.run_command(command, error_list=compare_locales_error_list,
+                                  cwd=abs_locales_src_dir, env=env,
+                                  halt_on_failure=halt_on_failure)
+        return status
 
 # __main__ {{{1
 

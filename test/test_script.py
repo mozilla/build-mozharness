@@ -36,28 +36,28 @@ class TestScript(unittest.TestCase):
         s.mkdir_p('test_dir/foo/bar/baz')
         self.assertTrue(os.path.isdir('test_dir/foo/bar/baz'),
                         msg="mkdir_p error when dir exists")
-        s.download_file("http://www.google.com", file_name="test_dir/google",
+        s.download_file("http://www.mozilla.com", file_name="test_dir/mozilla",
                         error_level="ignore")
-        self.assertTrue(os.path.exists('test_dir/google'),
-                        msg="error downloading google.com")
-        contents1 = s.get_output_from_command("cat test_dir/google")
-        fh = open("test_dir/google")
+        self.assertTrue(os.path.exists('test_dir/mozilla'),
+                        msg="error downloading mozilla.com")
+        contents1 = s.get_output_from_command("cat test_dir/mozilla")
+        fh = open("test_dir/mozilla")
         contents2 = fh.read()
         fh.close()
         self.assertEqual(contents1, contents2,
                          msg="get_output_from_command('cat file') differs from fh.read")
-        self.assertEqual(s.run_command("cat google", cwd="test_dir"), 0,
+        self.assertEqual(s.run_command("cat mozilla", cwd="test_dir"), 0,
                          msg="run_command('cat file') did not exit 0")
-        s.move('test_dir/google', 'test_dir/google2')
-        self.assertFalse(os.path.exists('test_dir/google'),
-                         msg="test_dir/google still exists after move()")
-        self.assertTrue(os.path.exists('test_dir/google2'),
-                        msg="test_dir/google2 doesn't exist after move()")
-        s.copyfile('test_dir/google2', 'test_dir/google')
-        self.assertTrue(os.path.exists('test_dir/google'),
-                         msg="test_dir/google doesn't exist after copyfile()")
-        s.run_command("rm test_dir/google test_dir/google2")
-        self.assertFalse(os.path.exists('test_dir/google'),
+        s.move('test_dir/mozilla', 'test_dir/mozilla2')
+        self.assertFalse(os.path.exists('test_dir/mozilla'),
+                         msg="test_dir/mozilla still exists after move()")
+        self.assertTrue(os.path.exists('test_dir/mozilla2'),
+                        msg="test_dir/mozilla2 doesn't exist after move()")
+        s.copyfile('test_dir/mozilla2', 'test_dir/mozilla')
+        self.assertTrue(os.path.exists('test_dir/mozilla'),
+                         msg="test_dir/mozilla doesn't exist after copyfile()")
+        s.run_command("rm test_dir/mozilla test_dir/mozilla2")
+        self.assertFalse(os.path.exists('test_dir/mozilla'),
                          msg="run_command('rm file') did not remove file")
         s.rmtree('test_dir')
         self.assertFalse(os.path.exists('test_dir'),
@@ -122,9 +122,9 @@ class TestScript(unittest.TestCase):
         s.mkdir_p('test_dir/foo/bar/baz')
         self.assertFalse(os.path.exists('test_dir'),
                          msg="mkdir_p noop error")
-        s.download_file("http://www.google.com", file_name="test_logs/google",
+        s.download_file("http://www.mozilla.com", file_name="test_logs/mozilla.com",
                         error_level="ignore")
-        self.assertFalse(os.path.exists('test_logs/google'),
+        self.assertFalse(os.path.exists('test_logs/mozilla.com'),
                          msg="download_file noop error")
         contents1 = s.run_command("cat test/test.json", cwd="configs",
                                   return_type="output")

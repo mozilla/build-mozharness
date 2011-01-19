@@ -81,20 +81,6 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
       "default": "l10n",
       "help": "Specify the l10n dir name"
      }
-    ],[
-     ["--compare-locales-repo",],
-     {"action": "store",
-      "dest": "hg_compare_locales_repo",
-      "type": "string",
-      "help": "Specify the compare-locales repo"
-     }
-    ],[
-     ["--compare-locales-tag",],
-     {"action": "store",
-      "dest": "hg_compare_locales_tag",
-      "type": "string",
-      "help": "Specify the compare-locales tag"
-     }
     ]]
 
     def __init__(self, require_config_file=True):
@@ -218,20 +204,9 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
         c = self.config
         dirs = self.query_abs_dirs()
         locales = self.query_locales()
-        compare_locales_script = os.path.join(dirs['abs_compare_locales_dir'],
-                                              'scripts', 'compare-locales')
-        env = self.generate_env(partial_env={'PYTHONPATH':
-                                os.path.join(dirs['abs_compare_locales_dir'],
-                                             'lib')})
-        compare_locales_error_list = list(PythonErrorList)
 
         for locale in locales:
-            self.rmtree(dirs['abs_merge_dir'])
-            command = "python %s -m %s l10n.ini %s %s" % (compare_locales_script,
-                      dirs['abs_merge_dir'], dirs['abs_l10n_dir'], locale)
-            self.run_command(command, error_list=compare_locales_error_list,
-                             cwd=dirs['abs_locales_src_dir'], env=env,
-                             halt_on_failure=True)
+            self.run_compare_locales(locale, halt_on_failure=True)
             command = 'make chrome-%s L10NBASEDIR=%s' % (locale, dirs['abs_l10n_dir'])
             if c['merge_locales']:
                 command += " LOCALE_MERGEDIR=%s" % dirs['abs_merge_dir']
