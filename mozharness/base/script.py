@@ -19,6 +19,7 @@ from mozharness.base.errors import HgErrorList
 class BaseScript(object):
     def __init__(self, config_options=None, default_log_level="info", **kwargs):
         self.log_obj = None
+        self.abs_dirs = None
         if config_options is None:
             config_options = []
         config_options.extend([[
@@ -60,44 +61,15 @@ class BaseScript(object):
     def _lock_config(self):
         self.config.lock()
 
-    def new_log_obj(self, default_log_level="info"):
-        log_config = {"logger_name": 'Simple',
-                      "log_name": 'test',
-                      "log_dir": 'logs',
-                      "log_level": default_log_level,
-                      "log_format": '%(asctime)s %(levelname)8s - %(message)s',
-                      "log_to_console": True,
-                      "append_to_log": False,
-                     }
-        log_type = self.config.get("log_type", "multi")
-        if log_type == "multi":
-            log_config['logger_name'] = 'Multi'
-        for key in log_config.keys():
-            value = self.config.get(key, None)
-            if value is not None:
-                log_config[key] = value
-        if log_type == "multi":
-            self.log_obj = MultiFileLogger(**log_config)
-        else:
-            self.log_obj = SimpleFileLogger(**log_config)
+    def query_abs_dirs(self):
+        if self.abs_dirs:
+            return self.abs_dirs
+        c = self.config
+        self.abs_dirs = {'abs_work_dir': os.path.join(c['base_work_dir'],
+                                                       c['work_dir'])}
+        return self.abs_dirs
 
-    def summary(self):
-        self.action_message("%s summary:" % self.__class__.__name__)
-        if self.summary_list:
-            for item in self.summary_list:
-                try:
-                    self.log(item['message'], level=item['level'])
-                except ValueError:
-                    """log is closed; print as a default. Ran into this
-                    when calling from __del__()"""
-                    print "### Log is closed! (%s)" % item['message']
-
-    def add_summary(self, message, level='info'):
-        self.summary_list.append({'message': message, 'level': level})
-        # TODO write to a summary-only log?
-        # Summaries need a lot more love.
-        self.log(message, level=level)
-
+# os commands {{{2
     def mkdir_p(self, path):
         if not os.path.exists(path):
             self.info("mkdir: %s" % path)
@@ -181,6 +153,28 @@ class BaseScript(object):
         else:
             os.chdir(dir_name)
 
+# logging {{{2
+    def new_log_obj(self, default_log_level="info"):
+        log_config = {"logger_name": 'Simple',
+                      "log_name": 'test',
+                      "log_dir": 'logs',
+                      "log_level": default_log_level,
+                      "log_format": '%(asctime)s %(levelname)8s - %(message)s',
+                      "log_to_console": True,
+                      "append_to_log": False,
+                     }
+        log_type = self.config.get("log_type", "multi")
+        if log_type == "multi":
+            log_config['logger_name'] = 'Multi'
+        for key in log_config.keys():
+            value = self.config.get(key, None)
+            if value is not None:
+                log_config[key] = value
+        if log_type == "multi":
+            self.log_obj = MultiFileLogger(**log_config)
+        else:
+            self.log_obj = SimpleFileLogger(**log_config)
+
     """There may be a better way of doing this, but I did this previously...
     """
     def log(self, message, level='info', exit_code=-1):
@@ -222,6 +216,23 @@ class BaseScript(object):
         self.info("#####")
         self.info("##### %s" % message)
         self.info("#####")
+
+    def summary(self):
+        self.action_message("%s summary:" % self.__class__.__name__)
+        if self.summary_list:
+            for item in self.summary_list:
+                try:
+                    self.log(item['message'], level=item['level'])
+                except ValueError:
+                    """log is closed; print as a default. Ran into this
+                    when calling from __del__()"""
+                    print "### Log is closed! (%s)" % item['message']
+
+    def add_summary(self, message, level='info'):
+        self.summary_list.append({'message': message, 'level': level})
+        # TODO write to a summary-only log?
+        # Summaries need a lot more love.
+        self.log(message, level=level)
 
 # run_command and get_output_from_command {{{2
     """These are very special but very complex methods that, together with

@@ -110,32 +110,6 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
         self.package(package_type='multi')
 #        self.upload(package_type='multi')
 
-    def query_abs_dirs(self):
-        if hasattr(self, "abs_dirs"):
-            return self.abs_dirs
-        c = self.config
-        dirs = {}
-        dirs['abs_work_dir'] = os.path.join(c['base_work_dir'],
-                                            c['work_dir'])
-        dirs['abs_l10n_dir'] = os.path.join(dirs['abs_work_dir'],
-                                            c['l10n_dir'])
-        dirs['abs_mozilla_dir'] = os.path.join(dirs['abs_work_dir'],
-                                               c['mozilla_dir'])
-        dirs['abs_objdir'] = os.path.join(dirs['abs_mozilla_dir'],
-                                          c['objdir'])
-        dirs['abs_merge_dir'] = os.path.join(dirs['abs_objdir'],
-                                             'merged')
-        dirs['abs_locales_dir'] = os.path.join(dirs['abs_objdir'],
-                                               c['locales_dir'])
-        dirs['abs_locales_src_dir'] = os.path.join(dirs['abs_mozilla_dir'],
-                                                   c['locales_dir'])
-        dirs['abs_l10n_dir'] = os.path.join(dirs['abs_work_dir'],
-                                            c['l10n_dir'])
-        dirs['abs_compare_locales_dir'] = os.path.join(dirs['abs_work_dir'],
-                                                       'compare-locales')
-        self.abs_dirs = dirs
-        return self.abs_dirs
-
     def clobber(self):
         if 'clobber' not in self.actions:
             self.action_message("Skipping clobber step.")

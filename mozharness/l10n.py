@@ -90,6 +90,35 @@ class LocalesMixin(object):
                                   halt_on_failure=halt_on_failure)
         return status
 
+    def query_abs_dirs(self):
+        if self.abs_dirs:
+            return self.abs_dirs
+        abs_dirs = super(LocalesMixin, self).query_abs_dirs()
+        c = self.config
+        dirs = {}
+        dirs['abs_work_dir'] = os.path.join(c['base_work_dir'],
+                                            c['work_dir'])
+        dirs['abs_l10n_dir'] = os.path.join(dirs['abs_work_dir'],                                            c['l10n_dir'])
+        dirs['abs_mozilla_dir'] = os.path.join(dirs['abs_work_dir'],
+                                               c['mozilla_dir'])
+        dirs['abs_objdir'] = os.path.join(dirs['abs_mozilla_dir'],
+                                          c['objdir'])
+        dirs['abs_merge_dir'] = os.path.join(dirs['abs_objdir'],
+                                             'merged')
+        dirs['abs_locales_dir'] = os.path.join(dirs['abs_objdir'],
+                                               c['locales_dir'])
+        dirs['abs_locales_src_dir'] = os.path.join(dirs['abs_mozilla_dir'],
+                                                   c['locales_dir'])
+        dirs['abs_l10n_dir'] = os.path.join(dirs['abs_work_dir'],
+                                            c['l10n_dir'])
+        dirs['abs_compare_locales_dir'] = os.path.join(dirs['abs_work_dir'],
+                                                       'compare-locales')
+        for key in dirs.keys():
+            if key not in abs_dirs:
+                abs_dirs[key] = dirs[key]
+        self.abs_dirs = abs_dirs
+        return self.abs_dirs
+
 # __main__ {{{1
 
 if __name__ == '__main__':
