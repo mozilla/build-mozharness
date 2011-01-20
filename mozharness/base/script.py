@@ -114,7 +114,7 @@ class BaseScript(object):
         self.info("Dumping config to %s." % file_path)
         self.mkdir_p(dirs['abs_upload_dir'])
         json_config = json.dumps(self.config, sort_keys=True, indent=4)
-        fh = open(file_path)
+        fh = open(file_path, 'w')
         fh.write(json_config)
         fh.close()
 

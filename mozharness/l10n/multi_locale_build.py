@@ -95,13 +95,12 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
         self.scm_checkout_repos(c['repos'])
 
     def pull_locale_source(self):
+        c = self.config
+        dirs = self.query_abs_dirs()
         self.mkdir_p(dirs['abs_l10n_dir'])
         locales = self.query_locales()
         locale_repos = []
         for locale in locales:
-            locale_dict = {
-                
-            }
             tag = c['hg_l10n_tag']
             if hasattr(self, 'locale_dict'):
                 tag = self.locale_dict[locale]
