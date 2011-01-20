@@ -9,7 +9,7 @@
 export PYTHONPATH=.:..:$PYTHONPATH
 pylint -E -e F -f parseable `find mozharness -name [a-z]\*.py` `find scripts -name [a-z]\*.py`
 
-if [ -e localconfig.json ] ; then rm localconfig.json; fi
+rm -rf upload_dir
 coverage run -a --branch --omit='/Library/*,/usr/*,/opt/*' `which nosetests`
 for filename in `find mozharness -name [a-z]\*.py`; do
   coverage run -a --branch --omit='/Library/*,/usr/*,/opt/*' $filename
@@ -17,9 +17,7 @@ done
 for filename in `find scripts -name [a-z]\*.py` ; do
   coverage run -a --branch --omit='/Library/*,/usr/*,/opt/*' $filename --list-actions | grep -v "Actions available" | grep -v "Default actions"
 done
-if [ -e localconfig.json ] ; then rm localconfig.json; fi
 coverage run -a --branch --omit='/Library/*,/usr/*,/opt/*' scripts/configtest.py --log-level warning
-if [ -e localconfig.json ] ; then rm localconfig.json; fi
 
 coverage html --omit="/Library/*,/usr/*,/opt/*" -d coverage.new
 if [ -e coverage ] ; then

@@ -68,10 +68,6 @@ class ConfigTest(BaseScript):
         return self.config_files
 
     def list_config_files(self):
-        if 'list-config-files' not in self.actions:
-            self.action_message("Skipping list config files step.")
-            return
-        self.action_message("Listing config files.")
         config_files = self.query_config_files()
         for config_file in config_files:
             self.info(config_file)
@@ -80,10 +76,6 @@ class ConfigTest(BaseScript):
         """ Currently only "is this well-formed json?"
 
         """
-        if 'test-json-configs' not in self.actions:
-            self.action_message("Skipping test json configs step.")
-            return
-        self.action_message("Testing json config files.")
         config_files = self.query_config_files()
         filecount = [0, 0]
         for config_file in config_files:
@@ -110,10 +102,6 @@ class ConfigTest(BaseScript):
         """Currently only "will this give me a config dictionary?"
 
         """
-        if 'test-python-configs' not in self.actions:
-            self.action_message("Skipping test python configs step.")
-            return
-        self.action_message("Testing python config files.")
         config_files = self.query_config_files()
         filecount = [0, 0]
         for config_file in config_files:

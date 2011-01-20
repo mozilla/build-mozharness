@@ -58,8 +58,13 @@ class MaemoMultiLocaleBuild(MultiLocaleBuild):
      }
     ]]
 
-    def __init__(self, require_config_file=True):
-        super(MaemoMultiLocaleBuild, self).__init__(require_config_file=require_config_file)
+    def __init__(self, require_config_file=True, **kwargs):
+        super(MaemoMultiLocaleBuild, self).__init__(
+         require_config_file=require_config_file,
+         **kwargs
+        )
+        self.deb_name = None
+        self.deb_package_version = None
 
     def set_sbox_target(self):
         c = self.config
@@ -70,9 +75,33 @@ class MaemoMultiLocaleBuild(MultiLocaleBuild):
             self.info("%s is not %s.  Setting scratchbox target." % (
                       sbox_target, c['sbox_target']))
             self.run_command("%s -p sb-conf select %s" % (c['sbox_path'],
-                                                          c['sbox_target']))
+                                                          c['sbox_target']),
+                             halt_on_failure=True)
         else:
-            self.info("Checking scratchbox target.")
+            self.debug("Scratchbox target is already set correctly.")
+
+    def preflight_build(self):
+        self.set_sbox_target()
+
+#    def query_deb_name(self):
+#        if self.deb_name:
+#            return self.deb_name
+#        c = self.config
+#        dirs = self.query_abs_dirs()
+#        command = "make wget-DEB_PKG_NAME EN_US_BINARY_URL=%s" % c['en_us_binary_url']
+#        self.deb_name = self._process_command(command=command,
+#                                              cwd=dirs['abs_locales_dir'],
+#                                              halt_on_failure=True,
+#                                              return_type='output')
+#        return self.deb_name
+#
+#    def query_deb_package_version(self):
+#        if self.deb_package_version:
+#            return self.deb_package_version
+#        deb_name = self.query_deb_name()
+#        m = re.match(r'[^_]+_([^_]+)_', deb_name)
+#        self.deb_package_version = m.groups()[0]
+#        return self.deb_package_version
 
     def add_locales(self):
         if 'add-locales' not in self.actions:
