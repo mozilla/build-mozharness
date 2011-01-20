@@ -25,7 +25,7 @@ sys.path.insert(1, os.path.dirname(sys.path[0]))
 
 from mozharness.base.errors import SSHErrorList, PythonErrorList, MakefileErrorList
 from mozharness.base.script import MercurialScript
-from mozharness.l10n import LocalesMixin
+from mozharness.l10n.locales import LocalesMixin
 
 
 
