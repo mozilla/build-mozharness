@@ -74,33 +74,13 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
         MercurialScript.__init__(self, config_options=self.config_options,
                                  all_actions=['clobber', 'pull-build-source',
                                               'pull-locale-source',
-# TODO no package-en-US or upload-en-US here.
-# which is fine; that'll be handled by buildbot factories for now, but we
-# should add it later for completeness.
                                               'build', 'package-en-US',
                                               'upload-en-US',
                                               'add-locales', 'package-multi',
                                               'upload-multi'],
-#                                 default_actions=['pull-locale-source',
-#                                                  'add-locales',
-#                                                  'package-multi'],
                                  require_config_file=require_config_file)
 
-    def run(self):
-        self.clobber()
-        self.pull()
-        self.build()
-        self.package(package_type='en-US')
-#        self.upload(package_type='en-US')
-        self.add_locales()
-        self.package(package_type='multi')
-#        self.upload(package_type='multi')
-
     def clobber(self):
-        if 'clobber' not in self.actions:
-            self.action_message("Skipping clobber step.")
-            return
-        self.action_message("Clobbering.")
         c = self.config
         if c['work_dir'] != '.':
             path = os.path.join(c['base_work_dir'], c['work_dir'])
@@ -109,41 +89,30 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
         else:
             self.info("work_dir is '.'; skipping for now.")
 
-    def pull(self):
+    def pull_build_source(self):
         c = self.config
         dirs = self.query_abs_dirs()
-        if 'pull-build-source' not in self.actions:
-            self.action_message("Skipping pull build source step.")
-        else:
-            self.action_message("Pulling.")
-            self.scm_checkout_repos(c['repos'])
+        self.scm_checkout_repos(c['repos'])
 
-        if 'pull-locale-source' not in self.actions:
-            self.action_message("Skipping pull locale source step.")
-        else:
-            self.action_message("Pulling locale source.")
-            self.mkdir_p(dirs['abs_l10n_dir'])
-            locales = self.query_locales()
-            locale_repos = []
-            for locale in locales:
-                locale_dict = {
-                    
-                }
-                tag = c['hg_l10n_tag']
-                if hasattr(self, 'locale_dict'):
-                    tag = self.locale_dict[locale]
-                locale_repos.append({
-                    'repo': "%s/%s" % (c['hg_l10n_base'], locale),
-                    'tag': tag
-                })
-            self.scm_checkout_repos(repo_list=locale_repos,
-                                    parent_dir=dirs['abs_l10n_dir'])
+    def pull_locale_source(self):
+        self.mkdir_p(dirs['abs_l10n_dir'])
+        locales = self.query_locales()
+        locale_repos = []
+        for locale in locales:
+            locale_dict = {
+                
+            }
+            tag = c['hg_l10n_tag']
+            if hasattr(self, 'locale_dict'):
+                tag = self.locale_dict[locale]
+            locale_repos.append({
+                'repo': "%s/%s" % (c['hg_l10n_base'], locale),
+                'tag': tag
+            })
+        self.scm_checkout_repos(repo_list=locale_repos,
+                                parent_dir=dirs['abs_l10n_dir'])
 
     def build(self):
-        if 'build' not in self.actions:
-            self.action_message("Skipping build step.")
-            return
-        self.action_message("Building.")
         c = self.config
         dirs = self.query_abs_dirs()
         self.copyfile(os.path.join(dirs['abs_work_dir'], c['mozconfig']),
@@ -173,26 +142,25 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
                                  error_list=MakefileErrorList,
                                  halt_on_failure=True)
 
+    def package_en_US(self):
+        self.package(package_type='en-US')
+
+    def package_multi(self):
+        self.package(package_type='multi')
+
     def package(self, package_type='en-US'):
-        if 'package-%s' % package_type not in self.actions:
-            self.action_message("Skipping package-%s." % package_type)
-            return
-        self.action_message("Packaging %s." % package_type)
         c = self.config
         dirs = self.query_abs_dirs()
 
         command = "make package"
-        # only a little ugly?
-        # TODO c['package_env'] that automatically replaces %(PATH),
-        # %(abs_work_dir)
         env = self.query_env()
         if package_type == 'multi':
             command += " AB_CD=multi"
             env['MOZ_CHROME_MULTILOCALE'] = "en-US " + \
                                             ' '.join(self.query_locales())
             self.info("MOZ_CHROME_MULTILOCALE is %s" % env['MOZ_CHROME_MULTILOCALE'])
+        # TODO remove once bug 611648 fixed
         if 'jarsigner' in c:
-            # hm, this is pretty mozpass.py specific
             env['JARSIGNER'] = os.path.join(dirs['abs_work_dir'],
                                             c['jarsigner'])
         status = self.run_command(command, cwd=dirs['abs_objdir'], env=env,
@@ -204,6 +172,14 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
         status = self.run_command(command, cwd=dirs['abs_objdir'], env=env,
                                   error_list=MakefileErrorList,
                                   halt_on_failure=True)
+
+    def upload_en_US(self):
+        # TODO
+        self.info("Not written yet.")
+
+    def upload_multi(self):
+        # TODO
+        self.info("Not written yet.")
 
     def _process_command(self, **kwargs):
         """Stub wrapper function that allows us to call scratchbox in
