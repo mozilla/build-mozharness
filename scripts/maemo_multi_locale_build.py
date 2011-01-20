@@ -4,11 +4,14 @@
 Override MultiLocaleBuild with Maemo- and scratchbox-isms.
 """
 
+import hashlib
 import os
+import re
 import sys
 
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
+from mozharness.base.errors import MakefileErrorList, PythonErrorList
 from mozharness.l10n.multi_locale_build import MultiLocaleBuild
 
 
@@ -127,6 +130,25 @@ class MaemoMultiLocaleBuild(MultiLocaleBuild):
         status = self.run_command(command, cwd=dirs['abs_objdir'], env=env,
                                   error_list=MakefileErrorList,
                                   halt_on_failure=True)
+
+    def _processCommand(self, **kwargs):
+        c = self.config
+        command = '%s ' % c['sbox_path']
+        if 'return_type' not in kwargs or kwargs['return_type'] != 'output':
+            command += '-p '
+        if 'cwd' in kwargs:
+            command += '-d %s ' % kwargs['cwd'].replace(c['sbox_home'], '')
+            del kwargs['cwd']
+        kwargs['command'] = '%s "%s"' % (command, kwargs['command'].replace(c['sbox_root'], ''))
+        if 'return_type' not in kwargs or kwargs['return_type'] != 'output':
+            if 'error_list' in kwargs:
+                kwargs['error_list'] = PythonErrorList + kwargs['error_list']
+            else:
+                kwargs['error_list'] = PythonErrorList
+            return self.run_command(**kwargs)
+        else:
+            del(kwargs['return_type'])
+            return self.get_output_from_command(**kwargs)
 
 # __main__ {{{1
 if __name__ == '__main__':

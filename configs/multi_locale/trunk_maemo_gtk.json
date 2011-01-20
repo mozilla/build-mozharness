@@ -35,5 +35,5 @@
     },
     "merge_locales": true,
     "mozilla_dir": "mozilla-central",
-    "mozconfig": "buildbot-configs/mozilla2/mobile/android/mobile-browser/nightly/mozconfig",
+    "mozconfig": "buildbot-configs/mozilla2/mobile/maemo5-gtk/mobile-browser/nightly/mozconfig"
 }

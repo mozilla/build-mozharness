@@ -239,22 +239,14 @@ class BaseScript(object):
     logging and config, provide the base for all scripts in this harness.
     """
 
-    def _fix_env(self, env, replace_dict=None):
-        if replace_dict:
-            for key in env.keys():
-                env[key] = env[key] % replace_dict
-        return env
-
-    def generate_env(self, partial_env=None, override_env=None,
-                     replace_dict=None):
-        if override_env:
-            env = self._fix_env(override_env, replace_dict)
-        else:
-            env = os.environ.copy()
-            partial_env = self._fix_env(partial_env, replace_dict)
-            for key in partial_env.keys():
-                env[key] = partial_env[key]
-        self.debug("Generated env: %s" % pprint.pformat(env))
+    def generate_env(self, partial_env, replace_dict=None):
+        env = os.environ.copy()
+        if replace_dict is None:
+            replace_dict = {}
+        replace_dict['PATH'] = os.environ['PATH']
+        for key in partial_env.keys():
+            env[key] = partial_env[key] % replace_dict
+            self.debug("ENV: %s is now %s" % (key, env[key]))
         return env
 
     def run_command(self, command, cwd=None, error_list=[], parse_at_end=False,
