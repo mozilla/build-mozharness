@@ -69,7 +69,8 @@ class MaemoMultiLocaleBuild(MultiLocaleBuild):
     def set_sbox_target(self):
         c = self.config
         self.info("Checking scratchbox target.")
-        output = self.get_output_from_command("%s -p sb-conf current")
+        output = self.get_output_from_command("%s -p sb-conf current" %
+                                              c['sbox_path'])
         sbox_target = output.replace("ARMEL", "").replace("_", "").replace("-", "")
         if sbox_target != c['sbox_target']:
             self.info("%s is not %s.  Setting scratchbox target." % (

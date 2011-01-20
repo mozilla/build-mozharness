@@ -67,7 +67,7 @@ class LocalesMixin(object):
         dirs = self.query_abs_dirs()
         compare_locales_script = os.path.join(dirs['abs_compare_locales_dir'],
                                               'scripts', 'compare-locales')
-        env = self.query_env(env={'PYTHONPATH':
+        env = self.query_env(partial_env={'PYTHONPATH':
                              os.path.join(dirs['abs_compare_locales_dir'],
                                           'lib')})
         compare_locales_error_list = list(PythonErrorList)
