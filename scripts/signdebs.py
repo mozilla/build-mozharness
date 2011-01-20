@@ -58,12 +58,6 @@ class MaemoDebSigner(LocalesMixin, MercurialScript):
                                               'upload'],
                                  require_config_file=require_config_file)
 
-    def run(self):
-        self.clobber_repo_dir()
-        self.create_repos()
-        self.upload_repos()
-        self.summary()
-
     def _query_deb_name(self, deb_name_url=None):
         if self.config.get('deb_name', None):
             return self.config['deb_name']
@@ -81,11 +75,7 @@ class MaemoDebSigner(LocalesMixin, MercurialScript):
             except URLError, e:
                 self.error("URL Error: %s %s" % (e.code, deb_name_url))
 
-    def clobber_repo_dir(self):
-        if 'clobber' not in self.actions:
-            self.action_message("Skipping clobber step.")
-            return
-        self.action_message("Clobbering repo dir.")
+    def clobber(self):
         c = self.config
         repo_path = os.path.join(c['base_work_dir'], c['work_dir'], c['repo_dir'])
         if os.path.exists(repo_path):
@@ -184,10 +174,6 @@ components = %(section)s
         
 
     def create_repos(self):
-        if 'create-repos' not in self.actions:
-            self.action_message("Skipping create repo step.")
-            return
-        self.action_message("Creating repos.")
         c = self.config
         platform_config = c['platform_config']
         platforms = c.get("platforms", platform_config.keys())
@@ -245,11 +231,7 @@ components = %(section)s
                                                        install_file),
                                           locale, platform)
 
-    def upload_repos(self):
-        if 'upload' not in self.actions:
-            self.action_message("Skipping upload step.")
-            return
-        self.action_message("Uploading repos.")
+    def upload(self):
         c = self.config
         platform_config = c['platform_config']
         platforms = self.config.get("platforms", platform_config.keys())
