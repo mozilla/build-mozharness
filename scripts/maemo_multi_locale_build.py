@@ -72,7 +72,7 @@ class MaemoMultiLocaleBuild(MultiLocaleBuild):
             self.run_command("%s -p sb-conf select %s" % (c['sbox_path'],
                                                           c['sbox_target']))
         else:
-            self.debug("%s is correct." % sbox_target)
+            self.info("Checking scratchbox target.")
 
     def add_locales(self):
         if 'add-locales' not in self.actions:
@@ -104,18 +104,12 @@ class MaemoMultiLocaleBuild(MultiLocaleBuild):
         # only a little ugly?
         # TODO c['package_env'] that automatically replaces %(PATH),
         # %(abs_work_dir)
-        partial_env = c['java_env'].copy()
-        env = self.generate_env(partial_env=c['java_env'],
-                                replace_dict={'PATH': os.environ['PATH']})
+        env = self.query_env()
         if package_type == 'multi':
             command += " AB_CD=multi"
-            partial_env['MOZ_CHROME_MULTILOCALE'] = "en-US " + \
-                                                   ' '.join(self.query_locales())
-            self.info("MOZ_CHROME_MULTILOCALE is %s" % partial_env['MOZ_CHROME_MULTILOCALE'])
-        if 'jarsigner' in c:
-            # hm, this is pretty mozpass.py specific
-            partial_env['JARSIGNER'] = os.path.join(dirs['abs_work_dir'],
-                                                    c['jarsigner'])
+            env['MOZ_CHROME_MULTILOCALE'] = "en-US " + \
+                                            ' '.join(self.query_locales())
+            self.info("MOZ_CHROME_MULTILOCALE is %s" % env['MOZ_CHROME_MULTILOCALE'])
         status = self.run_command(command, cwd=dirs['abs_objdir'], env=env,
                                   error_list=MakefileErrorList,
                                   halt_on_failure=True)

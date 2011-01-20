@@ -64,7 +64,6 @@ class LocalesMixin(object):
 
     def run_compare_locales(self, locale, halt_on_failure=False):
         c = self.config
-        # Making query_abs_dirs() an expected method
         dirs = self.query_abs_dirs()
         compare_locales_script = os.path.join(dirs['abs_compare_locales_dir'],
                                               'scripts', 'compare-locales')

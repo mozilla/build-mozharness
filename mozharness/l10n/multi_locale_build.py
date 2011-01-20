@@ -151,8 +151,8 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
                       error_level='fatal')
         command = "make -f client.mk build"
         env = self.query_env()
-        self._process_command(command, cwd=dirs['abs_mozilla_dir'], env=env,
-                              error_list=MakefileErrorList,
+        self._process_command(command=command, cwd=dirs['abs_mozilla_dir'],
+                              env=env, error_list=MakefileErrorList,
                               halt_on_failure=True)
 
     def add_locales(self):

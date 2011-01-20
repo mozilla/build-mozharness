@@ -39,13 +39,6 @@ class ConfigTest(BaseScript):
                                              'test-python-configs'],
                             require_config_file=require_config_file)
 
-    def run(self):
-        self.dump_config()
-        self.list_config_files()
-        self.test_json_configs()
-        self.test_python_configs()
-        self.summary()
-
     def dump_config(self):
         self.action_message("Dumping config")
         self.info("Note that some of these are not used.")

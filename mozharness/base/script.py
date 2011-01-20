@@ -11,6 +11,11 @@ import sys
 import tempfile
 import urllib2
 
+try:
+    import json
+except:
+    import simplejson as json
+
 from mozharness.base.config import BaseConfig
 from mozharness.base.log import SimpleFileLogger, MultiFileLogger
 from mozharness.base.errors import HgErrorList
@@ -42,32 +47,76 @@ class BaseScript(object):
                                **kwargs)
         self.config = rw_config.get_read_only_config()
         self.actions = tuple(rw_config.actions)
-        if os.path.exists("localconfig.json"):
-            self.move("localconfig.json", "localconfig.json.bak")
-        rw_config.dump_config(file_name="localconfig.json")
+        self.all_actions = tuple(rw_config.actions)
+        self.env = None
         self.new_log_obj(default_log_level=default_log_level)
-        # I can definitely see wanting to get more runtime info before
-        # locking -- what's my hg revision? What's the latest ____
-        # in this json feed?  ... that you might want to save for later
-        # for a respin.  But as I think of what I'd want to add
-        # to this list, I keep thinking of more and more things.
-
-        # Now I'm thinking it's two steps: 1) figure out runtime details;
-        # 2) set up configs and run.  (2) can be iterated over multiple
-        # times during respins. (1) should be external to that.
+        # self.config is read-only and locked.
+        #
+        # We can create intermediate config info programmatically from
+        # this in a repeatable way, with logs; this is how we straddle the
+        # ideal-but-not-user-friendly static config and the
+        # easy-to-write-hard-to-debug writable config.
         self._lock_config()
         self.info("Run as %s" % rw_config.command_line)
 
     def _lock_config(self):
         self.config.lock()
 
+    def _possibly_run_method(self, method_name, error_if_missing=False):
+        if hasattr(self, method_name) and callable(getattr(self, method_name)):
+            return getattr(self, method_name)()
+        elif error_if_missing:
+            self.error("No such method %s!" % method_name)
+
+    def run(self):
+        """Default run method.
+        This is the "do everything" method, based on actions and all_actions.
+
+        First run self.dump_config() if it exists.
+        Second, go through the list of all_actions.
+        If they're in the list of self.actions, try to run
+        self.preflight_ACTION(), self.ACTION(), and self.postflight_ACTION().
+
+        Preflight is sanity checking before doing anything time consuming or
+        destructive.
+
+        Postflight is quick testing for success after an action.
+
+        Run self.summary() at the end.
+
+        """
+        self.dump_config()
+        for action in self.all_actions:
+            if action not in self.actions:
+                self.action_message("Skipping %s step." % action)
+            else:
+                method_name = action.replace("-", "_")
+                self.action_message("Running %s step." % action)
+                self._possibly_run_method("preflight_%s" % method_name)
+                self._possibly_run_method(method_name, error_if_missing=True)
+                self._possibly_run_method("postflight_%s" % method_name)
+        self.summary()
+
     def query_abs_dirs(self):
         if self.abs_dirs:
             return self.abs_dirs
         c = self.config
-        self.abs_dirs = {'abs_work_dir': os.path.join(c['base_work_dir'],
-                                                       c['work_dir'])}
+        dirs = {}
+        dirs['abs_work_dir'] = os.path.join(c['base_work_dir'], c['work_dir'])
+        dirs['abs_upload_dir'] = os.path.join(c['base_work_dir'], 'upload_dir')
+        dirs['abs_log_dir'] = os.path.join(dirs['abs_upload_dir'], 'logs')
+        self.abs_dirs = dirs
         return self.abs_dirs
+
+    def dump_config(self):
+        dirs = self.query_abs_dirs()
+        file_path = os.path.join(dirs['abs_upload_dir'], "localconfig.json")
+        self.info("Dumping config to %s." % file_path)
+        self.mkdir_p(dirs['abs_upload_dir'])
+        json_config = json.dumps(self.config, sort_keys=True, indent=4)
+        fh = open(file_path)
+        fh.write(json_config)
+        fh.close()
 
 # os commands {{{2
     def mkdir_p(self, path):
@@ -155,9 +204,10 @@ class BaseScript(object):
 
 # logging {{{2
     def new_log_obj(self, default_log_level="info"):
+        dirs = self.query_abs_dirs()
         log_config = {"logger_name": 'Simple',
                       "log_name": 'test',
-                      "log_dir": 'logs',
+                      "log_dir": dirs['abs_log_dir'],
                       "log_level": default_log_level,
                       "log_format": '%(asctime)s %(levelname)8s - %(message)s',
                       "log_to_console": True,
@@ -252,7 +302,7 @@ class BaseScript(object):
         """
         set_self_env = False
         if partial_env is None:
-            if hasattr('env', self):
+            if self.env:
                 return self.env
             set_self_env = True
             partial_env = self.config.get('env', {})
