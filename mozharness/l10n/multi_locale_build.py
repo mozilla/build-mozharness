@@ -160,6 +160,10 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
 
         command = "make package"
         env = self.query_env()
+        if env is None:
+            # This is for Maemo, where we don't want an env for builds
+            # but we do for packaging.  self.query_env() will return None.
+            env = os.environ.copy()
         if package_type == 'multi':
             command += " AB_CD=multi"
             env['MOZ_CHROME_MULTILOCALE'] = "en-US " + \

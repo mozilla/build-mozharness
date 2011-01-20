@@ -435,8 +435,10 @@ class BaseScript(object):
         tmp_stdout = None
         tmp_stderr = None
         pv = platform.python_version_tuple()
+        python_26 = False
         # Bad NamedTemporaryFile in python_version < 2.6 :(
         if int(pv[0]) > 2 or (int(pv[0]) == 2 and int(pv[1]) >= 6):
+            python_26 = True
             tmp_stdout = tempfile.NamedTemporaryFile(suffix="stdout",
                                                      delete=False)
             tmp_stderr = tempfile.NamedTemporaryFile(suffix="stderr",
@@ -478,8 +480,9 @@ class BaseScript(object):
         elif p.returncode:
             return_level = 'error'
         self.log("Return code: %d" % p.returncode, level=return_level)
-        self.rmtree(tmp_stdout_filename)
-        self.rmtree(tmp_stderr_filename)
+        if python_26:
+            self.rmtree(tmp_stdout_filename)
+            self.rmtree(tmp_stderr_filename)
         if halt_on_failure and return_level == 'error':
             self.fatal("Halting on failure while running %s" % command,
                        exit_code=p.returncode)
