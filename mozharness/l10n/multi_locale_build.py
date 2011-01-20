@@ -5,7 +5,6 @@ This should be a mostly generic multilocale build script.
 """
 
 import os
-import re
 import sys
 
 sys.path.insert(1, os.path.dirname(os.path.dirname(sys.path[0])))
@@ -151,11 +150,10 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
                       os.path.join(dirs['abs_mozilla_dir'], 'mozconfig'),
                       error_level='fatal')
         command = "make -f client.mk build"
-        # TODO a better way to do envs
-        env = self.generate_env(c.get('env', {}))
-        self.run_command(command, cwd=dirs['abs_mozilla_dir'], env=env,
-                         error_list=MakefileErrorList,
-                         halt_on_failure=True)
+        env = self.query_env()
+        self._process_command(command, cwd=dirs['abs_mozilla_dir'], env=env,
+                              error_list=MakefileErrorList,
+                              halt_on_failure=True)
 
     def add_locales(self):
         if 'add-locales' not in self.actions:
@@ -187,7 +185,7 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
         # only a little ugly?
         # TODO c['package_env'] that automatically replaces %(PATH),
         # %(abs_work_dir)
-        env = self.generate_env(c.get('env', {}))
+        env = self.query_env()
         if package_type == 'multi':
             command += " AB_CD=multi"
             env['MOZ_CHROME_MULTILOCALE'] = "en-US " + \
@@ -206,6 +204,13 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
         status = self.run_command(command, cwd=dirs['abs_objdir'], env=env,
                                   error_list=MakefileErrorList,
                                   halt_on_failure=True)
+
+    def _process_command(self, **kwargs):
+        """Stub wrapper function that allows us to call scratchbox in
+           MaemoMultiLocaleBuild.
+
+        """
+        return self.run_command(**kwargs)
 
 # __main__ {{{1
 if __name__ == '__main__':

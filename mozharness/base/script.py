@@ -239,7 +239,23 @@ class BaseScript(object):
     logging and config, provide the base for all scripts in this harness.
     """
 
-    def generate_env(self, partial_env, replace_dict=None):
+    def query_env(self, partial_env=None, replace_dict=None):
+        """Environment query/generation method.
+
+        The default, self.query_env(), will look for self.config['env']
+        and replace any special strings in there ( %(PATH)s ).
+        It will then store it as self.env for speeding things up later.
+
+        If you specify partial_env, partial_env will be used instead of
+        self.config['env'], and we don't save self.env as it's a one-off.
+
+        """
+        set_self_env = False
+        if partial_env is None:
+            if hasattr('env', self):
+                return self.env
+            set_self_env = True
+            partial_env = self.config.get('env', {})
         env = os.environ.copy()
         if replace_dict is None:
             replace_dict = {}
@@ -247,6 +263,8 @@ class BaseScript(object):
         for key in partial_env.keys():
             env[key] = partial_env[key] % replace_dict
             self.debug("ENV: %s is now %s" % (key, env[key]))
+        if set_self_env:
+            self.env = env
         return env
 
     def run_command(self, command, cwd=None, error_list=[], parse_at_end=False,

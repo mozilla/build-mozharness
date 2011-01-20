@@ -61,23 +61,18 @@ class MaemoMultiLocaleBuild(MultiLocaleBuild):
     def __init__(self, require_config_file=True):
         super(MaemoMultiLocaleBuild, self).__init__(require_config_file=require_config_file)
 
-    def build(self):
-        if 'build' not in self.actions:
-            self.action_message("Skipping build step.")
-            return
-        self.action_message("Building.")
+    def set_sbox_target(self):
         c = self.config
-        dirs = self.query_abs_dirs()
-        self.copyfile(os.path.join(dirs['abs_work_dir'], c['mozconfig']),
-                      os.path.join(dirs['abs_mozilla_dir'], 'mozconfig'),
-                      error_level='fatal')
-        command = "make -f client.mk build"
-        # TODO a better way to do envs
-        env = self.generate_env(partial_env=c['java_env'],
-                                replace_dict={'PATH': os.environ['PATH']})
-        self.run_command(command, cwd=dirs['abs_mozilla_dir'], env=env,
-                         error_list=MakefileErrorList,
-                         halt_on_failure=True)
+        self.info("Checking scratchbox target.")
+        output = self.get_output_from_command("%s -p sb-conf current")
+        sbox_target = output.replace("ARMEL", "").replace("_", "").replace("-", "")
+        if sbox_target != c['sbox_target']:
+            self.info("%s is not %s.  Setting scratchbox target." % (
+                      sbox_target, c['sbox_target']))
+            self.run_command("%s -p sb-conf select %s" % (c['sbox_path'],
+                                                          c['sbox_target']))
+        else:
+            self.debug("%s is correct." % sbox_target)
 
     def add_locales(self):
         if 'add-locales' not in self.actions:
@@ -131,7 +126,7 @@ class MaemoMultiLocaleBuild(MultiLocaleBuild):
                                   error_list=MakefileErrorList,
                                   halt_on_failure=True)
 
-    def _processCommand(self, **kwargs):
+    def _process_command(self, **kwargs):
         c = self.config
         command = '%s ' % c['sbox_path']
         if 'return_type' not in kwargs or kwargs['return_type'] != 'output':
