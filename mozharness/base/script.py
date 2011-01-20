@@ -47,7 +47,7 @@ class BaseScript(object):
                                **kwargs)
         self.config = rw_config.get_read_only_config()
         self.actions = tuple(rw_config.actions)
-        self.all_actions = tuple(rw_config.actions)
+        self.all_actions = tuple(rw_config.all_actions)
         self.env = None
         self.new_log_obj(default_log_level=default_log_level)
         # self.config is read-only and locked.
@@ -429,9 +429,11 @@ class BaseScript(object):
         if self.config['noop']:
             self.info("(Dry run; skipping)")
             return
-        tmp_stdout = tempfile.NamedTemporaryFile(suffix="stdout", delete=False)
+#        tmp_stdout = tempfile.NamedTemporaryFile(suffix="stdout", delete=False)
+        tmp_stdout = tempfile.NamedTemporaryFile(suffix="stdout")
         tmp_stdout_filename = tmp_stdout.name
-        tmp_stderr = tempfile.NamedTemporaryFile(suffix="stderr", delete=False)
+#        tmp_stderr = tempfile.NamedTemporaryFile(suffix="stderr", delete=False)
+        tmp_stderr = tempfile.NamedTemporaryFile(suffix="stderr")
         tmp_stderr_filename = tmp_stderr.name
         p = subprocess.Popen(command, shell=shell, stdout=tmp_stdout,
                              cwd=cwd, stderr=tmp_stderr, env=env)

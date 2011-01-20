@@ -67,9 +67,9 @@ class LocalesMixin(object):
         dirs = self.query_abs_dirs()
         compare_locales_script = os.path.join(dirs['abs_compare_locales_dir'],
                                               'scripts', 'compare-locales')
-        env = self.generate_env(partial_env={'PYTHONPATH':
-                                os.path.join(dirs['abs_compare_locales_dir'],
-                                             'lib')})
+        env = self.query_env(env={'PYTHONPATH':
+                             os.path.join(dirs['abs_compare_locales_dir'],
+                                          'lib')})
         compare_locales_error_list = list(PythonErrorList)
         self.rmtree(dirs['abs_merge_dir'])
         command = "python %s -m %s l10n.ini %s %s" % (compare_locales_script,
