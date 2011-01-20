@@ -1,10 +1,9 @@
 #!/usr/bin/env python
-"""multil10n.py
+"""multi_locale_build.py
 
 This should be a mostly generic multilocale build script.
 """
 
-import hashlib
 import os
 import re
 import sys
@@ -108,7 +107,8 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
             path = os.path.join(c['base_work_dir'], c['work_dir'])
             if os.path.exists(path):
                 self.rmtree(path, error_level='fatal')
-        # TODO what to do otherwise?
+        else:
+            self.info("work_dir is '.'; skipping for now.")
 
     def pull(self):
         c = self.config
@@ -152,8 +152,7 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
                       error_level='fatal')
         command = "make -f client.mk build"
         # TODO a better way to do envs
-        env = self.generate_env(partial_env=c['java_env'],
-                                replace_dict={'PATH': os.environ['PATH']})
+        env = self.generate_env(c['env'])
         self.run_command(command, cwd=dirs['abs_mozilla_dir'], env=env,
                          error_list=MakefileErrorList,
                          halt_on_failure=True)
@@ -188,18 +187,16 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
         # only a little ugly?
         # TODO c['package_env'] that automatically replaces %(PATH),
         # %(abs_work_dir)
-        partial_env = c['java_env'].copy()
-        env = self.generate_env(partial_env=c['java_env'],
-                                replace_dict={'PATH': os.environ['PATH']})
+        env = self.generate_env(c['env'])
         if package_type == 'multi':
             command += " AB_CD=multi"
-            partial_env['MOZ_CHROME_MULTILOCALE'] = "en-US " + \
-                                                   ' '.join(self.query_locales())
-            self.info("MOZ_CHROME_MULTILOCALE is %s" % partial_env['MOZ_CHROME_MULTILOCALE'])
+            env['MOZ_CHROME_MULTILOCALE'] = "en-US " + \
+                                            ' '.join(self.query_locales())
+            self.info("MOZ_CHROME_MULTILOCALE is %s" % env['MOZ_CHROME_MULTILOCALE'])
         if 'jarsigner' in c:
             # hm, this is pretty mozpass.py specific
-            partial_env['JARSIGNER'] = os.path.join(dirs['abs_work_dir'],
-                                                    c['jarsigner'])
+            env['JARSIGNER'] = os.path.join(dirs['abs_work_dir'],
+                                            c['jarsigner'])
         status = self.run_command(command, cwd=dirs['abs_objdir'], env=env,
                                   error_list=MakefileErrorList,
                                   halt_on_failure=True)
