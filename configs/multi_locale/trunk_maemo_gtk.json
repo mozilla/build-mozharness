@@ -29,10 +29,6 @@
     "hg_l10n_base": "http://hg.mozilla.org/l10n-central",
     "hg_l10n_tag": "default",
     "l10n_dir": "l10n-central",
-    "env": {
-        "JAVA_HOME": "/tools/jdk",
-        "PATH": "%(PATH)s:/tools/jdk/bin"
-    },
     "merge_locales": true,
     "mozilla_dir": "mozilla-central",
     "mozconfig": "buildbot-configs/mozilla2/mobile/maemo5-gtk/mobile-browser/nightly/mozconfig"

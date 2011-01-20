@@ -3,6 +3,7 @@
 """
 
 import os
+import platform
 import pprint
 import re
 import shutil
@@ -305,7 +306,9 @@ class BaseScript(object):
             if self.env:
                 return self.env
             set_self_env = True
-            partial_env = self.config.get('env', {})
+            partial_env = self.config.get('env', None)
+            if not partial_env:
+                return None
         env = os.environ.copy()
         if replace_dict is None:
             replace_dict = {}
@@ -429,11 +432,19 @@ class BaseScript(object):
         if self.config['noop']:
             self.info("(Dry run; skipping)")
             return
-#        tmp_stdout = tempfile.NamedTemporaryFile(suffix="stdout", delete=False)
-        tmp_stdout = tempfile.NamedTemporaryFile(suffix="stdout")
+        tmp_stdout = None
+        tmp_stderr = None
+        pv = platform.python_version_tuple()
+        # Bad NamedTemporaryFile in python_version < 2.6 :(
+        if int(pv[0]) > 2 or (int(pv[0]) == 2 and int(pv[1]) >= 6):
+            tmp_stdout = tempfile.NamedTemporaryFile(suffix="stdout",
+                                                     delete=False)
+            tmp_stderr = tempfile.NamedTemporaryFile(suffix="stderr",
+                                                     delete=False)
+        else:
+            tmp_stdout = tempfile.NamedTemporaryFile(suffix="stdout")
+            tmp_stderr = tempfile.NamedTemporaryFile(suffix="stderr")
         tmp_stdout_filename = tmp_stdout.name
-#        tmp_stderr = tempfile.NamedTemporaryFile(suffix="stderr", delete=False)
-        tmp_stderr = tempfile.NamedTemporaryFile(suffix="stderr")
         tmp_stderr_filename = tmp_stderr.name
         p = subprocess.Popen(command, shell=shell, stdout=tmp_stdout,
                              cwd=cwd, stderr=tmp_stderr, env=env)
