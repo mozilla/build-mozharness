@@ -152,7 +152,7 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
                       error_level='fatal')
         command = "make -f client.mk build"
         # TODO a better way to do envs
-        env = self.generate_env(c['env'])
+        env = self.generate_env(c.get('env', {}))
         self.run_command(command, cwd=dirs['abs_mozilla_dir'], env=env,
                          error_list=MakefileErrorList,
                          halt_on_failure=True)
@@ -187,7 +187,7 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
         # only a little ugly?
         # TODO c['package_env'] that automatically replaces %(PATH),
         # %(abs_work_dir)
-        env = self.generate_env(c['env'])
+        env = self.generate_env(c.get('env', {}))
         if package_type == 'multi':
             command += " AB_CD=multi"
             env['MOZ_CHROME_MULTILOCALE'] = "en-US " + \

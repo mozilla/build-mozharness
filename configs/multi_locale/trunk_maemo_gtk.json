@@ -1,5 +1,6 @@
 {
-    "work_dir": ".",
+    "base_work_dir": "/scratchbox/users/cltbld/home/cltbld/build",
+    "work_dir": "trunk_maemo_gtk",
     "log_name": "multilocale",
     "objdir": "objdir",
     "locales_file": "mozilla-central/mobile/locales/maemo-locales",
@@ -35,5 +36,4 @@
     "merge_locales": true,
     "mozilla_dir": "mozilla-central",
     "mozconfig": "buildbot-configs/mozilla2/mobile/android/mobile-browser/nightly/mozconfig",
-    "jarsigner": "../tools/release/signing/mozpass.py"
 }

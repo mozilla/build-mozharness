@@ -29,7 +29,7 @@
         "tag": "RELEASE_AUTOMATION"
     }],
     "l10n_dir": "l10n-central",
-    "java_env": {
+    "env": {
         "JAVA_HOME": "/tools/jdk",
         "PATH": "%(PATH)s:/tools/jdk/bin"
     },
