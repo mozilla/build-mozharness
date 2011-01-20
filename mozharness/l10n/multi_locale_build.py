@@ -124,10 +124,6 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
                               halt_on_failure=True)
 
     def add_locales(self):
-        if 'add-locales' not in self.actions:
-            self.action_message("Skipping add-locales step.")
-            return
-        self.action_message("Adding locales to the apk.")
         c = self.config
         dirs = self.query_abs_dirs()
         locales = self.query_locales()
@@ -137,15 +133,26 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
             command = 'make chrome-%s L10NBASEDIR=%s' % (locale, dirs['abs_l10n_dir'])
             if c['merge_locales']:
                 command += " LOCALE_MERGEDIR=%s" % dirs['abs_merge_dir']
-                self.run_command(command, cwd=dirs['abs_locales_dir'],
-                                 error_list=MakefileErrorList,
-                                 halt_on_failure=True)
+                self._process_command(command=command,
+                                      cwd=dirs['abs_locales_dir'],
+                                      error_list=MakefileErrorList,
+                                      halt_on_failure=True)
 
     def package_en_US(self):
         self.package(package_type='en-US')
 
     def package_multi(self):
         self.package(package_type='multi')
+
+    def additional_packaging(self, package_type='en-US', env=None):
+        dirs = self.query_abs_dirs()
+        command = "make package-tests"
+        if package_type == 'multi':
+            command += " AB_CD=multi"
+        self.run_command(command, cwd=dirs['abs_objdir'], env=env,
+                         error_list=MakefileErrorList,
+                         halt_on_failure=True)
+        # TODO deal with buildsymbols
 
     def package(self, package_type='en-US'):
         c = self.config
@@ -162,15 +169,10 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
         if 'jarsigner' in c:
             env['JARSIGNER'] = os.path.join(dirs['abs_work_dir'],
                                             c['jarsigner'])
-        status = self.run_command(command, cwd=dirs['abs_objdir'], env=env,
-                                  error_list=MakefileErrorList,
-                                  halt_on_failure=True)
-        command = "make package-tests"
-        if package_type == 'multi':
-            command += " AB_CD=multi"
-        status = self.run_command(command, cwd=dirs['abs_objdir'], env=env,
-                                  error_list=MakefileErrorList,
-                                  halt_on_failure=True)
+        self._process_command(command=command, cwd=dirs['abs_objdir'],
+                              env=env, error_list=MakefileErrorList,
+                              halt_on_failure=True)
+        self.additional_packaging(package_type=package_type, env=env)
 
     def upload_en_US(self):
         # TODO

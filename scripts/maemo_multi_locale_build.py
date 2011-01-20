@@ -121,39 +121,27 @@ class MaemoMultiLocaleBuild(MultiLocaleBuild):
                                  error_list=MakefileErrorList,
                                  halt_on_failure=True)
 
-    def package(self, package_type='en-US'):
-        if 'package-%s' % package_type not in self.actions:
-            self.action_message("Skipping package-%s." % package_type)
-            return
-        self.action_message("Packaging %s." % package_type)
-        c = self.config
+    def additional_packaging(self, package_type='en-US', env=None):
         dirs = self.query_abs_dirs()
-
-        command = "make package"
-        # only a little ugly?
-        # TODO c['package_env'] that automatically replaces %(PATH),
-        # %(abs_work_dir)
-        env = self.query_env()
+        command = "make deb"
+        self._process_command(command=command, cwd=dirs['abs_objdir'],
+                              env=env, error_list=MakefileErrorList,
+                              halt_on_failure=True)
+        command = "make package-tests PYTHON=python2.5"
         if package_type == 'multi':
             command += " AB_CD=multi"
-            env['MOZ_CHROME_MULTILOCALE'] = "en-US " + \
-                                            ' '.join(self.query_locales())
-            self.info("MOZ_CHROME_MULTILOCALE is %s" % env['MOZ_CHROME_MULTILOCALE'])
-        status = self.run_command(command, cwd=dirs['abs_objdir'], env=env,
-                                  error_list=MakefileErrorList,
-                                  halt_on_failure=True)
-        command = "make package-tests"
-        if package_type == 'multi':
-            command += " AB_CD=multi"
-        status = self.run_command(command, cwd=dirs['abs_objdir'], env=env,
-                                  error_list=MakefileErrorList,
-                                  halt_on_failure=True)
+        self._process_command(command=command, cwd=dirs['abs_objdir'],
+                              env=env, error_list=MakefileErrorList,
+                              halt_on_failure=True)
+        # TODO deal with buildsymbols
 
     def _process_command(self, **kwargs):
         c = self.config
         command = '%s ' % c['sbox_path']
         if 'return_type' not in kwargs or kwargs['return_type'] != 'output':
             command += '-p '
+        if 'env' in kwargs:
+            command += '-k '
         if 'cwd' in kwargs:
             command += '-d %s ' % kwargs['cwd'].replace(c['sbox_home'], '')
             del kwargs['cwd']
