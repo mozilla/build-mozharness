@@ -70,7 +70,7 @@ class MaemoMultiLocaleBuild(MultiLocaleBuild):
         c = self.config
         self.info("Checking scratchbox target.")
         sbox_target = self.get_output_from_command("%s -p sb-conf current" %
-                                              c['sbox_path'])
+                                                   c['sbox_path']).split('\n')[-1]
         if sbox_target != c['sbox_target']:
             self.info("%s is not %s.  Setting scratchbox target." % (
                       sbox_target, c['sbox_target']))
@@ -83,43 +83,25 @@ class MaemoMultiLocaleBuild(MultiLocaleBuild):
     def preflight_build(self):
         self.set_sbox_target()
 
-#    def query_deb_name(self):
-#        if self.deb_name:
-#            return self.deb_name
-#        c = self.config
-#        dirs = self.query_abs_dirs()
-#        command = "make wget-DEB_PKG_NAME EN_US_BINARY_URL=%s" % c['en_us_binary_url']
-#        self.deb_name = self._process_command(command=command,
-#                                              cwd=dirs['abs_locales_dir'],
-#                                              halt_on_failure=True,
-#                                              return_type='output')
-#        return self.deb_name
-#
-#    def query_deb_package_version(self):
-#        if self.deb_package_version:
-#            return self.deb_package_version
-#        deb_name = self.query_deb_name()
-#        m = re.match(r'[^_]+_([^_]+)_', deb_name)
-#        self.deb_package_version = m.groups()[0]
-#        return self.deb_package_version
+    def preflight_package(self):
+        self.set_sbox_target()
 
     def add_locales(self):
-        if 'add-locales' not in self.actions:
-            self.action_message("Skipping add-locales step.")
-            return
-        self.action_message("Adding locales to the apk.")
         c = self.config
         dirs = self.query_abs_dirs()
         locales = self.query_locales()
 
         for locale in locales:
             self.run_compare_locales(locale, halt_on_failure=True)
-            command = 'make chrome-%s L10NBASEDIR=%s' % (locale, dirs['abs_l10n_dir'])
+            # TODO Not proud of this hardcode -- how to fix?
+            command = 'make chrome-%s L10NBASEDIR=%s' % (locale,
+                      dirs['abs_l10n_dir'].replace("/scratchbox/users/cltbld", ""))
             if c['merge_locales']:
-                command += " LOCALE_MERGEDIR=%s" % dirs['abs_merge_dir']
-                self.run_command(command, cwd=dirs['abs_locales_dir'],
-                                 error_list=MakefileErrorList,
-                                 halt_on_failure=True)
+                command += " LOCALE_MERGEDIR=%s" % dirs['abs_merge_dir'].replace("/scratchbox/users/cltbld", "")
+                self._process_command(command=command,
+                                      cwd=dirs['abs_locales_dir'],
+                                      error_list=MakefileErrorList,
+                                      halt_on_failure=True)
 
     def additional_packaging(self, package_type='en-US', env=None):
         dirs = self.query_abs_dirs()
