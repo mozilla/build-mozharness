@@ -180,7 +180,7 @@ class BaseConfig(object):
         if default_actions:
             self.default_actions = default_actions[:]
         else:
-            self.default_actions = self.all_actions
+            self.default_actions = self.all_actions[:]
         if volatile_config_vars is None:
             self.volatile_config_vars = []
         else:
@@ -369,7 +369,7 @@ class BaseConfig(object):
         Finally, if we specify --no-BLAH, remove that from the list of
         actions to perform.
         """
-        self.actions = self.default_actions
+        self.actions = self.default_actions[:]
         if options.only_actions:
             actions = self.verify_actions(options.only_actions)
             self.actions = actions
