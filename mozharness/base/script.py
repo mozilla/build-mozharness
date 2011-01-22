@@ -133,7 +133,10 @@ class BaseScript(object):
         if os.path.exists(path):
             if not self.config['noop']:
                 if os.path.isdir(path):
-                    shutil.rmtree(path)
+                    if platform.system() == 'Windows':
+                        self._rmdir_recursive(path)
+                    else:
+                        shutil.rmtree(path)
                 else:
                     os.remove(path)
                 if os.path.exists(path):
@@ -141,6 +144,35 @@ class BaseScript(object):
                              exit_code=exit_code)
         else:
             self.debug("%s doesn't exist." % path)
+
+    def _rmdir_recursive(self, path):
+        """This is a replacement for shutil.rmtree that works better under
+        windows. Thanks to Bear at the OSAF for the code."""
+        if not os.path.exists(path):
+            return
+
+        # Verify the directory is read/write/execute for the current user
+        self.chmod(path, 0700)
+
+        for name in os.listdir(path):
+            full_name = os.path.join(path, name)
+            # on Windows, if we don't have write permission we can't remove
+            # the file/directory either, so turn that on
+            if platform.system() == 'Windows':
+                if not os.access(full_name, os.W_OK):
+                    # I think this is now redundant, but I don't have an NT
+                    # machine to test on, so I'm going to leave it in place
+                    # -warner
+                    self.chmod(full_name, 0600)
+            if os.path.islink(full_name):
+                os.remove(full_name) # as suggested in bug #792
+            elif os.path.isdir(full_name):
+                self._rmdir_recursive(full_name)
+            else:
+                if os.path.isfile(full_name):
+                    os.chmod(full_name, 0700)
+                os.remove(full_name)
+        os.rmdir(path)
 
     # http://www.techniqal.com/blog/2008/07/31/python-file-read-write-with-urllib2/
     def download_file(self, url, file_name=None,
