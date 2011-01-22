@@ -133,7 +133,7 @@ class BaseScript(object):
         if os.path.exists(path):
             if not self.config['noop']:
                 if os.path.isdir(path):
-                    if platform.system() == 'Windows':
+                    if self._is_windows():
                         self._rmdir_recursive(path)
                     else:
                         shutil.rmtree(path)
@@ -144,6 +144,12 @@ class BaseScript(object):
                              exit_code=exit_code)
         else:
             self.debug("%s doesn't exist." % path)
+
+    def _is_windows(self):
+        if platform.system() in ("Windows",):
+            return True
+        if platform.system().startswith("CYGWIN"):
+            return True
 
     def _rmdir_recursive(self, path):
         """This is a replacement for shutil.rmtree that works better under
@@ -158,7 +164,7 @@ class BaseScript(object):
             full_name = os.path.join(path, name)
             # on Windows, if we don't have write permission we can't remove
             # the file/directory either, so turn that on
-            if platform.system() == 'Windows':
+            if self._is_windows():
                 if not os.access(full_name, os.W_OK):
                     # I think this is now redundant, but I don't have an NT
                     # machine to test on, so I'm going to leave it in place
