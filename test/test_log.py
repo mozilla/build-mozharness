@@ -29,6 +29,7 @@ class TestLog(unittest.TestCase):
         self.assertTrue(os.path.exists(tmp_dir))
         l.info('blah')
         self.assertTrue(os.path.exists(self.get_log_file_path()))
+        del(l)
         self.clean_log_dir()
 
     def test_multi_log(self):
@@ -59,6 +60,7 @@ class TestLog(unittest.TestCase):
                 filesize = os.path.getsize(log_path)
                 self.assertTrue(filesize > filesize_dict.get(log_path, 0))
                 filesize_dict[log_path] = filesize
+        del(l)
         self.clean_log_dir()
 
     def test_console_log(self):
@@ -66,4 +68,5 @@ class TestLog(unittest.TestCase):
         l = log.SimpleFileLogger(log_dir=tmp_dir, log_name=log_name,
                                  log_to_console=True)
         l.warning("This test warning should go to the console.")
+        del(l)
         self.clean_log_dir()
