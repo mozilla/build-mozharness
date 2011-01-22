@@ -131,6 +131,7 @@ class BaseLogger(object):
             self.all_handlers = []
 
     def __del__(self):
+        logging.shutdown()
         self._clear_handlers()
 
     def add_console_handler(self, log_level=None, log_format=None,

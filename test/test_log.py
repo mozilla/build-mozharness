@@ -29,7 +29,6 @@ class TestLog(unittest.TestCase):
         self.assertTrue(os.path.exists(tmp_dir))
         l.info('blah')
         self.assertTrue(os.path.exists(self.get_log_file_path()))
-        l.shutdown()
         del(l)
         self.clean_log_dir()
 
@@ -55,7 +54,6 @@ class TestLog(unittest.TestCase):
                     pass
                 else:
                     self.assertEqual(0, 1, msg="fatal() doesn't exit")
-            l.shutdown()
             del(l)
             for level in level_dict[log_level]:
                 log_path = self.get_log_file_path(level=level)
@@ -70,6 +68,5 @@ class TestLog(unittest.TestCase):
         l = log.SimpleFileLogger(log_dir=tmp_dir, log_name=log_name,
                                  log_to_console=True)
         l.warning("This test warning should go to the console.")
-        l.shutdown()
         del(l)
         self.clean_log_dir()
