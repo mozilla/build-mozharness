@@ -83,8 +83,17 @@ class MaemoMultiLocaleBuild(MultiLocaleBuild):
     def preflight_build(self):
         self.set_sbox_target()
 
-    def preflight_package(self):
+    def _preflight_package(self):
+        dirs = self.query_abs_dirs()
         self.set_sbox_target()
+        self.run_command("rm dist/*.tar mobile/*.deb dist/deb_name.txt dist/*.zip",
+                         cwd=dirs['abs_objdir'], halt_on_failure=False)
+
+    def preflight_package_en_US(self):
+        self._preflight_package()
+
+    def preflight_package_multi(self):
+        self._preflight_package()
 
     def add_locales(self):
         c = self.config
