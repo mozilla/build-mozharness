@@ -135,7 +135,7 @@ def parse_config_file(file_name, quiet=False, search_path=None):
     else:
         if not quiet:
             print "ERROR: Can't find %s in %s!" % (file_name, search_path)
-            return
+        return
     if file_name.endswith('.py'):
         global_dict = {}
         local_dict = {}
