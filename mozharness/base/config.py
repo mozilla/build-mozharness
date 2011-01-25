@@ -15,8 +15,7 @@ at a later time.
 
 TODO:
 
-* env?
-* checkRequiredSettings or something -- run at init, assert that
+* check_required_settings or something -- run at init, assert that
   these settings are set.
 """
 

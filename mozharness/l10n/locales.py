@@ -87,7 +87,8 @@ class LocalesMixin(object):
         dirs = {}
         dirs['abs_work_dir'] = os.path.join(c['base_work_dir'],
                                             c['work_dir'])
-        dirs['abs_l10n_dir'] = os.path.join(dirs['abs_work_dir'],                                            c['l10n_dir'])
+        dirs['abs_l10n_dir'] = os.path.join(dirs['abs_work_dir'],
+                                            c['l10n_dir'])
         dirs['abs_mozilla_dir'] = os.path.join(dirs['abs_work_dir'],
                                                c['mozilla_dir'])
         dirs['abs_objdir'] = os.path.join(dirs['abs_mozilla_dir'],
