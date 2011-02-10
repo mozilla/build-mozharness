@@ -104,9 +104,9 @@ class MaemoMultiLocaleBuild(MultiLocaleBuild):
             self.run_compare_locales(locale, halt_on_failure=True)
             # TODO Not proud of this hardcode -- how to fix?
             command = 'make chrome-%s L10NBASEDIR=%s' % (locale,
-                      dirs['abs_l10n_dir'].replace("/scratchbox/users/cltbld", ""))
+                      dirs['abs_l10n_dir'].replace(c['sbox_root'], ""))
             if c['merge_locales']:
-                command += " LOCALE_MERGEDIR=%s" % dirs['abs_merge_dir'].replace("/scratchbox/users/cltbld", "")
+                command += " LOCALE_MERGEDIR=%s" % dirs['abs_merge_dir'].replace(c['sbox_root'], "")
                 self._process_command(command=command,
                                       cwd=dirs['abs_locales_dir'],
                                       error_list=MakefileErrorList,
