@@ -1,0 +1,34 @@
+{
+    "work_dir": ".",
+    "log_name": "multilocale",
+    "objdir": "objdir",
+    "locales_file": "mozilla-central/mobile/locales/maemo-locales",
+    "locales_dir": "mobile/locales",
+    "ignore_locales": ["en-US", "multi"],
+    "repos": [{
+        "repo": "http://hg.mozilla.org/mozilla-central",
+        "tag": "default",
+        "dir_name": "mozilla-central"
+    },{
+        "repo": "http://hg.mozilla.org/build/buildbot-configs",
+        "tag": "default",
+        "dir_name": "buildbot-configs"
+    },{
+        "repo": "http://hg.mozilla.org/build/tools",
+        "tag": "default",
+        "dir_name": "tools"
+    },{
+        "repo": "http://hg.mozilla.org/mobile-browser",
+        "tag": "default",
+        "dir_name": "mozilla-central/mobile"
+    },{
+        "repo": "http://hg.mozilla.org/build/compare-locales",
+        "tag": "RELEASE_AUTOMATION"
+    }],
+    "hg_l10n_base": "http://hg.mozilla.org/l10n-central",
+    "hg_l10n_tag": "default",
+    "l10n_dir": "l10n-central",
+    "merge_locales": true,
+    "mozilla_dir": "mozilla-central",
+    "mozconfig": "buildbot-configs/mozilla2/mobile/maemo5-gtk/mobile-browser/nightly/mozconfig"
+}

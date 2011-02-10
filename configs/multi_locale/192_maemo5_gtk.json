@@ -1,15 +1,14 @@
 {
-    "base_work_dir": "/scratchbox/users/cltbld/home/cltbld/build",
-    "work_dir": "trunk_maemo_gtk",
+    "work_dir": ".",
     "log_name": "multilocale",
     "objdir": "objdir",
-    "locales_file": "mozilla-central/mobile/locales/maemo-locales",
+    "locales_file": "mozilla-1.9.2/mobile/locales/maemo-locales",
     "locales_dir": "mobile/locales",
     "ignore_locales": ["en-US", "multi"],
     "repos": [{
-        "repo": "http://hg.mozilla.org/mozilla-central",
+        "repo": "http://hg.mozilla.org/releases/mozilla-1.9.2",
         "tag": "default",
-        "dir_name": "mozilla-central"
+        "dir_name": "mozilla-1.9.2"
     },{
         "repo": "http://hg.mozilla.org/build/buildbot-configs",
         "tag": "default",
@@ -19,7 +18,7 @@
         "tag": "default",
         "dir_name": "tools"
     },{
-        "repo": "http://hg.mozilla.org/mobile-browser",
+        "repo": "http://hg.mozilla.org/mobile-1.1",
         "tag": "default",
         "dir_name": "mozilla-central/mobile"
     },{
@@ -28,8 +27,8 @@
     }],
     "hg_l10n_base": "http://hg.mozilla.org/l10n-central",
     "hg_l10n_tag": "default",
-    "l10n_dir": "l10n-central",
+    "l10n_dir": "l10n-mozilla-1.9.2",
     "merge_locales": true,
-    "mozilla_dir": "mozilla-central",
-    "mozconfig": "buildbot-configs/mozilla2/mobile/maemo5-gtk/mobile-browser/nightly/mozconfig"
+    "mozilla_dir": "mozilla-1.9.2",
+    "mozconfig": "buildbot-configs/mozilla2/mobile/maemo5-gtk/mobile-1.1/nightly/mozconfig"
 }
