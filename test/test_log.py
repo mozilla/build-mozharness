@@ -33,7 +33,6 @@ class TestLog(unittest.TestCase):
         self.clean_log_dir()
 
     def test_multi_log(self):
-        self.clean_log_dir()
         level_dict = {'debug':    [],
                       'ignore':   [],
                       'info':     ['info'],
@@ -41,8 +40,8 @@ class TestLog(unittest.TestCase):
                       'error':    ['info', 'warning', 'error'],
                       'critical': ['info', 'warning', 'error', 'critical'],
                       'fatal':    ['info', 'warning', 'error', 'critical']}
-        filesize_dict = {}
         for log_level in level_dict.keys():
+            self.clean_log_dir()
             l = log.MultiFileLogger(log_dir=tmp_dir, log_name=log_name,
                                     log_to_console=False)
             if log_level != "fatal":
@@ -59,8 +58,7 @@ class TestLog(unittest.TestCase):
                 log_path = self.get_log_file_path(level=level)
                 self.assertTrue(os.path.exists(log_path))
                 filesize = os.path.getsize(log_path)
-                self.assertTrue(filesize > filesize_dict.get(log_path, 0))
-                filesize_dict[log_path] = filesize
+                self.assertTrue(filesize > 0)
         self.clean_log_dir()
 
     def test_console_log(self):
