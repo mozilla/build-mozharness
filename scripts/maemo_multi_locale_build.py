@@ -115,6 +115,8 @@ class MaemoMultiLocaleBuild(MultiLocaleBuild):
     def additional_packaging(self, package_type='en-US', env=None):
         dirs = self.query_abs_dirs()
         command = "make deb"
+        if package_type == 'multi':
+            command += " AB_CD=multi"
         self._process_command(command=command, cwd=dirs['abs_objdir'],
                               env=env, error_list=MakefileErrorList,
                               halt_on_failure=True)
