@@ -46,7 +46,8 @@ class MaemoMultiLocaleBuild(MultiLocaleBuild):
      ["--sbox-root",],     {"action": "store",
       "dest": "sbox_root",
       "type": "string",
-      "default": "/scratchbox/users/cltbld",      "help": "Specify the scratchbox user home directory"
+      "default": "/scratchbox/users/cltbld",
+      "help": "Specify the scratchbox user home directory"
      }
     ],[
      ["--sbox_path",],
