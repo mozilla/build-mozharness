@@ -39,14 +39,14 @@ class MaemoMultiLocaleBuild(MultiLocaleBuild):
      {"action": "store",
       "dest": "sbox_home",
       "type": "string",
-      "default": "/builds/scratchbox/users/cltbld/home/cltbld/",
+      "default": "/scratchbox/users/cltbld/home/cltbld/",
       "help": "Specify the scratchbox user home directory"
      }
     ],[
      ["--sbox-root",],     {"action": "store",
       "dest": "sbox_root",
       "type": "string",
-      "default": "/builds/scratchbox/users/cltbld",      "help": "Specify the scratchbox user home directory"
+      "default": "/scratchbox/users/cltbld",      "help": "Specify the scratchbox user home directory"
      }
     ],[
      ["--sbox_path",],

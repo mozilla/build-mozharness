@@ -1,5 +1,7 @@
 {
     "work_dir": ".",
+    "sbox_home": "/builds/scratchbox/users/cltbld/home/cltbld/",
+    "sbox_root": "/builds/scratchbox/users/cltbld",
     "log_name": "multilocale",
     "objdir": "objdir",
     "locales_file": "mozilla-central/mobile/locales/maemo-locales",
