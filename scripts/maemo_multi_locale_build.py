@@ -87,7 +87,7 @@ class MaemoMultiLocaleBuild(MultiLocaleBuild):
     def _preflight_package(self):
         dirs = self.query_abs_dirs()
         self.set_sbox_target()
-        self.run_command("rm -f dist/*.tar* mobile/*.deb dist/deb_name.txt dist/*.zip",
+        self.run_command("rm -f dist/*.tar.* mobile/*.deb dist/deb_name.txt dist/*.zip",
                          cwd=dirs['abs_objdir'], halt_on_failure=False)
 
     def preflight_package_en_US(self):
