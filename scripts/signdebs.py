@@ -125,7 +125,7 @@ class MaemoDebSigner(MercurialScript):
 
         # TODO error_list
         error_list = []
-        command = "%s -p -d %s apt-ftparchive packages " % (sbox_path, sbox_work_dir)
+        command = "%s -d %s apt-ftparchive packages " % (sbox_path, sbox_work_dir)
         command += "dists/%s/%s/binary-armel |" % (platform, section)
         command += "gzip -9c > %s/dists/%s/%s/binary-armel/Packages.gz" % \
                    (abs_work_dir, platform, section)
@@ -141,7 +141,7 @@ class MaemoDebSigner(MercurialScript):
             # Create Release file outside of the tree, then move in.
             # TODO error_list
             error_list=[]
-            command = "%s -p -d %s/%s " % (sbox_path, sbox_work_dir, sub_dir)
+            command = "%s -d %s/%s " % (sbox_path, sbox_work_dir, sub_dir)
             command += "apt-ftparchive release . > %s/Release.tmp" % abs_work_dir
             if self.runCommand(command, error_list=error_list):
                 self.error("Exiting signRepo.")
