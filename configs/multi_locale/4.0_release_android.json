@@ -2,7 +2,7 @@
     "work_dir": ".",
     "log_name": "multilocale",
     "objdir": "objdir",
-    "locales_file": "buildbot-configs/mozilla2/l10n-changesets_mobile-2.0.json",
+    "locales_file": "configs/mozilla2/l10n-changesets_mobile-2.0.json",
     "locales_platform": "android-multilocale",
     "locales_dir": "mobile/locales",
     "ignore_locales": ["en-US", "multi"],
@@ -15,7 +15,7 @@
     },{
         "repo": "http://hg.mozilla.org/build/buildbot-configs",
         "tag": "default",
-        "dir_name": "buildbot-configs"
+        "dir_name": "configs"
     },{
         "repo": "http://hg.mozilla.org/build/tools",
         "tag": "default",
@@ -35,6 +35,6 @@
     },
     "merge_locales": true,
     "mozilla_dir": "mozilla-central",
-    "mozconfig": "buildbot-configs/mozilla2/mobile/android/mobile-browser/nightly/mozconfig",
+    "mozconfig": "configs/mozilla2/mobile/android/mobile-browser/nightly/mozconfig",
     "jarsigner": "../tools/release/signing/mozpass.py"
 }
