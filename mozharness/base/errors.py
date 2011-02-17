@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-"""Generic error regexes.
-"""
+'''Generic error regexes.
+'''
 
 # TODO: We could also create classes that generate these, but with the
 # appropriate level (please don't die on any errors; please die on any
@@ -15,47 +15,47 @@
 
 # For ssh, scp, rsync over ssh
 SSHErrorList=[
- {'substr': 'Name or service not known', 'level': 'error'},
- {'substr': 'Could not resolve hostname', 'level': 'error'},
- {'substr': 'POSSIBLE BREAK-IN ATTEMPT', 'level': 'warning'},
- {'substr': 'Network error:', 'level': 'error'},
- {'substr': 'Access denied', 'level': 'error'},
- {'substr': 'Authentication refused', 'level': 'error'},
- {'substr': 'Out of memory', 'level': 'error'},
- {'substr': 'Connection reset by peer', 'level': 'warning'},
- {'substr': 'Host key verification failed', 'level': 'error'},
- {'substr': 'command not found', 'level': 'error'},
- {'substr': 'WARNING:', 'level': 'warning'},
- {'substr': 'rsync error:', 'level': 'error'},
- {'substr': 'Broken pipe:', 'level': 'error'},
- {'substr': 'connection unexpectedly closed:', 'level': 'error'},
+ {'substr': r'''Name or service not known''', 'level': 'error'},
+ {'substr': r'''Could not resolve hostname''', 'level': 'error'},
+ {'substr': r'''POSSIBLE BREAK-IN ATTEMPT''', 'level': 'warning'},
+ {'substr': r'''Network error:''', 'level': 'error'},
+ {'substr': r'''Access denied''', 'level': 'error'},
+ {'substr': r'''Authentication refused''', 'level': 'error'},
+ {'substr': r'''Out of memory''', 'level': 'error'},
+ {'substr': r'''Connection reset by peer''', 'level': 'warning'},
+ {'substr': r'''Host key verification failed''', 'level': 'error'},
+ {'substr': r'''command not found''', 'level': 'error'},
+ {'substr': r'''WARNING:''', 'level': 'warning'},
+ {'substr': r'''rsync error:''', 'level': 'error'},
+ {'substr': r'''Broken pipe:''', 'level': 'error'},
+ {'substr': r'''connection unexpectedly closed:''', 'level': 'error'},
 ]
 
 HgErrorList=[
- {'regex': '^abort:', 'level': 'error'},
- {'substr': 'command not found', 'level': 'error'},
- {'substr': 'unknown exception encountered', 'level': 'error'},
+ {'regex': r'''^abort:''', 'level': 'error'},
+ {'substr': r'''command not found''', 'level': 'error'},
+ {'substr': r'''unknown exception encountered''', 'level': 'error'},
 ]
 
 PythonErrorList=[
- {'substr': 'Traceback (most recent call last)', 'level': 'error'},
- {'substr': 'SyntaxError: ', 'level': 'error'},
- {'substr': 'TypeError: ', 'level': 'error'},
- {'substr': 'NameError: ', 'level': 'error'},
- {'substr': 'ZeroDivisionError: ', 'level': 'error'},
- {'substr': 'command not found', 'level': 'error'},
+ {'substr': r'''Traceback (most recent call last)''', 'level': 'error'},
+ {'substr': r'''SyntaxError: ''', 'level': 'error'},
+ {'substr': r'''TypeError: ''', 'level': 'error'},
+ {'substr': r'''NameError: ''', 'level': 'error'},
+ {'substr': r'''ZeroDivisionError: ''', 'level': 'error'},
+ {'substr': r'''command not found''', 'level': 'error'},
 ]
 
 # We may need to have various MakefileErrorLists for differing amounts of
 # warning-ignoring-ness.
 MakefileErrorList = [
- {'substr': 'No rule to make target ', 'level': 'error'},
- {'regex': 'akefile.*was not found\.', 'level': 'error'},
- {'regex': 'Stop\.$', 'level': 'error'},
- {'regex': ':\d+: error:', 'level': 'error'},
- {'regex': 'make\[\d+\]: \*\*\* \[.*\] Error \d+', 'level': 'error'},
- {'regex': ':\d+: warning:', 'level': 'warning'},
- {'substr': 'Warning: ', 'level': 'warning'},
+ {'substr': r'''No rule to make target ''', 'level': 'error'},
+ {'regex': r'''akefile.*was not found\.''', 'level': 'error'},
+ {'regex': r'''Stop\.$''', 'level': 'error'},
+ {'regex': r''':\d+: error:''', 'level': 'error'},
+ {'regex': r'''make\[\d+\]: \*\*\* \[.*\] Error \d+''', 'level': 'error'},
+ {'regex': r''':\d+: warning:''', 'level': 'warning'},
+ {'substr': r'''Warning: ''', 'level': 'warning'},
 ]
 
 
@@ -63,6 +63,6 @@ MakefileErrorList = [
 # __main__ {{{1
 
 if __name__ == '__main__':
-    """TODO: unit tests.
-    """
+    '''TODO: unit tests.
+    '''
     pass
