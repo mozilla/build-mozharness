@@ -120,7 +120,7 @@ class BaseScript(object):
         fh = codecs.open(file_path, encoding='utf-8', mode='w+')
         fh.write(json_config)
         fh.close()
-        self.info(pprint.pprint(self.config))
+        self.info(pprint.pformat(self.config))
 
 # os commands {{{2
     def mkdir_p(self, path):

@@ -124,17 +124,20 @@ def parse_config_file(file_name, quiet=False, search_path=None):
     # TODO error checking.  Does this need to be part of an object with
     # self.log() functions?
     file_path = None
-    if not search_path:
-        search_path = ['.', os.path.join(sys.path[0], '..', 'configs'),
-                       os.path.join(sys.path[0], '..', '..', 'configs')]
-    for path in search_path:
-        if os.path.exists(os.path.join(path, file_name)):
-            file_path = os.path.join(path, file_name)
-            break
+    if os.path.exists(file_name):
+        file_path = file_name
     else:
-        if not quiet:
-            print "ERROR: Can't find %s in %s!" % (file_name, search_path)
-        return
+        if not search_path:
+            search_path = ['.', os.path.join(sys.path[0], '..', 'configs'),
+                           os.path.join(sys.path[0], '..', '..', 'configs')]
+        for path in search_path:
+            if os.path.exists(os.path.join(path, file_name)):
+                file_path = os.path.join(path, file_name)
+                break
+        else:
+            if not quiet:
+                print "ERROR: Can't find %s in %s!" % (file_name, search_path)
+            return
     if file_name.endswith('.py'):
         global_dict = {}
         local_dict = {}
@@ -154,7 +157,7 @@ def parse_config_file(file_name, quiet=False, search_path=None):
                 contents.append(line)
                 config = dict(contents)
     fh.close()
-
+    # TODO return file_path
     return config
 
 

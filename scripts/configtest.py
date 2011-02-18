@@ -39,16 +39,6 @@ class ConfigTest(BaseScript):
                                              'test-python-configs'],
                             require_config_file=require_config_file)
 
-    def dump_config(self):
-        self.action_message("Dumping config")
-        self.info("Note that some of these are not used.")
-        self.info("Running config:")
-        for key in sorted(self.config.keys()):
-            self.info(" %s = %s" % (key, self.config[key]))
-        self.info("Actions:")
-        for action in self.actions:
-            self.info(" %s" % action)
-
     def query_config_files(self):
         if self.config_files:
             return self.config_files
