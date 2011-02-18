@@ -31,7 +31,7 @@ except:
 
 
 # optparse {{{1
-class MozOptionParser(OptionParser):
+class ExtendedOptionParser(OptionParser):
     """Very slightly modified optparse.OptionParser, which assumes you know
     all the options you just add_option'ed, which is usually the case.
 
@@ -198,7 +198,7 @@ class BaseConfig(object):
         return ReadOnlyDict(self._config)
 
     def _create_config_parser(self, config_options, usage):
-        self.config_parser = MozOptionParser(usage=usage)
+        self.config_parser = ExtendedOptionParser(usage=usage)
         self.config_parser.add_option(
          "--log-level", action="store",
          type="choice", dest="log_level", default="info",
@@ -292,27 +292,6 @@ class BaseConfig(object):
 
     def get_actions(self):
         return self.actions
-
-    def dump_config(self, config=None, file_name=None):
-        """Dump the configuration somewhere, default to STDOUT.
-        Be nice to be able to write a .py or .json file according to
-        filename.
-
-        TODO: write to file, verify that dump/load is exactly the same
-        config.
-        """
-        if not config:
-            config = {}
-            for key in self._config.keys():
-                if key not in self.volatile_config_vars:
-                    config[key] = self._config[key]
-        json_config = json.dumps(config, sort_keys=True, indent=4)
-        if not file_name:
-            return json_config
-        else:
-            fh = open(file_name, 'w')
-            fh.write(json_config)
-            fh.close()
 
     def verify_actions(self, action_list, quiet=False):
         for action in action_list:

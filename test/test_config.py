@@ -27,22 +27,6 @@ class TestConfig(unittest.TestCase):
         for key in content_dict.keys():
             self.assertEqual(content_dict[key], c._config[key])
     
-    def test_dump_config(self):
-        c = config.BaseConfig(initial_config_file='test/test.json')
-        dump_config_output = c.dump_config()
-        dump_config_dict = json.loads(dump_config_output)
-        content_dict = self._get_json_config()
-        for key in content_dict.keys():
-            self.assertEqual(content_dict[key], dump_config_dict[key],
-                             msg="dumped config not equal for key %s" % key)
-        c.dump_config(config=content_dict, file_name='tmp_file')
-        fh = open('tmp_file')
-        contents = json.load(fh)
-        fh.close()
-        self.assertEqual(content_dict, dict(contents),
-                         msg="dumped config file differs from config")
-        os.remove('tmp_file')
-
     def test_read_only_dict(self):
         # ReadOnlyDict {{{
         control_dict = {
@@ -99,7 +83,6 @@ class TestConfig(unittest.TestCase):
 
     def test_verify_actions(self):
         c = config.BaseConfig(initial_config_file='test/test.json')
-        c.dump_config()
         try:
             c.verify_actions(['not_a_real_action'])
         except:

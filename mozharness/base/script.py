@@ -2,6 +2,7 @@
 """Generic script objects.
 """
 
+import codecs
 import os
 import platform
 import pprint
@@ -109,15 +110,17 @@ class BaseScript(object):
         self.abs_dirs = dirs
         return self.abs_dirs
 
-    def dump_config(self):
+    def dump_config(self, file_path=None):
         dirs = self.query_abs_dirs()
-        file_path = os.path.join(dirs['abs_upload_dir'], "localconfig.json")
+        if not file_path:
+            file_path = os.path.join(dirs['abs_upload_dir'], "localconfig.json")
         self.info("Dumping config to %s." % file_path)
         self.mkdir_p(dirs['abs_upload_dir'])
         json_config = json.dumps(self.config, sort_keys=True, indent=4)
-        fh = open(file_path, 'w')
+        fh = codecs.open(file_path, encoding='utf-8', mode='w+')
         fh.write(json_config)
         fh.close()
+        self.info(pprint.pprint(self.config))
 
 # os commands {{{2
     def mkdir_p(self, path):
