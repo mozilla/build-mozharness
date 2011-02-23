@@ -18,6 +18,7 @@ for filename in `find scripts -name [a-z]\*.py` ; do
   coverage run -a --branch --omit='/Library/*,/usr/*,/opt/*' $filename --list-actions | grep -v "Actions available" | grep -v "Default actions"
 done
 coverage run -a --branch --omit='/Library/*,/usr/*,/opt/*' scripts/configtest.py --log-level warning
+rm -rf upload_dir
 
 coverage html --omit="/Library/*,/usr/*,/opt/*" -d coverage.new
 if [ -e coverage ] ; then

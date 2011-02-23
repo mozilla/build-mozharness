@@ -160,10 +160,10 @@ class TestScript(unittest.TestCase):
             obj.critical("Testing CRITICAL")
             try:
                 obj.fatal("Testing FATAL")
-            except:
+            except SystemExit:
                 pass
             else:
-                self.assertTrue(False, msg="fatal() didn't!")
+                self.assertTrue(False, msg="fatal() didn't SystemExit!")
         self.cleanup()
 
     def testRunCommand(self):

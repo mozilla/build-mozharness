@@ -15,7 +15,6 @@ TODO:
 from datetime import datetime
 import logging
 import os
-import sys
 
 # Define our own FATAL
 FATAL = logging.CRITICAL + 10
@@ -168,7 +167,7 @@ class BaseLogger(object):
             self.logger.log(self.get_logger_level(level), line)
         if level == 'fatal' and self.halt_on_failure:
             self.logger.log(FATAL, 'Exiting %d' % exit_code)
-            sys.exit(exit_code)
+            raise SystemExit(exit_code)
 
     def debug(self, message):
         self.log(message, level='debug')

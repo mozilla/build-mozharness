@@ -302,7 +302,7 @@ class BaseConfig(object):
                 if not quiet:
                     print("Invalid action %s not in %s!" % (action,
                                                             self.all_actions))
-                sys.exit(-1)
+                raise SystemExit(-1)
         return action_list
 
     def parse_args(self, args=None):
@@ -318,14 +318,14 @@ class BaseConfig(object):
             print "Actions available: " + ', '.join(self.all_actions)
             if self.default_actions != self.all_actions:
                 print "Default actions: " + ', '.join(self.default_actions)
-            sys.exit(0)
+            raise SystemExit(0)
 
         defaults = self.config_parser.defaults.copy()
 
         if not options.config_file:
             if self.require_config_file:
                 print("Required config file not set!")
-                sys.exit(-1)
+                raise SystemExit(-1)
         else:
             self.set_config(parse_config_file(options.config_file))
         for key in self.config_parser.variables:

@@ -280,7 +280,7 @@ class BaseScript(object):
             print >> sys.stderr, "%s: %s" % (level.upper(), message)
         elif level == 'fatal':
             print >> sys.stderr, "FATAL: %s" % message
-            sys.exit(exit_code)
+            raise SystemExit(exit_code)
 
     def debug(self, message):
         if self.config.get('log_level', None) == 'debug':

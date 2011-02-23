@@ -49,10 +49,10 @@ class TestLog(unittest.TestCase):
             else:
                 try:
                     l.fatal('testing')
-                except:
+                except SystemExit:
                     pass
                 else:
-                    self.assertEqual(0, 1, msg="fatal() doesn't exit")
+                    self.assertEqual(0, 1, msg="fatal() doesn't SystemExit!")
             del(l)
             for level in level_dict[log_level]:
                 log_path = self.get_log_file_path(level=level)
