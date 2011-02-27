@@ -106,7 +106,10 @@ class BaseScript(object):
         dirs = {}
         dirs['abs_work_dir'] = os.path.join(c['base_work_dir'], c['work_dir'])
         dirs['abs_upload_dir'] = os.path.join(c['base_work_dir'], 'upload_dir')
-        dirs['abs_log_dir'] = os.path.join(dirs['abs_upload_dir'], 'logs')
+        if c.get('log_dir', None):
+            dirs['abs_log_dir'] = os.path.join(c['base_work_dir'], c['log_dir'])
+        else:
+            dirs['abs_log_dir'] = os.path.join(dirs['abs_upload_dir'], 'logs')
         self.abs_dirs = dirs
         return self.abs_dirs
 
