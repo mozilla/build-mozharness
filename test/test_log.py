@@ -14,13 +14,18 @@ class TestLog(unittest.TestCase):
             shutil.rmtree(tmp_dir)
         self.assertFalse(os.path.exists(tmp_dir))
 
+    def setUp(self):
+        self.clean_log_dir()
+
+    def tearDown(self):
+        self.clean_log_dir()
+
     def get_log_file_path(self, level=None):
         if level:
             return os.path.join(tmp_dir, "%s_%s.log" % (log_name, level))
         return os.path.join(tmp_dir, "%s.log" % log_name)
 
     def test_log_dir(self):
-        self.clean_log_dir()
         fh = open(tmp_dir, 'w')
         fh.write("foo")
         fh.close()
@@ -30,7 +35,6 @@ class TestLog(unittest.TestCase):
         l.info('blah')
         self.assertTrue(os.path.exists(self.get_log_file_path()))
         del(l)
-        self.clean_log_dir()
 
     def test_multi_log(self):
         level_dict = {'debug':    [],
@@ -59,12 +63,9 @@ class TestLog(unittest.TestCase):
                 self.assertTrue(os.path.exists(log_path))
                 filesize = os.path.getsize(log_path)
                 self.assertTrue(filesize > 0)
-        self.clean_log_dir()
 
     def test_console_log(self):
-        self.clean_log_dir()
         l = log.SimpleFileLogger(log_dir=tmp_dir, log_name=log_name,
                                  log_to_console=True)
         l.warning("This test warning should go to the console.")
         del(l)
-        self.clean_log_dir()

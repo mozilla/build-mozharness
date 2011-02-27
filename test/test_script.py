@@ -20,8 +20,13 @@ class TestScript(unittest.TestCase):
             if os.path.exists(filename):
                 os.remove(filename)
 
-    def test_helper_functions(self):
+    def setUp(self):
         self.cleanup()
+
+    def tearDown(self):
+        self.cleanup()
+
+    def test_helper_functions(self):
         s = script.BaseScript(initial_config_file='test/test.json')
         if os.path.exists('test_dir'):
             if os.path.isdir('test_dir'):
@@ -65,11 +70,9 @@ class TestScript(unittest.TestCase):
         s.rmtree('test_dir')
         self.assertFalse(os.path.exists('test_dir'),
                          msg="2nd rmtree unsuccessful")
-        self.cleanup()
 
     def test_summary(self):
         """I need a log watcher helper function, here and in test_log."""
-        self.cleanup()
         s = script.BaseScript(config={'log_type': 'multi'},
                               initial_config_file='test/test.json')
         info_logsize = os.path.getsize("test_logs/test_info.log")
@@ -93,10 +96,8 @@ class TestScript(unittest.TestCase):
                         msg="summary() didn't log to info")
         self.assertTrue(warning_logsize < warning_logsize2,
                         msg="summary() with warning didn't log to warning")
-        self.cleanup()
 
     def testMercurial(self):
-        self.cleanup()
         s = script.MercurialScript(initial_config_file='test/test.json')
         s.mkdir_p('test_dir')
         s.run_command("touch test_dir/tools")
@@ -106,10 +107,8 @@ class TestScript(unittest.TestCase):
         s.scm_checkout("http://hg.mozilla.org/build/tools",
                       dir_name="test_dir/tools", halt_on_failure=False)
         s.rmtree('test_dir')
-        self.cleanup()
 
     def testNoop(self):
-        self.cleanup()
         s = script.MercurialScript(config={'noop': True},
                                    initial_config_file='test/test.json')
         if os.path.exists('test_dir'):
@@ -142,10 +141,8 @@ class TestScript(unittest.TestCase):
         self.assertEqual('%s/test_logs' % cwd, os.getcwd(),
                          msg="chdir noop noignore error")
         s.chdir(cwd)
-        self.cleanup()
 
     def testLog(self):
-        self.cleanup()
         s = script.BaseScript(config={'log_type': 'multi',
                                        'log_level': 'debug'},
                               initial_config_file='test/test.json')
@@ -164,10 +161,8 @@ class TestScript(unittest.TestCase):
                 pass
             else:
                 self.assertTrue(False, msg="fatal() didn't SystemExit!")
-        self.cleanup()
 
     def testRunCommand(self):
-        self.cleanup()
         s = script.BaseScript(config={'log_type': 'multi',
                                        'log_level': 'debug'},
                               initial_config_file='test/test.json')
@@ -206,4 +201,3 @@ class TestScript(unittest.TestCase):
         error_logsize2 = os.path.getsize("test_logs/test_error.log")
         self.assertTrue(error_logsize2 > error_logsize,
                         msg="command not found error not hit")
-        self.cleanup()
