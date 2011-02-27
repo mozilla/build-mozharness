@@ -37,51 +37,59 @@ class TestReadOnlyDict(unittest.TestCase):
      'e':['f', 'g'],
     }
 
-    def test_create_ROD(self):
+    def get_unlocked_ROD(self):
         r = config.ReadOnlyDict(self.control_dict)
+        return r
+
+    def get_locked_ROD(self):
+        r = config.ReadOnlyDict(self.control_dict)
+        r.lock()
+        return r
+
+    def test_create_ROD(self):
+        r = self.get_unlocked_ROD()
         self.assertEqual(r, self.control_dict,
                          msg="can't transfer dict to ReadOnlyDict")
 
     def test_pop_item(self):
-        r = config.ReadOnlyDict(self.control_dict)
+        r = self.get_unlocked_ROD()
         r.popitem()
         self.assertEqual(len(r), len(self.control_dict) - 1,
                          msg="can't popitem() ReadOnlyDict when unlocked")
 
     def test_pop(self):
-        r = config.ReadOnlyDict(self.control_dict)
+        r = self.get_unlocked_ROD()
         r.pop('e')
         self.assertEqual(len(r), len(self.control_dict) - 1,
                          msg="can't pop() ReadOnlyDict when unlocked")
 
     def test_set(self):
-        r = config.ReadOnlyDict(self.control_dict)
+        r = self.get_unlocked_ROD()
         r['e'] = 'yarrr'
         self.assertEqual(r['e'], 'yarrr',
                          msg="can't set var in ReadOnlyDict when unlocked")
 
     def test_del(self):
-        r = config.ReadOnlyDict(self.control_dict)
+        r = self.get_unlocked_ROD()
         del r['e']
         self.assertEqual(len(r), len(self.control_dict) - 1,
                          msg="can't del in ReadOnlyDict when unlocked")
 
     def test_clear(self):
-        r = config.ReadOnlyDict(self.control_dict)
+        r = self.get_unlocked_ROD()
         r.clear()
         self.assertEqual(r, {},
                          msg="can't clear() ReadOnlyDict when unlocked")
 
     def test_set_default(self):
-        r = config.ReadOnlyDict(self.control_dict)
+        r = self.get_unlocked_ROD()
         for key in self.control_dict.keys():
             r.setdefault(key, self.control_dict[key])
         self.assertEqual(r, self.control_dict,
                          msg="can't setdefault() ReadOnlyDict when unlocked")
 
-    def test_locked_ROD(self):
-        r = config.ReadOnlyDict(self.control_dict)
-        r.lock()
+    def test_locked_set(self):
+        r = self.get_locked_ROD()
         # TODO use |with self.assertRaises(AssertionError):| if/when we're
         # all on 2.7.
         try:
@@ -90,16 +98,34 @@ class TestReadOnlyDict(unittest.TestCase):
             pass
         else:
             self.assertEqual(0, 1, msg="can set r['e'] when locked")
+
+    def test_locked_del(self):
+        r = self.get_locked_ROD()
         try:
             del r['e']
         except:
             pass
         else:
             self.assertEqual(0, 1, "can del r['e'] when locked")
+
+    def test_locked_popitem(self):
+        r = self.get_locked_ROD()
         self.assertRaises(AssertionError, r.popitem)
+
+    def test_locked_update(self):
+        r = self.get_locked_ROD()
         self.assertRaises(AssertionError, r.update, {})
+
+    def test_locked_set_default(self):
+        r = self.get_locked_ROD()
         self.assertRaises(AssertionError, r.setdefault, {})
+
+    def test_locked_pop(self):
+        r = self.get_locked_ROD()
         self.assertRaises(AssertionError, r.pop)
+
+    def test_locked_clear(self):
+        r = self.get_locked_ROD()
         self.assertRaises(AssertionError, r.clear)
 
 

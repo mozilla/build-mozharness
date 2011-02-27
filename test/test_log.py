@@ -60,9 +60,11 @@ class TestLog(unittest.TestCase):
             del(l)
             for level in level_dict[log_level]:
                 log_path = self.get_log_file_path(level=level)
-                self.assertTrue(os.path.exists(log_path))
+                self.assertTrue(os.path.exists(log_path),
+                                msg="%s doesn't exist!" % log_path)
                 filesize = os.path.getsize(log_path)
-                self.assertTrue(filesize > 0)
+                self.assertTrue(filesize > 0,
+                                msg="%s is size 0!" % log_path)
 
     def test_console_log(self):
         l = log.SimpleFileLogger(log_dir=tmp_dir, log_name=log_name,
