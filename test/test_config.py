@@ -10,7 +10,8 @@ except:
 
 import mozharness.base.config as config
 
-class TestConfig(unittest.TestCase):
+
+class TestJsonConfig(unittest.TestCase):
     def _get_json_config(self, filename="configs/test/test.json",
                          output='dict'):
         fh = open(filename)
@@ -26,39 +27,60 @@ class TestConfig(unittest.TestCase):
         content_dict = self._get_json_config()
         for key in content_dict.keys():
             self.assertEqual(content_dict[key], c._config[key])
+
+
     
-    def test_read_only_dict(self):
-        # ReadOnlyDict {{{
-        control_dict = {
-         'b':'2',
-         'c':{'d': '4'},
-         'e':['f', 'g'],
-        }
-        r = config.ReadOnlyDict(control_dict)
-        self.assertEqual(r, control_dict,
+class TestReadOnlyDict(unittest.TestCase):
+    control_dict = {
+     'b':'2',
+     'c':{'d': '4'},
+     'e':['f', 'g'],
+    }
+
+    def test_create_ROD(self):
+        r = config.ReadOnlyDict(self.control_dict)
+        self.assertEqual(r, self.control_dict,
                          msg="can't transfer dict to ReadOnlyDict")
+
+    def test_pop_item(self):
+        r = config.ReadOnlyDict(self.control_dict)
         r.popitem()
-        self.assertEqual(len(r), len(control_dict) - 1,
+        self.assertEqual(len(r), len(self.control_dict) - 1,
                          msg="can't popitem() ReadOnlyDict when unlocked")
-        r = config.ReadOnlyDict(control_dict)
+
+    def test_pop(self):
+        r = config.ReadOnlyDict(self.control_dict)
         r.pop('e')
-        self.assertEqual(len(r), len(control_dict) - 1,
+        self.assertEqual(len(r), len(self.control_dict) - 1,
                          msg="can't pop() ReadOnlyDict when unlocked")
-        r = config.ReadOnlyDict(control_dict)
+
+    def test_set(self):
+        r = config.ReadOnlyDict(self.control_dict)
         r['e'] = 'yarrr'
         self.assertEqual(r['e'], 'yarrr',
                          msg="can't set var in ReadOnlyDict when unlocked")
+
+    def test_del(self):
+        r = config.ReadOnlyDict(self.control_dict)
         del r['e']
-        self.assertEqual(len(r), len(control_dict) - 1,
+        self.assertEqual(len(r), len(self.control_dict) - 1,
                          msg="can't del in ReadOnlyDict when unlocked")
+
+    def test_clear(self):
+        r = config.ReadOnlyDict(self.control_dict)
         r.clear()
         self.assertEqual(r, {},
                          msg="can't clear() ReadOnlyDict when unlocked")
-        for key in control_dict.keys():
-            r.setdefault(key, control_dict[key])
-        self.assertEqual(r, control_dict,
+
+    def test_set_default(self):
+        r = config.ReadOnlyDict(self.control_dict)
+        for key in self.control_dict.keys():
+            r.setdefault(key, self.control_dict[key])
+        self.assertEqual(r, self.control_dict,
                          msg="can't setdefault() ReadOnlyDict when unlocked")
-        r = config.ReadOnlyDict(control_dict)
+
+    def test_locked_ROD(self):
+        r = config.ReadOnlyDict(self.control_dict)
         r.lock()
         # TODO use |with self.assertRaises(AssertionError):| if/when we're
         # all on 2.7.
@@ -79,7 +101,12 @@ class TestConfig(unittest.TestCase):
         self.assertRaises(AssertionError, r.setdefault, {})
         self.assertRaises(AssertionError, r.pop)
         self.assertRaises(AssertionError, r.clear)
-        # End ReadOnlyDict }}}
+
+
+
+class TestActions(unittest.TestCase):
+    all_actions=['a', 'b', 'c', 'd', 'e']
+    default_actions = ['b', 'c', 'd']
 
     def test_verify_actions(self):
         c = config.BaseConfig(initial_config_file='test/test.json')
@@ -94,34 +121,40 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(c.all_actions, returned_actions,
                          msg="returned actions from verify_actions() changed")
 
-    def test_actions(self):
-        all_actions=['a', 'b', 'c', 'd', 'e']
-        default_actions = ['b', 'c', 'd']
-        c = config.BaseConfig(default_actions=default_actions,
-                              all_actions=all_actions,
+    def test_default_actions(self):
+        c = config.BaseConfig(default_actions=self.default_actions,
+                              all_actions=self.all_actions,
                               initial_config_file='test/test.json')
-        self.assertEqual(default_actions, c.get_actions(),
+        self.assertEqual(self.default_actions, c.get_actions(),
                          msg="default_actions broken")
-        c = config.BaseConfig(default_actions=default_actions,
-                              all_actions=all_actions,
+
+    def test_no_action1(self):
+        c = config.BaseConfig(default_actions=self.default_actions,
+                              all_actions=self.all_actions,
                               initial_config_file='test/test.json')
         c.parse_args(args=['foo', '--no-action', 'a'])
-        self.assertEqual(default_actions, c.get_actions(),
+        self.assertEqual(self.default_actions, c.get_actions(),
                          msg="--no-ACTION broken")
-        c = config.BaseConfig(default_actions=default_actions,
-                              all_actions=all_actions,
+
+    def test_no_action2(self):
+        c = config.BaseConfig(default_actions=self.default_actions,
+                              all_actions=self.all_actions,
                               initial_config_file='test/test.json')
         c.parse_args(args=['foo', '--no-c'])
         self.assertEqual(['b', 'd'], c.get_actions(),
                          msg="--no-ACTION broken")
-        c = config.BaseConfig(default_actions=default_actions,
-                              all_actions=all_actions,
+
+    def test_add_action(self):
+        c = config.BaseConfig(default_actions=self.default_actions,
+                              all_actions=self.all_actions,
                               initial_config_file='test/test.json')
         c.parse_args(args=['foo', '--add-action', 'e'])
         self.assertEqual(['b', 'c', 'd', 'e'], c.get_actions(),
                          msg="--add-action ACTION broken")
-        c = config.BaseConfig(default_actions=default_actions,
-                              all_actions=all_actions,
+
+    def test_only_action(self):
+        c = config.BaseConfig(default_actions=self.default_actions,
+                              all_actions=self.all_actions,
                               initial_config_file='test/test.json')
         c.parse_args(args=['foo', '--only-a', '--only-e'])
         self.assertEqual(['a', 'e'], c.get_actions(),
