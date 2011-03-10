@@ -2,12 +2,9 @@
     "work_dir": ".",
     "log_name": "multilocale",
     "objdir": "objdir",
-    "locales_file": "configs/mozilla2/l10n-changesets_mobile-2.0.json",
-    "locales_platform": "android-multilocale",
+    "locales_file": "mozilla-2.1/mobile/locales/maemo-locales",
     "locales_dir": "mobile/locales",
     "ignore_locales": ["en-US", "multi"],
-    "hg_l10n_base": "http://hg.mozilla.org/releases/l10n-mozilla-2.0",
-    "hg_l10n_tag": "default",
     "repos": [{
         "repo": "http://hg.mozilla.org/releases/mozilla-2.1",
         "tag": "default",
@@ -15,7 +12,7 @@
     },{
         "repo": "http://hg.mozilla.org/build/buildbot-configs",
         "tag": "default",
-        "dir_name": "configs"
+        "dir_name": "buildbot-configs"
     },{
         "repo": "http://hg.mozilla.org/build/tools",
         "tag": "default",
@@ -28,6 +25,8 @@
         "repo": "http://hg.mozilla.org/build/compare-locales",
         "tag": "RELEASE_AUTOMATION"
     }],
+    "hg_l10n_base": "http://hg.mozilla.org/releases/l10n-mozilla-2.0",
+    "hg_l10n_tag": "default",
     "l10n_dir": "l10n-mozilla-2.0",
     "env": {
         "JAVA_HOME": "/tools/jdk",
@@ -35,6 +34,6 @@
     },
     "merge_locales": true,
     "mozilla_dir": "mozilla-2.1",
-    "mozconfig": "configs/mozilla2/mobile/android/mobile-2.0/release/mozconfig",
+    "mozconfig": "buildbot-configs/mozilla2/mobile/android/mobile-2.0/nightly/mozconfig",
     "jarsigner": "../tools/release/signing/mozpass.py"
 }
