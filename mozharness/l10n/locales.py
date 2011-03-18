@@ -87,20 +87,24 @@ class LocalesMixin(object):
         dirs = {}
         dirs['abs_work_dir'] = os.path.join(c['base_work_dir'],
                                             c['work_dir'])
-        dirs['abs_l10n_dir'] = os.path.join(dirs['abs_work_dir'],
-                                            c['l10n_dir'])
-        dirs['abs_mozilla_dir'] = os.path.join(dirs['abs_work_dir'],
-                                               c['mozilla_dir'])
-        dirs['abs_objdir'] = os.path.join(dirs['abs_mozilla_dir'],
-                                          c['objdir'])
-        dirs['abs_merge_dir'] = os.path.join(dirs['abs_objdir'],
-                                             'merged')
-        dirs['abs_locales_dir'] = os.path.join(dirs['abs_objdir'],
-                                               c['locales_dir'])
-        dirs['abs_locales_src_dir'] = os.path.join(dirs['abs_mozilla_dir'],
+        # TODO prettify this up later
+        if 'l10n_dir' in c:
+            dirs['abs_l10n_dir'] = os.path.join(dirs['abs_work_dir'],
+                                                c['l10n_dir'])
+        if 'mozilla_dir' in c:
+            dirs['abs_mozilla_dir'] = os.path.join(dirs['abs_work_dir'],
+                                                   c['mozilla_dir'])
+            dirs['abs_locales_src_dir'] = os.path.join(dirs['abs_mozilla_dir'],
+                                                       c['locales_dir'])
+            dirs['abs_l10n_dir'] = os.path.join(dirs['abs_work_dir'],
+                                                c['l10n_dir'])
+        if 'objdir' in c:
+            dirs['abs_objdir'] = os.path.join(dirs['abs_mozilla_dir'],
+                                              c['objdir'])
+            dirs['abs_merge_dir'] = os.path.join(dirs['abs_objdir'],
+                                                 'merged')
+            dirs['abs_locales_dir'] = os.path.join(dirs['abs_objdir'],
                                                    c['locales_dir'])
-        dirs['abs_l10n_dir'] = os.path.join(dirs['abs_work_dir'],
-                                            c['l10n_dir'])
         dirs['abs_compare_locales_dir'] = os.path.join(dirs['abs_work_dir'],
                                                        'compare-locales')
         for key in dirs.keys():
