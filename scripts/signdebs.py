@@ -95,6 +95,7 @@ class MaemoDebSigner(LocalesMixin, MercurialScript):
             if c.get("multi_locale", True):
                 locales = ["multi"] + locales
             locales = ["en-US"] + locales
+        self.locales = locales
         return locales
 
     def _sign_repo(self, repo_name, platform):
