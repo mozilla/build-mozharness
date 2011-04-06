@@ -1,7 +1,7 @@
 {
     "log_name": "multilocale",
     "objdir": "objdir",
-    "locales_file": "mozilla-2.1/mobile/locales/maemo-locales",
+    "locales_file": "mozilla-central/mobile/locales/maemo-locales",
     "locales_dir": "mobile/locales",
     "ignore_locales": ["en-US", "multi"],
     "repos": [{
@@ -16,10 +16,6 @@
         "repo": "http://hg.mozilla.org/build/tools",
         "tag": "default",
         "dir_name": "tools"
-    },{
-        "repo": "http://hg.mozilla.org/mobile-browser",
-        "tag": "default",
-        "dir_name": "mozilla-central/mobile"
     },{
         "repo": "http://hg.mozilla.org/build/compare-locales",
         "tag": "RELEASE_AUTOMATION"

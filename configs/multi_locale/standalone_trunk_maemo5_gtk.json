@@ -19,10 +19,6 @@
         "tag": "default",
         "dir_name": "tools"
     },{
-        "repo": "http://hg.mozilla.org/mobile-browser",
-        "tag": "default",
-        "dir_name": "mozilla-central/mobile"
-    },{
         "repo": "http://hg.mozilla.org/build/compare-locales",
         "tag": "RELEASE_AUTOMATION"
     }],
