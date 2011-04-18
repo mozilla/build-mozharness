@@ -4,13 +4,13 @@
     "sbox_root": "/builds/scratchbox/users/cltbld",
     "log_name": "multilocale",
     "objdir": "objdir",
-    "locales_file": "mozilla-2.1/mobile/locales/maemo-locales",
+    "locales_file": "mozilla-aurora/mobile/locales/maemo-locales",
     "locales_dir": "mobile/locales",
     "ignore_locales": ["en-US", "multi"],
     "repos": [{
-        "repo": "http://hg.mozilla.org/releases/mozilla-2.1",
+        "repo": "http://hg.mozilla.org/releases/mozilla-aurora",
         "tag": "default",
-        "dir_name": "mozilla-2.1"
+        "dir_name": "mozilla-aurora"
     },{
         "repo": "http://hg.mozilla.org/build/buildbot-configs",
         "tag": "default",
@@ -20,17 +20,13 @@
         "tag": "default",
         "dir_name": "tools"
     },{
-        "repo": "http://hg.mozilla.org/releases/mobile-2.0",
-        "tag": "default",
-        "dir_name": "mozilla-2.1/mobile"
-    },{
         "repo": "http://hg.mozilla.org/build/compare-locales",
         "tag": "RELEASE_AUTOMATION"
     }],
-    "hg_l10n_base": "http://hg.mozilla.org/releases/l10n-mozilla-2.0",
+    "hg_l10n_base": "http://hg.mozilla.org/releases/l10n/mozilla-aurora",
     "hg_l10n_tag": "default",
-    "l10n_dir": "l10n-mozilla-2.0",
+    "l10n_dir": "mozilla-aurora",
     "merge_locales": true,
-    "mozilla_dir": "mozilla-2.0",
-    "mozconfig": "buildbot-configs/mozilla2/mobile/maemo5-gtk/mobile-2.0/nightly/mozconfig"
+    "mozilla_dir": "mozilla-aurora",
+    "mozconfig": "buildbot-configs/mozilla2/mobile/maemo5-qt/mozilla-aurora/nightly/mozconfig"
 }
