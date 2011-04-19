@@ -31,6 +31,6 @@
     "hg_l10n_tag": "default",
     "l10n_dir": "l10n-mozilla-2.0",
     "merge_locales": true,
-    "mozilla_dir": "mozilla-2.0",
+    "mozilla_dir": "mozilla-2.1",
     "mozconfig": "buildbot-configs/mozilla2/mobile/maemo5-gtk/mobile-2.0/nightly/mozconfig"
 }
