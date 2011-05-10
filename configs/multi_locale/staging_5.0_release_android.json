@@ -1,0 +1,40 @@
+{
+    "work_dir": ".",
+    "log_name": "multilocale",
+    "objdir": "objdir",
+    "locales_file": "configs/mozilla2-staging/l10n-changesets_mobile-5.0.json",
+    "locales_platform": "android-multilocale",
+    "locales_dir": "mobile/locales",
+    "ignore_locales": ["en-US", "multi"],
+    "hg_l10n_base": "http://hg.mozilla.org/releases/l10n/mozilla-beta",
+    "hg_l10n_tag": "default",
+    "repos": [{
+        "repo": "http://hg.mozilla.org/releases/mozilla-mobile-5.0",
+        "tag": "default",
+        "dir_name": "mozilla-mobile-5.0"
+    },{
+        "repo": "http://hg.mozilla.org/build/buildbot-configs",
+        "tag": "default",
+        "dir_name": "configs"
+    },{
+        "repo": "http://hg.mozilla.org/build/tools",
+        "tag": "default",
+        "dir_name": "tools"
+    },{
+        "repo": "http://hg.mozilla.org/releases/mobile-5.0",
+        "tag": "default",
+        "dir_name": "mozilla-mobile-5.0/mobile"
+    },{
+        "repo": "http://hg.mozilla.org/build/compare-locales",
+        "tag": "RELEASE_AUTOMATION"
+    }],
+    "l10n_dir": "mozilla-mobile-5.0",
+    "env": {
+        "JAVA_HOME": "/tools/jdk",
+        "PATH": "%(PATH)s:/tools/jdk/bin"
+    },
+    "merge_locales": true,
+    "mozilla_dir": "mozilla-mobile-5.0",
+    "mozconfig": "configs/mozilla2/mobile/android/mozilla-beta/release/mozconfig",
+    "jarsigner": "../tools/release/signing/mozpass.py"
+}
