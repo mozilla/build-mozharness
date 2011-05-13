@@ -141,6 +141,10 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
     def package_en_US(self):
         self.package(package_type='en-US')
 
+    def preflight_package_multi(self):
+        dirs = self.query_abs_dirs()
+        self.run_command("rm -rfv dist/fennec*", cwd=dirs['abs_objdir'])
+
     def package_multi(self):
         self.package(package_type='multi')
 
