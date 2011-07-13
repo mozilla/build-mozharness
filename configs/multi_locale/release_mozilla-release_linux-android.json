@@ -1,0 +1,36 @@
+{
+    "work_dir": ".",
+    "log_name": "multilocale",
+    "objdir": "obj-firefox",
+    "locales_file": "build/configs/mozilla/l10n-changesets_mobile-release.json",
+    "locales_platform": "android-multilocale",
+    "locales_dir": "mobile/locales",
+    "ignore_locales": ["en-US", "multi"],
+    "repos": [{
+        "repo": "http://hg.mozilla.org/releases/mozilla-release",
+        "tag": "FENNEC_6_0_RELEASE",
+        "dir_name": "build"
+    },{
+        "repo": "http://hg.mozilla.org/build/buildbot-configs",
+        "tag": "FENNEC_6_0_RELEASE",
+        "dir_name": "build/configs"
+    },{
+        "repo": "http://hg.mozilla.org/build/tools",
+        "tag": "FENNEC_6_0_RELEASE",
+        "dir_name": "tools"
+    },{
+        "repo": "http://hg.mozilla.org/build/compare-locales",
+        "tag": "FENNEC_6_0_RELEASE"
+    }],
+    "hg_l10n_base": "http://hg.mozilla.org/releases/l10n/mozilla-release",
+    "hg_l10n_tag": "FENNEC_6_0_RELEASE",
+    "l10n_dir": "mozilla-release",
+    "env": {
+        "JAVA_HOME": "/tools/jdk",
+        "PATH": "%(PATH)s:/tools/jdk/bin"
+    },
+    "merge_locales": true,
+    "mozilla_dir": "build",
+    "mozconfig": "build/configs/mozilla2/linux-android/mozilla-release/nightly/mozconfig",
+    "jarsigner": "tools/release/signing/mozpass.py"
+}
