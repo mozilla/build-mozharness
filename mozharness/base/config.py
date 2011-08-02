@@ -156,7 +156,7 @@ def parse_config_file(file_name, quiet=False, search_path=None):
                 line = line[:-1]
                 contents.append(line)
                 config = dict(contents)
-    fh.close()
+        fh.close()
     # TODO return file_path
     return config
 
