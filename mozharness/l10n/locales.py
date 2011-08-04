@@ -72,6 +72,7 @@ class LocalesMixin(object):
                                           'lib')})
         compare_locales_error_list = list(PythonErrorList)
         self.rmtree(dirs['abs_merge_dir'])
+        self.mkdir_p(dirs['abs_merge_dir'])
         command = "python %s -m %s l10n.ini %s %s" % (compare_locales_script,
                   dirs['abs_merge_dir'], dirs['abs_l10n_dir'], locale)
         status = self.run_command(command, error_list=compare_locales_error_list,

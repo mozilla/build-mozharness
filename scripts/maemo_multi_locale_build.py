@@ -110,10 +110,10 @@ class MaemoMultiLocaleBuild(MultiLocaleBuild):
                       dirs['abs_l10n_dir'].replace(c['sbox_root'], ""))
             if c['merge_locales']:
                 command += " LOCALE_MERGEDIR=%s" % dirs['abs_merge_dir'].replace(c['sbox_root'], "")
-                self._process_command(command=command,
-                                      cwd=dirs['abs_locales_dir'],
-                                      error_list=MakefileErrorList,
-                                      halt_on_failure=True)
+            self._process_command(command=command,
+                                  cwd=dirs['abs_locales_dir'],
+                                  error_list=MakefileErrorList,
+                                  halt_on_failure=True)
 
     def additional_packaging(self, package_type='en-US', env=None):
         dirs = self.query_abs_dirs()

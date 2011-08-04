@@ -133,10 +133,10 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
             command = 'make chrome-%s L10NBASEDIR=%s' % (locale, dirs['abs_l10n_dir'])
             if c['merge_locales']:
                 command += " LOCALE_MERGEDIR=%s" % dirs['abs_merge_dir']
-                self._process_command(command=command,
-                                      cwd=dirs['abs_locales_dir'],
-                                      error_list=MakefileErrorList,
-                                      halt_on_failure=True)
+            self._process_command(command=command,
+                                  cwd=dirs['abs_locales_dir'],
+                                  error_list=MakefileErrorList,
+                                  halt_on_failure=True)
 
     def package_en_US(self):
         self.package(package_type='en-US')
