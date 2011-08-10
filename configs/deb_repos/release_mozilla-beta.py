@@ -1,4 +1,4 @@
-VERSION = "6.0b5"
+VERSION = "6.0b6"
 BUILDNUM = 1
 
 config = {
@@ -7,7 +7,7 @@ config = {
     "locales": ['en-US', 'multi'],
     "hg_repos": [{
         "repo": "http://hg.mozilla.org/build/buildbot-configs",
-        "tag": "FENNEC_6_0b5_RELEASE"
+        "tag": "FENNEC_6_0b6_RELEASE"
     }],
     "package_name": "fennec",
     "repo_name": "%(locale)s",
