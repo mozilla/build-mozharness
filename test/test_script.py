@@ -67,7 +67,7 @@ class TestScript(unittest.TestCase):
                       parent_dir="test_dir", clobber=True)
         self.assertTrue(os.path.isdir("test_dir/tools"))
         s.scm_checkout("http://hg.mozilla.org/build/tools",
-                      dir_name="test_dir/tools", halt_on_failure=False)
+                      dest="test_dir/tools", halt_on_failure=False)
 
     def test_noop_mkdir_p(self):
         s = get_noop_script_obj()

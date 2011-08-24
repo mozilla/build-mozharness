@@ -11,15 +11,15 @@
     "repos": [{
         "repo": "http://hg.mozilla.org/users/stage-ffxbld/mozilla-beta",
         "tag": "FENNEC_6_0b2_RELEASE",
-        "dir_name": "build"
+        "dest": "build"
     },{
         "repo": "http://hg.mozilla.org/users/stage-ffxbld/buildbot-configs",
         "tag": "FENNEC_6_0b2_RELEASE",
-        "dir_name": "build/configs"
+        "dest": "build/configs"
     },{
         "repo": "http://hg.mozilla.org/users/stage-ffxbld/tools",
         "tag": "FENNEC_6_0b2_RELEASE",
-        "dir_name": "tools"
+        "dest": "tools"
     },{
         "repo": "http://hg.mozilla.org/users/stage-ffxbld/compare-locales",
         "tag": "FENNEC_6_0b2_RELEASE"

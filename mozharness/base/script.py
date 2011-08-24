@@ -548,20 +548,20 @@ class MercurialMixin(object):
 
     #TODO: num_retries
     def scm_checkout(self, repo, parent_dir=None, tag="default",
-                     dir_name=None, clobber=False, halt_on_failure=True):
-        if not dir_name:
-            dir_name = os.path.basename(repo)
+                     dest=None, clobber=False, halt_on_failure=True):
+        if not dest:
+            dest = os.path.basename(repo)
         if parent_dir:
-            dir_path = os.path.join(parent_dir, dir_name)
+            dir_path = os.path.join(parent_dir, dest)
             self.mkdir_p(parent_dir)
         else:
-            dir_path = dir_name
+            dir_path = dest
         if clobber and os.path.exists(dir_path):
             self.rmtree(dir_path)
         if not os.path.exists(dir_path):
-            command = "hg clone %s %s" % (repo, dir_name)
+            command = "hg clone %s %s" % (repo, dest)
         else:
-            command = "hg --cwd %s pull" % (dir_name)
+            command = "hg --cwd %s pull" % (dest)
         self.run_command(command, cwd=parent_dir, halt_on_failure=halt_on_failure,
                         error_list=HgErrorList)
         self.scm_update(dir_path, tag=tag, halt_on_failure=halt_on_failure)

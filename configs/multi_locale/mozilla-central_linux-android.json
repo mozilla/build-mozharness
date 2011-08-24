@@ -8,15 +8,15 @@
     "repos": [{
         "repo": "http://hg.mozilla.org/mozilla-central",
         "tag": "default",
-        "dir_name": "build"
+        "dest": "build"
     },{
         "repo": "http://hg.mozilla.org/build/buildbot-configs",
         "tag": "default",
-        "dir_name": "build/configs"
+        "dest": "build/configs"
     },{
         "repo": "http://hg.mozilla.org/build/tools",
         "tag": "default",
-        "dir_name": "tools"
+        "dest": "tools"
     },{
         "repo": "http://hg.mozilla.org/build/compare-locales",
         "tag": "RELEASE_AUTOMATION"
