@@ -25,6 +25,7 @@ from mozharness.base.errors import HgErrorList
 # BaseScript {{{1
 class BaseScript(object):
     def __init__(self, config_options=None, default_log_level="info", **kwargs):
+        self.return_code = 0
         self.log_obj = None
         self.abs_dirs = None
         if config_options is None:
@@ -98,6 +99,7 @@ class BaseScript(object):
                 self._possibly_run_method(method_name, error_if_missing=True)
                 self._possibly_run_method("postflight_%s" % method_name)
         self.summary()
+        sys.exit(self.return_code)
 
     def query_abs_dirs(self):
         if self.abs_dirs:
@@ -397,8 +399,11 @@ class BaseScript(object):
         num_errors = 0
         if cwd:
             if not os.path.isdir(cwd):
-                self.error("Can't run command %s in non-existent directory %s!" % \
-                           (command, cwd))
+                level = "error"
+                if halt_on_failure:
+                    level = "fatal"
+                self.log("Can't run command %s in non-existent directory %s!" % \
+                         (command, cwd), level=level)
                 return -1
             self.info("Running command: %s in %s" % (command, cwd))
         else:
@@ -466,8 +471,11 @@ class BaseScript(object):
         """
         if cwd:
             if not os.path.isdir(cwd):
-                self.error("Can't run command %s in non-existent directory %s!" % \
-                           (command, cwd))
+                level = 'error'
+                if halt_on_failure:
+                    level = 'fatal'
+                self.log("Can't run command %s in non-existent directory %s!" % \
+                         (command, cwd), level=level)
                 return -1
             self.info("Getting output from command: %s in %s" % (command, cwd))
         else:
@@ -587,8 +595,8 @@ class MercurialMixin(object):
 class MercurialScript(MercurialMixin, BaseScript):
     def __init__(self, **kwargs):
         super(MercurialScript, self).__init__(**kwargs)
-        
-        
+
+
 
 
 # __main__ {{{1
