@@ -7,23 +7,20 @@
     "locales_dir": "mobile/locales",
     "ignore_locales": ["en-US", "multi"],
     "repos": [{
-        "repo": "http://hg.mozilla.org/users/stage-ffxbld/mozilla-release",
-        "tag": "FENNEC_6_0_RELEASE",
+        "repo": "http://hg.mozilla.org/%(user_repo_override)s/mozilla-release",
         "dest": "build"
     },{
-        "repo": "http://hg.mozilla.org/users/stage-ffxbld/buildbot-configs",
-        "tag": "FENNEC_6_0_RELEASE",
+        "repo": "http://hg.mozilla.org/%(user_repo_override)s/buildbot-configs",
         "dest": "build/configs"
     },{
-        "repo": "http://hg.mozilla.org/users/stage-ffxbld/tools",
-        "tag": "FENNEC_6_0_RELEASE",
+        "repo": "http://hg.mozilla.org/%(user_repo_override)s/tools",
         "dest": "tools"
     },{
-        "repo": "http://hg.mozilla.org/users/stage-ffxbld/compare-locales",
-        "tag": "FENNEC_6_0_RELEASE"
+        "repo": "http://hg.mozilla.org/%(user_repo_override)s/compare-locales",
+        "tag": "RELEASE_AUTOMATION"
     }],
-    "hg_l10n_base": "http://hg.mozilla.org/users/stage-ffxbld",
-    "hg_l10n_tag": "FENNEC_6_0_RELEASE",
+    "hg_l10n_base": "http://hg.mozilla.org/%(user_repo_override)s",
+    "required_config_vars": ["tag_override", "user_repo_override"],
     "l10n_dir": "mozilla-release",
     "env": {
         "JAVA_HOME": "/tools/jdk",

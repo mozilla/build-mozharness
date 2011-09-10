@@ -61,6 +61,13 @@ class BaseScript(object):
         # easy-to-write-hard-to-debug writable config.
         self._lock_config()
         self.info("Run as %s" % rw_config.command_line)
+        if self.config.get('required_config_vars'):
+            message = ""
+            for var in self.config['required_config_vars']:
+                if var not in self.config:
+                    message += "Required var %s not set!\n" % var
+            if message:
+                self.fatal(message)
 
     def _lock_config(self):
         self.config.lock()
@@ -580,7 +587,8 @@ class MercurialMixin(object):
                         error_list=HgErrorList)
 
     def scm_checkout_repos(self, repo_list, parent_dir=None,
-                           clobber=False, halt_on_failure=True):
+                           clobber=False, halt_on_failure=True,
+                           tag_override=None):
         c = self.config
         if not parent_dir:
             parent_dir = os.path.join(c['base_work_dir'], c['work_dir'])
@@ -590,6 +598,8 @@ class MercurialMixin(object):
             kwargs['parent_dir'] = parent_dir
             kwargs['clobber'] = clobber
             kwargs['halt_on_failure'] = halt_on_failure
+            if tag_override:
+                kwargs['tag'] = tag_override
             self.scm_checkout(**kwargs)
 
 class MercurialScript(MercurialMixin, BaseScript):

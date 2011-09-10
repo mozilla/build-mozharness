@@ -8,22 +8,19 @@
     "ignore_locales": ["en-US", "multi"],
     "repos": [{
         "repo": "http://hg.mozilla.org/releases/mozilla-release",
-        "tag": "FENNEC_6_0_2_RELEASE",
         "dest": "build"
     },{
         "repo": "http://hg.mozilla.org/build/buildbot-configs",
-        "tag": "FENNEC_6_0_2_RELEASE",
         "dest": "build/configs"
     },{
         "repo": "http://hg.mozilla.org/build/tools",
-        "tag": "FENNEC_6_0_2_RELEASE",
         "dest": "tools"
     },{
         "repo": "http://hg.mozilla.org/build/compare-locales",
-        "tag": "FENNEC_6_0_2_RELEASE"
+        "tag": "RELEASE_AUTOMATION"
     }],
     "hg_l10n_base": "http://hg.mozilla.org/releases/l10n/mozilla-release",
-    "hg_l10n_tag": "FENNEC_6_0_2_RELEASE",
+    "required_config_vars": ["tag_override"],
     "l10n_dir": "mozilla-release",
     "env": {
         "JAVA_HOME": "/tools/jdk",
