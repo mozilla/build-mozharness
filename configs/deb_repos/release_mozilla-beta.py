@@ -1,4 +1,4 @@
-VERSION = "7.0b6"
+VERSION = "8.0b1"
 BUILDNUM = 1
 
 config = {
