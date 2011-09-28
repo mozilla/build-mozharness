@@ -1,5 +1,5 @@
-VERSION = "7.0"
-BUILDNUM = 2
+VERSION = "7.0.1"
+BUILDNUM = 1
 
 config = {
     "log_name": "signdebs",
