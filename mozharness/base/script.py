@@ -1,47 +1,5 @@
 #!/usr/bin/env python
-# ***** BEGIN LICENSE BLOCK *****
-# Version: MPL 1.1/GPL 2.0/LGPL 2.1
-#
-# The contents of this file are subject to the Mozilla Public License Version
-# 1.1 (the "License"); you may not use this file except in compliance with
-# the License. You may obtain a copy of the License at
-# http://www.mozilla.org/MPL/
-#
-# Software distributed under the License is distributed on an "AS IS" basis,
-# WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
-# for the specific language governing rights and limitations under the
-# License.
-#
-# The Original Code is Mozilla.
-#
-# The Initial Developer of the Original Code is
-# the Mozilla Foundation <http://www.mozilla.org/>.
-# Portions created by the Initial Developer are Copyright (C) 2011
-# the Initial Developer. All Rights Reserved.
-#
-# Contributor(s):
-#   Aki Sasaki <aki@mozilla.com>
-#
-# Alternatively, the contents of this file may be used under the terms of
-# either the GNU General Public License Version 2 or later (the "GPL"), or
-# the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
-# in which case the provisions of the GPL or the LGPL are applicable instead
-# of those above. If you wish to allow use of your version of this file only
-# under the terms of either the GPL or the LGPL, and not to allow others to
-# use your version of this file under the terms of the MPL, indicate your
-# decision by deleting the provisions above and replace them with the notice
-# and other provisions required by the GPL or the LGPL. If you do not delete
-# the provisions above, a recipient may use your version of this file under
-# the terms of any one of the MPL, the GPL or the LGPL.
-#
-# ***** END LICENSE BLOCK *****
 """Generic script objects.
-
-TODO: The various mixins assume that they're used by BaseScript.
-Either every child object will need self.config, or these need some
-work.
-
-TODO: The mixin names kind of need work too?
 """
 
 import codecs
@@ -52,37 +10,143 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import urllib2
 
 try:
-    import simplejson as json
-except ImportError:
     import json
+except:
+    import simplejson as json
 
 from mozharness.base.config import BaseConfig
-from mozharness.base.log import SimpleFileLogger, MultiFileLogger, \
-                                LogMixin, DEBUG, INFO, WARNING, ERROR, \
-                                CRITICAL, FATAL, IGNORE
+from mozharness.base.log import SimpleFileLogger, MultiFileLogger
 from mozharness.base.errors import HgErrorList
 
-# OSMixin {{{1
-class OSMixin(object):
-    """Filesystem commands and the like.
+# BaseScript {{{1
+class BaseScript(object):
+    def __init__(self, config_options=None, default_log_level="info", **kwargs):
+        self.return_code = 0
+        self.log_obj = None
+        self.abs_dirs = None
+        if config_options is None:
+            config_options = []
+        config_options.extend([[
+         ["--multi-log",],
+         {"action": "store_const",
+          "const": "multi",
+          "dest": "log_type",
+          "help": "Log using MultiFileLogger"
+         }
+        ],[
+         ["--simple-log",],
+         {"action": "store_const",
+          "const": "simple",
+          "dest": "log_type",
+          "help": "Log using SimpleFileLogger"
+         }
+        ]])
+        self.summary_list = []
+        rw_config = BaseConfig(config_options=config_options,
+                               **kwargs)
+        self.config = rw_config.get_read_only_config()
+        self.actions = tuple(rw_config.actions)
+        self.all_actions = tuple(rw_config.all_actions)
+        self.env = None
+        self.new_log_obj(default_log_level=default_log_level)
+        # self.config is read-only and locked.
+        #
+        # We can create intermediate config info programmatically from
+        # this in a repeatable way, with logs; this is how we straddle the
+        # ideal-but-not-user-friendly static config and the
+        # easy-to-write-hard-to-debug writable config.
+        self._lock_config()
+        self.info("Run as %s" % rw_config.command_line)
+        if self.config.get('required_config_vars'):
+            message = ""
+            for var in self.config['required_config_vars']:
+                if var not in self.config:
+                    message += "Required var %s not set!\n" % var
+            if message:
+                self.fatal(message)
 
-    Currently dependent on LogMixin, and a self.config of some sort.
-    """
+    def _lock_config(self):
+        self.config.lock()
+
+    def _possibly_run_method(self, method_name, error_if_missing=False):
+        if hasattr(self, method_name) and callable(getattr(self, method_name)):
+            return getattr(self, method_name)()
+        elif error_if_missing:
+            self.error("No such method %s!" % method_name)
+
+    def run(self):
+        """Default run method.
+        This is the "do everything" method, based on actions and all_actions.
+
+        First run self.dump_config() if it exists.
+        Second, go through the list of all_actions.
+        If they're in the list of self.actions, try to run
+        self.preflight_ACTION(), self.ACTION(), and self.postflight_ACTION().
+
+        Preflight is sanity checking before doing anything time consuming or
+        destructive.
+
+        Postflight is quick testing for success after an action.
+
+        Run self.summary() at the end.
+
+        """
+        self.dump_config()
+        for action in self.all_actions:
+            if action not in self.actions:
+                self.action_message("Skipping %s step." % action)
+            else:
+                method_name = action.replace("-", "_")
+                self.action_message("Running %s step." % action)
+                self._possibly_run_method("preflight_%s" % method_name)
+                self._possibly_run_method(method_name, error_if_missing=True)
+                self._possibly_run_method("postflight_%s" % method_name)
+        self.summary()
+        sys.exit(self.return_code)
+
+    def query_abs_dirs(self):
+        if self.abs_dirs:
+            return self.abs_dirs
+        c = self.config
+        dirs = {}
+        dirs['abs_work_dir'] = os.path.join(c['base_work_dir'], c['work_dir'])
+        dirs['abs_upload_dir'] = os.path.join(c['base_work_dir'], 'upload_dir')
+        if c.get('log_dir', None):
+            dirs['abs_log_dir'] = os.path.join(c['base_work_dir'], c['log_dir'])
+        else:
+            dirs['abs_log_dir'] = os.path.join(dirs['abs_upload_dir'], 'logs')
+        self.abs_dirs = dirs
+        return self.abs_dirs
+
+    def dump_config(self, file_path=None):
+        dirs = self.query_abs_dirs()
+        if not file_path:
+            file_path = os.path.join(dirs['abs_upload_dir'], "localconfig.json")
+        self.info("Dumping config to %s." % file_path)
+        self.mkdir_p(dirs['abs_upload_dir'])
+        json_config = json.dumps(self.config, sort_keys=True, indent=4)
+        fh = codecs.open(file_path, encoding='utf-8', mode='w+')
+        fh.write(json_config)
+        fh.close()
+        self.info(pprint.pformat(self.config))
+
+# os commands {{{2
     def mkdir_p(self, path):
         if not os.path.exists(path):
             self.info("mkdir: %s" % path)
-            if not self.config.get('noop'):
+            if not self.config['noop']:
                 os.makedirs(path)
         else:
             self.debug("mkdir_p: %s Already exists." % path)
 
-    def rmtree(self, path, error_level=ERROR, exit_code=-1):
+    def rmtree(self, path, error_level='error', exit_code=-1):
         self.info("rmtree: %s" % path)
         if os.path.exists(path):
-            if not self.config.get('noop'):
+            if not self.config['noop']:
                 if os.path.isdir(path):
                     if self._is_windows():
                         self._rmdir_recursive(path)
@@ -93,10 +157,8 @@ class OSMixin(object):
                 if os.path.exists(path):
                     self.log('Unable to remove %s!' % path, level=error_level,
                              exit_code=exit_code)
-                    return -1
         else:
             self.debug("%s doesn't exist." % path)
-        return 0
 
     def _is_windows(self):
         if platform.system() in ("Windows",):
@@ -134,16 +196,15 @@ class OSMixin(object):
         os.rmdir(path)
 
     # http://www.techniqal.com/blog/2008/07/31/python-file-read-write-with-urllib2/
-    # TODO thinking about creating a transfer object.
     def download_file(self, url, file_name=None,
-                     error_level=ERROR, exit_code=-1):
+                     error_level='error', exit_code=-1):
         """Python wget.
         TODO: option to mkdir_p dirname(file_name) if it doesn't exist.
         TODO: should noop touch the filename? seems counter-noop.
         """
         if not file_name:
             file_name = os.path.basename(url)
-        if self.config.get('noop'):
+        if self.config['noop']:
             self.info("Downloading %s" % url)
             return file_name
         req = urllib2.Request(url)
@@ -163,49 +224,124 @@ class OSMixin(object):
             return
         return file_name
 
-    def move(self, src, dest, error_level="error", exit_code=-1):
+    def move(self, src, dest):
         self.info("Moving %s to %s" % (src, dest))
-        if not self.config.get('noop'):
-            try:
-                shutil.move(src, dest)
-            # http://docs.python.org/tutorial/errors.html
-            except IOError, e:
-                self.log("IO error: %s" % str(e),
-                         level=error_level, exit_code=exit_code)
-                return -1
-        return 0
+        if not self.config['noop']:
+            shutil.move(src, dest)
 
     def chmod(self, path, mode):
-        self.info("Chmoding %s to %s" % (path, str(oct(mode))))
-        if not self.config.get('noop'):
+        self.info("Chmoding %s to %s" % (path, mode))
+        if not self.config['noop']:
             os.chmod(path, mode)
 
-    def copyfile(self, src, dest, error_level=ERROR):
+    def chown(self, path, uid, guid):
+        self.info("Chowning %s to uid %s guid %s" % (path, uid, guid))
+        if not self.config['noop']:
+            os.chown(path, uid, guid)
+
+    def copyfile(self, src, dest, error_level='error'):
         self.info("Copying %s to %s" % (src, dest))
-        if not self.config.get('noop'):
+        if not self.config['noop']:
             try:
                 shutil.copyfile(src, dest)
-            except (IOError, shutil.Error):
-                self.dump_exception("Can't copy %s to %s!" % (src, dest),
-                                    level=error_level)
+            except:
+                # TODO say why
+                self.log("Can't copy %s to %s!" % (src, dest),
+                         level=error_level)
 
     def chdir(self, dir_name, ignore_if_noop=False):
         self.log("Changing directory to %s." % dir_name)
-        if self.config.get('noop') and ignore_if_noop:
+        if self.config['noop'] and ignore_if_noop:
             self.info("noop: not changing dir")
         else:
             os.chdir(dir_name)
 
-# ShellMixin {{{1
-class ShellMixin(object):
+# logging {{{2
+    def new_log_obj(self, default_log_level="info"):
+        dirs = self.query_abs_dirs()
+        log_config = {"logger_name": 'Simple',
+                      "log_name": 'test',
+                      "log_dir": dirs['abs_log_dir'],
+                      "log_level": default_log_level,
+                      "log_format": '%(asctime)s %(levelname)8s - %(message)s',
+                      "log_to_console": True,
+                      "append_to_log": False,
+                     }
+        log_type = self.config.get("log_type", "multi")
+        if log_type == "multi":
+            log_config['logger_name'] = 'Multi'
+        for key in log_config.keys():
+            value = self.config.get(key, None)
+            if value is not None:
+                log_config[key] = value
+        if log_type == "multi":
+            self.log_obj = MultiFileLogger(**log_config)
+        else:
+            self.log_obj = SimpleFileLogger(**log_config)
+
+    """There may be a better way of doing this, but I did this previously...
+    """
+    def log(self, message, level='info', exit_code=-1):
+        if self.log_obj:
+            return self.log_obj.log(message, level=level, exit_code=exit_code)
+        if level == 'info':
+            print message
+        elif level == 'debug':
+            print 'DEBUG: %s' % message
+        elif level in ('warning', 'error', 'critical'):
+            print >> sys.stderr, "%s: %s" % (level.upper(), message)
+        elif level == 'fatal':
+            print >> sys.stderr, "FATAL: %s" % message
+            raise SystemExit(exit_code)
+
+    def debug(self, message):
+        if self.config.get('log_level', None) == 'debug':
+            self.log(message, level='debug')
+
+    def info(self, message):
+        self.log(message, level='info')
+
+    def warning(self, message):
+        self.log(message, level='warning')
+
+    def warn(self, message):
+        self.log(message, level='warning')
+
+    def error(self, message):
+        self.log(message, level='error')
+
+    def critical(self, message):
+        self.log(message, level='critical')
+
+    def fatal(self, message, exit_code=-1):
+        self.log(message, level='fatal', exit_code=exit_code)
+
+    def action_message(self, message):
+        self.info("#####")
+        self.info("##### %s" % message)
+        self.info("#####")
+
+    def summary(self):
+        self.action_message("%s summary:" % self.__class__.__name__)
+        if self.summary_list:
+            for item in self.summary_list:
+                try:
+                    self.log(item['message'], level=item['level'])
+                except ValueError:
+                    """log is closed; print as a default. Ran into this
+                    when calling from __del__()"""
+                    print "### Log is closed! (%s)" % item['message']
+
+    def add_summary(self, message, level='info'):
+        self.summary_list.append({'message': message, 'level': level})
+        # TODO write to a summary-only log?
+        # Summaries need a lot more love.
+        self.log(message, level=level)
+
+# run_command and get_output_from_command {{{2
     """These are very special but very complex methods that, together with
     logging and config, provide the base for all scripts in this harness.
-
-    This is currently dependent on LogMixin and OSMixin, and assumes that
-    there is a self.config of some sort.
     """
-    def __init__(self):
-        self.env = None
 
     def query_env(self, partial_env=None, replace_dict=None):
         """Environment query/generation method.
@@ -220,12 +356,12 @@ class ShellMixin(object):
         """
         set_self_env = False
         if partial_env is None:
-            if self.env is not None:
+            if self.env:
                 return self.env
-            partial_env = self.config.get('env', None)
-            if partial_env is None:
-                partial_env = {}
             set_self_env = True
+            partial_env = self.config.get('env', None)
+            if not partial_env:
+                return None
         env = os.environ.copy()
         if replace_dict is None:
             replace_dict = {}
@@ -238,44 +374,50 @@ class ShellMixin(object):
         return env
 
     def run_command(self, command, cwd=None, error_list=[], parse_at_end=False,
-                    halt_on_failure=False, success_codes=[0],
-                    env=None, return_type='status', throw_exception=False):
+                    shell=True, halt_on_failure=False, success_codes=[0],
+                    env=None, return_type='status'):
         """Run a command, with logging and error parsing.
 
         TODO: parse_at_end, contextLines
         TODO: retry_interval?
         TODO: error_level_override?
-        TODO: Add a copy-pastable version of |command| if it's a list.
+        TODO: command should be able to be a list or a string.
+              If it's a list, I would want a copy-pasteable version of it
+              output in the log at some point; this would need to be
+              properly formatted (so ['echo', 'foo'] would not be
+                INFO - Running Command: echo foo
+              but
+                INFO - Running Command: 'echo' 'foo'
+              )
+              This'll be even trickier if the contents of the list have
+              single quotes in them.
 
         error_list example:
-        [{'regex': '^Error: LOL J/K', level=IGNORE},
-         {'regex': '^Error:', level=ERROR, contextLines='5:5'},
-         {'substr': 'THE WORLD IS ENDING', level=FATAL, contextLines='20:'}
+        [{'regex': '^Error: LOL J/K', level='ignore'},
+         {'regex': '^Error:', level='error', contextLines='5:5'},
+         {'substr': 'THE WORLD IS ENDING', level='fatal', contextLines='20:'}
         ]
         """
-        # Get rid of this when we get rid of the scratchbox stuff
         if return_type == 'output':
             return self.get_output_from_command(command=command, cwd=cwd,
+                                                shell=shell,
                                                 halt_on_failure=halt_on_failure,
                                                 env=env)
         num_errors = 0
         if cwd:
             if not os.path.isdir(cwd):
-                level = ERROR
+                level = "error"
                 if halt_on_failure:
-                    level = FATAL
+                    level = "fatal"
                 self.log("Can't run command %s in non-existent directory %s!" % \
                          (command, cwd), level=level)
                 return -1
             self.info("Running command: %s in %s" % (command, cwd))
         else:
             self.info("Running command: %s" % command)
-        if self.config.get('noop'):
+        if self.config['noop']:
             self.info("(Dry run; skipping)")
             return
-        shell = True
-        if isinstance(command, list):
-            shell = False
         p = subprocess.Popen(command, shell=shell, stdout=subprocess.PIPE,
                              cwd=cwd, stderr=subprocess.STDOUT, env=env)
         loop = True
@@ -299,18 +441,16 @@ class ShellMixin(object):
                         self.warn("error_list: 'substr' and 'regex' not in %s" % \
                                   error_check)
                     if match:
-                        level=error_check.get('level', INFO)
+                        level=error_check.get('level', 'info')
                         self.log(' %s' % line, level=level)
-                        if level in (ERROR, CRITICAL, FATAL):
+                        if level in ('error', 'critical', 'fatal'):
                             num_errors = num_errors + 1
                         break
                 else:
                     self.info(' %s' % line)
-        return_level = INFO
+        return_level = 'info'
         if p.returncode not in success_codes:
-            return_level = ERROR
-            if throw_exception:
-                raise subprocess.CalledProcessError(p.returncode, command)
+            return_level = 'error'
         self.log("Return code: %d" % p.returncode, level=return_level)
         if halt_on_failure:
             if num_errors or p.returncode not in success_codes:
@@ -320,11 +460,9 @@ class ShellMixin(object):
             return num_errors
         return p.returncode
 
-    def get_output_from_command(self, command, cwd=None,
+    def get_output_from_command(self, command, cwd=None, shell=True,
                                 halt_on_failure=False, env=None,
-                                silent=False, tmpfile_base_path='tmpfile',
-                                return_type='output', save_tmpfiles=False,
-                                throw_exception=False):
+                                silent=False):
         """Similar to run_command, but where run_command is an
         os.system(command) analog, get_output_from_command is a `command`
         analog.
@@ -340,9 +478,9 @@ class ShellMixin(object):
         """
         if cwd:
             if not os.path.isdir(cwd):
-                level = ERROR
+                level = 'error'
                 if halt_on_failure:
-                    level = FATAL
+                    level = 'fatal'
                 self.log("Can't run command %s in non-existent directory %s!" % \
                          (command, cwd), level=level)
                 return -1
@@ -350,45 +488,30 @@ class ShellMixin(object):
         else:
             self.info("Getting output from command: %s" % command)
         # This could potentially return something?
-        if self.config.get('noop'):
+        if self.config['noop']:
             self.info("(Dry run; skipping)")
             return
-        pv = platform.python_version_tuple()
-        python_26 = False
         tmp_stdout = None
         tmp_stderr = None
-        tmp_stdout_filename = '%s_stdout' % tmpfile_base_path
-        tmp_stderr_filename = '%s_stderr' % tmpfile_base_path
-
-        # TODO probably some more elegant solution than 2 similar passes
-        try:
-            tmp_stdout = open(tmp_stdout_filename, 'w')
-        except IOError:
-            level = ERROR
-            if halt_on_failure:
-                level = FATAL
-            self.log("Can't open %s for writing!" % tmp_stdout_filename + \
-                     self.dump_exception(), level=level)
-            return -1
-        try:
-            tmp_stderr = open(tmp_stderr_filename, 'w')
-        except IOError:
-            level = ERROR
-            if halt_on_failure:
-                level = FATAL
-            self.log("Can't open %s for writing!" % tmp_stderr_filename + \
-                     self.dump_exception(), level=level)
-            return -1
-        shell = True
-        if isinstance(command, list):
-            shell = False
+        pv = platform.python_version_tuple()
+        python_26 = False
+        # Bad NamedTemporaryFile in python_version < 2.6 :(
+        if int(pv[0]) > 2 or (int(pv[0]) == 2 and int(pv[1]) >= 6):
+            python_26 = True
+            tmp_stdout = tempfile.NamedTemporaryFile(suffix="stdout",
+                                                     delete=False)
+            tmp_stderr = tempfile.NamedTemporaryFile(suffix="stderr",
+                                                     delete=False)
+        else:
+            tmp_stdout = tempfile.NamedTemporaryFile(suffix="stdout")
+            tmp_stderr = tempfile.NamedTemporaryFile(suffix="stderr")
+        tmp_stdout_filename = tmp_stdout.name
+        tmp_stderr_filename = tmp_stderr.name
         p = subprocess.Popen(command, shell=shell, stdout=tmp_stdout,
                              cwd=cwd, stderr=tmp_stderr, env=env)
         self.debug("Temporary files: %s and %s" % (tmp_stdout_filename, tmp_stderr_filename))
         p.wait()
-        tmp_stdout.close()
-        tmp_stderr.close()
-        return_level = DEBUG
+        return_level = 'debug'
         output = None
         if os.path.exists(tmp_stdout_filename) and os.path.getsize(tmp_stdout_filename):
             fh = open(tmp_stdout_filename)
@@ -402,9 +525,8 @@ class ShellMixin(object):
                     line = line.decode("utf-8")
                     self.info(' %s' % line)
                 output = '\n'.join(output_lines)
-            fh.close()
         if os.path.exists(tmp_stderr_filename) and os.path.getsize(tmp_stderr_filename):
-            return_level = ERROR
+            return_level = 'error'
             self.error("Errors received:")
             fh = open(tmp_stderr_filename)
             errors = fh.read()
@@ -415,238 +537,75 @@ class ShellMixin(object):
                 self.error(' %s' % line)
             fh.close()
         elif p.returncode:
-            return_level = ERROR
-        # Clean up.
-        if not save_tmpfiles:
-            self.rmtree(tmp_stderr_filename)
-            self.rmtree(tmp_stdout_filename)
-        if p.returncode and throw_exception:
-            raise subprocess.CalledProcessError(p.returncode, command)
+            return_level = 'error'
         self.log("Return code: %d" % p.returncode, level=return_level)
-        if halt_on_failure and return_level == ERROR:
+        if python_26:
+            self.rmtree(tmp_stdout_filename)
+            self.rmtree(tmp_stderr_filename)
+        if halt_on_failure and return_level == 'error':
             self.fatal("Halting on failure while running %s" % command,
                        exit_code=p.returncode)
         # Hm, options on how to return this? I bet often we'll want
         # output_lines[0] with no newline.
-        if return_type != 'output':
-            return (tmp_stdout_filename, tmp_stderr_filename)
+        return output
+# End run_command and get_output_from_command 2}}}
+
+
+
+# Mercurial {{{1
+"""If we ever support multiple vcs, this could potentially go into a
+source.py or source/mercurial.py so script.py doesn't end up like factory.py.
+
+This should be rewritten to work closely with Catlee's hgtool.
+"""
+class MercurialMixin(object):
+    """This should eventually just use catlee's hg libs."""
+
+    #TODO: num_retries
+    def scm_checkout(self, repo, parent_dir=None, tag="default",
+                     dest=None, clobber=False, halt_on_failure=True):
+        if not dest:
+            dest = os.path.basename(repo)
+        if parent_dir:
+            dir_path = os.path.join(parent_dir, dest)
+            self.mkdir_p(parent_dir)
         else:
-            return output
+            dir_path = dest
+        if clobber and os.path.exists(dir_path):
+            self.rmtree(dir_path)
+        if not os.path.exists(dir_path):
+            command = "hg clone %s %s" % (repo, dest)
+        else:
+            command = "hg --cwd %s pull" % (dest)
+        self.run_command(command, cwd=parent_dir, halt_on_failure=halt_on_failure,
+                        error_list=HgErrorList)
+        self.scm_update(dir_path, tag=tag, halt_on_failure=halt_on_failure)
 
+    def scm_update(self, dir_path, tag="default", halt_on_failure=True):
+        command = "hg --cwd %s update -C -r %s" % (dir_path, tag)
+        self.run_command(command, halt_on_failure=halt_on_failure,
+                        error_list=HgErrorList)
 
-
-# BaseScript {{{1
-class BaseScript(ShellMixin, OSMixin, LogMixin, object):
-    def __init__(self, config_options=None, default_log_level="info", **kwargs):
-        super(BaseScript, self).__init__()
-        self.return_code = 0
-        self.log_obj = None
-        self.abs_dirs = None
-        if config_options is None:
-            config_options = []
-        self.summary_list = []
-        rw_config = BaseConfig(config_options=config_options,
-                               **kwargs)
-        self.config = rw_config.get_read_only_config()
-        self.actions = tuple(rw_config.actions)
-        self.all_actions = tuple(rw_config.all_actions)
-        self.env = None
-        self.new_log_obj(default_log_level=default_log_level)
-
-        # Set self.config to read-only.
-        #
-        # We can create intermediate config info programmatically from
-        # this in a repeatable way, with logs; this is how we straddle the
-        # ideal-but-not-user-friendly static config and the
-        # easy-to-write-hard-to-debug writable config.
-        #
-        # To allow for other, script-specific configurations
-        # (e.g., hgtool's buildbot props json parsing), before locking,
-        # call self._pre_config_lock().  If needed, this method can
-        # alter self.config.
-        self._pre_config_lock(rw_config)
-        self._config_lock()
-
-        self.info("Run as %s" % rw_config.command_line)
-
-    def _pre_config_lock(self, rw_config):
-        pass
-
-    def _config_lock(self):
-        self.config.lock()
-
-    def _possibly_run_method(self, method_name, error_if_missing=False):
-        if hasattr(self, method_name) and callable(getattr(self, method_name)):
-            return getattr(self, method_name)()
-        elif error_if_missing:
-            self.error("No such method %s!" % method_name)
-
-    def run(self):
-        """Default run method.
-        This is the "do everything" method, based on actions and all_actions.
-
-        First run self.dump_config() if it exists.
-        Second, go through the list of all_actions.
-        If they're in the list of self.actions, try to run
-        self.preflight_ACTION(), self.ACTION(), and self.postflight_ACTION().
-
-        Preflight is sanity checking before doing anything time consuming or
-        destructive.
-
-        Postflight is quick testing for success after an action.
-
-        Run self.summary() at the end.
-
-        """
-        self.dump_config()
-        for action in self.all_actions:
-            if action not in self.actions:
-                self.action_message("Skipping %s step." % action)
-            else:
-                method_name = action.replace("-", "_")
-                self.action_message("Running %s step." % action)
-                self._possibly_run_method("preflight_%s" % method_name)
-                self._possibly_run_method(method_name, error_if_missing=True)
-                self._possibly_run_method("postflight_%s" % method_name)
-        self.summary()
-        dirs = self.query_abs_dirs()
-        self.info("Copying logs to upload dir...")
-        for log_name in self.log_obj.log_files.keys():
-            log_file = self.log_obj.log_files[log_name]
-            self.copy_to_upload_dir(os.path.join(dirs['abs_log_dir'], log_file),
-                                    dest=os.path.join('logs', log_file),
-                                    short_desc='%s log' % log_name,
-                                    long_desc='%s log' % log_name)
-        sys.exit(self.return_code)
-
-    def query_abs_dirs(self):
-        if self.abs_dirs:
-            return self.abs_dirs
+    def scm_checkout_repos(self, repo_list, parent_dir=None,
+                           clobber=False, halt_on_failure=True,
+                           tag_override=None):
         c = self.config
-        dirs = {}
-        dirs['abs_work_dir'] = os.path.join(c['base_work_dir'], c['work_dir'])
-        dirs['abs_upload_dir'] = os.path.join(dirs['abs_work_dir'], 'upload')
-        dirs['abs_log_dir'] = os.path.join(c['base_work_dir'], c.get('log_dir', 'logs'))
-        self.abs_dirs = dirs
-        return self.abs_dirs
+        if not parent_dir:
+            parent_dir = os.path.join(c['base_work_dir'], c['work_dir'])
+        self.mkdir_p(parent_dir)
+        for repo_dict in repo_list:
+            kwargs = repo_dict.copy()
+            kwargs['parent_dir'] = parent_dir
+            kwargs['clobber'] = clobber
+            kwargs['halt_on_failure'] = halt_on_failure
+            if tag_override:
+                kwargs['tag'] = tag_override
+            self.scm_checkout(**kwargs)
 
-    def dump_config(self, file_path=None):
-        dirs = self.query_abs_dirs()
-        if not file_path:
-            file_path = os.path.join(dirs['abs_upload_dir'], "localconfig.json")
-        self.info("Dumping config to %s." % file_path)
-        self.mkdir_p(dirs['abs_upload_dir'])
-        json_config = json.dumps(self.config, sort_keys=True, indent=4)
-        fh = codecs.open(file_path, encoding='utf-8', mode='w+')
-        fh.write(json_config)
-        fh.close()
-        self.info(pprint.pformat(self.config))
+class MercurialScript(MercurialMixin, BaseScript):
+    def __init__(self, **kwargs):
+        super(MercurialScript, self).__init__(**kwargs)
 
-    # logging {{{2
-    def new_log_obj(self, default_log_level="info"):
-        dirs = self.query_abs_dirs()
-        log_config = {"logger_name": 'Simple',
-                      "log_name": 'log',
-                      "log_dir": dirs['abs_log_dir'],
-                      "log_level": default_log_level,
-                      "log_format": '%(asctime)s %(levelname)8s - %(message)s',
-                      "log_to_console": True,
-                      "append_to_log": False,
-                     }
-        log_type = self.config.get("log_type", "multi")
-        if log_type == "multi":
-            log_config['logger_name'] = 'Multi'
-        for key in log_config.keys():
-            value = self.config.get(key, None)
-            if value is not None:
-                log_config[key] = value
-        if log_type == "multi":
-            self.log_obj = MultiFileLogger(**log_config)
-        else:
-            self.log_obj = SimpleFileLogger(**log_config)
-
-    def action_message(self, message):
-        self.info("#####")
-        self.info("##### %s" % message)
-        self.info("#####")
-
-    def summary(self):
-        self.action_message("%s summary:" % self.__class__.__name__)
-        if self.summary_list:
-            for item in self.summary_list:
-                try:
-                    self.log(item['message'], level=item['level'])
-                except ValueError:
-                    """log is closed; print as a default. Ran into this
-                    when calling from __del__()"""
-                    print "### Log is closed! (%s)" % item['message']
-
-    def add_summary(self, message, level=INFO):
-        self.summary_list.append({'message': message, 'level': level})
-        # TODO write to a summary-only log?
-        # Summaries need a lot more love.
-        self.log(message, level=level)
-
-    def copy_to_upload_dir(self, target, dest=None, short_desc="unknown",
-                           long_desc="unknown", error_level="error",
-                           rotate=False, max_backups=None):
-        """Copy target file to upload_dir/dest.
-
-        Potentially update a manifest in the future if we go that route.
-
-        Currently only copies a single file; would be nice to allow for
-        recursive copying; that would probably done by creating a helper
-        _copy_file_to_upload_dir().
-
-        short_desc and long_desc are placeholders for if/when we add
-        upload_dir manifests.
-        """
-        dirs = self.query_abs_dirs()
-        if dest is None:
-            dest = os.path.basename(target)
-        if dest.endswith('/'):
-            dest_file = os.path.basename(target)
-            dest_dir = os.path.join(dirs['abs_upload_dir'], dest)
-        else:
-            dest_file = os.path.basename(dest)
-            dest_dir = os.path.join(dirs['abs_upload_dir'], os.path.dirname(dest))
-        dest = os.path.join(dest_dir, dest_file)
-        if not os.path.exists(target):
-            self.log("%s doesn't exist!" % target, level=error_level)
-            return None
-        self.mkdir_p(dest_dir)
-        if os.path.exists(dest):
-            if os.path.isdir(dest):
-                self.log("%s exists and is a directory!" % dest, level=error_level)
-                return -1
-            if rotate:
-                # Probably a better way to do this
-                oldest_backup = None
-                backup_regex = re.compile("^%s\.(\d+)$" % dest_file)
-                for filename in os.listdir(dest_dir):
-                    r = re.match(backup_regex, filename)
-                    if r and r.groups()[0] > oldest_backup:
-                        oldest_backup = r.groups()[0]
-                for backup_num in range(oldest_backup, 0, -1):
-                    # TODO more error checking?
-                    if backup_num >= max_backups:
-                        self.rmtree(os.path.join(dest_dir, dest_file, backup_num))
-                    else:
-                        self.move(os.path.join(dest_dir, dest_file, '.%d' % backup_num),
-                                  os.path.join(dest_dir, dest_file, '.%d' % backup_num +1))
-                if self.move(dest, "%s.1" % dest):
-                    self.log("Unable to move %s!" % dest, level=error_level)
-                    return -1
-            else:
-                if self.rmtree(dest):
-                    self.log("Unable to remove %s!" % dest, level=error_level)
-                    return -1
-        self.copyfile(target, dest)
-        if os.path.exists(dest):
-            return dest
-        else:
-            self.log("%s doesn't exist after copy!" % dest, level=error_level)
-            return None
 
 
 

@@ -1,132 +1,25 @@
 #!/usr/bin/env python
-# ***** BEGIN LICENSE BLOCK *****
-# Version: MPL 1.1/GPL 2.0/LGPL 2.1
-#
-# The contents of this file are subject to the Mozilla Public License Version
-# 1.1 (the "License"); you may not use this file except in compliance with
-# the License. You may obtain a copy of the License at
-# http://www.mozilla.org/MPL/
-#
-# Software distributed under the License is distributed on an "AS IS" basis,
-# WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
-# for the specific language governing rights and limitations under the
-# License.
-#
-# The Original Code is Mozilla.
-#
-# The Initial Developer of the Original Code is
-# the Mozilla Foundation <http://www.mozilla.org/>.
-# Portions created by the Initial Developer are Copyright (C) 2011
-# the Initial Developer. All Rights Reserved.
-#
-# Contributor(s):
-#   Aki Sasaki <aki@mozilla.com>
-#
-# Alternatively, the contents of this file may be used under the terms of
-# either the GNU General Public License Version 2 or later (the "GPL"), or
-# the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
-# in which case the provisions of the GPL or the LGPL are applicable instead
-# of those above. If you wish to allow use of your version of this file only
-# under the terms of either the GPL or the LGPL, and not to allow others to
-# use your version of this file under the terms of the MPL, indicate your
-# decision by deleting the provisions above and replace them with the notice
-# and other provisions required by the GPL or the LGPL. If you do not delete
-# the provisions above, a recipient may use your version of this file under
-# the terms of any one of the MPL, the GPL or the LGPL.
-#
-# ***** END LICENSE BLOCK *****
 """Generic logging, the way I remember it from scripts gone by.
 
 TODO:
 - network logging support.
+- ability to change log settings mid-stream
+- per-module log settings
+- are we really forced to use global logging.* settings???
+  - i hope i'm mistaken here
+  - would love to do instance-based settings so we can have multiple
+    objects that can each have their own logger
 - log rotation config
 """
 
 from datetime import datetime
 import logging
 import os
-import sys
-import traceback
 
-# Define our own FATAL_LEVEL
-FATAL_LEVEL = logging.CRITICAL + 10
-logging.addLevelName(FATAL_LEVEL, 'FATAL')
+# Define our own FATAL
+FATAL = logging.CRITICAL + 10
+logging.addLevelName(FATAL, 'FATAL')
 
-# mozharness log levels.
-DEBUG, INFO, WARNING, ERROR, CRITICAL, FATAL, IGNORE = (
-    'debug', 'info', 'warning', 'error', 'critical', 'fatal', 'ignore')
-
-
-
-# LogMixin {{{1
-class LogMixin(object):
-    """This is a mixin for any object to access similar logging
-    functionality -- more so, of course, for those objects with
-    self.config and self.log_obj, of course.
-    """
-
-    def _log_level_at_least(self, level):
-        log_level = INFO
-        levels = [DEBUG, INFO, WARNING, ERROR, CRITICAL, FATAL]
-        if hasattr(self, 'config'):
-            log_level = self.config.get('log_level', INFO)
-        return levels.index(level) >= levels.index(log_level)
-
-    def _print(self, message, stderr=False):
-        if not hasattr(self, 'config') or self.config.get('log_to_console', True):
-            if stderr:
-                print >> sys.stderr, message
-            else:
-                print message
-
-    def log(self, message, level=INFO, exit_code=-1):
-        if self.log_obj:
-            return self.log_obj.log_message(message, level=level,
-                                            exit_code=exit_code)
-        if level == INFO:
-            if self._log_level_at_least(level):
-                self._print(message)
-        elif level == DEBUG:
-            if self._log_level_at_least(level):
-                self._print('DEBUG: %s' % message)
-        elif level in (WARNING, ERROR, CRITICAL):
-            if self._log_level_at_least(level):
-                self._print("%s: %s" % (level.upper(), message), stderr=True)
-        elif level == FATAL:
-            if self._log_level_at_least(level):
-                self._print("FATAL: %s" % message, stderr=True)
-                raise SystemExit(exit_code)
-
-    # Copying Bear's dumpException():
-    # http://hg.mozilla.org/build/tools/annotate/1485f23c38e0/sut_tools/sut_lib.py#l23
-    def dump_exception(self, message=None, level=ERROR):
-        tb_type, tb_value, tb_traceback = sys.exc_info()
-        if message is None:
-            message = ""
-        else:
-            message = "%s\n" % message
-        for s in traceback.format_exception(tb_type, tb_value, tb_traceback):
-            message += "%s\n" % s
-        # Log at the end, as a fatal will attempt to exit after the 1st line.
-        self.log(message, level=level)
-
-    def debug(self, message):
-        self.log(message, level=DEBUG)
-
-    def info(self, message):
-        self.log(message, level=INFO)
-
-    def warning(self, message):
-        self.log(message, level=WARNING)
-
-    def error(self, message):
-        self.log(message, level=ERROR)
-
-    def critical(self, message):
-        self.log(message, level=CRITICAL)
-
-    def fatal(self, message, exit_code=-1):
-        self.log(message, level=FATAL, exit_code=exit_code)
 
 
 # BaseLogger {{{1
@@ -136,16 +29,25 @@ class BaseLogger(object):
     either logging or config that allows you to count the number of
     error,critical,fatal messages for us to count up at the end (aiming
     for 0).
+
+    This "warning" instead of "warn" is going to trip me up.
+    (It has, already.)
+    However, while adding a 'warn': logging.WARNING would be nice,
+
+        a) I don't want to confuse people who know the logging module and
+           are comfortable with WARNING, so removing 'warning' is out, and
+        b) there's a |for level in self.LEVELS.keys():| below, which would
+           create a dup .warn.log alongside the .warning.log.
     """
-    LEVELS = {DEBUG: logging.DEBUG,
-              INFO: logging.INFO,
-              WARNING: logging.WARNING,
-              ERROR: logging.ERROR,
-              CRITICAL: logging.CRITICAL,
-              FATAL: FATAL_LEVEL
+    LEVELS = {'debug': logging.DEBUG,
+              'info': logging.INFO,
+              'warning': logging.WARNING,
+              'error': logging.ERROR,
+              'critical': logging.CRITICAL,
+              'fatal': FATAL
              }
 
-    def __init__(self, log_level=INFO,
+    def __init__(self, log_level='info',
                  log_format='%(message)s',
                  log_date_format='%H:%M:%S',
                  log_name='test',
@@ -186,9 +88,9 @@ class BaseLogger(object):
     def init_message(self, name=None):
         if not name:
             name = self.__class__.__name__
-        self.log_message("%s online at %s in %s" % \
-                         (name, datetime.now().strftime("%Y%m%d %H:%M:%S"),
-                         os.getcwd()))
+        self.info("%s online at %s in %s" % \
+                  (name, datetime.now().strftime("%Y%m%d %H:%M:%S"),
+                   os.getcwd()))
 
     def get_logger_level(self, level=None):
         if not level:
@@ -251,22 +153,42 @@ class BaseLogger(object):
         self.logger.addHandler(file_handler)
         self.all_handlers.append(file_handler)
 
-    def log_message(self, message, level=INFO, exit_code=-1):
+    def log(self, message, level='info', exit_code=-1):
         """Generic log method.
         There should be more options here -- do or don't split by line,
         use os.linesep instead of assuming \n, be able to pass in log level
         by name or number.
 
-        Adding the IGNORE special level for runCommand.
+        Adding the "ignore" special level for runCommand.
         """
-        if level == IGNORE:
+        if level == "ignore":
             return
         for line in message.splitlines():
             self.logger.log(self.get_logger_level(level), line)
-        if level == FATAL and self.halt_on_failure:
-            self.logger.log(FATAL_LEVEL, 'Exiting %d' % exit_code)
+        if level == 'fatal' and self.halt_on_failure:
+            self.logger.log(FATAL, 'Exiting %d' % exit_code)
             raise SystemExit(exit_code)
 
+    def debug(self, message):
+        self.log(message, level='debug')
+
+    def info(self, message):
+        self.log(message, level='info')
+
+    def warning(self, message):
+        self.log(message, level='warning')
+
+    def warn(self, message):
+        self.log(message, level='warning')
+
+    def error(self, message):
+        self.log(message, level='error')
+
+    def critical(self, message):
+        self.log(message, level='critical')
+
+    def fatal(self, message, exit_code=-1):
+        self.log(message, level='fatal', exit_code=exit_code)
 
 
 # SimpleFileLogger {{{1

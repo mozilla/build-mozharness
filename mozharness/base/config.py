@@ -1,40 +1,4 @@
 #!/usr/bin/env python
-# ***** BEGIN LICENSE BLOCK *****
-# Version: MPL 1.1/GPL 2.0/LGPL 2.1
-#
-# The contents of this file are subject to the Mozilla Public License Version
-# 1.1 (the "License"); you may not use this file except in compliance with
-# the License. You may obtain a copy of the License at
-# http://www.mozilla.org/MPL/
-#
-# Software distributed under the License is distributed on an "AS IS" basis,
-# WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
-# for the specific language governing rights and limitations under the
-# License.
-#
-# The Original Code is Mozilla.
-#
-# The Initial Developer of the Original Code is
-# the Mozilla Foundation <http://www.mozilla.org/>.
-# Portions created by the Initial Developer are Copyright (C) 2011
-# the Initial Developer. All Rights Reserved.
-#
-# Contributor(s):
-#   Aki Sasaki <aki@mozilla.com>
-#
-# Alternatively, the contents of this file may be used under the terms of
-# either the GNU General Public License Version 2 or later (the "GPL"), or
-# the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
-# in which case the provisions of the GPL or the LGPL are applicable instead
-# of those above. If you wish to allow use of your version of this file only
-# under the terms of either the GPL or the LGPL, and not to allow others to
-# use your version of this file under the terms of the MPL, indicate your
-# decision by deleting the provisions above and replace them with the notice
-# and other provisions required by the GPL or the LGPL. If you do not delete
-# the provisions above, a recipient may use your version of this file under
-# the terms of any one of the MPL, the GPL or the LGPL.
-#
-# ***** END LICENSE BLOCK *****
 """Generic config parsing and dumping, the way I remember it from scripts
 gone by.
 
@@ -56,25 +20,43 @@ TODO:
 """
 
 from copy import deepcopy
-from optparse import OptionParser, Option, OptionGroup
+from optparse import OptionParser, Option
 import os
 import sys
 try:
-    import simplejson as json
-except ImportError:
     import json
-
-from mozharness.base.log import DEBUG, INFO, WARNING, ERROR, CRITICAL, FATAL, IGNORE
+except:
+    import simplejson as json
 
 
 
 # optparse {{{1
 class ExtendedOptionParser(OptionParser):
-    """OptionParser, but with ExtendOption as the option_class.
+    """Very slightly modified optparse.OptionParser, which assumes you know
+    all the options you just add_option'ed, which is usually the case.
+
+    However, I wanted to be able to have options defined in various places
+    and then figure out the dest for each option (e.g. not -v or --verbose,
+    but options.verbose) so I could set those directly in the config.
+
+    The options and parser objects in
+        (options, args) = parser.parse_args()
+    don't give an easy way of doing that; dir(options) is pretty ugly and
+    I was playing with dict() and str() in ways that made me pretty
+    frustrated.
+
+    Adding a self.variables list seems like a fairly innocuous and easy
+    way to work around this problem.
     """
     def __init__(self, **kwargs):
         kwargs['option_class'] = ExtendOption
         OptionParser.__init__(self, **kwargs)
+        self.variables = []
+
+    def add_option(self, *args, **kwargs):
+        option = OptionParser.add_option(self, *args, **kwargs)
+        if option.dest and option.dest not in self.variables:
+            self.variables.append(option.dest)
 
 class ExtendOption(Option):
     """from http://docs.python.org/library/optparse.html?highlight=optparse#adding-new-actions"""
@@ -139,6 +121,8 @@ class ReadOnlyDict(dict):
 def parse_config_file(file_name, quiet=False, search_path=None):
     """Read a config file and return a dictionary.
     """
+    # TODO error checking.  Does this need to be part of an object with
+    # self.log() functions?
     file_path = None
     if os.path.exists(file_name):
         file_path = file_name
@@ -151,20 +135,28 @@ def parse_config_file(file_name, quiet=False, search_path=None):
                 file_path = os.path.join(path, file_name)
                 break
         else:
-            raise IOError, "Can't find %s in %s!" % (file_name, search_path)
+            if not quiet:
+                print "ERROR: Can't find %s in %s!" % (file_name, search_path)
+            return
     if file_name.endswith('.py'):
         global_dict = {}
         local_dict = {}
         execfile(file_path, global_dict, local_dict)
         config = local_dict['config']
-    elif file_name.endswith('.json'):
+    else:
         fh = open(file_path)
         config = {}
-        json_config = json.load(fh)
-        config = dict(json_config)
+        if file_name.endswith('.json'):
+            json_config = json.load(fh)
+            config = dict(json_config)
+        else:
+            # TODO better default? I'd self.fatal if it were available here.
+            contents = []
+            for line in fh:
+                line = line[:-1]
+                contents.append(line)
+                config = dict(contents)
         fh.close()
-    else:
-        raise RuntimeError, "Unknown config file type %s!" % file_name
     # TODO return file_path
     return config
 
@@ -211,8 +203,23 @@ class BaseConfig(object):
     def _create_config_parser(self, config_options, usage):
         self.config_parser = ExtendedOptionParser(usage=usage)
         self.config_parser.add_option(
+         "--log-level", action="store",
+         type="choice", dest="log_level", default="info",
+         choices=['debug', 'info', 'warning', 'error', 'critical', 'fatal'],
+         help="Set log level (debug|info|warning|error|critical|fatal)"
+        )
+        self.config_parser.add_option(
+         "-q", "--quiet", action="store_false", dest="log_to_console",
+         default=True, help="Don't log to the console"
+        )
+        self.config_parser.add_option(
+         "--append-to-log", action="store_true",
+         dest="append_to_log", default=False,
+         help="Append to the log"
+        )
+        self.config_parser.add_option(
          "--work-dir", action="store", dest="work_dir",
-         type="string", default="build",
+         type="string", default="work_dir",
          help="Specify the work_dir (subdir of base_work_dir)"
         )
         self.config_parser.add_option(
@@ -221,80 +228,47 @@ class BaseConfig(object):
          help="Specify the absolute path of the parent of the working directory"
         )
         self.config_parser.add_option(
-         "--config-file", "--cfg", action="store", dest="config_file",
+         "--config-file", action="store", dest="config_file",
          type="string", help="Specify the config file (required)"
         )
 
-        # Logging
-        log_option_group = OptionGroup(self.config_parser, "Logging")
-        log_option_group.add_option(
-         "--log-level", action="store",
-         type="choice", dest="log_level", default=INFO,
-         choices=[DEBUG, INFO, WARNING, ERROR, CRITICAL, FATAL],
-         help="Set log level (debug|info|warning|error|critical|fatal)"
-        )
-        log_option_group.add_option(
-         "-q", "--quiet", action="store_false", dest="log_to_console",
-         default=True, help="Don't log to the console"
-        )
-        log_option_group.add_option(
-         "--append-to-log", action="store_true",
-         dest="append_to_log", default=False,
-         help="Append to the log"
-        )
-        log_option_group.add_option(
-         "--multi-log", action="store_const", const="multi",
-         dest="log_type", help="Log using MultiFileLogger"
-        )
-        log_option_group.add_option(
-         "--simple-log", action="store_const", const="simple",
-          dest="log_type", help="Log using SimpleFileLogger"
-        )
-        self.config_parser.add_option_group(log_option_group)
-
-
-        # TODO deal with noop properly.
-        #self.config_parser.add_option(
-        # "--noop", "--dry-run", action="store_true", default=False,
-        # dest="noop",
-        # help="Echo commands without executing them."
-        #)
-
         # Actions
-        action_option_group = OptionGroup(self.config_parser, "Actions",
-         "Use these options to list or enable/disable actions.")
-        action_option_group.add_option(
+        self.config_parser.add_option(
          "--list-actions", action="store_true",
          dest="list_actions",
          help="List all available actions, then exit"
         )
-        action_option_group.add_option(
+        self.config_parser.add_option(
          "--action", action="extend",
          dest="only_actions", metavar="ACTIONS",
          help="Do action %s" % self.all_actions
         )
-        action_option_group.add_option(
+        self.config_parser.add_option(
          "--add-action", action="extend",
          dest="add_actions", metavar="ACTIONS",
          help="Add action %s to the list of actions" % self.all_actions
         )
-        action_option_group.add_option(
+        self.config_parser.add_option(
          "--no-action", action="extend",
          dest="no_actions", metavar="ACTIONS",
          help="Don't perform action"
         )
+        self.config_parser.add_option(
+         "--noop", "--dry-run", action="store_true", default=False,
+         dest="noop",
+         help="Echo commands without executing them."
+        )
         for action in self.all_actions:
-            action_option_group.add_option(
-             "--only-%s" % action, "--%s" % action, action="append_const",
+            self.config_parser.add_option(
+             "--only-%s" % action, action="append_const",
              dest="only_actions", const=action,
              help="Add %s to the limited list of actions" % action
             )
-            action_option_group.add_option(
+            self.config_parser.add_option(
              "--no-%s" % action, action="append_const",
              dest="no_actions", const=action,
              help="Remove %s from the list of actions to perform" % action
             )
-        self.config_parser.add_option_group(action_option_group)
         self.volatile_config_vars.extend(['only_actions', 'add_actions',
                                           'no_actions', 'list_actions',
                                           'noop'])
@@ -338,7 +312,7 @@ class BaseConfig(object):
         """
         self.command_line = ' '.join(sys.argv)
         if not args:
-            args = sys.argv[1:]
+            args = sys.argv[:]
         (options, args) = self.config_parser.parse_args(args)
         if options.list_actions:
             print "Actions available: " + ', '.join(self.all_actions)
@@ -354,7 +328,7 @@ class BaseConfig(object):
                 raise SystemExit(-1)
         else:
             self.set_config(parse_config_file(options.config_file))
-        for key in defaults.keys():
+        for key in self.config_parser.variables:
             value = getattr(options, key)
             if value is None:
                 continue
@@ -367,8 +341,8 @@ class BaseConfig(object):
 
         Seems a little complex, but the logic goes:
 
-        If we specify --BLAH or --only-BLAH once or multiple times,
-        we want to override the default_actions list with the ones we list.
+        If we specify --only-BLAH once or multiple times, we want to override
+        the default_actions list with the ones we list.
 
         Otherwise, if we specify --add-action, we want to add an action to
         the default list.
@@ -389,9 +363,7 @@ class BaseConfig(object):
                 if action in self.actions:
                     self.actions.remove(action)
 
-        self.options = options
-        self.args = args
-        return (self.options, self.args)
+        return (options, args)
 
 
 

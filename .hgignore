@@ -1,7 +1,5 @@
 syntax: glob
 
-.hgignore
-.gitignore
 *.log
 *.pyc
 *.swp
