@@ -397,15 +397,18 @@ class MercurialVCS(ShellMixin, OSMixin, LogMixin, object):
             else:
                 self.clone(repo, shared_repo, branch=branch, revision=revision)
 
-            try:
-                self.info("Trying to share %s to %s" % (shared_repo, dest))
-                return self.share(shared_repo, dest, branch=branch, revision=revision)
-            except subprocess.CalledProcessError:
-                if not c.get('allow_unshared_local_clones'):
-                    # Re-raise the exception so it gets caught below.
-                    # We'll then clobber dest, and clone from original
-                    # repo
-                    raise
+            if os.path.exists(dest):
+                return self.update(dest, branch=branch, revision=revision)
+            else:
+                try:
+                    self.info("Trying to share %s to %s" % (shared_repo, dest))
+                    return self.share(shared_repo, dest, branch=branch, revision=revision)
+                except subprocess.CalledProcessError:
+                    if not c.get('allow_unshared_local_clones'):
+                        # Re-raise the exception so it gets caught below.
+                        # We'll then clobber dest, and clone from original
+                        # repo
+                        raise
 
                 self.warning("Error calling hg share from %s to %s; falling back to normal clone from shared repo" % (shared_repo, dest))
                 # Do a full local clone first, and then update to the
