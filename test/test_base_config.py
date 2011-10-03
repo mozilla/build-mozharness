@@ -3,15 +3,19 @@ import subprocess
 import sys
 import unittest
 
+JSON_TYPE = None
 try:
-    import json
-except:
     import simplejson as json
+except ImportError:
+    import json
+    JSON_TYPE = 'json'
+else:
+    JSON_TYPE = 'simplejson'
 
 import mozharness.base.config as config
 
 
-class TestJsonConfig(unittest.TestCase):
+class TestParseConfigFile(unittest.TestCase):
     def _get_json_config(self, filename="configs/test/test.json",
                          output='dict'):
         fh = open(filename)
@@ -21,15 +25,43 @@ class TestJsonConfig(unittest.TestCase):
             return dict(contents)
         else:
             return contents
-    
-    def test_config(self):
+
+    def _get_python_config(self, filename="configs/test/test.py",
+                           output='dict'):
+        global_dict = {}
+        local_dict = {}
+        execfile(filename, global_dict, local_dict)
+        return local_dict['config']
+
+    def test_json_config(self):
         c = config.BaseConfig(initial_config_file='test/test.json')
         content_dict = self._get_json_config()
         for key in content_dict.keys():
             self.assertEqual(content_dict[key], c._config[key])
 
+    def test_python_config(self):
+        c = config.BaseConfig(initial_config_file='test/test.py')
+        config_dict = self._get_python_config()
+        for key in config_dict.keys():
+            self.assertEqual(config_dict[key], c._config[key])
 
-    
+    def test_illegal_config(self):
+        self.assertRaises(IOError, config.parse_config_file, "this_file_does_not_exist.py", search_path="yadda")
+
+    def test_illegal_suffix(self):
+        self.assertRaises(RuntimeError, config.parse_config_file, "test/test.illegal_suffix")
+
+    def test_malformed_json(self):
+        if JSON_TYPE == 'simplejson':
+            self.assertRaises(json.decoder.JSONDecodeError, config.parse_config_file, "test/test_malformed.json")
+        else:
+            self.assertRaises(ValueError, config.parse_config_file, "test/test_malformed.json")
+
+    def test_malformed_json(self):
+        self.assertRaises(SyntaxError, config.parse_config_file, "test/test_malformed.py")
+
+
+
 class TestReadOnlyDict(unittest.TestCase):
     control_dict = {
      'b':'2',
