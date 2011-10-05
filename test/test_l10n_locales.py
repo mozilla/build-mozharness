@@ -125,3 +125,6 @@ class TestLocalesMixin(unittest.TestCase):
         expected_dirs = self.BASE_ABS_DIRS + ['abs_mozilla_dir', 'abs_locales_src_dir', 'abs_l10n_dir', 'abs_objdir', 'abs_merge_dir', 'abs_locales_dir']
         expected_dirs.sort()
         self.assertEqual(dirs, expected_dirs)
+
+if __name__ == '__main__':
+    unittest.main()

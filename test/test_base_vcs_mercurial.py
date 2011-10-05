@@ -532,3 +532,6 @@ class TestHg(unittest.TestCase):
         def c(r,a):
             pass
         self.assertRaises(errors.VCSException, m.apply_and_push, self.wc, self.repodir, c)
+
+if __name__ == '__main__':
+    unittest.main()

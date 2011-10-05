@@ -390,3 +390,6 @@ class TestScriptLogging(unittest.TestCase):
 
     def test_fatal(self):
         self._test_log_level(FATAL, [INFO, WARNING, ERROR, CRITICAL, FATAL])
+
+if __name__ == '__main__':
+    unittest.main()

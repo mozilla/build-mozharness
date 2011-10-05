@@ -217,3 +217,6 @@ class TestActions(unittest.TestCase):
         c.parse_args(args=['foo', '--only-a', '--only-e'])
         self.assertEqual(['a', 'e'], c.get_actions(),
                          msg="--only-ACTION broken")
+
+if __name__ == '__main__':
+    unittest.main()
