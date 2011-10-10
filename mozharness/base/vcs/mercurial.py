@@ -389,15 +389,16 @@ class MercurialVCS(ShellMixin, OSMixin, LogMixin, object):
             self.info("Updating shared repo")
             if os.path.exists(shared_repo):
                 try:
-                    self.pull(repo, shared_repo, branch=branch, revision=revision)
+                    self.pull(repo, shared_repo)
                 except subprocess.CalledProcessError:
                     self.warning("Error pulling changes into %s form %s; clobbering" % (shared_repo, repo))
                     self.dump_exception(level='debug')
-                    self.clone(repo, shared_repo, branch=branch, revision=revision)
+                    self.clone(repo, shared_repo)
             else:
-                self.clone(repo, shared_repo, branch=branch, revision=revision)
+                self.clone(repo, shared_repo)
 
             if os.path.exists(dest):
+                self.pull(shared_repo, dest)
                 return self.update(dest, branch=branch, revision=revision)
             else:
                 try:
@@ -469,14 +470,16 @@ class MercurialVCS(ShellMixin, OSMixin, LogMixin, object):
         # Non-shared
         if os.path.exists(dest):
             try:
-                return self.pull(repo, dest, branch=branch, revision=revision)
+                self.pull(repo, dest)
+                return self.update(dest, branch=branch, revision=revision)
             except subprocess.CalledProcessError:
                 self.warning("Error pulling changes into %s form %s; clobbering" % (dest, repo))
                 self.dump_exception(level='debug')
                 self.rmtree(dest)
         elif not os.path.exists(os.path.dirname(dest)):
             self.mkdir_p(os.path.dirname(dest))
-        return self.clone(repo, dest, branch, revision)
+        self.clone(repo, dest)
+        return self.update(dest, branch=branch, revision=revision)
 
 
 

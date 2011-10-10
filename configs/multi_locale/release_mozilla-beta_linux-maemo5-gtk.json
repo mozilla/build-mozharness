@@ -21,6 +21,10 @@
         "repo": "http://hg.mozilla.org/build/compare-locales",
         "tag": "RELEASE_AUTOMATION"
     }],
+    "l10n_repos": [{
+        "repo": "http://hg.mozilla.org/build/buildbot-configs",
+        "dest": "build/configs"
+    }],
     "hg_l10n_base": "http://hg.mozilla.org/releases/l10n/mozilla-beta",
     "required_config_vars": ["tag_override"],
     "l10n_dir": "mozilla-beta",

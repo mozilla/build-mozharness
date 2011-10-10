@@ -98,7 +98,7 @@ class VCSMixin(object):
             for repo_dict in repo_list:
                 kwargs = repo_dict.copy()
                 if tag_override:
-                    kwargs['tag'] = tag_override
+                    kwargs['revision'] = tag_override
                 self.vcs_checkout(**kwargs)
         finally:
             self.chdir(orig_dir)

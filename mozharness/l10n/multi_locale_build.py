@@ -159,6 +159,18 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
         c = self.config
         dirs = self.query_abs_dirs()
         self.mkdir_p(dirs['abs_l10n_dir'])
+        repos = []
+        replace_dict = {}
+        # Replace %(user_repo_override)s with c['user_repo_override']
+        if c.get("user_repo_override"):
+            replace_dict['user_repo_override'] = c['user_repo_override']
+            for repo_dict in c.get('l10n_repos', []):
+                repo_dict['repo'] = repo_dict['repo'] % replace_dict
+                repos.append(repo_dict)
+        else:
+            repos = c.get("l10n_repos")
+        if repos:
+            self.vcs_checkout_repos(repos, tag_override=c.get('tag_override'))
         locales = self.query_locales()
         locale_repos = []
         hg_l10n_base = c['hg_l10n_base']
