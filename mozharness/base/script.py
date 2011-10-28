@@ -53,6 +53,7 @@ import shutil
 import subprocess
 import sys
 import urllib2
+import urlparse
 
 try:
     import simplejson as json
@@ -142,7 +143,13 @@ class OSMixin(object):
         TODO: should noop touch the filename? seems counter-noop.
         """
         if not file_name:
-            file_name = os.path.basename(url)
+            # Set file_name to the basename of the url
+            parsed = urlparse.urlsplit(url)
+            if parsed.path != '':
+                file_name = parsed.path.rstrip('/').rsplit('/', 1)[-1]
+            else:
+                # No url path, use network location
+                file_name = parsed.netloc
         if self.config.get('noop'):
             self.info("Downloading %s" % url)
             return file_name
