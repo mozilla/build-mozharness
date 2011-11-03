@@ -18,6 +18,8 @@ test_string = '''foo
 bar
 baz'''
 
+HG = mercurial.HG
+
 def cleanup():
     if os.path.exists('test_logs'):
         shutil.rmtree('test_logs')
@@ -38,7 +40,7 @@ def get_mercurial_vcs_obj():
 def get_revisions(dest):
     m = get_mercurial_vcs_obj()
     retval = []
-    for rev in m.get_output_from_command(['hg', 'log', '-R', dest, '--template', '{node|short}\n']).split('\n'):
+    for rev in m.get_output_from_command(HG + ['log', '-R', dest, '--template', '{node|short}\n']).split('\n'):
         rev = rev.strip()
         if not rev:
             continue
@@ -323,8 +325,8 @@ class TestHg(unittest.TestCase):
         m.vcs_config = {'repo': self.repodir, 'dest': sharerepo}
         m.ensure_repo_and_revision()
         open(os.path.join(self.repodir, 'test.txt'), 'w').write('hello!')
-        m.run_command(['hg', 'add', 'test.txt'], cwd=self.repodir)
-        m.run_command(['hg', 'commit', '-m', 'adding changeset'], cwd=self.repodir)
+        m.run_command(HG + ['add', 'test.txt'], cwd=self.repodir)
+        m.run_command(HG + ['commit', '-m', 'adding changeset'], cwd=self.repodir)
         m = get_mercurial_vcs_obj()
         m.vcs_config = {'repo': self.repodir, 'dest': self.wc, 'share_base': share_base}
         m.ensure_repo_and_revision()
@@ -466,8 +468,8 @@ class TestHg(unittest.TestCase):
         m.share(repo5, repo6)
         open(os.path.join(repo6, 'test.txt'), 'w').write("hello!")
         # modify the history of the new clone
-        m.run_command(['hg', 'add', 'test.txt'], cwd=repo6)
-        m.run_command(['hg', 'commit', '-m', 'adding changeset'], cwd=repo6)
+        m.run_command(HG + ['add', 'test.txt'], cwd=repo6)
+        m.run_command(HG + ['commit', '-m', 'adding changeset'], cwd=repo6)
         self.assertNotEquals(self.revisions, get_revisions(repo6))
         self.assertNotEquals(self.revisions, get_revisions(repo5))
         self.assertEquals(get_revisions(repo5), get_revisions(repo6))
@@ -476,7 +478,7 @@ class TestHg(unittest.TestCase):
         m = get_mercurial_vcs_obj()
         m.clone(self.repodir, self.wc)
         def c(repo, attempt):
-            m.run_command(['hg', 'tag', '-f', 'TEST'], cwd=repo)
+            m.run_command(HG + ['tag', '-f', 'TEST'], cwd=repo)
         m.apply_and_push(self.wc, self.repodir, c)
         self.assertEquals(get_revisions(self.wc), get_revisions(self.repodir))
 
@@ -484,8 +486,8 @@ class TestHg(unittest.TestCase):
         m = get_mercurial_vcs_obj()
         m.clone(self.repodir, self.wc)
         def c(repo, attempt, remote):
-            m.run_command(['hg', 'tag', '-f', 'TEST'], cwd=repo)
-            m.run_command(['hg', 'tag', '-f', 'CONFLICTING_TAG'], cwd=remote)
+            m.run_command(HG + ['tag', '-f', 'TEST'], cwd=repo)
+            m.run_command(HG + ['tag', '-f', 'CONFLICTING_TAG'], cwd=remote)
         m.config = {'log_to_console': False}
         self.assertRaises(errors.VCSException, m.apply_and_push, self.wc,
                           self.repodir, lambda r, a: c(r, a, self.repodir),
@@ -496,10 +498,10 @@ class TestHg(unittest.TestCase):
         m.clone(self.repodir, self.wc)
         m.config = {'log_to_console': False}
         def c(repo, attempt, remote):
-            m.run_command(['hg', 'tag', '-f', 'TEST'], cwd=repo)
+            m.run_command(HG + ['tag', '-f', 'TEST'], cwd=repo)
             if attempt == 1:
-                m.run_command(['hg', 'rm', 'hello.txt'], cwd=remote)
-                m.run_command(['hg', 'commit', '-m', 'test'], cwd=remote)
+                m.run_command(HG + ['rm', 'hello.txt'], cwd=remote)
+                m.run_command(HG + ['commit', '-m', 'test'], cwd=remote)
         m.apply_and_push(self.wc, self.repodir,
                        lambda r, a: c(r, a, self.repodir), max_attempts=2)
         self.assertEquals(get_revisions(self.wc), get_revisions(self.repodir))
@@ -509,9 +511,9 @@ class TestHg(unittest.TestCase):
         m.clone(self.repodir, self.wc)
         m.config = {'log_to_console': False}
         def c(repo, attempt, remote):
-            m.run_command(['hg', 'tag', '-f', 'TEST'], cwd=repo)
+            m.run_command(HG + ['tag', '-f', 'TEST'], cwd=repo)
             if attempt in (1,2):
-                m.run_command(['hg', 'tag', '-f', 'CONFLICTING_TAG'], cwd=remote)
+                m.run_command(HG + ['tag', '-f', 'CONFLICTING_TAG'], cwd=remote)
         m.apply_and_push(self.wc, self.repodir,
                        lambda r, a: c(r, a, self.repodir), max_attempts=4)
         self.assertEquals(get_revisions(self.wc), get_revisions(self.repodir))
@@ -521,8 +523,8 @@ class TestHg(unittest.TestCase):
         if m.hg_ver() >= (1,6,0):
             m.clone(self.repodir, self.wc)
             def c(repo, attempt):
-                m.run_command(['hg', 'branch', 'branch3'], cwd=repo)
-                m.run_command(['hg', 'tag', '-f', 'TEST'], cwd=repo)
+                m.run_command(HG + ['branch', 'branch3'], cwd=repo)
+                m.run_command(HG + ['tag', '-f', 'TEST'], cwd=repo)
             m.apply_and_push(self.wc, self.repodir, c)
             self.assertEquals(get_revisions(self.wc), get_revisions(self.repodir))
 

@@ -55,6 +55,8 @@ from mozharness.base.errors import HgErrorList, VCSException
 from mozharness.base.log import LogMixin
 from mozharness.base.script import BaseScript, ShellMixin, OSMixin
 
+HG = ['hg', '--config', 'ui.merge=internal:merge']
+
 # MercurialVCS {{{1
 # TODO Make the remaining functions more mozharness-friendly.
 # TODO Add the various tag functionality that are currently in
@@ -123,16 +125,16 @@ class MercurialVCS(ShellMixin, OSMixin, LogMixin, object):
     def get_revision_from_path(self, path):
         """Returns which revision directory `path` currently has checked out."""
         return self.get_output_from_command(
-            ['hg', 'parent', '--template', '{node|short}'], cwd=path
+            HG + ['parent', '--template', '{node|short}'], cwd=path
         )
 
     def get_branch_from_path(self, path):
-        branch = self.get_output_from_command(['hg', 'branch'], cwd=path)
+        branch = self.get_output_from_command(HG + ['branch'], cwd=path)
         return str(branch).strip()
 
     def get_branches_from_path(self, path):
         branches = []
-        for line in self.get_output_from_command(['hg', 'branches', '-c'],
+        for line in self.get_output_from_command(HG + ['branches', '-c'],
                                                  cwd=path).splitlines():
             branches.append(line.split()[0])
         return branches
@@ -140,7 +142,7 @@ class MercurialVCS(ShellMixin, OSMixin, LogMixin, object):
     def hg_ver(self):
         """Returns the current version of hg, as a tuple of
         (major, minor, build)"""
-        ver_string = self.get_output_from_command(['hg', '-q', 'version'])
+        ver_string = self.get_output_from_command(HG + ['-q', 'version'])
         match = re.search("\(version ([0-9.]+)\)", ver_string)
         if match:
             bits = match.group(1).split(".")
@@ -167,13 +169,13 @@ class MercurialVCS(ShellMixin, OSMixin, LogMixin, object):
             msg += " revision %s" % revision
         self.info("%s." % msg)
         if revision is not None:
-            cmd = ['hg', 'update', '-C', '-r', revision]
+            cmd = HG + ['update', '-C', '-r', revision]
             self.run_command(cmd, cwd=dest, error_list=HgErrorList)
         else:
             # Check & switch branch
             local_branch = self.get_branch_from_path(dest)
 
-            cmd = ['hg', 'update', '-C']
+            cmd = HG + ['update', '-C']
 
             # If this is different, checkout the other branch
             if branch and branch != local_branch:
@@ -205,7 +207,7 @@ class MercurialVCS(ShellMixin, OSMixin, LogMixin, object):
             self.info("Removing %s before clone." % dest)
             self.rmtree(dest)
 
-        cmd = ['hg', 'clone']
+        cmd = HG + ['clone']
         if not update_dest:
             cmd.append('-U')
 
@@ -263,7 +265,7 @@ class MercurialVCS(ShellMixin, OSMixin, LogMixin, object):
             return -1
         # Convert repo to an absolute path if it's a local repository
         repo = self._make_absolute(repo)
-        cmd = ['hg', 'pull']
+        cmd = HG + ['pull']
         cmd.extend(self.common_args(**kwargs))
         cmd.append(repo)
         self.run_command(cmd, cwd=dest, error_list=HgErrorList,
@@ -279,7 +281,7 @@ class MercurialVCS(ShellMixin, OSMixin, LogMixin, object):
     def out(self, src, remote, **kwargs):
         """Check for outgoing changesets present in a repo"""
         self.info("Checking for outgoing changesets from %s to %s." % (src, remote))
-        cmd = ['hg', '-q', 'out', '--template', '{node} {branches}\n']
+        cmd = HG + ['-q', 'out', '--template', '{node} {branches}\n']
         cmd.extend(self.common_args(**kwargs))
         cmd.append(remote)
         if os.path.exists(src):
@@ -307,7 +309,7 @@ class MercurialVCS(ShellMixin, OSMixin, LogMixin, object):
         # This doesn't appear to work with hg_ver < (1, 6, 0).
         # Error out, or let you try?
         self.info("Pushing new changes from %s to %s." % (src, remote))
-        cmd = ['hg', 'push']
+        cmd = HG + ['push']
         cmd.extend(self.common_args(**kwargs))
         if push_new_branches and self.hg_ver() >= (1, 6, 0):
             cmd.append('--new-branch')
@@ -323,7 +325,7 @@ class MercurialVCS(ShellMixin, OSMixin, LogMixin, object):
         self.can_share = True
         try:
             self.info("Checking if share extension works.")
-            output = self.get_output_from_command(['hg', 'help', 'share'],
+            output = self.get_output_from_command(HG + ['help', 'share'],
                                                   silent=True,
                                                   throw_exception=True)
             if 'no commands defined' in output:
@@ -430,7 +432,7 @@ class MercurialVCS(ShellMixin, OSMixin, LogMixin, object):
         with "source" using Mercurial's share extension
         """
         self.info("Sharing %s to %s." % (source, dest))
-        self.run_command(['hg', 'share', '-U', source, dest],
+        self.run_command(HG + ['share', '-U', source, dest],
                          error_list=HgErrorList,
                          throw_exception=True)
         return self.update(dest, branch=branch, revision=revision)
@@ -511,7 +513,7 @@ class MercurialVCS(ShellMixin, OSMixin, LogMixin, object):
                 if n == max_attempts:
                     self.debug("Tried %d times, giving up" % max_attempts)
                     for r in reversed(new_revs):
-                        self.run_command(['hg', 'strip', '-n', r[REVISION]],
+                        self.run_command(HG + ['strip', '-n', r[REVISION]],
                                          cwd=localrepo, error_list=HgErrorList)
                     raise VCSException("Failed to push")
                 self.pull(remote, localrepo, update_dest=False,
@@ -519,14 +521,14 @@ class MercurialVCS(ShellMixin, OSMixin, LogMixin, object):
                 # After we successfully rebase or strip away heads the push
                 # is is attempted again at the start of the loop
                 try:
-                    self.run_command(['hg', 'rebase'], cwd=localrepo,
+                    self.run_command(HG + ['rebase'], cwd=localrepo,
                                      error_list=HgErrorList,
                                      throw_exception=True)
                 except subprocess.CalledProcessError, e:
                     self.debug("Failed to rebase: %s" % str(e))
                     self.update(localrepo, branch=branch)
                     for r in reversed(new_revs):
-                        self.run_command(['hg', 'strip', '-n', r[REVISION]],
+                        self.run_command(HG + ['strip', '-n', r[REVISION]],
                                          cwd=localrepo, error_list=HgErrorList)
                     changer(localrepo, n+1)
 
@@ -537,7 +539,7 @@ class MercurialVCS(ShellMixin, OSMixin, LogMixin, object):
         outgoingRevs = self.out(src=reponame, remote=remote,
                                 ssh_username=username, ssh_key=sshKey)
         for r in reversed(outgoingRevs):
-            self.run_command(['hg', 'strip', '-n', r[REVISION]],
+            self.run_command(HG + ['strip', '-n', r[REVISION]],
                              cwd=reponame, error_list=HgErrorList)
 
 
