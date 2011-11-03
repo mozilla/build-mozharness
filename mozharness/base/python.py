@@ -48,6 +48,7 @@ virtualenv_config_options = [[
  ["--venv-path", "--virtualenv-path"],
  {"action": "store",
   "dest": "virtualenv_path",
+  "default": os.path.join(os.getcwd(), "venv"),
   "help": "Specify the virtualenv path"
  }
 ]]

@@ -21,6 +21,7 @@
 #
 # Contributor(s):
 #   Aki Sasaki <aki@mozilla.com>
+#   Andrew Halberstadt <ahalberstadt@mozilla.com>
 #
 # Alternatively, the contents of this file may be used under the terms of
 # either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -52,8 +53,10 @@ import re
 import shutil
 import subprocess
 import sys
+import tarfile
 import urllib2
 import urlparse
+import zipfile
 
 try:
     import simplejson as json
@@ -134,6 +137,13 @@ class OSMixin(object):
                 os.remove(full_name)
         os.rmdir(path)
 
+    def get_filename_from_url(self, url):
+        parsed = urlparse.urlsplit(url.rstrip('/'))
+        if parsed.path != '':
+            return parsed.path.rsplit('/', 1)[-1]
+        else:
+            file_name = parsed.netloc
+
     # http://www.techniqal.com/blog/2008/07/31/python-file-read-write-with-urllib2/
     # TODO thinking about creating a transfer object.
     def download_file(self, url, file_name=None,
@@ -143,13 +153,7 @@ class OSMixin(object):
         TODO: should noop touch the filename? seems counter-noop.
         """
         if not file_name:
-            # Set file_name to the basename of the url
-            parsed = urlparse.urlsplit(url)
-            if parsed.path != '':
-                file_name = parsed.path.rstrip('/').rsplit('/', 1)[-1]
-            else:
-                # No url path, use network location
-                file_name = parsed.netloc
+            file_name = self.get_filename_from_url(url)
         if self.config.get('noop'):
             self.info("Downloading %s" % url)
             return file_name
@@ -169,6 +173,57 @@ class OSMixin(object):
                      exit_code=exit_code)
             return
         return file_name
+
+    def extract(self, path, extdir=None, delete=False,
+                error_level=ERROR, exit_code=-1):
+        """
+        Takes in a tar or zip file and extracts it to extdir
+        - If extdir is not specified, extracts to os.path.dirname(path)
+        - If delete is set to True, deletes the bundle at path
+        - Returns the list of top level files that were extracted
+
+        TODO: dmg
+        """
+        # determine directory to extract to
+        if extdir is None:
+            extdir = os.path.dirname(path)
+        elif not os.path.exists(extdir):
+            self.mkdir_p(extdir)
+        self.info("Extracting %s to %s" % (os.path.abspath(path),
+                                           os.path.abspath(extdir)))
+        try:
+            if zipfile.is_zipfile(path):
+                bundle = zipfile.ZipFile(path)
+                namelist = bundle.namelist()
+            elif tarfile.is_tarfile(path):
+                bundle = tarfile.open(path)
+                namelist = bundle.getnames()
+            else:
+                # unkown filetype
+                self.warning("Unsupported file type: %s" % path)
+            bundle.extractall(path=extdir)
+            bundle.close()
+        except (zipfile.BadZipfile, zipfile.LargeZipFile,
+                tarfile.ReadError, tarfile.CompressionError), e:
+            cla = sys.exc_info()[0]
+            self.log("%s, Error extracting: %s" % (cla.__name__,
+                                                   os.path.abspath(path)),
+                     level=error_level, exit_code=exit_code)
+            return
+        if delete:
+            self.rmtree(path)
+
+        # namelist returns paths with forward slashes even in windows
+        top_level_files = [os.path.join(extdir, name) for name in namelist
+                                 if len(name.rstrip('/').split('/')) == 1]
+        # namelist doesn't include folders  in windows, append these to the list
+        if platform.system() == "Windows":
+            for name in namelist:
+                root = name[:name.find('/')]
+                if root not in top_level_files:
+                    top_level_files.append(root)
+        # return list of paths of top level extracted files
+        return top_level_files
 
     def move(self, src, dest, error_level="error", exit_code=-1):
         self.info("Moving %s to %s" % (src, dest))
