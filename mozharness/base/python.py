@@ -61,12 +61,14 @@ class VirtualenvMixin(object):
      * virtualenv_modules lists the module names.
      * MODULE_url list points to the module URLs (optional)
     Requires virtualenv to be in PATH.
+    Depends on OSMixin
     '''
     python_paths = {}
 
     def query_python_path(self, binary="python"):
         """Return the path of a binary inside the virtualenv, if
         c['virtualenv_path'] is set; otherwise return the binary name.
+        Otherwise return None
         """
         if binary not in self.python_paths:
             bin_dir = 'bin'
@@ -76,7 +78,24 @@ class VirtualenvMixin(object):
                 self.python_paths[binary] = os.path.abspath(os.path.join(self.config['virtualenv_path'], bin_dir, binary))
             else:
                 self.python_paths[binary] = binary
-        return self.python_paths[binary]
+        return self.which(self.python_paths[binary])
+
+    def query_package(self, package_name, error_level=WARNING):
+        """
+        Returns a list of all installed packages
+        that contain package_name in their name
+        """
+        pip = self.query_python_path("pip")
+        if not pip:
+            self.log("query_package: Program pip not in path", level=error_level)
+            return []
+        output = self.get_output_from_command(pip + " freeze",
+                                              silent=True)
+        if not output:
+            return []
+        packages = output.split()
+        return [package for package in packages
+                if package.lower().find(package_name.lower()) != -1]
 
     def create_virtualenv(self):
         c = self.config

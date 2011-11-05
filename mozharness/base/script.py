@@ -73,7 +73,7 @@ from mozharness.base.errors import HgErrorList
 class OSMixin(object):
     """Filesystem commands and the like.
 
-    Currently dependent on LogMixin, and a self.config of some sort.
+    Depends on LogMixin, ShellMixin, and a self.config of some sort.
     """
     def mkdir_p(self, path):
         if not os.path.exists(path):
@@ -161,7 +161,7 @@ class OSMixin(object):
         try:
             self.info("Downloading %s" % url)
             f = urllib2.urlopen(req)
-            local_file = open(file_name, 'w')
+            local_file = open(file_name, 'wb')
             local_file.write(f.read())
             local_file.close()
         except urllib2.HTTPError, e:
@@ -257,6 +257,29 @@ class OSMixin(object):
             self.info("noop: not changing dir")
         else:
             os.chdir(dir_name)
+
+    def which(self, program):
+        """
+        OS independent implementation of Unix's which command
+        Takes in a program name
+        Returns path to executable or None
+        """
+        def is_exe(fpath):
+            return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+        if self._is_windows() and not program.endswith(".exe"):
+            program += ".exe"
+        fpath, fname = os.path.split(program)
+        if fpath:
+            if is_exe(program):
+                return program
+        else:
+            env = self.query_env()
+            for path in env["PATH"].split(os.pathsep):
+                exe_file = os.path.join(path, program)
+                if is_exe(exe_file):
+                    return exe_file
+        return None
 
 # ShellMixin {{{1
 class ShellMixin(object):
