@@ -168,13 +168,6 @@ class PepTest(VirtualenvMixin, BaseScript):
                          error_list=PythonErrorList)
         self.rmtree(peptest)
 
-    def clobber(self):
-        """
-        Delete the working directory
-        """
-        dirs = self.query_abs_dirs()
-        self.rmtree(dirs['abs_work_dir'])
-
     def get_latest_tinderbox(self):
         """
         Find the url to the latest-tinderbox build and

@@ -57,7 +57,6 @@ DEBUG, INFO, WARNING, ERROR, CRITICAL, FATAL, IGNORE = (
     'debug', 'info', 'warning', 'error', 'critical', 'fatal', 'ignore')
 
 
-
 # LogMixin {{{1
 class LogMixin(object):
     """This is a mixin for any object to access similar logging

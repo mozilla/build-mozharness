@@ -604,6 +604,13 @@ class BaseScript(ShellMixin, OSMixin, LogMixin, object):
                                     long_desc='%s log' % log_name)
         sys.exit(self.return_code)
 
+    def clobber(self):
+        """
+        Delete the working directory
+        """
+        dirs = self.query_abs_dirs()
+        self.rmtree(dirs['abs_work_dir'])
+        
     def query_abs_dirs(self):
         if self.abs_dirs:
             return self.abs_dirs
@@ -732,7 +739,6 @@ class BaseScript(ShellMixin, OSMixin, LogMixin, object):
         else:
             self.log("%s doesn't exist after copy!" % dest, level=error_level)
             return None
-
 
 
 # __main__ {{{1
