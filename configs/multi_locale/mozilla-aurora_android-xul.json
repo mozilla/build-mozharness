@@ -2,8 +2,8 @@
     "work_dir": ".",
     "log_name": "multilocale",
     "objdir": "obj-firefox",
-    "locales_file": "build/mobile/locales/maemo-locales",
-    "locales_dir": "mobile/locales",
+    "locales_file": "build/mobile/xul/locales/maemo-locales",
+    "locales_dir": "mobile/xul/locales",
     "ignore_locales": ["en-US", "multi"],
     "repos": [{
         "repo": "http://hg.mozilla.org/releases/mozilla-aurora",
@@ -30,6 +30,6 @@
     },
     "merge_locales": true,
     "mozilla_dir": "build",
-    "mozconfig": "build/configs/mozilla2/mobile/linux-android/mozilla-aurora/nightly/mozconfig",
+    "mozconfig": "build/configs/mozilla2/mobile/android-xul/mozilla-aurora/nightly/mozconfig",
     "jarsigner": "tools/release/signing/mozpass.py"
 }

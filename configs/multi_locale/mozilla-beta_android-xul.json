@@ -2,11 +2,11 @@
     "work_dir": ".",
     "log_name": "multilocale",
     "objdir": "obj-firefox",
-    "locales_file": "build/mobile/locales/maemo-locales",
-    "locales_dir": "mobile/locales",
+    "locales_file": "build/mobile/xul/locales/maemo-locales",
+    "locales_dir": "mobile/xul/locales",
     "ignore_locales": ["en-US", "multi"],
     "repos": [{
-        "repo": "http://hg.mozilla.org/releases/mozilla-aurora",
+        "repo": "http://hg.mozilla.org/releases/mozilla-beta",
         "tag": "default",
         "dest": "build"
     },{
@@ -21,15 +21,15 @@
         "repo": "http://hg.mozilla.org/build/compare-locales",
         "tag": "RELEASE_AUTOMATION"
     }],
-    "hg_l10n_base": "http://hg.mozilla.org/releases/l10n/mozilla-aurora",
+    "hg_l10n_base": "http://hg.mozilla.org/releases/l10n/mozilla-beta",
     "hg_l10n_tag": "default",
-    "l10n_dir": "mozilla-aurora",
+    "l10n_dir": "mozilla-beta",
     "env": {
         "JAVA_HOME": "/tools/jdk",
         "PATH": "%(PATH)s:/tools/jdk/bin"
     },
     "merge_locales": true,
     "mozilla_dir": "build",
-    "mozconfig": "build/configs/mozilla2/mobile/linux-android/mozilla-aurora/nightly/mozconfig",
+    "mozconfig": "build/configs/mozilla2/android-xul/mozilla-beta/nightly/mozconfig",
     "jarsigner": "tools/release/signing/mozpass.py"
 }
