@@ -7,7 +7,12 @@ config = {
     # mozharness script options
     "log_name": "pep",
     "buildbot_json_path": "buildprops.json",
+    "virtualenv_path": 'c:/talos-slave/test/build/venv',
     "virtualenv_modules": ["simplejson"],
+    "virtualenv_python_dll": 'c:/mozilla-build/python25/python25.dll',
+#    "virtualenv_options": ['--no-site-packages', '--distribute', '--never-download'],
+    "distribute_url": "http://build.mozilla.org/talos/zips/distribute-0.6.24.tar.gz",
+    "pip_url": "http://build.mozilla.org/talos/zips/pip-1.0.2.tar.gz",
     "simplejson_url": "http://build.mozilla.org/talos/zips/simplejson-2.2.1.tar.gz",
     # peptest options
     # defaults to firefox, can also be thunderbird, fennec, etc.
@@ -32,7 +37,8 @@ config = {
     "symbols_path": None,
 
     "exes": {
-        'python': '/tools/buildbot/bin/python',
-        'virtualenv': ['/tools/buildbot/bin/python', '/tools/misc-python/virtualenv.py'],
+        'python': 'c:/mozilla-build/python25/python',
+        'virtualenv': ['c:/mozilla-build/python25/python', 'c:/mozilla-build/buildbotve/virtualenv.py'],
+        'hg': 'c:/mozilla-build/hg/hg',
     },
 }

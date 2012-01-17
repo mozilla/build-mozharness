@@ -18,7 +18,7 @@ test_string = '''foo
 bar
 baz'''
 
-HG = mercurial.HG
+HG = ['hg'] + mercurial.HG_OPTIONS
 
 def cleanup():
     if os.path.exists('test_logs'):

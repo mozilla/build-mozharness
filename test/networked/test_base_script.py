@@ -33,7 +33,7 @@ class TestNetworkedHelperFunctions(unittest.TestCase):
         s = script.BaseScript(initial_config_file='test/test.json')
         os.mkdir('test_dir')
         self.assertRaises(SystemExit, s.download_file,
-                          "http://www.mozilla.sdfsdsdf",
+                          "http://www.mozilla.sdfsdsdf", file_name="foo",
                           error_level=FATAL)
 
     def test_download_bad_file(self):

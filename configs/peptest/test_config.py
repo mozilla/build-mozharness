@@ -2,18 +2,13 @@ import os
 
 config = {
     # mozharness script options
-    "base_work_dir": os.getcwd(),
-    "work_dir": "build",
     "log_name": "pep",
-    "log_level": "info",
-    "test_url": "https://github.com/downloads/ahal/peptest/tests.zip",
-    "mozbase_path": "https://github.com/mozilla/mozbase/zipball/master",
-    "peptest_path": "https://github.com/mozilla/peptest/zipball/master",
+    "test_url": "ftp://ftp.mozilla.org/pub/firefox/tinderbox-builds/mozilla-central-linux/1323881237/firefox-11.0a1.en-US.linux-i686.tests.zip",
 
     # peptest options
-    "appname": "ftp://ftp.mozilla.org/pub/firefox/nightly/latest-mozilla-central/firefox-10.0a1.en-US.linux-i686.tar.bz2",
+    "appname": "ftp://ftp.mozilla.org/pub/firefox/tinderbox-builds/mozilla-central-linux/1323881237/firefox-11.0a1.en-US.linux-i686.tar.bz2",
     "app": "firefox",
-    "test_manifest": "firefox/all_tests.ini", # this is relative to the test folder specified by test_url
+    "test_manifest": "tests/firefox/firefox_all.ini", # this is relative to the test folder specified by test_url
     "profile_path": None,
     "timeout": 60,
     "server_path": None,
@@ -27,11 +22,3 @@ config = {
     "get_latest_tinderbox_platform": None,
     "get_latest_tinderbox_debug_build": False,
 }
-
-abs_work_dir = os.path.abspath(os.path.join(config['base_work_dir'],
-                                            config['work_dir']))
-
-config['virtualenv_path'] = os.path.join(abs_work_dir, "venv")
-config['test_install_dir'] = os.path.join(abs_work_dir, "tests")
-config['application_install_dir'] = os.path.join(abs_work_dir,
-                                                 "application")

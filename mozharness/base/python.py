@@ -48,14 +48,13 @@ virtualenv_config_options = [[
  ["--venv-path", "--virtualenv-path"],
  {"action": "store",
   "dest": "virtualenv_path",
-  "default": os.path.join(os.getcwd(), "venv"),
-  "help": "Specify the virtualenv path"
- }    
+  "default": "venv",
+  "help": "Specify the path to the virtualenv top level directory"
+ }
 ],
 [["--virtualenv"],
  {"action": "store",
   "dest": "virtualenv",
-  "default": "virtualenv",
   "help": "Specify the virtualenv executable to use"
   }
 ]]
@@ -72,6 +71,15 @@ class VirtualenvMixin(object):
     '''
     python_paths = {}
 
+    def query_virtualenv_path(self):
+        c = self.config
+        dirs = self.query_abs_dirs()
+        if 'abs_virtualenv_dir' in dirs:
+            return dirs['abs_virtualenv_dir']
+        if os.path.isabs(c['virtualenv_path']):
+            return c['virtualenv_path']
+        return os.path.join(dirs['abs_base_dir'], c['virtualenv_path'])
+
     def query_python_path(self, binary="python"):
         """Return the path of a binary inside the virtualenv, if
         c['virtualenv_path'] is set; otherwise return the binary name.
@@ -81,11 +89,12 @@ class VirtualenvMixin(object):
             bin_dir = 'bin'
             if self._is_windows():
                 bin_dir = 'Scripts'
-            if self.config.get('virtualenv_path'):
-                self.python_paths[binary] = os.path.abspath(os.path.join(self.config['virtualenv_path'], bin_dir, binary))
+            virtualenv_path = self.query_virtualenv_path()
+            if virtualenv_path:
+                self.python_paths[binary] = os.path.abspath(os.path.join(virtualenv_path, bin_dir, binary))
             else:
-                self.python_paths[binary] = binary
-        return self.which(self.python_paths[binary])
+                self.python_paths[binary] = self.query_exe(binary)
+        return self.python_paths[binary]
 
     def query_package(self, package_name, error_level=WARNING):
         """
@@ -106,18 +115,41 @@ class VirtualenvMixin(object):
 
     def create_virtualenv(self):
         c = self.config
-        if not c.get('virtualenv_path'):
-            self.add_summary("No virtualenv specified; not creating virtualenv!", level=FATAL)
-            return -1
-        venv_path = os.path.abspath(c['virtualenv_path'])
+        dirs = self.query_abs_dirs()
+        venv_path = self.query_virtualenv_path()
         self.info("Creating virtualenv %s" % venv_path)
-        virtualenv = c['virtualenv']
-        if not os.path.exists(virtualenv) and not self.which(virtualenv):
-            self.add_summary("The executable '%s' is not found; not creating virtualenv!" % virtualenv, level=FATAL)
-            return -1
-        
-        self.run_command([virtualenv, "--no-site-packages",
-                          venv_path],
+        virtualenv = c.get('virtualenv', self.query_exe('virtualenv'))
+        if isinstance(virtualenv, str):
+            if not os.path.exists(virtualenv) and not self.which(virtualenv):
+                self.add_summary("The executable '%s' is not found; not creating virtualenv!" % virtualenv, level=FATAL)
+                return -1
+            # allow for [python, virtualenv] in config
+            virtualenv = [virtualenv]
+
+        # https://bugs.launchpad.net/virtualenv/+bug/352844/comments/3
+        # https://bugzilla.mozilla.org/show_bug.cgi?id=700415#c50
+        if c.get('virtualenv_python_dll'):
+            # We may someday want to copy a differently-named dll, but
+            # let's not think about that right now =\
+            dll_name = os.path.basename(c['virtualenv_python_dll'])
+            target = self.query_python_path(dll_name)
+            scripts_dir = os.path.dirname(target)
+            self.mkdir_p(scripts_dir)
+            self.copyfile(c['virtualenv_python_dll'], target)
+        else:
+            self.mkdir_p(dirs['abs_work_dir'])
+
+        # make this list configurable?
+        for module in ('distribute', 'pip'):
+            if c.get('%s_url' % module):
+                self.download_file(c['%s_url' % module],
+                                   parent_dir=dirs['abs_work_dir'])
+
+        virtualenv_options = c.get('virtualenv_options',
+                                   ['--no-site-packages', '--distribute'])
+
+        self.run_command(virtualenv + virtualenv_options + [venv_path],
+                         cwd=dirs['abs_work_dir'],
                          error_list=PythonErrorList,
                          halt_on_failure=True)
         pip = self.query_python_path("pip")

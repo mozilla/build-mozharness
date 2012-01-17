@@ -12,9 +12,9 @@ config = {
     "log_level": "info",
     "test_url": "url_to_packaged_tests",
     # path or url to a zip or folder containing the mozbase packages
-    "mozbase_path": "url_to_mozbase_zip",
+    "mozbase_url": "url_to_mozbase_zip",
     # path or url to a zip or folder containing peptest
-    "peptest_path": "url_to_peptest_zip",
+    "peptest_url": "url_to_peptest_zip",
 
     # peptest options
 
