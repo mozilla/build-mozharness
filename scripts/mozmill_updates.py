@@ -42,6 +42,7 @@ Download and update Firefox against a specific channel.
 
 import os
 import pprint
+import re
 import sys
 try:
     import simplejson as json
@@ -163,7 +164,7 @@ class MozmillUpdate(VirtualenvMixin, MercurialScript):
          {'substr': r'''ERROR''', 'level': 'error'},
          {'substr': r'''UNEXPECTED''', 'level': 'error'},
          {'substr': r'''failed''', 'level': 'error'},
-         {'regex': r'''Failed[:]? [^0]''', 'level': 'error'},
+         {'regex': re.compile(r'''Failed[:]? [^0]'''), 'level': 'error'},
          {'substr': r'''Sorry, cannot connect''', 'level': 'error'},
          {'substr': r'''DeprecationWarning''', 'level': 'warning'},
         ])

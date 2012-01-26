@@ -50,6 +50,10 @@ from mozharness.base.errors import PythonErrorList
 
 class LocalesMixin(object):
     def __init__(self, **kwargs):
+        """ Mixins generally don't have an __init__.
+        This breaks super().__init__() for children.
+        However, this is needed to override the query_abs_dirs()
+        """
         self.abs_dirs = None
         self.locales = None
 

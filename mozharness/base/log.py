@@ -45,6 +45,7 @@ TODO:
 from datetime import datetime
 import logging
 import os
+import re
 import sys
 import traceback
 
@@ -126,6 +127,83 @@ class LogMixin(object):
 
     def fatal(self, message, exit_code=-1):
         self.log(message, level=FATAL, exit_code=exit_code)
+
+
+
+# OutputParser {{{1
+class OutputParser(LogMixin):
+    """ Helper object to parse command output.
+
+This will buffer output if needed, so we can go back and mark
+[(linenum - 10):linenum+10] as errors if need be, without having to
+get all the output first.
+
+linenum+10 will be easy; we can set self.num_post_context_lines to 10,
+and self.num_post_context_lines-- as we mark each line to at least error
+level X.
+
+linenum-10 will be trickier. We'll not only need to save the line
+itself, but also the level that we've set for that line previously,
+whether by matching on that line, or by a previous line's context.
+We should only log that line if all output has ended (self.finish() ?);
+otherwise store a list of dictionaries in self.context_buffer that is
+buffered up to self.num_pre_context_lines (set to the largest
+pre-context-line setting in error_list.)
+"""
+    def __init__(self, config=None, log_obj=None, error_list=None,
+                 log_output=True):
+        self.config = config
+        self.log_obj = log_obj
+        self.error_list = error_list
+        self.log_output = log_output
+        self.num_errors = 0
+        # TODO context_lines.
+        # Not in use yet, but will be based off error_list.
+        self.context_buffer = []
+        self.num_pre_context_lines = 0
+        self.num_post_context_lines = 0
+        # TODO set self.error_level to the worst error level hit
+        # (WARNING, ERROR, CRITICAL, FATAL)
+        # self.error_level = INFO
+
+    def add_lines(self, output):
+        if str(output) == output:
+            output = [output]
+        for line in output:
+            if not line or line.isspace():
+                continue
+            line = line.decode("utf-8").rstrip()
+            for error_check in self.error_list:
+                # TODO buffer for context_lines.
+                match = False
+                if 'substr' in error_check:
+                    if error_check['substr'] in line:
+                        match = True
+                elif 'regex' in error_check:
+                    if error_check['regex'].search(line):
+                        match = True
+                else:
+                    self.warn("error_list: 'substr' and 'regex' not in %s" % \
+                              error_check)
+                if match:
+                    level = error_check.get('level', INFO)
+                    if self.log_output:
+                        message = ' %s' % line
+                        if error_check.get('explanation'):
+                            message += '\n %s' % error_check['explanation']
+                        if error_check.get('summary'):
+                            self.add_summary(message, level=level)
+                        else:
+                            self.log(message, level=level)
+                    if level in (ERROR, CRITICAL, FATAL):
+                        self.num_errors += 1
+                    # TODO set self.error_status (or something)
+                    # that sets the worst error level hit.
+                    break
+            else:
+                if self.log_output:
+                    self.info(' %s' % line)
+
 
 
 # BaseLogger {{{1

@@ -136,7 +136,8 @@ class ReadOnlyDict(dict):
 
 
 # parse_config_file {{{1
-def parse_config_file(file_name, quiet=False, search_path=None):
+def parse_config_file(file_name, quiet=False, search_path=None,
+                      config_dict_name="config"):
     """Read a config file and return a dictionary.
     """
     file_path = None
@@ -156,7 +157,7 @@ def parse_config_file(file_name, quiet=False, search_path=None):
         global_dict = {}
         local_dict = {}
         execfile(file_path, global_dict, local_dict)
-        config = local_dict['config']
+        config = local_dict[config_dict_name]
     elif file_name.endswith('.json'):
         fh = open(file_path)
         config = {}
