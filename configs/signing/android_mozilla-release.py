@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-import os
-
 LOCALES = ["en-US", "multi"]
 TAG = "default"
-AUS_SERVER = "dev-stage01.build.mozilla.org"
-FTP_SERVER = "dev-stage01.build.mozilla.org"
+#AUS_SERVER = "dev-stage01.build.mozilla.org"
+AUS_SERVER = "aus2-staging.mozilla.org"
+#FTP_SERVER = "dev-stage01.build.mozilla.org"
+FTP_SERVER = "stage.mozilla.org"
 AUS_UPLOAD_BASE_DIR = "/opt/aus2/snippets/staging"
 AUS_DIR_BASE_NAME = "Fennec-%(version)s-build%(buildnum)d"
 FTP_UPLOAD_BASE_DIR = "/pub/mozilla.org/mobile/candidates/%(version)s-candidates/build%(buildnum)d"
@@ -16,7 +16,9 @@ APK_BASE_NAME = "fennec-%(version)s.%(locale)s.android-arm.apk"
 BUILDID_BASE_URL = DOWNLOAD_BASE_URL + "/%(platform)_info.txt"
 OLD_STYLE_BUILDID_BASE_URL = DOWNLOAD_BASE_URL + "/linux-android_info.txt"
 FFXBLD_SSH_KEY = '~/.ssh/ffxbld_dsa'
-CLTBLD_SSH_KEY = '~/.ssh/id_rsa'
+#FFXBLD_SSH_KEY = '~/staging_ssh/ffxbld_dsa'
+CLTBLD_SSH_KEY = '~/.ssh/cltbld_dsa'
+#CLTBLD_SSH_KEY = '~/staging_ssh/id_rsa'
 
 RELEASE_UPDATE_URL = "http://download.mozilla.org/?product=fennec-%(version)s-complete&os=%(platform)s&lang=%(locale)s"
 BETATEST_UPDATE_URL = "http://stage.mozilla.org/pub/mozilla.org/mobile/candidates/%(version)s-candidates/build%(buildnum)d/%(apk_name)s"
@@ -31,23 +33,20 @@ appv=%(version)s
 extv=%(version)s
 """
 
-KEYSTORE = "%s/.android/android.keystore" % os.environ['HOME']
-#BASE_WORK_DIR = "%s/signing-work/fennec-beta" % (os.environ['HOME'])
-BASE_WORK_DIR = "%s/signing-work/fennec-beta" % os.getcwd()
+KEYSTORE = "/home/cltsign/.android/android-release.keystore"
 WORK_DIR = "build"
 
-JAVA_HOME = "/tools/jdk6"
+JAVA_HOME = "/tools/jdk-1.6.0_17"
 JARSIGNER = "%s/bin/jarsigner" % JAVA_HOME
-KEY_ALIAS = "nightly"
+KEY_ALIAS = "release"
 
 config = {
     "log_name": "sign_android",
-    "base_work_dir": BASE_WORK_DIR,
     "work_dir": WORK_DIR,
 
     "locales": LOCALES,
-    "locales_file": "buildbot-configs/mozilla/l10n-changesets_mobile-beta.json",
-    "release_config_file": "buildbot-configs/mozilla/release-fennec-mozilla-beta.py",
+    "locales_file": "buildbot-configs/mozilla/l10n-changesets_mobile-release.json",
+    "release_config_file": "buildbot-configs/mozilla/release-fennec-mozilla-release.py",
 
     "platforms": ['android'],
     "update_platforms": ['android'],
@@ -95,11 +94,11 @@ config = {
     },
     "exes": {
         "jarsigner": JARSIGNER,
-        "zipalign": "/tools/android-sdk-r13/tools/zipalign",
+        "zipalign": "/tools/android-sdk-r8/tools/zipalign",
     },
     "signature_verification_script": "tools/release/signing/verify-android-signature.sh",
 
-    "user_repo_override": "users/stage-ffxbld",
+    "user_repo_override": "build",
     "tag_override": TAG,
     "repos": [{
         "repo": "http://hg.mozilla.org/%(user_repo_override)s/tools",
