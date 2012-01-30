@@ -46,7 +46,7 @@ config = {
 
     "locales": LOCALES,
     "locales_file": "buildbot-configs/mozilla/l10n-changesets_mobile-beta.json",
-    "release_config_file": "buildbot-configs/mozilla/staging_release-fennec-mozilla-beta.py",
+    "release_config_file": "buildbot-configs/mozilla/release-fennec-mozilla-beta.py",
 
     "platforms": ['android'],
     "update_platforms": ['android'],
