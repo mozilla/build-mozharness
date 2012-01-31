@@ -49,7 +49,7 @@ config = {
     "locales_file": "buildbot-configs/mozilla/l10n-changesets_mobile-beta.json",
     "release_config_file": "buildbot-configs/mozilla/staging_release-fennec-mozilla-beta.py",
 
-    "platforms": ['android'],
+    "platforms": ['android', 'android-xul'],
     "update_platforms": ['android'],
     "update_platform_map": {
         'android': 'Android_arm-eabi-gcc3',
@@ -85,7 +85,7 @@ config = {
     "download_base_url": DOWNLOAD_BASE_URL,
     "download_unsigned_base_subdir": "unsigned/%(platform)s/%(locale)s",
     "download_signed_base_subdir": "%(platform)s/%(locale)s",
-    "buildid_base_url": OLD_STYLE_BUILDID_BASE_URL,
+    "buildid_base_url": BUILDID_BASE_URL,
     "old_buildid_base_url": OLD_STYLE_BUILDID_BASE_URL,
 
     "keystore": KEYSTORE,
