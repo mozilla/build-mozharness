@@ -177,7 +177,7 @@ class BaseConfig(object):
     """
     def __init__(self, config=None, initial_config_file=None, config_options=None,
                  all_actions=None, default_actions=None,
-                 volatile_config_vars=None,
+                 volatile_config=None,
                  require_config_file=False, usage="usage: %prog [options]"):
         self._config = {}
         self.actions = []
@@ -192,10 +192,14 @@ class BaseConfig(object):
             self.default_actions = default_actions[:]
         else:
             self.default_actions = self.all_actions[:]
-        if volatile_config_vars is None:
-            self.volatile_config_vars = []
+        if volatile_config is None:
+            self.volatile_config = {
+                'actions': None,
+                'add_actions': None,
+                'no_actions': None,
+            }
         else:
-            self.volatile_config_vars = volatile_config_vars[:]
+            self.volatile_config = deepcopy(volatile_config)
 
         if config:
             self.set_config(config)
@@ -271,7 +275,7 @@ class BaseConfig(object):
         )
         action_option_group.add_option(
          "--action", action="extend",
-         dest="only_actions", metavar="ACTIONS",
+         dest="actions", metavar="ACTIONS",
          help="Do action %s" % self.all_actions
         )
         action_option_group.add_option(
@@ -287,7 +291,7 @@ class BaseConfig(object):
         for action in self.all_actions:
             action_option_group.add_option(
              "--only-%s" % action, "--%s" % action, action="append_const",
-             dest="only_actions", const=action,
+             dest="actions", const=action,
              help="Add %s to the limited list of actions" % action
             )
             action_option_group.add_option(
@@ -296,9 +300,6 @@ class BaseConfig(object):
              help="Remove %s from the list of actions to perform" % action
             )
         self.config_parser.add_option_group(action_option_group)
-        self.volatile_config_vars.extend(['only_actions', 'add_actions',
-                                          'no_actions', 'list_actions',
-                                          'noop'])
         # Child-specified options
         # TODO error checking for overlapping options
         if config_options:
@@ -351,7 +352,7 @@ class BaseConfig(object):
 
         if not options.config_file:
             if self.require_config_file:
-                print("Required config file not set!")
+                print("Required config file not set! (use --config-file option)")
                 raise SystemExit(-1)
         else:
             self.set_config(parse_config_file(options.config_file))
@@ -364,31 +365,50 @@ class BaseConfig(object):
                 continue
             self._config[key] = value
 
+        # The idea behind the volatile_config is we don't want to save this
+        # info over multiple runs.  This defaults to the action-specific
+        # config options, but can be anything.
+        for key in self.volatile_config.keys():
+            if self._config.get(key) is not None:
+                self.volatile_config[key] = self._config[key]
+                del(self._config[key])
+
         """Actions.
 
         Seems a little complex, but the logic goes:
 
-        If we specify --BLAH or --only-BLAH once or multiple times,
-        we want to override the default_actions list with the ones we list.
+        First, if default_actions is specified in the config, set our
+        default actions even if the script specifies other default actions.
 
-        Otherwise, if we specify --add-action, we want to add an action to
-        the default list.
+        Without any other action-specific options, run with default actions.
 
-        Finally, if we specify --no-BLAH, remove that from the list of
+        If we specify --ACTION or --only-ACTION once or multiple times,
+        we want to override the default_actions list with the one(s) we list.
+
+        Otherwise, if we specify --add-action ACTION, we want to add an
+        action to the list.
+
+        Finally, if we specify --no-ACTION, remove that from the list of
         actions to perform.
         """
+        if self._config.get('default_actions'):
+            default_actions = self.verify_actions(self._config['default_actions'])
+            self.default_actions = default_actions
         self.actions = self.default_actions[:]
-        if options.only_actions:
-            actions = self.verify_actions(options.only_actions)
+        if self.volatile_config['actions']:
+            actions = self.verify_actions(self.volatile_config['actions'])
             self.actions = actions
-        elif options.add_actions:
-            actions = self.verify_actions(options.add_actions)
+        elif self.volatile_config['add_actions']:
+            actions = self.verify_actions(self.volatile_config['add_actions'])
             self.actions.extend(actions)
-        if options.no_actions:
-            actions = self.verify_actions(options.no_actions)
+        if self.volatile_config['no_actions']:
+            actions = self.verify_actions(self.volatile_config['no_actions'])
             for action in actions:
                 if action in self.actions:
                     self.actions.remove(action)
+
+        # Keep? This is for saving the volatile config in the dump_config
+        self._config['volatile_config'] = self.volatile_config
 
         self.options = options
         self.args = args

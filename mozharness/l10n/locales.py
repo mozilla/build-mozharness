@@ -62,7 +62,8 @@ class LocalesMixin(object):
             return self.locales
         c = self.config
         locales = c.get("locales", None)
-        ignore_locales = c.get("ignore_locales", None)
+        ignore_locales = c.get("ignore_locales", [])
+        additional_locales = c.get("additional_locales", [])
 
         if locales is None:
             locales = []
@@ -73,11 +74,14 @@ class LocalesMixin(object):
                 locales = self.parse_locales_file(locales_file)
             else:
                 self.fatal("No way to determine locales!")
-        elif ignore_locales:
-            for locale in ignore_locales:
-                if locale in locales:
-                    self.debug("Ignoring locale %s." % locale)
-                    locales.remove(locale)
+        for locale in ignore_locales:
+            if locale in locales:
+                self.debug("Ignoring locale %s." % locale)
+                locales.remove(locale)
+        for locale in additional_locales:
+            if locale not in locales:
+                self.debug("Adding locale %s." % locale)
+                locales.append(locale)
         if locales is not None:
             self.locales = locales
 

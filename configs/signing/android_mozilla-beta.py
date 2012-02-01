@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-LOCALES = ["en-US", "multi"]
+ADDITIONAL_LOCALES = ["en-US", "multi"]
 TAG = "default"
 #AUS_SERVER = "dev-stage01.build.mozilla.org"
 AUS_SERVER = "aus2-staging.mozilla.org"
@@ -12,9 +12,7 @@ FTP_UPLOAD_BASE_DIR = "/pub/mozilla.org/mobile/candidates/%(version)s-candidates
 #DOWNLOAD_BASE_URL = "http://%s%s" % (FTP_SERVER, FTP_UPLOAD_BASE_DIR)
 DOWNLOAD_BASE_URL = "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/%(version)s-candidates/build%(buildnum)d"
 APK_BASE_NAME = "fennec-%(version)s.%(locale)s.android-arm.apk"
-# because sign_android-0.8.sh renamed these wrong :(
-BUILDID_BASE_URL = DOWNLOAD_BASE_URL + "/%(platform)_info.txt"
-OLD_STYLE_BUILDID_BASE_URL = DOWNLOAD_BASE_URL + "/linux-android_info.txt"
+BUILDID_BASE_URL = DOWNLOAD_BASE_URL + "/%(platform)s_info.txt"
 FFXBLD_SSH_KEY = '~/.ssh/ffxbld_dsa'
 #FFXBLD_SSH_KEY = '~/staging_ssh/ffxbld_dsa'
 CLTBLD_SSH_KEY = '~/.ssh/cltbld_dsa'
@@ -34,17 +32,16 @@ extv=%(version)s
 """
 
 KEYSTORE = "/home/cltsign/.android/android-release.keystore"
-WORK_DIR = "build"
 
 JAVA_HOME = "/tools/jdk-1.6.0_17"
 JARSIGNER = "%s/bin/jarsigner" % JAVA_HOME
 KEY_ALIAS = "release"
 
 config = {
-    "log_name": "sign_android",
-    "work_dir": WORK_DIR,
+    "log_name": "sign_android_beta",
+    "work_dir": "beta",
 
-    "locales": LOCALES,
+    "additional_locales": ADDITIONAL_LOCALES,
     "locales_file": "buildbot-configs/mozilla/l10n-changesets_mobile-beta.json",
     "release_config_file": "buildbot-configs/mozilla/release-fennec-mozilla-beta.py",
 
@@ -80,12 +77,21 @@ config = {
     "aus_upload_base_dir": AUS_UPLOAD_BASE_DIR,
 
     "apk_base_name": APK_BASE_NAME,
-    "unsigned_apk_base_name": 'gecko-unsigned-unaligned.apk',
+    "unsigned_apk_base_name": APK_BASE_NAME,
     "download_base_url": DOWNLOAD_BASE_URL,
     "download_unsigned_base_subdir": "unsigned/%(platform)s/%(locale)s",
     "download_signed_base_subdir": "%(platform)s/%(locale)s",
     "buildid_base_url": BUILDID_BASE_URL,
-    "old_buildid_base_url": OLD_STYLE_BUILDID_BASE_URL,
+    "old_buildid_base_url": BUILDID_BASE_URL,
+    "actions": [
+                "passphrase",
+                "clobber",
+                "pull",
+                "download-unsigned-bits",
+                "sign",
+                "verify-signatures",
+                "upload-signed-bits",
+               ],
 
     "keystore": KEYSTORE,
     "key_alias": KEY_ALIAS,
