@@ -237,7 +237,7 @@ class SignAndroid(LocalesMixin, MercurialScript):
             self.release_config['buildnum'] = rc['buildNumber']
             self.release_config['old_version'] = rc['oldVersion']
             self.release_config['old_buildnum'] = rc['oldBuildNumber']
-            self.release_config['ftp_server'] = rc['ftpServer']
+            self.release_config['ftp_server'] = rc['stagingServer']
             self.release_config['ftp_user'] = c.get('ftp_user', rc['hgUsername'])
             self.release_config['ftp_ssh_key'] = c.get('ftp_ssh_key', rc['hgSshKey'])
             self.release_config['aus_server'] = rc['stagingServer']
