@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-ADDITIONAL_LOCALES = ["en-US", "multi"]
+ADDITIONAL_LOCALES = ["en-US"]
 TAG = "default"
 #AUS_SERVER = "dev-stage01.build.mozilla.org"
 AUS_SERVER = "aus2-staging.mozilla.org"
