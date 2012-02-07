@@ -5,6 +5,7 @@
 #  easy_install coverage
 #  easy_install nose
 #  easy_install pylint
+#  easy_install pyflakes
 #
 # test_base_vcs_mercurial.py requires hg >= 1.6.0 with mq, rebase, share
 # extensions to fully test.
@@ -50,6 +51,9 @@ else
   SCRIPTS_PY_FILES=$files
 fi
 export PYTHONPATH=`env pwd`:$PYTHONPATH
+
+echo "### Running pyflakes"
+pyflakes $MOZHARNESS_PY_FILES $SCRIPTS_PY_FILES
 
 echo "### Running pylint"
 pylint -E -e F -f parseable $MOZHARNESS_PY_FILES $SCRIPTS_PY_FILES 2>&1 | egrep -v '(No config file found, using default configuration|Instance of .* has no .* member)'
