@@ -5,11 +5,7 @@ run talos test suites in a virtualenv
 """
 
 import os
-import subprocess
-import sys
-import urllib2
 
-from mozharness.base.log import DEBUG, INFO, WARNING, ERROR, CRITICAL, FATAL, IGNORE
 from mozharness.base.python import virtualenv_config_options, VirtualenvMixin
 from mozharness.base.script import BaseScript
 
@@ -132,7 +128,7 @@ class Talos(VirtualenvMixin, BaseScript):
         # run talos tests
         # assumes a webserver is appropriately running
         python = self.query_python_path()
-        code = self.run_command([python, 'run_tests.py', '--noisy', self.talos_conf], cwd=self.talos_dir)
+        self.return_code = self.run_command([python, 'run_tests.py', '--noisy', self.talos_conf], cwd=self.talos_dir)
 
 
 if __name__ == '__main__':

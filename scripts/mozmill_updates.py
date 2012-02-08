@@ -41,7 +41,6 @@ Download and update Firefox against a specific channel.
 """
 
 import os
-import pprint
 import re
 import sys
 try:
@@ -174,7 +173,7 @@ class MozmillUpdate(VirtualenvMixin, MercurialScript):
             for version in version_dict.keys():
                 self.info("Testing %s on %s channel" % (version, channel))
                 report_json = os.path.join(dirs['abs_work_dir'], "report_%s_%s.json" % (version, channel))
-                status = self.run_command(
+                self.run_command(
                  [python, 'testrun_update.py',
                   '--channel=%s' % channel,
                   '--report=file://%s' % report_json,

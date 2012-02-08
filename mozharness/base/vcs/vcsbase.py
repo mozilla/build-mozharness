@@ -38,17 +38,14 @@
 """Generic VCS support.
 """
 
+from copy import deepcopy
 import os
-import re
-import subprocess
-from urlparse import urlsplit
 
 import sys
 sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.dirname(sys.path[0]))))
 
-from mozharness.base.errors import HgErrorList, VCSException
-from mozharness.base.log import LogMixin
-from mozharness.base.script import BaseScript, ShellMixin, OSMixin
+from mozharness.base.errors import VCSException
+from mozharness.base.script import BaseScript
 from mozharness.base.vcs.mercurial import MercurialVCS
 
 # Update this with supported VCS name : VCS object
@@ -75,6 +72,8 @@ class VCSMixin(object):
         # need a better way to do this.
         if 'dest' not in kwargs:
             kwargs['dest'] = os.path.basename(kwargs['repo'])
+        if 'vcs_share_base' not in kwargs:
+            kwargs['vcs_share_base'] = c.get('vcs_share_base')
         vcs_obj = vcs_class(
          log_obj=self.log_obj,
          config=self.config,
@@ -96,7 +95,7 @@ class VCSMixin(object):
         self.chdir(parent_dir)
         try:
             for repo_dict in repo_list:
-                kwargs = repo_dict.copy()
+                kwargs = deepcopy(repo_dict)
                 if tag_override:
                     kwargs['revision'] = tag_override
                 self.vcs_checkout(**kwargs)

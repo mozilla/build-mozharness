@@ -35,18 +35,31 @@
 # the terms of any one of the MPL, the GPL or the LGPL.
 #
 # ***** END LICENSE BLOCK *****
-"""multil10n.py
-
+"""Generic signing methods.
 """
 
+import hashlib
 import os
-import sys
 
-# load modules from parent dir
-sys.path.insert(1, os.path.dirname(sys.path[0]))
+# BaseSigningMixin {{{1
 
-from mozharness.mozilla.l10n.multi_locale_build import MultiLocaleBuild
+class BaseSigningMixin(object):
+    """Generic signing helper methods.
+    """
+    def query_filesize(self, file_path):
+        self.info("Determining filesize for %s" % file_path)
+        length = os.path.getsize(file_path)
+        self.info(" %s" % str(length))
+        return length
 
-if __name__ == '__main__':
-    multi_locale_build = MultiLocaleBuild()
-    multi_locale_build.run()
+    # TODO this should be parallelized with the to-be-written BaseHelper!
+    def query_sha512sum(self, file_path):
+        self.info("Determining sha512sum for %s" % file_path)
+        m = hashlib.sha512()
+        fh = open(file_path, 'rb')
+        contents = fh.read()
+        fh.close()
+        m.update(contents)
+        sha512 = m.hexdigest()
+        self.info(" %s" % sha512)
+        return sha512

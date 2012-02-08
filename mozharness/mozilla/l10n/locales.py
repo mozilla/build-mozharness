@@ -45,10 +45,11 @@ sys.path.insert(1, os.path.dirname(sys.path[0]))
 
 from mozharness.base.config import parse_config_file
 from mozharness.base.errors import PythonErrorList
+from mozharness.base.parallel import ChunkingMixin
 
 # LocalesMixin {{{1
 
-class LocalesMixin(object):
+class LocalesMixin(ChunkingMixin):
     def __init__(self, **kwargs):
         """ Mixins generally don't have an __init__.
         This breaks super().__init__() for children.
@@ -82,10 +83,22 @@ class LocalesMixin(object):
             if locale not in locales:
                 self.debug("Adding locale %s." % locale)
                 locales.append(locale)
-        if locales is not None:
-            self.locales = locales
-
+        if locales is None:
+            return
+        if 'total_locale_chunks' and 'this_locale_chunk' in c:
+            self.debug("Pre-chunking locale list: %s" % str(locales))
+            locales = self.query_chunked_list(locales,
+                                              c['this_locale_chunk'],
+                                              c['total_locale_chunks'],
+                                              sort=True)
+            self.debug("Post-chunking locale list: %s" % locales)
+        self.locales = locales
         return self.locales
+
+    def list_locales(self):
+        """ Stub action method.
+        """
+        self.info("Locale list: %s" % str(self.query_locales()))
 
     def parse_locales_file(self, locales_file):
         locales = []
@@ -107,7 +120,6 @@ class LocalesMixin(object):
         return locales
 
     def run_compare_locales(self, locale, halt_on_failure=False):
-        c = self.config
         dirs = self.query_abs_dirs()
         compare_locales_script = os.path.join(dirs['abs_compare_locales_dir'],
                                               'scripts', 'compare-locales')
@@ -157,6 +169,40 @@ class LocalesMixin(object):
                 abs_dirs[key] = dirs[key]
         self.abs_dirs = abs_dirs
         return self.abs_dirs
+
+    # This requires self to inherit a VCSMixin.
+    def pull_locale_source(self):
+        c = self.config
+        dirs = self.query_abs_dirs()
+        self.mkdir_p(dirs['abs_l10n_dir'])
+        repos = []
+        replace_dict = {}
+        # Replace %(user_repo_override)s with c['user_repo_override']
+        if c.get("user_repo_override"):
+            replace_dict['user_repo_override'] = c['user_repo_override']
+            for repo_dict in c.get('l10n_repos', []):
+                repo_dict['repo'] = repo_dict['repo'] % replace_dict
+                repos.append(repo_dict)
+        else:
+            repos = c.get("l10n_repos")
+        if repos:
+            self.vcs_checkout_repos(repos, tag_override=c.get('tag_override'))
+        locales = self.query_locales()
+        locale_repos = []
+        hg_l10n_base = c['hg_l10n_base']
+        if c.get("user_repo_override"):
+            hg_l10n_base = hg_l10n_base % {"user_repo_override": c["user_repo_override"]}
+        for locale in locales:
+            tag = c.get('hg_l10n_tag', 'default')
+            if hasattr(self, 'locale_dict'):
+                tag = self.locale_dict[locale]
+            locale_repos.append({
+                'repo': "%s/%s" % (hg_l10n_base, locale),
+                'tag': tag
+            })
+        self.vcs_checkout_repos(repo_list=locale_repos,
+                                parent_dir=dirs['abs_l10n_dir'],
+                                tag_override=c.get('tag_override'))
 
 # __main__ {{{1
 

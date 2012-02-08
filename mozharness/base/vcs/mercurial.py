@@ -53,7 +53,7 @@ sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.dirname(sys.path[0]))
 
 from mozharness.base.errors import HgErrorList, VCSException
 from mozharness.base.log import LogMixin
-from mozharness.base.script import BaseScript, ShellMixin, OSMixin
+from mozharness.base.script import ShellMixin, OSMixin
 
 HG_OPTIONS = ['--config', 'ui.merge=internal:merge']
 
@@ -457,7 +457,7 @@ class MercurialVCS(ShellMixin, OSMixin, LogMixin, object):
         repo = c['repo']
         revision = c.get('revision')
         branch = c.get('branch')
-        share_base = c.get('share_base',
+        share_base = c.get('vcs_share_base',
                            os.environ.get("HG_SHARE_BASE_DIR", None))
         msg = "Setting %s to %s" % (dest, repo)
         if branch:

@@ -46,11 +46,8 @@ from mozharness.base.errors import PythonErrorList
 from mozharness.base.log import DEBUG, INFO, WARNING, ERROR, FATAL
 from mozharness.base.python import virtualenv_config_options, VirtualenvMixin
 from mozharness.base.script import BaseScript
-from mozharness.buildbot import BuildbotMixin, TBPL_SUCCESS, TBPL_WARNING, TBPL_FAILURE, TBPL_RETRY
+from mozharness.mozilla.buildbot import BuildbotMixin, TBPL_SUCCESS, TBPL_WARNING, TBPL_FAILURE
 import urlparse
-import tarfile
-import zipfile
-import platform
 
 class PepTest(VirtualenvMixin, BuildbotMixin, BaseScript):
     config_options = [
@@ -171,7 +168,6 @@ class PepTest(VirtualenvMixin, BuildbotMixin, BaseScript):
         Downloads and installs the application
         Returns the binary path
         """
-        c = self.config
         dirs = self.query_abs_dirs()
 
         # download the application
@@ -238,7 +234,6 @@ class PepTest(VirtualenvMixin, BuildbotMixin, BaseScript):
         """
         Create virtualenv and install dependencies
         """
-        c = self.config
         dirs = self.query_abs_dirs()
         if self.test_url:
             bundle = self.download_file(self.test_url,

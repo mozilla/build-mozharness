@@ -45,10 +45,10 @@ import sys
 
 sys.path.insert(1, os.path.dirname(os.path.dirname(sys.path[0])))
 
-from mozharness.base.errors import SSHErrorList, PythonErrorList, MakefileErrorList
-from mozharness.base.log import DEBUG, INFO, WARNING, ERROR, CRITICAL, FATAL, IGNORE
+from mozharness.base.errors import MakefileErrorList
+from mozharness.base.log import FATAL
 from mozharness.base.vcs.vcsbase import MercurialScript
-from mozharness.l10n.locales import LocalesMixin
+from mozharness.mozilla.l10n.locales import LocalesMixin
 
 
 
@@ -142,7 +142,6 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
 
     def pull_build_source(self):
         c = self.config
-        dirs = self.query_abs_dirs()
         repos = []
         replace_dict = {}
         # Replace %(user_repo_override)s with c['user_repo_override']
@@ -155,38 +154,7 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
             repos = c['repos']
         self.vcs_checkout_repos(c['repos'], tag_override=c.get('tag_override'))
 
-    def pull_locale_source(self):
-        c = self.config
-        dirs = self.query_abs_dirs()
-        self.mkdir_p(dirs['abs_l10n_dir'])
-        repos = []
-        replace_dict = {}
-        # Replace %(user_repo_override)s with c['user_repo_override']
-        if c.get("user_repo_override"):
-            replace_dict['user_repo_override'] = c['user_repo_override']
-            for repo_dict in c.get('l10n_repos', []):
-                repo_dict['repo'] = repo_dict['repo'] % replace_dict
-                repos.append(repo_dict)
-        else:
-            repos = c.get("l10n_repos")
-        if repos:
-            self.vcs_checkout_repos(repos, tag_override=c.get('tag_override'))
-        locales = self.query_locales()
-        locale_repos = []
-        hg_l10n_base = c['hg_l10n_base']
-        if c.get("user_repo_override"):
-            hg_l10n_base = hg_l10n_base % {"user_repo_override": c["user_repo_override"]}
-        for locale in locales:
-            tag = c.get('hg_l10n_tag', 'default')
-            if hasattr(self, 'locale_dict'):
-                tag = self.locale_dict[locale]
-            locale_repos.append({
-                'repo': "%s/%s" % (hg_l10n_base, locale),
-                'tag': tag
-            })
-        self.vcs_checkout_repos(repo_list=locale_repos,
-                                parent_dir=dirs['abs_l10n_dir'],
-                                tag_override=c.get('tag_override'))
+    # pull_locale_source() defined in LocalesMixin.
 
     def build(self):
         c = self.config

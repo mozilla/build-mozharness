@@ -6,7 +6,7 @@ import unittest
 
 import mozharness.base.log as log
 import mozharness.base.script as script
-import mozharness.l10n.locales as locales
+import mozharness.mozilla.l10n.locales as locales
 
 ALL_LOCALES = ['ar', 'be', 'de', 'es-ES']
 

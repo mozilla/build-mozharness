@@ -65,9 +65,7 @@ except ImportError:
 
 from mozharness.base.config import BaseConfig
 from mozharness.base.log import SimpleFileLogger, MultiFileLogger, \
-     LogMixin, OutputParser, DEBUG, INFO, WARNING, ERROR, CRITICAL, FATAL, \
-     IGNORE
-from mozharness.base.errors import HgErrorList
+     LogMixin, OutputParser, DEBUG, INFO, ERROR, FATAL
 
 # OSMixin {{{1
 class OSMixin(object):
@@ -143,7 +141,7 @@ class OSMixin(object):
         if parsed.path != '':
             return parsed.path.rsplit('/', 1)[-1]
         else:
-            file_name = parsed.netloc
+            return parsed.netloc
 
     # http://www.techniqal.com/blog/2008/07/31/python-file-read-write-with-urllib2/
     # TODO thinking about creating a transfer object.
@@ -234,7 +232,7 @@ class OSMixin(object):
                 self.warning("Unsupported file type: %s" % path)
             bundle.close()
         except (zipfile.BadZipfile, zipfile.LargeZipFile,
-                tarfile.ReadError, tarfile.CompressionError), e:
+                tarfile.ReadError, tarfile.CompressionError):
             cla = sys.exc_info()[0]
             self.log("%s, Error extracting: %s" % (cla.__name__,
                                                    os.path.abspath(path)),
@@ -323,7 +321,8 @@ class ShellMixin(object):
     def __init__(self):
         self.env = None
 
-    def query_env(self, partial_env=None, replace_dict=None):
+    def query_env(self, partial_env=None, replace_dict=None,
+                  set_self_env=None):
         """Environment query/generation method.
 
         The default, self.query_env(), will look for self.config['env']
@@ -334,18 +333,23 @@ class ShellMixin(object):
         self.config['env'], and we don't save self.env as it's a one-off.
 
         """
-        set_self_env = False
         if partial_env is None:
             if self.env is not None:
                 return self.env
             partial_env = self.config.get('env', None)
             if partial_env is None:
                 partial_env = {}
-            set_self_env = True
+            if set_self_env is None:
+                set_self_env = True
         env = os.environ.copy()
-        if replace_dict is None:
-            replace_dict = {}
-        replace_dict['PATH'] = os.environ['PATH']
+        default_replace_dict = self.query_abs_dirs()
+        default_replace_dict['PATH'] = os.environ['PATH']
+        if not replace_dict:
+            replace_dict = default_replace_dict
+        else:
+            for key in default_replace_dict:
+                if key not in replace_dict:
+                    replace_dict[key] = default_replace_dict[key]
         for key in partial_env.keys():
             env[key] = partial_env[key] % replace_dict
             self.debug("ENV: %s is now %s" % (key, env[key]))
@@ -461,8 +465,6 @@ class ShellMixin(object):
         if self.config.get('noop'):
             self.info("(Dry run; skipping)")
             return
-        pv = platform.python_version_tuple()
-        python_26 = False
         tmp_stdout = None
         tmp_stderr = None
         tmp_stdout_filename = '%s_stdout' % tmpfile_base_path
@@ -553,6 +555,7 @@ class BaseScript(ShellMixin, OSMixin, LogMixin, object):
         if config_options is None:
             config_options = []
         self.summary_list = []
+        self.failures = []
         rw_config = BaseConfig(config_options=config_options,
                                **kwargs)
         self.config = rw_config.get_read_only_config()
@@ -701,6 +704,23 @@ class BaseScript(ShellMixin, OSMixin, LogMixin, object):
         # TODO write to a summary-only log?
         # Summaries need a lot more love.
         self.log(message, level=level)
+
+    def add_failure(self, key, message="%(key)s failed.", level=ERROR):
+        if key not in self.failures:
+            self.failures.append(key)
+            self.return_code += 1
+            self.add_summary(message % {'key': key}, level=level)
+
+    def query_failure(self, key):
+        return key in self.failures
+
+    def summarize_success_count(self, success_count, total_count,
+                                message="%d of %d successful."):
+        level = INFO
+        if success_count < total_count:
+            level = ERROR
+        self.add_summary(message % (success_count, total_count),
+                         level=level)
 
     def copy_to_upload_dir(self, target, dest=None, short_desc="unknown",
                            long_desc="unknown", log_level=DEBUG,

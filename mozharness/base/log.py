@@ -45,7 +45,6 @@ TODO:
 from datetime import datetime
 import logging
 import os
-import re
 import sys
 import traceback
 

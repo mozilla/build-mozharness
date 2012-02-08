@@ -225,12 +225,12 @@ class TestHg(unittest.TestCase):
         share_base = os.path.join(self.tmpdir, 'share')
 
         # Clone the original repo
-        m.vcs_config = {'repo': self.repodir, 'dest': self.wc, 'share_base': share_base}
+        m.vcs_config = {'repo': self.repodir, 'dest': self.wc, 'vcs_share_base': share_base}
         m.ensure_repo_and_revision()
 
         # Clone the new repo
         m = get_mercurial_vcs_obj()
-        m.vcs_config = {'repo': repo2, 'dest': self.wc, 'share_base': share_base}
+        m.vcs_config = {'repo': repo2, 'dest': self.wc, 'vcs_share_base': share_base}
         m.ensure_repo_and_revision()
 
         self.assertEquals(get_revisions(self.wc), get_revisions(repo2))
@@ -238,7 +238,7 @@ class TestHg(unittest.TestCase):
     def test_share_reset(self):
         m = get_mercurial_vcs_obj()
         share_base = os.path.join(self.tmpdir, 'share')
-        m.vcs_config = {'repo': self.repodir, 'dest': self.wc, 'share_base': share_base}
+        m.vcs_config = {'repo': self.repodir, 'dest': self.wc, 'vcs_share_base': share_base}
 
         # Clone the original repo
         m.ensure_repo_and_revision()
@@ -252,7 +252,7 @@ class TestHg(unittest.TestCase):
 
         # Try and update our working copy
         m = get_mercurial_vcs_obj()
-        m.vcs_config = {'repo': self.repodir, 'dest': self.wc, 'share_base': share_base}
+        m.vcs_config = {'repo': self.repodir, 'dest': self.wc, 'vcs_share_base': share_base}
         m.config = {'log_to_console': False}
         m.ensure_repo_and_revision()
 
@@ -298,7 +298,7 @@ class TestHg(unittest.TestCase):
         share_base = os.path.join(self.tmpdir, 'share')
         sharerepo = os.path.join(share_base, self.repodir.lstrip("/"))
         os.mkdir(share_base)
-        m.vcs_config = {'repo': self.repodir, 'dest': self.wc, 'share_base': share_base}
+        m.vcs_config = {'repo': self.repodir, 'dest': self.wc, 'vcs_share_base': share_base}
         m.ensure_repo_and_revision()
         self.assertEquals(get_revisions(self.repodir), get_revisions(self.wc))
         self.assertEquals(get_revisions(self.repodir), get_revisions(sharerepo))
@@ -328,7 +328,7 @@ class TestHg(unittest.TestCase):
         m.run_command(HG + ['add', 'test.txt'], cwd=self.repodir)
         m.run_command(HG + ['commit', '-m', 'adding changeset'], cwd=self.repodir)
         m = get_mercurial_vcs_obj()
-        m.vcs_config = {'repo': self.repodir, 'dest': self.wc, 'share_base': share_base}
+        m.vcs_config = {'repo': self.repodir, 'dest': self.wc, 'vcs_share_base': share_base}
         m.ensure_repo_and_revision()
         self.assertEquals(get_revisions(self.repodir), get_revisions(self.wc))
         self.assertEquals(get_revisions(self.repodir), get_revisions(sharerepo))

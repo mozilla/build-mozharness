@@ -48,12 +48,7 @@ Maybe I need to rethink work_dir?
 """
 
 import os
-import pprint
 import sys
-try:
-    import simplejson as json
-except ImportError:
-    import json
 
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
@@ -233,7 +228,7 @@ You need to either specify --repo or specify it after the options:
               'dest': self.config['vcs_dest'],
               'branch': self.config.get('vcs_branch'),
               'revision': self.config.get('vcs_revision'),
-              'share_base': self.config.get('vcs_shared_dir'),
+              'vcs_share_base': self.config.get('vcs_shared_dir'),
               'allow_unshared_local_clones': self.config.get('vcs_allow_unshared_local_clones'),
               'halt_on_failure': self.config.get('halt_on_failure', True),
               'noop': self.config.get('noop'),

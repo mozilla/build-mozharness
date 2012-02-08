@@ -41,7 +41,7 @@
 import os
 
 from mozharness.base.errors import PythonErrorList
-from mozharness.base.log import DEBUG, INFO, WARNING, ERROR, CRITICAL, FATAL, IGNORE
+from mozharness.base.log import WARNING, FATAL
 
 # Virtualenv {{{1
 virtualenv_config_options = [[
