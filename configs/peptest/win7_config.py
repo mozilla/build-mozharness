@@ -41,4 +41,13 @@ config = {
         'virtualenv': ['c:/mozilla-build/python25/python', 'c:/mozilla-build/buildbotve/virtualenv.py'],
         'hg': 'c:/mozilla-build/hg/hg',
     },
+
+    "default_actions": [
+        "clobber",
+        "create-virtualenv",
+        "read-buildbot-config",
+        "create-deps",
+        "run-peptest",
+    ],
+    "repos": [{"repo": "http://hg.mozilla.org/build/tools",}],
 }

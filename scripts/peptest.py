@@ -45,11 +45,11 @@ sys.path.insert(1, os.path.dirname(sys.path[0]))
 from mozharness.base.errors import PythonErrorList
 from mozharness.base.log import DEBUG, INFO, WARNING, ERROR, FATAL
 from mozharness.base.python import virtualenv_config_options, VirtualenvMixin
-from mozharness.base.script import BaseScript
+from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.buildbot import BuildbotMixin, TBPL_SUCCESS, TBPL_WARNING, TBPL_FAILURE
 import urlparse
 
-class PepTest(VirtualenvMixin, BuildbotMixin, BaseScript):
+class PepTest(VirtualenvMixin, BuildbotMixin, MercurialScript):
     config_options = [
         [["--appname"],
         {"action": "store",
@@ -94,7 +94,7 @@ class PepTest(VirtualenvMixin, BuildbotMixin, BaseScript):
                          'run-peptest'],
             default_actions=['clobber',
                              'create-virtualenv',
-                             'read-buildbot-config',
+                             'get-latest-tinderbox',
                              'create-deps',
                              'run-peptest'],
             require_config_file=require_config_file,
@@ -246,6 +246,9 @@ class PepTest(VirtualenvMixin, BuildbotMixin, BaseScript):
                              cwd=dirs['abs_test_install_dir'])
         self._install_deps()
         self._install_peptest()
+        if self.config.get('repos'):
+            self.vcs_checkout_repos(self.config['repos'],
+                                    parent_dir=dirs['abs_work_dir'])
 
 
     def get_latest_tinderbox(self):

@@ -35,4 +35,13 @@ config = {
         'python': '/tools/buildbot/bin/python',
         'virtualenv': ['/tools/buildbot/bin/python', '/tools/misc-python/virtualenv.py'],
     },
+
+    "default_actions": [
+        "clobber",
+        "create-virtualenv",
+        "read-buildbot-config",
+        "create-deps",
+        "run-peptest",
+    ],
+    "repos": [{"repo": "http://hg.mozilla.org/build/tools",}],
 }
