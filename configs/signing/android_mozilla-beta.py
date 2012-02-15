@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-ADDITIONAL_LOCALES = ["en-US"]
+ADDITIONAL_LOCALES = ["en-US", "multi"]
 TAG = "default"
 #AUS_SERVER = "dev-stage01.build.mozilla.org"
 AUS_SERVER = "aus2-staging.mozilla.org"
@@ -45,8 +45,8 @@ config = {
     "locales_file": "buildbot-configs/mozilla/l10n-changesets_mobile-beta.json",
     "release_config_file": "buildbot-configs/mozilla/release-fennec-mozilla-beta.py",
 
-    "platforms": ['android', 'android-xul'],
-    "update_platforms": ['android'],
+    "platforms": ['android-xul'],
+    "update_platforms": [],
     "update_platform_map": {
         'android': 'Android_arm-eabi-gcc3',
     },
