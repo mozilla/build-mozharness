@@ -69,6 +69,17 @@ class PepTest(VirtualenvMixin, BuildbotMixin, MercurialScript):
          "default": "https://github.com/mozilla/peptest/zipball/master",
          "help": "URL to peptest zip file",
         }],
+        [["--use-proxy"],
+        {"action": "store_true",
+         "dest": "peptest_use_proxy",
+         "default": True,
+         "help": "Use a local proxy for peptest runs",
+        }],
+        [["--no-use-proxy"],
+        {"action": "store_false",
+         "dest": "peptest_use_proxy",
+         "help": "Don't use a local proxy for peptest runs",
+        }],
         [["--test-url"],
         {"action":"store",
          "dest": "test_url",
@@ -328,6 +339,15 @@ class PepTest(VirtualenvMixin, BuildbotMixin, MercurialScript):
         cmd.extend(self._build_arg('--tracer-interval',
                    self.config.get('tracer_interval')))
         cmd.extend(self._build_arg('--symbols-path', self.symbols))
+        if self.config.get('peptest_use_proxy'):
+            # TODO should these be options? config file settings?
+            cmd.extend(['--proxy',
+                        os.path.join(dirs['abs_peptest_dir'],
+                                     'tests/firefox/server-locations.txt')])
+            cmd.append('--proxy-host-dirs')
+            cmd.extend(['--server-path',
+                        os.path.join(dirs['abs_peptest_dir'],
+                                     'tests/firefox/server')])
         if (self.config.get('log_level') in
                            ['debug', 'info', 'warning', 'error']):
             cmd.extend(['--log-level', self.config['log_level'].upper()])
