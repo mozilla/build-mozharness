@@ -2,12 +2,12 @@
     "work_dir": ".",
     "log_name": "multilocale",
     "objdir": "obj-firefox",
-    "locales_file": "build/configs/mozilla/l10n-changesets_mobile-release.json",
+    "locales_file": "build/configs/mozilla/l10n-changesets_mobile-esr10.json",
     "locales_platform": "android-multilocale",
-    "locales_dir": "mobile/xul/locales",
+    "locales_dir": "mobile/locales",
     "ignore_locales": ["en-US", "multi"],
     "repos": [{
-        "repo": "http://hg.mozilla.org/releases/mozilla-release",
+        "repo": "http://hg.mozilla.org/releases/mozilla-esr10",
         "dest": "build"
     },{
         "repo": "http://hg.mozilla.org/build/buildbot-configs",
@@ -25,13 +25,13 @@
     }],
     "hg_l10n_base": "http://hg.mozilla.org/releases/l10n/mozilla-release",
     "required_config_vars": ["tag_override"],
-    "l10n_dir": "mozilla-release",
+    "l10n_dir": "mozilla-esr10",
     "env": {
         "JAVA_HOME": "/tools/jdk",
         "PATH": "%(PATH)s:/tools/jdk/bin"
     },
     "merge_locales": true,
     "mozilla_dir": "build",
-    "mozconfig": "build/configs/mozilla2/android-xul/mozilla-release/release/mozconfig",
+    "mozconfig": "build/configs/mozilla2/linux-android/mozilla-esr10/release/mozconfig",
     "jarsigner": "tools/release/signing/mozpass.py"
 }
