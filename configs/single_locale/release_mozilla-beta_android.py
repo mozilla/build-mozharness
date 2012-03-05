@@ -61,8 +61,7 @@ config = {
     "merge_locales": True,
     "make_dirs": ['config'],
     "mozilla_dir": MOZILLA_DIR,
-    # TODO change to MOZILLA_DIR/mobile/android/config/mozconfigs/android/l10n-mozconfig when in-tree l10n-mozconfigs land.
-    "mozconfig": "buildbot-configs/mozilla2/android/%s/release/l10n-mozconfig" % BRANCH,
+    "mozconfig": "%s/mobile/android/config/mozconfigs/android/l10n-release" % MOZILLA_DIR,
     "jarsigner": JARSIGNER,
     "signature_verification_script": "tools/release/signing/verify-android-signature.sh",
     "default_actions": [
