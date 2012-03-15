@@ -1,4 +1,5 @@
 BRANCH = "mozilla-beta"
+MOZ_UPDATE_CHANNEL = "beta"
 MOZILLA_DIR = BRANCH
 JAVA_HOME = "/tools/jdk6"
 JARSIGNER = "tools/release/signing/mozpass.py"
@@ -46,6 +47,7 @@ config = {
         "MOZ_OBJDIR": OBJDIR,
         "JARSIGNER": "%(abs_work_dir)s/" + JARSIGNER,
         "LOCALE_MERGEDIR": "%(abs_merge_dir)s/",
+        "MOZ_UPDATE_CHANNEL": MOZ_UPDATE_CHANNEL,
     },
     "base_en_us_binary_url": EN_US_BINARY_URL,
     # TODO ideally we could get this info from a central location.

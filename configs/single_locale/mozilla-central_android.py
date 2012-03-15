@@ -1,4 +1,5 @@
 BRANCH = "mozilla-central"
+MOZ_UPDATE_CHANNEL = "nightly"
 MOZILLA_DIR = BRANCH
 JAVA_HOME = "/tools/jdk6"
 JARSIGNER = "tools/release/signing/mozpass.py"
@@ -50,6 +51,7 @@ config = {
         "EN_US_BINARY_URL": EN_US_BINARY_URL,
         "JARSIGNER": "%(abs_work_dir)s/" + JARSIGNER,
         "LOCALE_MERGEDIR": "%(abs_merge_dir)s/",
+        "MOZ_UPDATE_CHANNEL": MOZ_UPDATE_CHANNEL,
     },
     # TODO ideally we could get this info from a central location.
     # However, the agility of these individual config files might trump that.
