@@ -47,7 +47,7 @@ class VirtualenvMixin(object):
             return dirs['abs_virtualenv_dir']
         if os.path.isabs(c['virtualenv_path']):
             return c['virtualenv_path']
-        return os.path.join(c['base_work_dir'], c['virtualenv_path'])
+        return os.path.join(dirs['abs_work_dir'], c['virtualenv_path'])
 
     def query_python_path(self, binary="python"):
         """Return the path of a binary inside the virtualenv, if
