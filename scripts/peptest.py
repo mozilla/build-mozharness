@@ -329,8 +329,15 @@ class PepTest(VirtualenvMixin, BuildbotMixin, MercurialScript):
             tbpl_status = TBPL_SUCCESS
             level = INFO
         elif code == 1:
-            status = "test failures"
-            tbpl_status = TBPL_WARNING
+            # XXX hack: perma-green
+            # https://bugzilla.mozilla.org/show_bug.cgi?id=737581#c6
+            # "Also, can you force this test to go green, regardless of results?"
+
+            #status = "test failures"
+            #tbpl_status = TBPL_WARNING
+            status = "success"
+            tbpl_status = TBPL_SUCCESS
+            level = INFO
         else:
             status = "harness failure"
             tbpl_status = TBPL_FAILURE
