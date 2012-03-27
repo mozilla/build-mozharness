@@ -12,7 +12,7 @@ import re
 
 from mozharness.base.errors import BaseErrorList
 from mozharness.base.log import ERROR, FATAL
-from mozharness.base.signing import BaseSigningMixin
+from mozharness.base.signing import AndroidSigningMixin, BaseSigningMixin
 
 AndroidSignatureVerificationErrorList = BaseErrorList + [{
     "regex": re.compile(r'''^Invalid$'''),
@@ -80,11 +80,7 @@ class SigningMixin(BaseSigningMixin):
         contents = SNIPPET_TEMPLATE % replace_dict
         self.mkdir_p(snippet_dir)
         snippet_path = os.path.join(snippet_dir, snippet_file)
-        try:
-            fh = open(snippet_path, 'w')
-            fh.write(contents)
-            fh.close()
-        except:
+        if self.write_to_file(snippet_path, contents, verbose=False) is None:
             self.log("Unable to write complete snippet to %s!" % snippet_path,
                      level=error_level)
             return False
@@ -94,7 +90,7 @@ class SigningMixin(BaseSigningMixin):
 
 
 # MobileSigningMixin {{{1
-class MobileSigningMixin(SigningMixin):
+class MobileSigningMixin(AndroidSigningMixin, SigningMixin):
     def verify_android_signature(self, apk, script=None, key_alias="nightly",
                                  tools_dir="tools/", env=None):
         """Runs mjessome's android signature verification script.

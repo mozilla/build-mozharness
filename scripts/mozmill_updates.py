@@ -152,9 +152,9 @@ class MozmillUpdate(VirtualenvMixin, MercurialScript):
                  error_list=MozmillErrorList,
                 )
                 if os.path.exists(report_json):
-                    fh = open(report_json)
+                    raw_json = self.read_from_file(report_json, verbose=False)
                     try:
-                        contents = json.load(fh)
+                        contents = json.loads(raw_json)
                         passed = contents['tests_passed']
                         failed = contents['tests_failed']
                         skipped = contents['tests_skipped']
@@ -168,7 +168,6 @@ class MozmillUpdate(VirtualenvMixin, MercurialScript):
                         self.add_summary("%s is invalid json!", level="error")
                     finally:
                         self.copy_to_upload_dir(report_json)
-                        fh.close()
                 else:
                     self.add_summary("%s on %s channel didn't create report json!" % (version, channel), level="error")
                     self.return_code += 1

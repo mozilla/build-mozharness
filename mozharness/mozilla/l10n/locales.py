@@ -83,9 +83,7 @@ class LocalesMixin(ChunkingMixin):
                 locales.append(locale)
                 self.locale_dict[locale] = locales_json[locale]['revision']
         else:
-            fh = open(locales_file)
-            locales = fh.read().split()
-            fh.close()
+            locales = self.read_from_file(locales_file).split()
         return locales
 
     def run_compare_locales(self, locale, halt_on_failure=False):

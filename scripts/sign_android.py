@@ -7,21 +7,20 @@
 """sign_android.py
 
 """
-# TODO partner repacks downloading/signing
 # TODO split out signing and transfers to helper objects so we can do
 #      the downloads/signing/uploads in parallel, speeding that up
+# TODO retire this script when Android signing-on-demand lands.
 
 from copy import deepcopy
-import getpass
 import os
-import subprocess
 import sys
 
 # load modules from parent dir
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
-from mozharness.base.errors import BaseErrorList, JarsignerErrorList, SSHErrorList
-from mozharness.base.log import OutputParser, ERROR, FATAL, IGNORE
+from mozharness.base.errors import BaseErrorList
+from mozharness.base.log import ERROR, FATAL
+from mozharness.base.transfer import TransferMixin
 from mozharness.mozilla.release import ReleaseMixin
 from mozharness.mozilla.signing import MobileSigningMixin
 from mozharness.base.vcs.vcsbase import MercurialScript
@@ -29,15 +28,12 @@ from mozharness.mozilla.l10n.locales import LocalesMixin
 
 # So far this only references the ftp platform name.
 SUPPORTED_PLATFORMS = ["android", "android-xul"]
-TEST_JARSIGNER_ERROR_LIST = [{
-    "substr": "jarsigner: unable to open jar file:",
-    "level": IGNORE,
-}] + JarsignerErrorList
 
 
 
 # SignAndroid {{{1
-class SignAndroid(LocalesMixin, ReleaseMixin, MobileSigningMixin, MercurialScript):
+class SignAndroid(LocalesMixin, ReleaseMixin, MobileSigningMixin,
+                  TransferMixin, MercurialScript):
     config_options = [[
      ['--locale',],
      {"action": "extend",
@@ -136,11 +132,22 @@ class SignAndroid(LocalesMixin, ReleaseMixin, MobileSigningMixin, MercurialScrip
       "type": "string",
       "help": "Specify the location of the signing keystore"
      }
+    ],[
+    # XXX this is a bit of a hack.
+    # Ideally we'd have fully configured partner repack info with their own
+    # actions so they could be handled discretely.
+    # However, the ideal long term solution will involve signing-on-demand;
+    # this, along with signing support in mobile_partner_repack.py,
+    # seems to be an acceptable interim solution.
+     ['--with-partner-repacks',],
+     {"action": "store_true",
+      "dest": "enable_partner_repacks",
+      "default": False,
+      "help": "Download, sign, and verify partner repacks as well."
+     }
     ]]
 
     def __init__(self, require_config_file=True):
-        self.store_passphrase = os.environ.get('android_storepass')
-        self.key_passphrase = os.environ.get('android_keypass')
         self.release_config = {}
         LocalesMixin.__init__(self)
         MobileSigningMixin.__init__(self)
@@ -181,44 +188,9 @@ class SignAndroid(LocalesMixin, ReleaseMixin, MobileSigningMixin, MercurialScrip
                 return output.replace("buildID=", "")
             else:
                 self.warning("Can't get buildID from %s (try %d)" % (url, count))
-        self.critical("Can't get buildID from %s!" % url)
-
-    def _sign(self, apk, remove_signature=True, error_list=None):
-        c = self.config
-        jarsigner = self.query_exe("jarsigner")
-        zip_bin = self.query_exe("zip")
-        if remove_signature:
-            # Get rid of previous signature.
-            # TODO error checking, but allow for no META-INF/ in the zipfile.
-            self.run_command([zip_bin, apk, '-d', 'META-INF/*'])
-        if error_list is None:
-            error_list = JarsignerErrorList
-        # This needs to run silently, so no run_command() or
-        # get_output_from_command() (though I could add a
-        # suppress_command_echo=True or something?)
-        try:
-            p = subprocess.Popen([jarsigner, "-keystore", c['keystore'],
-                                 "-storepass", self.store_passphrase,
-                                 "-keypass", self.key_passphrase,
-                                 apk, c['key_alias']],
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.STDOUT)
-        except OSError:
-            self.dump_exception("Error while signing %s (missing %s?):" % (apk, jarsigner))
-            return -1
-        except ValueError:
-            self.dump_exception("Popen called with invalid arguments during signing?")
-            return -2
-        parser = OutputParser(config=self.config, log_obj=self.log_obj,
-                              error_list=error_list)
-        loop = True
-        while loop:
-            if p.poll() is not None:
-                """Avoid losing the final lines of the log?"""
-                loop = False
-            for line in p.stdout:
-                parser.add_lines(line)
-        return parser.num_errors
+        # This will break create-snippets if it isn't set.
+        # Might as well fatal().
+        self.fatal("Can't get buildID from %s!" % url)
 
     def add_failure(self, platform, locale, **kwargs):
         s = "%s:%s" % (platform, locale)
@@ -231,25 +203,10 @@ class SignAndroid(LocalesMixin, ReleaseMixin, MobileSigningMixin, MercurialScrip
         return super(SignAndroid, self).query_failure(s)
 
     # Actions {{{2
-    def passphrase(self):
-        if not self.store_passphrase:
-            self.store_passphrase = getpass.getpass("Store passphrase: ")
-        if not self.key_passphrase:
-            self.key_passphrase = getpass.getpass("Key passphrase: ")
 
-    def verify_passphrases(self):
-        self.info("Verifying passphrases...")
-        status = self._sign("NOTAREALAPK", remove_signature=False,
-                            error_list=TEST_JARSIGNER_ERROR_LIST)
-        if status == 0:
-            self.info("Passphrases are good.")
-        elif status < 0:
-            self.fatal("Encountered errors while trying to sign!")
-        else:
-            self.fatal("Unable to verify passphrases!")
-
-    def postflight_passphrase(self):
-        self.verify_passphrases()
+    # passphrase() is in AndroidSigningMixin
+    # verify_passphrases() is in AndroidSigningMixin
+    # postflight_passphrase() is in AndroidSigningMixin
 
     def pull(self):
         c = self.config
@@ -297,6 +254,18 @@ class SignAndroid(LocalesMixin, ReleaseMixin, MobileSigningMixin, MercurialScrip
                     success_count += 1
         self.summarize_success_count(success_count, total_count,
                                      message="Downloaded %d of %d unsigned apks successfully.")
+        if c['enable_partner_repacks']:
+            self.info("Downloading partner-repacks")
+            if replace_dict.get('platform'):
+                del(replace_dict['platform'])
+            remote_dir = c['ftp_upload_base_dir'] % replace_dict + '/unsigned/partner-repacks'
+            local_dir = os.path.join(dirs['abs_work_dir'], 'unsigned', 'partner-repacks')
+            self.mkdir_p(local_dir)
+            if self.rsync_download_directory(rc['ftp_ssh_key'], rc['ftp_user'],
+                                             rc['ftp_server'], remote_dir,
+                                             local_dir):
+                self.add_summary("Unable to download partner repacks!", level=ERROR)
+                self.rmtree(local_dir)
 
     def preflight_sign(self):
         if 'passphrase' not in self.actions:
@@ -309,14 +278,13 @@ class SignAndroid(LocalesMixin, ReleaseMixin, MobileSigningMixin, MercurialScrip
         dirs = self.query_abs_dirs()
         locales = self.query_locales()
         success_count = total_count = 0
-        zipalign = self.query_exe("zipalign")
         for platform in c['platforms']:
             for locale in locales:
                 if self.query_failure(platform, locale):
                     self.warning("%s:%s had previous issues; skipping!" % (platform, locale))
                     continue
                 unsigned_path = '%s/unsigned/%s/%s/gecko.ap_' % (dirs['abs_work_dir'], platform, locale)
-                signed_dir = '%s/%s/%s' % (dirs['abs_work_dir'], platform, locale)
+                signed_dir = '%s/signed/%s/%s' % (dirs['abs_work_dir'], platform, locale)
                 signed_file_name = c['apk_base_name'] % {'version': rc['version'],
                                                          'locale': locale}
                 signed_path = "%s/%s" % (signed_dir, signed_file_name)
@@ -325,14 +293,14 @@ class SignAndroid(LocalesMixin, ReleaseMixin, MobileSigningMixin, MercurialScrip
                 if not os.path.exists(unsigned_path):
                     self.error("Missing apk %s!" % unsigned_path)
                     continue
-                if self._sign(unsigned_path) != 0:
-                    self.add_summary("Unable to sign %s:%s apk!",
+                if self.sign_apk(unsigned_path, c['keystore'],
+                                 self.store_passphrase, self.key_passphrase,
+                                 c['key_alias']) != 0:
+                    self.add_summary("Unable to sign %s:%s apk!" % (platform, locale),
                                      level=FATAL)
                 else:
                     self.mkdir_p(signed_dir)
-                    if self.run_command([zipalign, '-f', '4',
-                                       unsigned_path, signed_path],
-                                      error_list=BaseErrorList):
+                    if self.align_apk(unsigned_path, signed_path):
                         self.add_failure(platform, locale,
                                          message="Unable to align %(platform)s:%(locale)s apk!")
                         self.rmtree(signed_dir)
@@ -340,6 +308,37 @@ class SignAndroid(LocalesMixin, ReleaseMixin, MobileSigningMixin, MercurialScrip
                         success_count += 1
         self.summarize_success_count(success_count, total_count,
                                      message="Signed %d of %d apks successfully.")
+        if c['enable_partner_repacks']:
+            total_count = success_count = 0
+            self.info("Signing partner repacks.")
+            for partner in c.get("partners", []):
+                for platform in c.get("partner_platforms", []):
+                    for locale in locales:
+                        file_name = c['apk_base_name'] % {'version': rc['version'],
+                                                          'locale': locale}
+                        unsigned_path = '%s/unsigned/partner-repacks/%s/%s/%s/%s' % (dirs['abs_work_dir'], partner, platform, locale, file_name)
+                        signed_dir = '%s/signed/partner-repacks/%s/%s/%s' % (dirs['abs_work_dir'], partner, platform, locale)
+                        signed_path = '%s/%s' % (signed_dir, file_name)
+                        total_count += 1
+                        self.info("Signing %s %s %s." % (partner, platform, locale))
+                        if not os.path.exists(unsigned_path):
+                            self.warning("%s doesn't exist; skipping." % unsigned_path)
+                            continue
+                        if self.sign_apk(unsigned_path, c['keystore'],
+                                         self.store_passphrase, self.key_passphrase,
+                                         c['key_alias']) != 0:
+                            self.add_summary("Unable to sign %s %s:%s apk!" % (partner, platform, locale),
+                                             level=ERROR)
+                            continue
+                        else:
+                            self.mkdir_p(signed_dir)
+                            if self.align_apk(unsigned_path, signed_path):
+                                self.add_summary("Unable to align %s %s:%s apk!" % (partner, platform, locale))
+                                self.rmtree(signed_dir)
+                            else:
+                                success_count += 1
+            self.summarize_success_count(success_count, total_count,
+                                         message="Signed %d of %d partner apks successfully.")
 
     def verify_signatures(self):
         c = self.config
@@ -352,7 +351,7 @@ class SignAndroid(LocalesMixin, ReleaseMixin, MobileSigningMixin, MercurialScrip
                 if self.query_failure(platform, locale):
                     self.warning("%s:%s had previous issues; skipping!" % (platform, locale))
                     continue
-                signed_path = '%s/%s/%s' % (platform, locale,
+                signed_path = 'signed/%s/%s/%s' % (platform, locale,
                     c['apk_base_name'] % {'version': rc['version'],
                                           'locale': locale})
                 if not os.path.exists(os.path.join(dirs['abs_work_dir'],
@@ -375,28 +374,20 @@ class SignAndroid(LocalesMixin, ReleaseMixin, MobileSigningMixin, MercurialScrip
 
     def upload_signed_bits(self):
         c = self.config
+        dirs = self.query_abs_dirs()
         if not c['platforms']:
             self.info("No platforms to rsync! Skipping...")
             return
         rc = self.query_release_config()
-        dirs = self.query_abs_dirs()
-        rsync = self.query_exe("rsync")
-        ssh = self.query_exe("ssh")
+        signed_dir = os.path.join(dirs['abs_work_dir'], 'signed')
         ftp_upload_dir = c['ftp_upload_base_dir'] % {
             'version': rc['version'],
             'buildnum': rc['buildnum'],
         }
-        cmd = [ssh, '-oIdentityFile=%s' % rc['ftp_ssh_key'],
-               '%s@%s' % (rc['ftp_user'], rc['ftp_server']),
-               'mkdir', '-p', ftp_upload_dir]
-        self.run_command(cmd, cwd=dirs['abs_work_dir'],
-                         error_list=SSHErrorList)
-        cmd = [rsync, '-e']
-        cmd += ['%s -oIdentityFile=%s' % (ssh, rc['ftp_ssh_key']), '-azv']
-        cmd += c['platforms']
-        cmd += ["%s@%s:%s/" % (rc['ftp_user'], rc['ftp_server'], ftp_upload_dir)]
-        self.run_command(cmd, cwd=dirs['abs_work_dir'],
-                         error_list=SSHErrorList)
+        if self.rsync_upload_directory(signed_dir, rc['ftp_ssh_key'],
+                                       rc['ftp_user'], rc['ftp_server'],
+                                       ftp_upload_dir,):
+            self.return_code += 1
 
     def create_snippets(self):
         c = self.config
@@ -479,25 +470,18 @@ class SignAndroid(LocalesMixin, ReleaseMixin, MobileSigningMixin, MercurialScrip
         c = self.config
         rc = self.query_release_config()
         dirs = self.query_abs_dirs()
-        update_dir = os.path.join(dirs['abs_work_dir'], 'update',)
+        update_dir = os.path.join(dirs['abs_work_dir'], 'update')
         if not os.path.exists(update_dir):
             self.error("No such directory %s! Skipping..." % update_dir)
             return
-        rsync = self.query_exe("rsync")
-        ssh = self.query_exe("ssh")
         aus_upload_dir = c['aus_upload_base_dir'] % {
             'version': rc['version'],
             'buildnum': rc['buildnum'],
         }
-        cmd = [ssh, '-oIdentityFile=%s' % rc['aus_ssh_key'],
-               '%s@%s' % (rc['aus_user'], rc['aus_server']),
-               'mkdir', '-p', aus_upload_dir]
-        self.run_command(cmd, cwd=dirs['abs_work_dir'],
-                         error_list=SSHErrorList)
-        cmd = [rsync, '-e']
-        cmd += ['%s -oIdentityFile=%s' % (ssh, rc['aus_ssh_key']), '-azv', './']
-        cmd += ["%s@%s:%s/" % (rc['aus_user'], rc['aus_server'], aus_upload_dir)]
-        self.run_command(cmd, cwd=update_dir, error_list=SSHErrorList)
+        if self.rsync_upload_directory(update_dir, rc['aus_ssh_key'],
+                                       rc['aus_user'], rc['aus_server'],
+                                       aus_upload_dir):
+            self.return_code += 1
 
 
 

@@ -21,10 +21,8 @@ import re
 import shutil
 import subprocess
 import sys
-import tarfile
 import urllib2
 import urlparse
-import zipfile
 
 try:
     import simplejson as json
@@ -41,15 +39,26 @@ class OSMixin(object):
 
     Depends on LogMixin, ShellMixin, and a self.config of some sort.
     """
-    def mkdir_p(self, path):
+    def mkdir_p(self, path, error_level=ERROR):
+        """
+        Returns None for success, not None for failure
+        """
         if not os.path.exists(path):
             self.info("mkdir: %s" % path)
             if not self.config.get('noop'):
-                os.makedirs(path)
+                try:
+                    os.makedirs(path)
+                except OSError:
+                    self.log("Can't create directory %s!" % path,
+                             level=error_level)
+                    return -1
         else:
             self.debug("mkdir_p: %s Already exists." % path)
 
     def rmtree(self, path, log_level=INFO, error_level=ERROR, exit_code=-1):
+        """
+        Returns None for success, not None for failure
+        """
         self.log("rmtree: %s" % path, level=log_level)
         if os.path.exists(path):
             if not self.config.get('noop'):
@@ -66,7 +75,6 @@ class OSMixin(object):
                     return -1
         else:
             self.debug("%s doesn't exist." % path)
-        return 0
 
     def _is_windows(self):
         system = platform.system()
@@ -139,7 +147,7 @@ class OSMixin(object):
             self.info("Downloading %s%s" % (url, message))
             f = urllib2.urlopen(req)
             if create_parent_dir and parent_dir:
-                self.mkdir_p(parent_dir)
+                self.mkdir_p(parent_dir, error_level=error_level)
             local_file = open(file_name, 'wb')
             local_file.write(f.read())
             local_file.close()
@@ -179,6 +187,60 @@ class OSMixin(object):
             except (IOError, shutil.Error):
                 self.dump_exception("Can't copy %s to %s!" % (src, dest),
                                     level=error_level)
+                return -1
+
+    def write_to_file(self, file_path, contents, verbose=True,
+                      open_mode='w', create_parent_dir=False,
+                      error_level=ERROR):
+        """
+        Write contents to file_path.
+
+        This doesn't currently create the parent_dir or translate into
+        abs_path; that needs to be done beforehand, since OSMixin doesn't
+        necessarily have access to query_abs_dirs().
+
+        Returns file_path if successful, None if not.
+        """
+        self.info("Writing to file %s" % file_path)
+        if verbose:
+            self.info("Contents:")
+            for line in contents.splitlines():
+                self.info(" %s" % line)
+        if create_parent_dir:
+            parent_dir = os.path.dirname(file_path)
+            self.mkdir_p(parent_dir, error_level=error_level)
+        try:
+            fh = open(file_path, open_mode)
+            fh.write(contents)
+            fh.close()
+            return file_path
+        except IOError:
+            self.log("%s can't be opened for writing!" % file_path,
+                     level=error_level)
+
+    def read_from_file(self, file_path, verbose=True, open_mode='r',
+                       error_level=ERROR):
+        """
+        Reads from file_path.
+
+        Returns contents if successful, None if not.
+        """
+        self.info("Reading from file %s" % file_path)
+        if not os.path.exists(file_path):
+            self.log("%s doesn't exist!" % file_path, level=error_level)
+            return
+        try:
+            fh = open(file_path, open_mode)
+            contents = fh.read()
+            fh.close()
+            if verbose:
+                self.info("Contents:")
+                for line in contents.splitlines():
+                    self.info(" %s" % line)
+            return contents
+        except IOError:
+            self.log("%s can't be opened for reading!" % file_path,
+                     level=error_level)
 
     def chdir(self, dir_name, ignore_if_noop=False):
         self.log("Changing directory to %s." % dir_name)
@@ -403,8 +465,8 @@ class ShellMixin(object):
         return_level = DEBUG
         output = None
         if os.path.exists(tmp_stdout_filename) and os.path.getsize(tmp_stdout_filename):
-            fh = open(tmp_stdout_filename)
-            output = fh.read()
+            output = self.read_from_file(tmp_stdout_filename,
+                                         verbose=False)
             if not silent:
                 self.info("Output received:")
                 output_lines = output.rstrip().splitlines()
@@ -414,18 +476,16 @@ class ShellMixin(object):
                     line = line.decode("utf-8")
                     self.info(' %s' % line)
                 output = '\n'.join(output_lines)
-            fh.close()
         if os.path.exists(tmp_stderr_filename) and os.path.getsize(tmp_stderr_filename):
             return_level = ERROR
             self.error("Errors received:")
-            fh = open(tmp_stderr_filename)
-            errors = fh.read()
+            errors = self.read_from_file(tmp_stderr_filename,
+                                         verbose=False)
             for line in errors.rstrip().splitlines():
                 if not line or line.isspace():
                     continue
                 line = line.decode("utf-8")
                 self.error(' %s' % line)
-            fh.close()
         elif p.returncode:
             return_level = ERROR
         # Clean up.

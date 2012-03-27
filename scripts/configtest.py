@@ -78,9 +78,9 @@ class ConfigTest(BaseScript):
             if config_file.endswith(".json"):
                 filecount[0] += 1
                 self.info("Testing %s." % config_file)
-                fh = open(config_file)
+                contents = self.read_from_file(config_file, verbose=False)
                 try:
-                    json.load(fh)
+                    json.loads(contents)
                 except ValueError:
                     self.add_summary("%s is invalid json." % config_file,
                                      level="error")

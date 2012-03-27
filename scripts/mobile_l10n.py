@@ -18,8 +18,9 @@ import sys
 # load modules from parent dir
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
-from mozharness.base.errors import BaseErrorList, MakefileErrorList, SSHErrorList
+from mozharness.base.errors import BaseErrorList, MakefileErrorList
 from mozharness.base.log import OutputParser
+from mozharness.base.transfer import TransferMixin
 from mozharness.mozilla.release import ReleaseMixin
 from mozharness.mozilla.signing import MobileSigningMixin
 from mozharness.base.vcs.vcsbase import MercurialScript
@@ -29,7 +30,7 @@ from mozharness.mozilla.l10n.locales import LocalesMixin
 
 # MobileSingleLocale {{{1
 class MobileSingleLocale(LocalesMixin, ReleaseMixin, MobileSigningMixin,
-                         MercurialScript):
+                         TransferMixin, MercurialScript):
     config_options = [[
      ['--locale',],
      {"action": "extend",
@@ -435,22 +436,14 @@ class MobileSingleLocale(LocalesMixin, ReleaseMixin, MobileSigningMixin,
     def upload_nightly_snippets(self):
         c = self.config
         dirs = self.query_abs_dirs()
-        update_dir = os.path.join(dirs['abs_work_dir'], 'update',)
+        update_dir = os.path.join(dirs['abs_work_dir'], 'update')
         if not os.path.exists(update_dir):
             self.error("No such directory %s! Skipping..." % update_dir)
             return
-        rsync = self.query_exe("rsync")
-        ssh = self.query_exe("ssh")
-        aus_upload_dir = c['aus_upload_base_dir']
-        cmd = [ssh, '-oIdentityFile=%s' % c['aus_ssh_key'],
-               '%s@%s' % (c['aus_user'], c['aus_server']),
-               'mkdir', '-p', aus_upload_dir]
-        self.run_command(cmd, cwd=dirs['abs_work_dir'],
-                         error_list=SSHErrorList)
-        cmd = [rsync, '-e']
-        cmd += ['%s -oIdentityFile=%s' % (ssh, c['aus_ssh_key']), '-azv', './']
-        cmd += ["%s@%s:%s/" % (c['aus_user'], c['aus_server'], aus_upload_dir)]
-        self.run_command(cmd, cwd=update_dir, error_list=SSHErrorList)
+        if self.rsync_upload_directory(update_dir, c['aus_ssh_key'],
+                                       c['aus_user'], c['aus_server'],
+                                       c['aus_upload_dir']):
+            self.return_code += 1
 
 
 

@@ -101,6 +101,28 @@ JarsignerErrorList = [{
     'explanation': r'''The apk is missing!''',
 }]
 
+ZipErrorList = BaseErrorList + [{
+    'substr': r'''zip warning:''',
+    'level': WARNING,
+},{
+    'substr': r'''zip error:''',
+    'level': ERROR,
+},{
+    'substr': r'''Cannot open file: it does not appear to be a valid archive''',
+    'level': ERROR,
+}]
+
+ZipalignErrorList = BaseErrorList + [{
+    'regex': re.compile(r'''Unable to open .* as a zip archive'''),
+    'level': ERROR,
+},{
+    'regex': re.compile(r'''Output file .* exists'''),
+    'level': ERROR,
+},{
+    'substr': r'''Input and output can't be the same file''',
+    'level': ERROR,
+}]
+
 
 
 # __main__ {{{1
