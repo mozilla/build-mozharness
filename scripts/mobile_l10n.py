@@ -442,7 +442,7 @@ class MobileSingleLocale(LocalesMixin, ReleaseMixin, MobileSigningMixin,
             return
         if self.rsync_upload_directory(update_dir, c['aus_ssh_key'],
                                        c['aus_user'], c['aus_server'],
-                                       c['aus_upload_dir']):
+                                       c['aus_upload_base_dir']):
             self.return_code += 1
 
 
