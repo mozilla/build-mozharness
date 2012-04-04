@@ -1,13 +1,30 @@
 #!/usr/bin/env python
 
 """
-run talos test suites in a virtualenv
+run talos tests in a virtualenv
 """
 
 import os
+import re
 
+from mozharness.base.errors import PythonErrorList
+from mozharness.base.log import DEBUG, ERROR, CRITICAL
 from mozharness.base.python import virtualenv_config_options, VirtualenvMixin
 from mozharness.base.script import BaseScript
+
+TalosErrorList = PythonErrorList + [
+ {'regex': re.compile(r'''run-as: Package '.*' is unknown'''), 'level': DEBUG},
+ {'substr': r'''FAIL: Graph server unreachable''', 'level': CRITICAL},
+ {'substr': r'''FAIL: Busted:''', 'level': CRITICAL},
+ {'substr': r'''FAIL: failed to cleanup''', 'level': ERROR},
+ {'substr': r'''erfConfigurator.py: Unknown error''', 'level': CRITICAL},
+ {'regex': re.compile(r'''No machine_name called '.*' can be found'''), 'level': CRITICAL},
+ {'substr': r"""No such file or directory: 'browser_output.txt'""",
+  'level': CRITICAL,
+  'explanation': r"""Most likely the browser failed to launch, or the test was otherwise unsuccessful in even starting."""},
+]
+
+# TODO: check for running processes on script invocation
 
 class Talos(VirtualenvMixin, BaseScript):
     """
@@ -15,121 +32,162 @@ class Talos(VirtualenvMixin, BaseScript):
     https://wiki.mozilla.org/Buildbot/Talos
     """
 
-    config_options = [
-        [["--title"],
+    talos_options = [
+        [["-a", "--tests"],
+         {'action': 'extend',
+          "dest": "tests",
+          "default": [],
+          "help": "Specify the tests to run"
+          }],
+        [["-e", "--binary"],
          {"action": "store",
-          "dest": "title",
+          "dest": "binary",
           "default": None,
-          "help": "talos run title"}],
+          "help": "Path to the binary to run tests on",
+          }],
+        [["--results-url"],
+         {'action': 'store',
+          'dest': 'results_url',
+          'default': None,
+          'help': "URL to send results to"
+          }],
+        ]
+
+    config_options = [
         [["--talos-url"],
          {"action": "store",
           "dest": "talos_url",
           "default": "http://hg.mozilla.org/build/talos/archive/tip.tar.gz",
           "help": "Specify the talos package url"
           }],
-        [["--talos-branch"],
-         {"action": "store",
-          "dest": "talos_branch",
-          "default": "Mozilla-Central",
-          "help": "Specify the branch name",
-          }],
-        [["--pyyaml-url"],
-         {"action": "store",
-          "dest": "pyyaml_url",
-          "default": "http://pypi.python.org/packages/source/P/PyYAML/PyYAML-3.10.tar.gz", # note that this is subject to package-rot
-          "help": "URL to PyYAML package"
-          }],
-        [["--pageloader-url"],
-         {"action": "store",
-          "dest": "pageloader_url",
-          "default": "http://hg.mozilla.org/build/pageloader/archive/tip.zip",
-          "help": "URL to PageLoader extension"
-          }],
-        [["-a", "--activeTests"],
-         {"action": "extend",
-          "dest": "activeTests",
-          "default": [],
-          "help": "Specify the tests to run"
-          }],
-        [["--appname"],
-         {"action": "store",
-          "dest": "appname",
-          "default": None,
-          "help": "Path to the Firefox binary to run tests on",
-          }],
-        [["--add-options"],
+        [["--add-option"],
           {"action": "extend",
-           "dest": "addOptions",
+           "dest": "talos_options",
            "default": None,
            "help": "extra options to PerfConfigurator"
            }],
-        ] + virtualenv_config_options
+        ] + talos_options + virtualenv_config_options
+
+    actions = ['clobber',
+               'create-virtualenv',
+               'generate-config',
+               'run-tests'
+               ]
 
     def __init__(self, require_config_file=False):
         BaseScript.__init__(self,
                             config_options=self.config_options,
-                            all_actions=['clobber',
-                                         'create-virtualenv',
-                                         'install-pageloader',
-                                         'generate-config',
-                                         'run-tests'
-                                         ],
-                            default_actions=['clobber',
-                                             'create-virtualenv',
-                                             'install-pageloader',
-                                             'generate-config',
-                                             'run-tests'
-                                             ],
+                            all_actions=self.actions,
+                            default_actions=self.actions,
                             require_config_file=require_config_file,
-                            config={"virtualenv_modules": ["pyyaml", "talos"]},
+                            config={"virtualenv_modules": ["talos"]},
                             )
+        self.check() # basic setup and sanity check
 
-    def _set_talos_dir(self):
-        """XXX this is required as talos must be run out of its directory"""
-        python = self.query_python_path()
-        self.talos_dir = self.get_output_from_command([python, '-c', 'import os, talos; print os.path.dirname(os.path.abspath(talos.__file__))'])
-        if not self.talos_dir:
-            self.fatal("Talos directory could not be found")
-        self.info('Talos directory: %s' % self.talos_dir)
+        # results output
+        self.results_url = self.config.get('results_url')
+        if self.results_url is None:
+            # use a results_url by default based on the class name in the working directory
+            self.results_url = 'file://%s' % os.path.join(self.workdir, self.__class__.__name__.lower() + '.txt')
 
-    def install_pageloader(self):
-        """install pageloader"""
-        if not hasattr(self, 'talos_dir'):
-            self._set_talos_dir()
-        dest = os.path.join(self.talos_dir, 'page_load_test', 'pageloader.xpi')
-        self.download_file(self.config['pageloader_url'], dest)
+    def check(self):
+        """ setup and sanity check"""
 
-    def generate_config(self):
+        self.workdir = self.query_abs_dirs()['abs_work_dir'] # convenience
+
+        # path to browser
+        self.binary = self.config.get('binary')
+        if not self.binary:
+            self.fatal("No path to binary specified; please specify --binary")
+        self.binary = os.path.abspath(self.binary)
+        if not os.path.exists(self.binary):
+            self.fatal("Path to binary does not exist: %s" % self.binary)
+
+        # Talos tests to run
+        self.tests = self.config['tests']
+        if not self.tests:
+            self.fatal("No tests specified; please specify --tests")
+
+    def PerfConfigurator_options(self, args=None, **kw):
+        """return options to PerfConfigurator"""
+
+        # TODO: do something about short options
+
+        options = ['-v', '--develop'] # hardcoded options (for now)
+        kw_options = {'output': 'talos.yml', # options overwritten from **kw
+                      'executablePath': self.binary,
+                      'activeTests': self.tests,
+                      'results_url': self.results_url}
+        if self.config.get('title'):
+            kw_options['title'] = self.config['title']
+        kw_options.update(kw)
+
+        # talos expects tests to be in the format (e.g.) 'ts:tp5:tsvg'
+        tests = kw_options['activeTests']
+        if not isinstance(tests, basestring):
+            tests = ':'.join(tests) # Talos expects this format
+            kw_options['activeTests'] = tests
+
+        for key, value in kw_options.items():
+            options.extend(['--%s' % key, value])
+
+        # extra arguments
+        if args is None:
+            args = self.config.get('perfconfigurator_options', [])
+        options += args
+
+        return options
+
+    def talos_conf_path(self, conf):
+        """return the full path for a talos .yml configuration file"""
+        if os.path.isabs(conf):
+            return conf
+        return os.path.join(self.workdir, conf)
+
+    def generate_config(self, conf='talos.yml', options=None):
         """generate talos configuration"""
 
-        firefox = self.config.get('appname')
-        if not firefox:
-            self.fatal("No appname specified; please specify --appname")
-        firefox = os.path.abspath(firefox)
-        tests = self.config['activeTests']
-        if not tests:
-            self.fatal("No tests specified; please specify --activeTests")
-        tests = ':'.join(tests) # Talos expects this format
-        if not hasattr(self, 'talos_dir'):
-            self._set_talos_dir()
-        python = self.query_python_path()
-        command = [python, 'PerfConfigurator.py', '-v', '-e', firefox, '-a', tests, '--output', 'talos.yml', '-b', self.config['talos_branch'], '--branchName', self.config['talos_branch']]
-        if self.config.get('title'):
-            command += ["-t", self.config['title']]
-        if self.config.get('addOptions'):
-            command += self.config['addOptions']
-        self.run_command(command, cwd=self.talos_dir)
-        self.talos_conf = os.path.join(self.talos_dir, 'talos.yml')
+        # XXX note: conf *must* match what is in options, if the latter is given
 
-    def run_tests(self):
-        if not hasattr(self, 'talos_conf'):
-            self.generate_config()
+        # find the path to the talos .yml configuration
+        # and remove if it exists
+        talos_conf_path = self.talos_conf_path(conf)
+        if os.path.exists(talos_conf_path):
+            os.remove(talos_conf_path)
+
+        # find PerfConfigurator console script
+        # TODO: support remotePerfConfigurator if
+        # https://bugzilla.mozilla.org/show_bug.cgi?id=704654
+        # is not fixed first
+        PerfConfigurator = self.query_python_path('PerfConfigurator')
+        if not os.path.exists(PerfConfigurator):
+            self.fatal("PerfConfigurator not found")
+
+        # get command line for PerfConfigurator
+        if options is None:
+            options = self.PerfConfigurator_options(output=talos_conf_path)
+        command = [PerfConfigurator] + options
+
+        # run PerfConfigurator and ensure conf creation
+        self.run_command(command, cwd=self.workdir,
+                         error_list=TalosErrorList)
+        if not os.path.exists(talos_conf_path):
+            self.fatal("PerfConfigurator invokation failed: configuration file '%s' not found" % talos_conf_path)
+
+    def run_tests(self, conf='talos.yml'):
+
+        # generate configuration if necessary
+        talos_conf_path = self.talos_conf_path(conf)
+        if not os.path.exists(talos_conf_path):
+            self.generate_config(conf)
 
         # run talos tests
-        # assumes a webserver is appropriately running
-        python = self.query_python_path()
-        self.return_code = self.run_command([python, 'run_tests.py', '--noisy', self.talos_conf], cwd=self.talos_dir)
-
+        talos = self.query_python_path('talos')
+        if not os.path.exists(talos):
+            self.fatal("talos script not found")
+        command = [talos, '--noisy', talos_conf_path]
+        self.return_code = self.run_command(command, cwd=self.workdir,
+                                            error_list=TalosErrorList)
 
 if __name__ == '__main__':
     talos = Talos()

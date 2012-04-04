@@ -10,7 +10,7 @@ except IOError:
 import mozharness
 version = mozharness.version_string
 
-dependencies = []
+dependencies = ['virtualenv']
 try:
     import json
 except ImportError:
