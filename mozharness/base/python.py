@@ -26,6 +26,12 @@ virtualenv_config_options = [[
   "dest": "virtualenv",
   "help": "Specify the virtualenv executable to use"
   }
+],
+[["--pypi-url"],
+ {"action": "store",
+  "dest": "pypi_url",
+  "help": "Base URL of Python Package Index (default http://pypi.python.org/simple/)"
+  }
 ]]
 
 class VirtualenvMixin(object):
@@ -122,10 +128,13 @@ class VirtualenvMixin(object):
                          error_list=PythonErrorList,
                          halt_on_failure=True)
         pip = self.query_python_path("pip")
+        command = [pip, "install"]
+        pypi_url = c.get("pypi_url")
+        if pypi_url:
+            command += ["--pypi-url", pypi_url]
         for module in c.get('virtualenv_modules', []):
             self.info("Installing %s into virtualenv %s" % (module, venv_path))
-            self.run_command([pip, "install", c.get("%s_url" % module,
-                                                    module)],
+            self.run_command(command + [c.get("%s_url" % module, module)],
                              error_list=PythonErrorList,
                              halt_on_failure=True)
         self.info("Done creating virtualenv %s." % venv_path)
