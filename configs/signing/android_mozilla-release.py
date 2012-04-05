@@ -52,7 +52,7 @@ config = {
     },
     "enable_partner_repacks": False,
     "partner_platforms": ['android'],
-    "partners": ['android-market'],
+    "partners": ['google-play'],
     "update_channels": {
         'release': {
             'url': RELEASE_UPDATE_URL,
