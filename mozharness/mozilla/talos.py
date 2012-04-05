@@ -188,7 +188,3 @@ class Talos(VirtualenvMixin, BaseScript):
         command = [talos, '--noisy', talos_conf_path]
         self.return_code = self.run_command(command, cwd=self.workdir,
                                             error_list=TalosErrorList)
-
-if __name__ == '__main__':
-    talos = Talos()
-    talos.run()
