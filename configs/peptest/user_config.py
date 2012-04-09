@@ -6,8 +6,6 @@ import os
 
 config = {
     # mozharness script options
-    "base_work_dir": os.getcwd(),
-    "work_dir": "build",
     "log_name": "pep",
     "log_level": "info",
     "test_url": "url_to_packaged_tests",
@@ -36,21 +34,4 @@ config = {
     "tracer_interval": 10,
     # URL or path to the symbols directory for debugging crashes
     "symbols_path": None,
-
-    # get latest tinderbox options
-    # (these are only used by the get-latest-tinderbox action)
-    "get_latest_tinderbox_product": "mozilla-central",
-    "get_latest_tinderbox_platform": None, # defaults to current platform
-    "get_latest_tinderbox_debug_build": False,
 }
-
-# these config options depend on the abs_work_dir option
-abs_work_dir = os.path.abspath(os.path.join(config['base_work_dir'],
-                                            config['work_dir']))
-
-config['virtualenv_path'] = os.path.join(abs_work_dir, "venv")
-# directory to extract tests to
-config['test_install_dir'] = os.path.join(abs_work_dir, "tests")
-# directory to install application to
-config['application_install_dir'] = os.path.join(abs_work_dir,
-                                                 "application")

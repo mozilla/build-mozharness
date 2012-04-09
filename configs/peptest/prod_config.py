@@ -7,7 +7,6 @@ config = {
     # mozharness script options
     "log_name": "pep",
     "buildbot_json_path": "buildprops.json",
-    "virtualenv_modules": ["simplejson"],
     "simplejson_url": "http://build.mozilla.org/talos/zips/simplejson-2.2.1.tar.gz",
     # peptest options
     # defaults to firefox, can also be thunderbird, fennec, etc.
@@ -38,9 +37,11 @@ config = {
 
     "default_actions": [
         "clobber",
-        "create-virtualenv",
+        "pull",
         "read-buildbot-config",
-        "create-deps",
+        "download-and-extract",
+        "create-virtualenv",
+        "install",
         "run-peptest",
     ],
     "repos": [{"repo": "http://hg.mozilla.org/build/tools",}],
