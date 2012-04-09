@@ -238,7 +238,7 @@ class PepTest(VirtualenvMixin, BuildbotMixin, MercurialScript):
         """
         dirs = self.query_abs_dirs()
 
-        if len(self.query_python_package('getlatesttinderbox')) == 0:
+        if len(self.query_package('getlatesttinderbox')) == 0:
             # install getlatest-tinderbox
             self.info("Installing getlatest-tinderbox")
             pip = self.query_python_path("pip")
