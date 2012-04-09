@@ -8,7 +8,9 @@ config = {
     "log_name": "pep",
     "buildbot_json_path": "buildprops.json",
     "virtualenv_path": 'c:/talos-slave/test/build/venv',
+    "virtualenv_modules": ["simplejson"],
     "virtualenv_python_dll": 'c:/mozilla-build/python25/python25.dll',
+#    "virtualenv_options": ['--no-site-packages', '--distribute', '--never-download'],
     "distribute_url": "http://build.mozilla.org/talos/zips/distribute-0.6.24.tar.gz",
     "pip_url": "http://build.mozilla.org/talos/zips/pip-1.0.2.tar.gz",
     "simplejson_url": "http://build.mozilla.org/talos/zips/simplejson-2.2.1.tar.gz",
@@ -42,11 +44,9 @@ config = {
 
     "default_actions": [
         "clobber",
-        "pull",
-        "read-buildbot-config",
-        "download-and-extract",
         "create-virtualenv",
-        "install",
+        "read-buildbot-config",
+        "create-deps",
         "run-peptest",
     ],
     "repos": [{"repo": "http://hg.mozilla.org/build/tools",}],
