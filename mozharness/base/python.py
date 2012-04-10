@@ -71,14 +71,14 @@ class VirtualenvMixin(object):
                 self.python_paths[binary] = self.query_exe(binary)
         return self.python_paths[binary]
 
-    def query_package(self, package_name, error_level=WARNING):
+    def query_python_package(self, package_name, error_level=WARNING):
         """
         Returns a list of all installed packages
         that contain package_name in their name
         """
         pip = self.query_python_path("pip")
         if not pip:
-            self.log("query_package: Program pip not in path", level=error_level)
+            self.log("query_python_package: Program pip not in path", level=error_level)
             return []
         output = self.get_output_from_command(pip + " freeze",
                                               silent=True)
@@ -88,7 +88,58 @@ class VirtualenvMixin(object):
         return [package for package in packages
                 if package.lower().find(package_name.lower()) != -1]
 
+    def install_module(self, module, module_url=None):
+        """
+        Install module via pip.
+
+        module_url can be a url to a python package tarball, a path to
+        a directory containing a setup.py (absolute or relative to work_dir)
+        or None, in which case it will default to the module name.
+        """
+        c = self.config
+        dirs = self.query_abs_dirs()
+        venv_path = self.query_virtualenv_path()
+        pip = self.query_python_path("pip")
+        self.info("Installing %s into virtualenv %s" % (module, venv_path))
+        if not module_url:
+            module_url = module
+        command = [pip, "install"]
+        pypi_url = c.get("pypi_url")
+        if pypi_url:
+            command += ["--pypi-url", pypi_url]
+        virtualenv_cache_dir = c.get("virtualenv_cache_dir")
+        if virtualenv_cache_dir:
+            self.mkdir_p(virtualenv_cache_dir)
+            command += ["--download-cache", virtualenv_cache_dir]
+        self.run_command(command + [module_url],
+                         error_list=PythonErrorList,
+                         cwd=dirs['abs_work_dir'],
+                         halt_on_failure=True)
+
     def create_virtualenv(self):
+        """
+        Create a python virtualenv.
+
+        The virtualenv exe can be defined in c['virtualenv'] or
+        c['exes']['virtualenv'], as a string (path) or list (path +
+        arguments).
+
+        c['virtualenv_python_dll'] is an optional config item that works
+        around an old windows virtualenv bug.
+
+        virtualenv_modules can be a list of module names to install, e.g.
+
+            virtualenv_modules = ['module1', 'module2']
+
+        or it can be a list of dicts that define a module: url-or-path,
+        or a combination.
+
+            virtualenv_modules = [
+                'module1',
+                {'module2': 'http://url/to/package'},
+                {'module3': os.path.join('path', 'to', 'setup_py', 'dir')},
+            ]
+        """
         c = self.config
         dirs = self.query_abs_dirs()
         venv_path = self.query_virtualenv_path()
@@ -127,16 +178,12 @@ class VirtualenvMixin(object):
                          cwd=dirs['abs_work_dir'],
                          error_list=PythonErrorList,
                          halt_on_failure=True)
-        pip = self.query_python_path("pip")
-        command = [pip, "install"]
-        pypi_url = c.get("pypi_url")
-        if pypi_url:
-            command += ["--pypi-url", pypi_url]
         for module in c.get('virtualenv_modules', []):
-            self.info("Installing %s into virtualenv %s" % (module, venv_path))
-            self.run_command(command + [c.get("%s_url" % module, module)],
-                             error_list=PythonErrorList,
-                             halt_on_failure=True)
+            module_url = module
+            if isinstance(module, dict):
+                (module, module_url) = module.items()[0]
+            module_url = self.config.get('%s_url' % module, module_url)
+            self.install_module(module, module_url)
         self.info("Done creating virtualenv %s." % venv_path)
 
 
