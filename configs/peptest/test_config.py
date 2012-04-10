@@ -16,9 +16,4 @@ config = {
     "tracer_threshold": 50,
     "tracer_interval": 10,
     "symbols_path": None,
-
-    # get latest tinderbox options
-    "get_latest_tinderbox_product": "mozilla-central",
-    "get_latest_tinderbox_platform": None,
-    "get_latest_tinderbox_debug_build": False,
 }

@@ -16,27 +16,32 @@ from mozharness.base.log import DEBUG, INFO, WARNING, ERROR, FATAL
 from mozharness.base.python import virtualenv_config_options, VirtualenvMixin
 from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.buildbot import BuildbotMixin, TBPL_SUCCESS, TBPL_FAILURE
-import urlparse
 
 class PepTest(VirtualenvMixin, BuildbotMixin, MercurialScript):
     config_options = [
-        [["--appname"],
+        [["--installer-url"],
         {"action": "store",
-         "dest": "appname",
+         "dest": "installer_url",
          "default": None,
-         "help": "Path to the binary (file path or URL) to run the tests on",
+         "help": "URL to the installer to install",
+        }],
+        [["--installer-path"],
+        {"action": "store",
+         "dest": "installer_path",
+         "default": None,
+         "help": "Path to the installer to install.  This is set automatically if run with --download-and-extract.",
+        }],
+        [["--binary-path"],
+        {"action": "store",
+         "dest": "binary_path",
+         "default": None,
+         "help": "Path to installed binary.  This is set automatically if run with --install.",
         }],
         [["--test-manifest"],
         {"action":"store",
          "dest": "test_manifest",
          "default":None,
          "help": "Path to test manifest to run",
-        }],
-        [["--peptest-url"],
-        {"action": "store",
-         "dest": "peptest_url",
-         "default": "https://github.com/mozilla/peptest/zipball/master",
-         "help": "URL to peptest zip file",
         }],
         [["--use-proxy"],
         {"action": "store_true",
@@ -63,33 +68,43 @@ class PepTest(VirtualenvMixin, BuildbotMixin, MercurialScript):
         {'substr': r'''PEP DEBUG''', 'level': DEBUG},
     ]
 
+    virtualenv_modules = [
+        'simplejson',
+        {'mozlog': os.path.join('tests', 'mozbase', 'mozlog')},
+        {'mozinfo': os.path.join('tests', 'mozbase', 'mozinfo')},
+        {'mozhttpd': os.path.join('tests', 'mozbase', 'mozhttpd')},
+        {'mozinstall': os.path.join('tests', 'mozbase', 'mozinstall')},
+        {'manifestdestiny': os.path.join('tests', 'mozbase', 'manifestdestiny')},
+        {'mozprofile': os.path.join('tests', 'mozbase', 'mozprofile')},
+        {'mozprocess': os.path.join('tests', 'mozbase', 'mozprocess')},
+        {'mozrunner': os.path.join('tests', 'mozbase', 'mozrunner')},
+        {'peptest': os.path.join('tests', 'peptest')},
+    ]
+
     def __init__(self, require_config_file=False):
         super(PepTest, self).__init__(
             config_options=self.config_options,
             all_actions=['clobber',
-                         'create-virtualenv',
+                         'pull',
                          'read-buildbot-config',
-                         'get-latest-tinderbox',
-                         'create-deps',
+                         'download-and-extract',
+                         'create-virtualenv',
+                         'install',
                          'run-peptest'],
             default_actions=['clobber',
+                             'pull',
+                             'download-and-extract',
                              'create-virtualenv',
-                             'get-latest-tinderbox',
-                             'create-deps',
+                             'install',
                              'run-peptest'],
             require_config_file=require_config_file,
-            config={'dependencies': ['mozlog',
-                                     'mozinfo',
-                                     'mozhttpd',
-                                     'mozinstall',
-                                     'manifestdestiny',
-                                     'mozprofile',
-                                     'mozprocess',
-                                     'mozrunner'],})
+            config={'virtualenv_modules': self.virtualenv_modules})
         # these are necessary since self.config is read only
         c = self.config
         dirs = self.query_abs_dirs()
-        self.appname = c.get('appname')
+        self.installer_url = c.get('installer_url')
+        self.installer_path = c.get('installer_path')
+        self.binary_path = c.get('binary_path')
         self.symbols = c.get('symbols_path')
         self.test_path = os.path.join(dirs['abs_peptest_dir'],
                                       c['test_manifest'])
@@ -104,11 +119,9 @@ class PepTest(VirtualenvMixin, BuildbotMixin, MercurialScript):
         c = self.config
         dirs = {}
         dirs['abs_test_install_dir'] = os.path.join(
-            abs_dirs['abs_work_dir'],
-            c.get('test_install_dir', 'tests'))
+            abs_dirs['abs_work_dir'], 'tests')
         dirs['abs_app_install_dir'] = os.path.join(
-            abs_dirs['abs_work_dir'],
-            c.get('app_install_dir', 'application'))
+            abs_dirs['abs_work_dir'], 'application')
         dirs['abs_mozbase_dir'] = os.path.join(
             dirs['abs_test_install_dir'], "mozbase")
         dirs['abs_peptest_dir'] = os.path.join(
@@ -125,15 +138,6 @@ class PepTest(VirtualenvMixin, BuildbotMixin, MercurialScript):
         self.abs_dirs = abs_dirs
         return self.abs_dirs
 
-    def _is_url(self, path):
-        """
-        Return True if path looks like a URL.
-        """
-        if path is not None:
-            parsed = urlparse.urlparse(path)
-            return parsed.scheme != '' or parsed.netloc != ''
-        return False
-
     def _build_arg(self, option, value):
         """
         Build a command line argument
@@ -142,58 +146,18 @@ class PepTest(VirtualenvMixin, BuildbotMixin, MercurialScript):
             return []
         return [str(option), str(value)]
 
-    def _install_from_url(self, url, error_level=FATAL):
-        """
-        Accepts a URL to the application (usually on ftp.m.o)
-        Downloads and installs the application
-        Returns the binary path
-        """
-        dirs = self.query_abs_dirs()
-
-        # download the application
-        source = self.download_file(url,
-                                    error_level=error_level,
-                                    parent_dir=dirs['abs_work_dir'])
-        if not source:
-            return
-        source = os.path.realpath(source)
-
-        # install the application
-        mozinstall = self.query_python_path("mozinstall")
-        cmd = [mozinstall, '--source', source]
-        cmd.extend(self._build_arg('--destination',
-                   dirs['abs_app_install_dir']))
-        binary = self.get_output_from_command(cmd)
-
-        # cleanup
-        return binary
-
-    def _install_deps(self):
-        """
-        Download and install dependencies
-        """
-        dirs = self.query_abs_dirs()
-        python = self.query_python_path()
-        # install dependencies
-        for module in self.config['dependencies']:
-            self.run_command([python, "setup.py", "install"],
-                             cwd=os.path.join(dirs['abs_mozbase_dir'], module),
-                             error_list=PythonErrorList)
-
-    def _install_peptest(self):
-        """
-        Download and install peptest
-        """
-        dirs = self.query_abs_dirs()
-        python = self.query_python_path()
-        self.run_command([python, "setup.py", "install"],
-                         cwd=dirs['abs_peptest_dir'],
-                         error_list=PythonErrorList)
-
 
 
     # Actions {{{1
-    # create_virtualenv is in VirtualenvMixin.
+    # clobber is in BaseScript.
+
+    def pull(self):
+        if self.config.get('repos'):
+            dirs = self.query_abs_dirs()
+            self.vcs_checkout_repos(self.config['repos'],
+                                    parent_dir=dirs['abs_work_dir'])
+
+
     # read_buildbot_config is in BuildbotMixin.
 
     def postflight_read_buildbot_config(self):
@@ -204,66 +168,80 @@ class PepTest(VirtualenvMixin, BuildbotMixin, MercurialScript):
                     if files[file_num]['name'].endswith('tests.zip'): # yuk
                         # str() because of unicode issues on mac
                         self.test_url = str(files[file_num]['name'])
+                        self.info("Found test url %s." % self.test_url)
                     else:
-                        self.appname = str(files[file_num]['name'])
+                        self.installer_url = str(files[file_num]['name'])
+                        self.info("Found installer url %s." % self.installer_url)
             except IndexError, e:
-                self.fatal("Unable to set appname+test_url from the the buildbot config: %s!" % str(e))
+                self.fatal("Unable to set installer_url+test_url from the the buildbot config: %s!" % str(e))
 
 
-    def create_deps(self):
+    def preflight_download_and_extract(self):
+        message = ""
+        if not self.installer_url:
+            message += """installer_url isn't set!
+
+You can set this by:
+
+1. specifying --installer-url URL, or
+2. running via buildbot and running the read-buildbot-config action
+
+"""
+        if not self.test_url:
+            message += """test_url isn't set!
+
+You can set this by:
+
+1. specifying --test-url URL, or
+2. running via buildbot and running the read-buildbot-config action
+
+"""
+        if message:
+            self.fatal(message + "Can't run download-and-extract... exiting")
+
+    def download_and_extract(self):
         """
         Create virtualenv and install dependencies
         """
         dirs = self.query_abs_dirs()
-        if self.test_url:
-            bundle = self.download_file(self.test_url,
-                                        parent_dir=dirs['abs_work_dir'],
-                                        error_level=FATAL)
-            unzip = self.query_exe("unzip")
-            self.mkdir_p(dirs['abs_test_install_dir'])
-            # TODO error_list
-            self.run_command([unzip, bundle],
-                             cwd=dirs['abs_test_install_dir'])
-        self._install_deps()
-        self._install_peptest()
-        if self.config.get('repos'):
-            self.vcs_checkout_repos(self.config['repos'],
+        bundle = self.download_file(self.test_url,
+                                    parent_dir=dirs['abs_work_dir'],
+                                    error_level=FATAL)
+        unzip = self.query_exe("unzip")
+        self.mkdir_p(dirs['abs_test_install_dir'])
+        # TODO error_list
+        self.run_command([unzip, bundle],
+                         cwd=dirs['abs_test_install_dir'])
+        source = self.download_file(self.installer_url, error_level=FATAL,
                                     parent_dir=dirs['abs_work_dir'])
+        self.installer_path = os.path.realpath(source)
 
 
-    def get_latest_tinderbox(self):
-        """
-        Find the url to the latest-tinderbox build and
-        point the appname at it
-        """
+    # create_virtualenv is in VirtualenvMixin.
+
+    def preflight_install(self):
+        if not self.installer_path:
+            self.fatal("""installer_path isn't set!
+
+You can set this by:
+
+1. specifying --installer-path PATH, or
+2. running the download-and-extract action
+""")
+
+    def install(self):
+        """ Dependent on mozinstall """
+        # install the application
+        mozinstall = self.query_python_path("mozinstall")
         dirs = self.query_abs_dirs()
-
-        if len(self.query_python_package('getlatesttinderbox')) == 0:
-            # install getlatest-tinderbox
-            self.info("Installing getlatest-tinderbox")
-            pip = self.query_python_path("pip")
-            self.run_command(pip + " install GetLatestTinderbox",
-                             cwd=dirs['abs_work_dir'],
-                             error_list=PythonErrorList)
-
-        # get latest tinderbox build url
-        getlatest = self.query_python_path("get-latest-tinderbox")
-        cmd = [getlatest, '--latest']
-        cmd.extend(self._build_arg('--product',
-                   self.config.get('get_latest_tinderbox_product')))
-        cmd.extend(self._build_arg('--platform',
-                   self.config.get('get_latest_tinderbox_platform')))
-        if self.config.get('get_latest_tinderbox_debug_build'):
-            cmd.append('--debug')
-        url = self.get_output_from_command(cmd)
-
-        # get the symbols url to use for debugging crashes
-        cmd = [getlatest, '--url', url, '--symbols']
-        self.symbols = self.get_output_from_command(cmd)
-
-        # get the application url to download and install
-        cmd = [getlatest, '--url', url]
-        self.appname = self.get_output_from_command(cmd)
+        target_dir = dirs.get('abs_app_install_dir',
+                              os.path.join(dirs['abs_work_dir'],
+                             'application'))
+        self.mkdir_p(target_dir)
+        cmd = [mozinstall, '--source', self.installer_path]
+        cmd.extend(['--destination', target_dir])
+        # TODO we'll need some error checking here
+        self.binary_path = self.get_output_from_command(cmd)
 
 
     def preflight_run_peptest(self):
@@ -273,8 +251,8 @@ class PepTest(VirtualenvMixin, BuildbotMixin, MercurialScript):
         if not os.path.isfile(self.test_path):
             self.fatal("Test manifest %s does not exist. Aborting" % self.test_path)
 
-        if not self.appname:
-            self.fatal("No appname specified! Rerun with appname set, or --get-latest-tinderbox")
+        if not self.binary_path:
+            self.fatal("No binary path specified!\nEither specify |--binary-path PATH| or |--install --installer-url URL|")
 
 
     def run_peptest(self):
@@ -282,9 +260,6 @@ class PepTest(VirtualenvMixin, BuildbotMixin, MercurialScript):
         Run the peptests
         """
         dirs = self.query_abs_dirs()
-        if self._is_url(self.appname):
-            self.appname = self._install_from_url(self.appname,
-                                                  error_level=FATAL)
 
         error_list = self.error_list
         error_list.extend(PythonErrorList)
@@ -294,7 +269,7 @@ class PepTest(VirtualenvMixin, BuildbotMixin, MercurialScript):
         cmd = [python, '-u', os.path.join(dirs['abs_peptest_dir'], 'peptest',
                                           'runpeptests.py')]
         cmd.extend(self._build_arg('--app', self.config.get('app')))
-        cmd.extend(self._build_arg('--binary', self.appname))
+        cmd.extend(self._build_arg('--binary', self.binary_path))
         cmd.extend(self._build_arg('--test-path', self.test_path))
         cmd.extend(self._build_arg('--profile-path',
                    self.config.get('profile_path')))
