@@ -5,6 +5,7 @@
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 # ***** END LICENSE BLOCK *****
 
+import copy
 import os
 import sys
 
@@ -12,31 +13,13 @@ import sys
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
 from mozharness.base.errors import PythonErrorList
-from mozharness.base.log import DEBUG, INFO, WARNING, ERROR, FATAL
-from mozharness.base.python import virtualenv_config_options, VirtualenvMixin
+from mozharness.base.log import DEBUG, INFO, WARNING, ERROR
 from mozharness.base.vcs.vcsbase import MercurialScript
-from mozharness.mozilla.buildbot import BuildbotMixin, TBPL_SUCCESS, TBPL_FAILURE
+from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_FAILURE
+from mozharness.mozilla.testing import TestingMixin, testing_config_options
 
-class PepTest(VirtualenvMixin, BuildbotMixin, MercurialScript):
+class PepTest(TestingMixin, MercurialScript):
     config_options = [
-        [["--installer-url"],
-        {"action": "store",
-         "dest": "installer_url",
-         "default": None,
-         "help": "URL to the installer to install",
-        }],
-        [["--installer-path"],
-        {"action": "store",
-         "dest": "installer_path",
-         "default": None,
-         "help": "Path to the installer to install.  This is set automatically if run with --download-and-extract.",
-        }],
-        [["--binary-path"],
-        {"action": "store",
-         "dest": "binary_path",
-         "default": None,
-         "help": "Path to installed binary.  This is set automatically if run with --install.",
-        }],
         [["--test-manifest"],
         {"action":"store",
          "dest": "test_manifest",
@@ -53,13 +36,7 @@ class PepTest(VirtualenvMixin, BuildbotMixin, MercurialScript):
         {"action": "store_false",
          "dest": "peptest_use_proxy",
          "help": "Don't use a local proxy for peptest runs",
-        }],
-        [["--test-url"],
-        {"action":"store",
-         "dest": "test_url",
-         "default": None,
-         "help": "URL to the zip file containing the actual tests",
-        }]] + virtualenv_config_options
+        }]] + copy.deepcopy(testing_config_options)
 
     error_list = [
         {'substr': r'''PEP TEST-UNEXPECTED-FAIL''', 'level': ERROR},
@@ -69,16 +46,16 @@ class PepTest(VirtualenvMixin, BuildbotMixin, MercurialScript):
     ]
 
     virtualenv_modules = [
-        'simplejson',
-        {'mozlog': os.path.join('tests', 'mozbase', 'mozlog')},
-        {'mozinfo': os.path.join('tests', 'mozbase', 'mozinfo')},
-        {'mozhttpd': os.path.join('tests', 'mozbase', 'mozhttpd')},
-        {'mozinstall': os.path.join('tests', 'mozbase', 'mozinstall')},
-        {'manifestdestiny': os.path.join('tests', 'mozbase', 'manifestdestiny')},
-        {'mozprofile': os.path.join('tests', 'mozbase', 'mozprofile')},
-        {'mozprocess': os.path.join('tests', 'mozbase', 'mozprocess')},
-        {'mozrunner': os.path.join('tests', 'mozbase', 'mozrunner')},
-        {'peptest': os.path.join('tests', 'peptest')},
+     'simplejson',
+     {'mozlog': os.path.join('tests', 'mozbase', 'mozlog')},
+     {'mozinfo': os.path.join('tests', 'mozbase', 'mozinfo')},
+     {'mozhttpd': os.path.join('tests', 'mozbase', 'mozhttpd')},
+     {'mozinstall': os.path.join('tests', 'mozbase', 'mozinstall')},
+     {'manifestdestiny': os.path.join('tests', 'mozbase', 'manifestdestiny')},
+     {'mozprofile': os.path.join('tests', 'mozbase', 'mozprofile')},
+     {'mozprocess': os.path.join('tests', 'mozbase', 'mozprocess')},
+     {'mozrunner': os.path.join('tests', 'mozbase', 'mozrunner')},
+     {'peptest': os.path.join('tests', 'peptest')},
     ]
 
     def __init__(self, require_config_file=False):
@@ -159,89 +136,12 @@ class PepTest(VirtualenvMixin, BuildbotMixin, MercurialScript):
 
 
     # read_buildbot_config is in BuildbotMixin.
-
-    def postflight_read_buildbot_config(self):
-        if self.buildbot_config:
-            try:
-                files = self.buildbot_config['sourcestamp']['changes'][0]['files']
-                for file_num in (0, 1):
-                    if files[file_num]['name'].endswith('tests.zip'): # yuk
-                        # str() because of unicode issues on mac
-                        self.test_url = str(files[file_num]['name'])
-                        self.info("Found test url %s." % self.test_url)
-                    else:
-                        self.installer_url = str(files[file_num]['name'])
-                        self.info("Found installer url %s." % self.installer_url)
-            except IndexError, e:
-                self.fatal("Unable to set installer_url+test_url from the the buildbot config: %s!" % str(e))
-
-
-    def preflight_download_and_extract(self):
-        message = ""
-        if not self.installer_url:
-            message += """installer_url isn't set!
-
-You can set this by:
-
-1. specifying --installer-url URL, or
-2. running via buildbot and running the read-buildbot-config action
-
-"""
-        if not self.test_url:
-            message += """test_url isn't set!
-
-You can set this by:
-
-1. specifying --test-url URL, or
-2. running via buildbot and running the read-buildbot-config action
-
-"""
-        if message:
-            self.fatal(message + "Can't run download-and-extract... exiting")
-
-    def download_and_extract(self):
-        """
-        Create virtualenv and install dependencies
-        """
-        dirs = self.query_abs_dirs()
-        bundle = self.download_file(self.test_url,
-                                    parent_dir=dirs['abs_work_dir'],
-                                    error_level=FATAL)
-        unzip = self.query_exe("unzip")
-        self.mkdir_p(dirs['abs_test_install_dir'])
-        # TODO error_list
-        self.run_command([unzip, bundle],
-                         cwd=dirs['abs_test_install_dir'])
-        source = self.download_file(self.installer_url, error_level=FATAL,
-                                    parent_dir=dirs['abs_work_dir'])
-        self.installer_path = os.path.realpath(source)
-
-
+    # postflight_read_buildbot_config is in TestingMixin.
+    # preflight_download_and_extract is in TestingMixin.
+    # download_and_extract is in TestingMixin.
     # create_virtualenv is in VirtualenvMixin.
-
-    def preflight_install(self):
-        if not self.installer_path:
-            self.fatal("""installer_path isn't set!
-
-You can set this by:
-
-1. specifying --installer-path PATH, or
-2. running the download-and-extract action
-""")
-
-    def install(self):
-        """ Dependent on mozinstall """
-        # install the application
-        mozinstall = self.query_python_path("mozinstall")
-        dirs = self.query_abs_dirs()
-        target_dir = dirs.get('abs_app_install_dir',
-                              os.path.join(dirs['abs_work_dir'],
-                             'application'))
-        self.mkdir_p(target_dir)
-        cmd = [mozinstall, '--source', self.installer_path]
-        cmd.extend(['--destination', target_dir])
-        # TODO we'll need some error checking here
-        self.binary_path = self.get_output_from_command(cmd)
+    # preflight_install is in TestingMixin.
+    # install is in TestingMixin.
 
 
     def preflight_run_peptest(self):
