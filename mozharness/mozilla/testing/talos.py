@@ -78,14 +78,13 @@ class Talos(VirtualenvMixin, BaseScript):
                'run-tests'
                ]
 
-    def __init__(self, require_config_file=False):
-        BaseScript.__init__(self,
-                            config_options=self.config_options,
-                            all_actions=self.actions,
-                            default_actions=self.actions,
-                            require_config_file=require_config_file,
-                            config={"virtualenv_modules": ["talos"]},
-                            )
+    def __init__(self, **kwargs):
+        kwargs.setdefault('config_options', self.config_options)
+        kwargs.setdefault('all_actions', self.actions)
+        kwargs.setdefault('default_actions', self.actions)
+        kwargs.setdefault('config', {})
+        kwargs['config'].setdefault('virtualenv_modules', ["talos", "mozinstall"])
+        BaseScript.__init__(self, **kwargs)
         self.check() # basic setup and sanity check
 
         # results output

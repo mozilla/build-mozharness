@@ -14,7 +14,7 @@ import sys
 # load modules from parent dir
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
-from mozharness.mozilla.talos import Talos
+from mozharness.mozilla.testing.talos import Talos
 
 if __name__ == '__main__':
     talos = Talos()

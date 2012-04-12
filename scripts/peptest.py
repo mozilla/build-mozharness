@@ -16,7 +16,7 @@ from mozharness.base.errors import PythonErrorList
 from mozharness.base.log import DEBUG, INFO, WARNING, ERROR
 from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_FAILURE
-from mozharness.mozilla.testing import TestingMixin, testing_config_options
+from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
 
 class PepTest(TestingMixin, MercurialScript):
     config_options = [
