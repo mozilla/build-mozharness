@@ -71,22 +71,45 @@ class VirtualenvMixin(object):
                 self.python_paths[binary] = self.query_exe(binary)
         return self.python_paths[binary]
 
-    def query_python_package(self, package_name, error_level=WARNING):
+    def package_versions(self, pip_freeze_output=None, error_level=WARNING):
         """
-        Returns a list of all installed packages
-        that contain package_name in their name
+        reads packages from `pip freeze` output and returns a dict of
+        {package_name: 'version'}
         """
-        pip = self.query_python_path("pip")
-        if not pip:
-            self.log("query_python_package: Program pip not in path", level=error_level)
-            return []
-        output = self.get_output_from_command(pip + " freeze",
-                                              silent=True)
-        if not output:
-            return []
-        packages = output.split()
-        return [package for package in packages
-                if package.lower().find(package_name.lower()) != -1]
+        packages = {}
+
+        if pip_freeze_output is None:
+            # get the output from `pip freeze`
+            pip = self.query_python_path("pip")
+            if not pip:
+                self.log("package_versions: Program pip not in path", level=error_level)
+                return {}
+            pip_freeze_output = self.get_output_from_command([pip, "freeze"], silent=True)
+            if not isinstance(pip_freeze_output, basestring):
+                self.fatal("package_versions: Error encountered running `pip freeze`: %s" % pip_freeze_output)
+
+        for line in pip_freeze_output.splitlines():
+            # parse the output into package, version
+            line = line.strip()
+            if not line:
+                # whitespace
+                continue
+            if line.startswith('-'):
+                # not a package, probably like '-e http://example.com/path#egg=package-dev'
+                continue
+            if '==' not in line:
+                self.fatal("pip_freeze_packages: Unrecognized output line: %s" % line)
+            package, version = line.split('==', 1)
+            packages[package] = version
+
+        return packages
+
+    def is_python_package_installed(self, package_name, error_level=WARNING):
+        """
+        Return whether the package is installed
+        """
+        packages = self.package_versions(error_level=error_level).keys()
+        return package_name.lower in [package.lower() for package in packages]
 
     def install_module(self, module, module_url=None):
         """

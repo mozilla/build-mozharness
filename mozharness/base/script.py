@@ -428,7 +428,7 @@ class ShellMixin(object):
         # This could potentially return something?
         if self.config.get('noop'):
             self.info("(Dry run; skipping)")
-            return
+            return ''
         tmp_stdout = None
         tmp_stderr = None
         tmp_stdout_filename = '%s_stdout' % tmpfile_base_path

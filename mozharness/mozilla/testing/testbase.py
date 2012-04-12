@@ -130,7 +130,7 @@ You can set this by:
 1. specifying --installer-path PATH, or
 2. running the download-and-extract action
 """)
-        if not self.query_python_package("mozinstall"):
+        if not self.is_python_package_installed("mozInstall"):
             self.fatal("""Can't call install() without mozinstall!
 Did you run with --create-virtualenv? Is mozinstall in virtualenv_modules?""")
 
