@@ -22,6 +22,7 @@ TalosErrorList = PythonErrorList + [
  {'substr': r'''FAIL: Busted:''', 'level': CRITICAL},
  {'substr': r'''FAIL: failed to cleanup''', 'level': ERROR},
  {'substr': r'''erfConfigurator.py: Unknown error''', 'level': CRITICAL},
+ {'substr': r'''talosError''', 'level': CRITICAL},
  {'regex': re.compile(r'''No machine_name called '.*' can be found'''), 'level': CRITICAL},
  {'substr': r"""No such file or directory: 'browser_output.txt'""",
   'level': CRITICAL,
@@ -85,7 +86,10 @@ class Talos(VirtualenvMixin, BaseScript):
         kwargs.setdefault('config', {})
         kwargs['config'].setdefault('virtualenv_modules', ["talos", "mozinstall"])
         BaseScript.__init__(self, **kwargs)
-        self.check() # basic setup and sanity check
+
+        self.workdir = self.query_abs_dirs()['abs_work_dir'] # convenience
+
+        self.check()
 
         # results output
         self.results_url = self.config.get('results_url')
@@ -94,22 +98,10 @@ class Talos(VirtualenvMixin, BaseScript):
             self.results_url = 'file://%s' % os.path.join(self.workdir, self.__class__.__name__.lower() + '.txt')
 
     def check(self):
-        """ setup and sanity check"""
+        """sanity check on initialization"""
 
-        self.workdir = self.query_abs_dirs()['abs_work_dir'] # convenience
-
-        # path to browser
-        self.binary = self.config.get('binary')
-        if not self.binary:
-            self.fatal("No path to binary specified; please specify --binary")
-        self.binary = os.path.abspath(self.binary)
-        if not os.path.exists(self.binary):
-            self.fatal("Path to binary does not exist: %s" % self.binary)
-
-        # Talos tests to run
-        self.tests = self.config['tests']
-        if not self.tests:
-            self.fatal("No tests specified; please specify --tests")
+        if 'generate-config' in self.actions:
+            self.preflight_generate_config()
 
     def PerfConfigurator_options(self, args=None, **kw):
         """return options to PerfConfigurator"""
@@ -146,6 +138,22 @@ class Talos(VirtualenvMixin, BaseScript):
         if os.path.isabs(conf):
             return conf
         return os.path.join(self.workdir, conf)
+
+    def preflight_generate_config(self):
+
+        # path to browser
+        self.binary = self.config.get('binary')
+        if self.binary:
+            self.binary = os.path.abspath(self.binary)
+            if not os.path.exists(self.binary):
+                self.fatal("Path to binary does not exist: %s" % self.binary)
+        else:
+            self.fatal("No path to binary specified; please specify --binary")
+
+        # Talos tests to run
+        self.tests = self.config['tests']
+        if not self.tests:
+            self.fatal("No tests specified; please specify --tests")
 
     def generate_config(self, conf='talos.yml', options=None):
         """generate talos configuration"""
