@@ -3,7 +3,7 @@
 ADDITIONAL_LOCALES = ["en-US", "multi"]
 TAG = "default"
 #AUS_SERVER = "dev-stage01.build.mozilla.org"
-AUS_SERVER = "aus2-staging.mozilla.org"
+AUS_SERVER = "aus3-staging.mozilla.org"
 #FTP_SERVER = "dev-stage01.build.mozilla.org"
 FTP_SERVER = "stage.mozilla.org"
 AUS_UPLOAD_BASE_DIR = "/opt/aus2/snippets/staging"
