@@ -109,7 +109,7 @@ class VirtualenvMixin(object):
         Return whether the package is installed
         """
         packages = self.package_versions(error_level=error_level).keys()
-        return package_name.lower in [package.lower() for package in packages]
+        return package_name.lower() in [package.lower() for package in packages]
 
     def install_module(self, module, module_url=None):
         """
