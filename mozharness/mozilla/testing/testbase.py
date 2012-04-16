@@ -51,7 +51,6 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin):
     installer_url = None
     installer_path = None
     binary_path = None
-    test_path = None
     test_url = None
 
     # read_buildbot_config is in BuildbotMixin.
@@ -62,18 +61,39 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin):
         created via the buildbot ScriptFactory.
         """
         if self.buildbot_config:
+            c = self.config
+            message = "Unable to set %s from the buildbot config"
             try:
                 files = self.buildbot_config['sourcestamp']['changes'][0]['files']
-                for file_num in (0, 1):
-                    if files[file_num]['name'].endswith('tests.zip'): # yuk
+                expected_length = 1
+                if c.get("require_test_zip"):
+                    expected_length = 2
+                actual_length = len(files)
+                if actual_length != expected_length:
+                    self.fatal("Unexpected number of files in buildbot config %s: %d != %d!" % (c['buildbot_json_path'], actual_length, expected_length))
+                for f in files:
+                    if f['name'].endswith('tests.zip'): # yuk
                         # str() because of unicode issues on mac
-                        self.test_url = str(files[file_num]['name'])
+                        self.test_url = str(f['name'])
                         self.info("Found test url %s." % self.test_url)
                     else:
-                        self.installer_url = str(files[file_num]['name'])
+                        self.installer_url = str(f['name'])
                         self.info("Found installer url %s." % self.installer_url)
             except IndexError, e:
-                self.fatal("Unable to set installer_url+test_url from the the buildbot config: %s!" % str(e))
+                if c.get("require_test_zip"):
+                    message = message % ("installer_url+test_url")
+                else:
+                    message = message % ("installer_url")
+                self.fatal("%s: %s!" % (message, str(e)))
+            missing = []
+            if not self.installer_url:
+                missing.append("installer_url")
+            if c.get("require_test_zip") and not self.test_url:
+                missing.append("test_url")
+            if missing:
+                self.fatal("%s!" % (message % ('+'.join(missing))))
+        else:
+            self.fatal("self.buildbot_config isn't set after running read_buildbot_config!")
 
 
     def preflight_download_and_extract(self):
@@ -87,7 +107,7 @@ You can set this by:
 2. running via buildbot and running the read-buildbot-config action
 
 """
-        if not self.test_url:
+        if self.config.get("require_test_zip") and not self.test_url:
             message += """test_url isn't set!
 
 You can set this by:
@@ -104,16 +124,17 @@ You can set this by:
         Create virtualenv and install dependencies
         """
         dirs = self.query_abs_dirs()
-        bundle = self.download_file(self.test_url,
-                                    parent_dir=dirs['abs_work_dir'],
-                                    error_level=FATAL)
-        unzip = self.query_exe("unzip")
-        test_install_dir = dirs.get('abs_test_install_dir',
-                                    os.path.join(dirs['abs_work_dir'], 'tests'))
-        self.mkdir_p(test_install_dir)
-        # TODO error_list
-        self.run_command([unzip, bundle],
-                         cwd=test_install_dir)
+        if self.test_url:
+            bundle = self.download_file(self.test_url,
+                                        parent_dir=dirs['abs_work_dir'],
+                                        error_level=FATAL)
+            unzip = self.query_exe("unzip")
+            test_install_dir = dirs.get('abs_test_install_dir',
+                                        os.path.join(dirs['abs_work_dir'], 'tests'))
+            self.mkdir_p(test_install_dir)
+            # TODO error_list
+            self.run_command([unzip, bundle],
+                             cwd=test_install_dir)
         source = self.download_file(self.installer_url, error_level=FATAL,
                                     parent_dir=dirs['abs_work_dir'])
         self.installer_path = os.path.realpath(source)

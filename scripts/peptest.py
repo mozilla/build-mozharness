@@ -75,7 +75,8 @@ class PepTest(TestingMixin, MercurialScript):
                              'install',
                              'run-peptest'],
             require_config_file=require_config_file,
-            config={'virtualenv_modules': self.virtualenv_modules})
+            config={'virtualenv_modules': self.virtualenv_modules,
+                    'require_test_zip': True,})
         # these are necessary since self.config is read only
         c = self.config
         dirs = self.query_abs_dirs()
