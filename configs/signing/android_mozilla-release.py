@@ -13,10 +13,10 @@ FTP_UPLOAD_BASE_DIR = "/pub/mozilla.org/mobile/candidates/%(version)s-candidates
 DOWNLOAD_BASE_URL = "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/%(version)s-candidates/build%(buildnum)d"
 APK_BASE_NAME = "fennec-%(version)s.%(locale)s.android-arm.apk"
 BUILDID_BASE_URL = DOWNLOAD_BASE_URL + "/%(platform)s_info.txt"
-FFXBLD_SSH_KEY = '~/.ssh/ffxbld_dsa'
-#FFXBLD_SSH_KEY = '~/staging_ssh/ffxbld_dsa'
-CLTBLD_SSH_KEY = '~/.ssh/cltbld_dsa'
-#CLTBLD_SSH_KEY = '~/staging_ssh/id_rsa'
+STAGE_SSH_KEY = '~/.ssh/ffxbld_dsa'
+#STAGE_SSH_KEY = '~/staging_ssh/ffxbld_dsa'
+AUS_SSH_KEY = '~/.ssh/auspush'
+#AUS_SSH_KEY = '~/staging_ssh/id_rsa'
 
 RELEASE_UPDATE_URL = "http://download.mozilla.org/?product=fennec-%(version)s-complete&os=%(platform)s&lang=%(locale)s"
 BETATEST_UPDATE_URL = "http://stage.mozilla.org/pub/mozilla.org/mobile/candidates/%(version)s-candidates/build%(buildnum)d/%(apk_name)s"
@@ -73,10 +73,10 @@ config = {
     "ftp_upload_base_dir": FTP_UPLOAD_BASE_DIR,
     # These should be from release_config, but that has stage-ffxbld
     # which doesn't work with dev-stage01.
-    "ftp_ssh_key": FFXBLD_SSH_KEY,
+    "ftp_ssh_key": STAGE_SSH_KEY,
     "ftp_user": "ffxbld",
 
-    "aus_ssh_key": CLTBLD_SSH_KEY,
+    "aus_ssh_key": AUS_SSH_KEY,
     "aus_upload_base_dir": AUS_UPLOAD_BASE_DIR,
 
     "apk_base_name": APK_BASE_NAME,
