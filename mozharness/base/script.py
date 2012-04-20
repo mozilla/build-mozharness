@@ -584,8 +584,10 @@ class BaseScript(ShellMixin, OSMixin, LogMixin, object):
         self.summary()
         dirs = self.query_abs_dirs()
         self.info("Copying logs to upload dir...")
+        log_files = ['localconfig.json']
         for log_name in self.log_obj.log_files.keys():
-            log_file = self.log_obj.log_files[log_name]
+            log_files.append(self.log_obj.log_files[log_name])
+        for log_file in log_files:
             self.copy_to_upload_dir(os.path.join(dirs['abs_log_dir'], log_file),
                                     dest=os.path.join('logs', log_file),
                                     short_desc='%s log' % log_name,
@@ -613,9 +615,9 @@ class BaseScript(ShellMixin, OSMixin, LogMixin, object):
     def dump_config(self, file_path=None):
         dirs = self.query_abs_dirs()
         if not file_path:
-            file_path = os.path.join(dirs['abs_upload_dir'], "localconfig.json")
+            file_path = os.path.join(dirs['abs_log_dir'], "localconfig.json")
         self.info("Dumping config to %s." % file_path)
-        self.mkdir_p(dirs['abs_upload_dir'])
+        self.mkdir_p(os.path.dirname(file_path))
         json_config = json.dumps(self.config, sort_keys=True, indent=4)
         fh = codecs.open(file_path, encoding='utf-8', mode='w+')
         fh.write(json_config)
