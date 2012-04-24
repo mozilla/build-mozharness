@@ -68,6 +68,13 @@ PythonErrorList = BaseErrorList + [
  {'regex': re.compile(r'''raise \w*Error: '''), 'level': CRITICAL},
 ]
 
+VirtualenvErrorList = [
+ {'substr': r'''not found or a compiler error:''', 'level': ERROR},
+ {'regex': re.compile('''\d+: error: '''), 'level': ERROR},
+ {'regex': re.compile('''\d+: warning: '''), 'level': WARNING},
+] + PythonErrorList
+
+
 # We may need to have various MakefileErrorLists for differing amounts of
 # warning-ignoring-ness.
 MakefileErrorList = BaseErrorList + [

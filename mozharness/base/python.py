@@ -9,7 +9,7 @@
 
 import os
 
-from mozharness.base.errors import PythonErrorList
+from mozharness.base.errors import VirtualenvErrorList
 from mozharness.base.log import WARNING, FATAL
 
 # Virtualenv {{{1
@@ -60,6 +60,7 @@ class VirtualenvMixin(object):
         c['virtualenv_path'] is set; otherwise return the binary name.
         Otherwise return None
         """
+        self._check_existing_virtualenv()
         if binary not in self.python_paths:
             bin_dir = 'bin'
             if self._is_windows():
@@ -111,6 +112,12 @@ class VirtualenvMixin(object):
         packages = self.package_versions(error_level=error_level).keys()
         return package_name.lower() in [package.lower() for package in packages]
 
+    def _check_existing_virtualenv(self, error_level=WARNING):
+        if 'VIRTUAL_ENV' in os.environ:
+            self.log("VIRTUAL_ENV %s set; this may break mozharness virtualenv calls!" % os.environ['VIRTUAL_ENV'],
+                     level=error_level)
+            return True
+
     def install_module(self, module, module_url=None):
         """
         Install module via pip.
@@ -134,10 +141,12 @@ class VirtualenvMixin(object):
         if virtualenv_cache_dir:
             self.mkdir_p(virtualenv_cache_dir)
             command += ["--download-cache", virtualenv_cache_dir]
-        self.run_command(command + [module_url],
-                         error_list=PythonErrorList,
-                         cwd=dirs['abs_work_dir'],
-                         halt_on_failure=True)
+        # Allow for errors while building modules, but require a
+        # return status of 0.
+        if self.run_command(command + [module_url],
+                            error_list=VirtualenvErrorList,
+                            cwd=dirs['abs_work_dir']) != 0:
+            self.fatal("Unable to install %s!" % module_url)
 
     def create_virtualenv(self):
         """
@@ -166,6 +175,7 @@ class VirtualenvMixin(object):
         c = self.config
         dirs = self.query_abs_dirs()
         venv_path = self.query_virtualenv_path()
+        self._check_existing_virtualenv()
         self.info("Creating virtualenv %s" % venv_path)
         virtualenv = c.get('virtualenv', self.query_exe('virtualenv'))
         if isinstance(virtualenv, str):
@@ -199,7 +209,7 @@ class VirtualenvMixin(object):
 
         self.run_command(virtualenv + virtualenv_options + [venv_path],
                          cwd=dirs['abs_work_dir'],
-                         error_list=PythonErrorList,
+                         error_list=VirtualenvErrorList,
                          halt_on_failure=True)
         for module in c.get('virtualenv_modules', []):
             module_url = module
