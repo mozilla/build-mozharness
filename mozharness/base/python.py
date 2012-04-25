@@ -45,6 +45,7 @@ class VirtualenvMixin(object):
     Depends on OSMixin
     '''
     python_paths = {}
+    site_packages_path = None
 
     def query_virtualenv_path(self):
         c = self.config
@@ -71,6 +72,16 @@ class VirtualenvMixin(object):
             else:
                 self.python_paths[binary] = self.query_exe(binary)
         return self.python_paths[binary]
+
+    def query_python_site_packages_path(self):
+        if self.site_packages_path:
+            return self.site_packages_path
+        python = self.query_python_path()
+        self.site_packages_path = self.get_output_from_command(
+            [python, '-c',
+             'from distutils.sysconfig import get_python_lib; ' + \
+             'print(get_python_lib())'])
+        return self.site_packages_path
 
     def package_versions(self, pip_freeze_output=None, error_level=WARNING):
         """
