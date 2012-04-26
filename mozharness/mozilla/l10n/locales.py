@@ -98,9 +98,11 @@ class LocalesMixin(ChunkingMixin):
         self.mkdir_p(dirs['abs_merge_dir'])
         command = "python %s -m %s l10n.ini %s %s" % (compare_locales_script,
                   dirs['abs_merge_dir'], dirs['abs_l10n_dir'], locale)
+        self.info("*** BEGIN compare-locales %s" % locale)
         status = self.run_command(command, error_list=compare_locales_error_list,
                                   cwd=dirs['abs_locales_src_dir'], env=env,
                                   halt_on_failure=halt_on_failure)
+        self.info("*** END compare-locales %s" % locale)
         return status
 
     def query_abs_dirs(self):

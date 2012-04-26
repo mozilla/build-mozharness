@@ -34,6 +34,7 @@ TBPL_STATUS_DICT = {
 
 class BuildbotMixin(object):
     buildbot_config = None
+    buildbot_properties = {}
 
     def read_buildbot_config(self):
         c = self.config
@@ -55,3 +56,33 @@ class BuildbotMixin(object):
             if not level:
                 level = TBPL_STATUS_DICT[tbpl_status]
             self.add_summary("# TBPL %s #" % tbpl_status, level=level)
+
+    def set_buildbot_property(self, prop_name, prop_value, write_to_file=False):
+        self.info("Setting buildbot property %s to %s" % (prop_name, prop_value))
+        self.buildbot_properties[prop_name] = prop_value
+        if write_to_file:
+            return self.dump_buildbot_properties(prop_list=[prop_name], file_name=prop_name)
+        return self.buildbot_properties[prop_name]
+
+    def query_buildbot_property(self, prop_name):
+        return self.buildbot_properties.get(prop_name)
+
+    def dump_buildbot_properties(self, prop_list=None, file_name="properties", error_level=ERROR):
+        c = self.config
+        if not os.path.isabs(file_name):
+            file_name = os.path.join(c['base_work_dir'], "properties", file_name)
+        dir_name = os.path.dirname(file_name)
+        if not os.path.isdir(dir_name):
+            self.mkdir_p(dir_name)
+        if not prop_list:
+            prop_list = self.buildbot_properties.keys()
+            self.info("Writing buildbot properties to %s" % file_name)
+        else:
+            if not isinstance(prop_list, (list, tuple)):
+                self.log("dump_buildbot_properties: Can't dump non-list prop_list %s!" % str(prop_list), level=error_level)
+                return
+            self.info("Writing buildbot properties %s to %s" % (str(prop_list), file_name))
+        contents = ""
+        for prop in prop_list:
+            contents += "%s:%s\n" % (prop, self.buildbot_properties.get(prop, "None"))
+        return self.write_to_file(file_name, contents)

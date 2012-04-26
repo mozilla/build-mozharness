@@ -15,12 +15,18 @@ import os
 import re
 import sys
 
+try:
+    import simplejson as json
+except ImportError:
+    import json
+
 # load modules from parent dir
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
 from mozharness.base.errors import BaseErrorList, MakefileErrorList
 from mozharness.base.log import OutputParser
 from mozharness.base.transfer import TransferMixin
+from mozharness.mozilla.buildbot import BuildbotMixin
 from mozharness.mozilla.release import ReleaseMixin
 from mozharness.mozilla.signing import MobileSigningMixin
 from mozharness.base.vcs.vcsbase import MercurialScript
@@ -30,7 +36,7 @@ from mozharness.mozilla.l10n.locales import LocalesMixin
 
 # MobileSingleLocale {{{1
 class MobileSingleLocale(LocalesMixin, ReleaseMixin, MobileSigningMixin,
-                         TransferMixin, MercurialScript):
+                         TransferMixin, BuildbotMixin, MercurialScript):
     config_options = [[
      ['--locale',],
      {"action": "extend",
@@ -113,6 +119,7 @@ class MobileSingleLocale(LocalesMixin, ReleaseMixin, MobileSigningMixin,
         self.upload_env = None
         self.version = None
         self.upload_urls = {}
+        self.locales_property = {}
 
     # Helper methods {{{2
     def query_repack_env(self):
@@ -243,6 +250,25 @@ class MobileSingleLocale(LocalesMixin, ReleaseMixin, MobileSigningMixin,
             return self.config['snippet_base_url'] % {'locale': locale}
         self.error("Can't determine the upload url for %s!" % locale)
         self.error("You either need to run --upload-repacks before --create-nightly-snippets, or specify the 'snippet_base_url' in self.config!")
+
+    def add_failure(self, locale, message, **kwargs):
+        self.locales_property[locale] = "Failed"
+        prop_key = "%s_failure" % locale
+        prop_value = self.query_buildbot_property(prop_key)
+        if prop_value:
+            prop_value = "%s  %s" % (prop_value, message)
+        else:
+            prop_value = message
+        self.set_buildbot_property(prop_key, prop_value, write_to_file=True)
+        MercurialScript.add_failure(self, locale, message=message, **kwargs)
+
+    def summary(self):
+        MercurialScript.summary(self)
+        # TODO we probably want to make this configurable on/off
+        locales = self.query_locales()
+        for locale in locales:
+            self.locales_property.setdefault(locale, "Success")
+        self.set_buildbot_property("locales", json.dumps(self.locales_property), write_to_file=True)
 
     # Actions {{{2
     def pull(self):
