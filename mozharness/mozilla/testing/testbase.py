@@ -52,6 +52,7 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin):
     installer_path = None
     binary_path = None
     test_url = None
+    test_zip_path = None
 
     # read_buildbot_config is in BuildbotMixin.
 
@@ -119,25 +120,44 @@ You can set this by:
         if message:
             self.fatal(message + "Can't run download-and-extract... exiting")
 
+    def _download_test_zip(self):
+        dirs = self.query_abs_dirs()
+        file_name = None
+        if self.test_zip_path:
+            file_name = self.test_zip_path
+        source = self.download_file(self.test_url, file_name=file_name,
+                                    parent_dir=dirs['abs_work_dir'],
+                                    error_level=FATAL)
+        self.test_zip_path = os.path.realpath(source)
+
+    def _extract_test_zip(self):
+        dirs = self.query_abs_dirs()
+        unzip = self.query_exe("unzip")
+        test_install_dir = dirs.get('abs_test_install_dir',
+                                    os.path.join(dirs['abs_work_dir'], 'tests'))
+        self.mkdir_p(test_install_dir)
+        # TODO error_list
+        self.run_command([unzip, self.test_zip_path],
+                         cwd=test_install_dir)
+
+    def _download_installer(self):
+        file_name = None
+        if self.installer_path:
+            file_name = self.installer_path
+        dirs = self.query_abs_dirs()
+        source = self.download_file(self.installer_url, file_name=file_name,
+                                    parent_dir=dirs['abs_work_dir'],
+                                    error_level=FATAL)
+        self.installer_path = os.path.realpath(source)
+
     def download_and_extract(self):
         """
         Create virtualenv and install dependencies
         """
-        dirs = self.query_abs_dirs()
         if self.test_url:
-            bundle = self.download_file(self.test_url,
-                                        parent_dir=dirs['abs_work_dir'],
-                                        error_level=FATAL)
-            unzip = self.query_exe("unzip")
-            test_install_dir = dirs.get('abs_test_install_dir',
-                                        os.path.join(dirs['abs_work_dir'], 'tests'))
-            self.mkdir_p(test_install_dir)
-            # TODO error_list
-            self.run_command([unzip, bundle],
-                             cwd=test_install_dir)
-        source = self.download_file(self.installer_url, error_level=FATAL,
-                                    parent_dir=dirs['abs_work_dir'])
-        self.installer_path = os.path.realpath(source)
+            self._download_test_zip()
+            self._extract_test_zip()
+        self._download_installer()
 
 
     # create_virtualenv is in VirtualenvMixin.
