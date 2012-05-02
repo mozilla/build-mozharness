@@ -13,7 +13,7 @@ HG_SHARE_BASE_DIR = "/builds/hg-shared"
 config = {
     "log_name": "single_locale",
     "objdir": OBJDIR,
-    "locales_file": "buildbot-configs/mozilla/l10n-changesets_mobile-beta.json",
+    "locales_file": "buildbot-configs/mozilla/l10n-changesets_mobile-aurora.json",
     "locales_dir": "mobile/android/locales",
     "locales_platform": "android",
     "ignore_locales": ["en-US"],
