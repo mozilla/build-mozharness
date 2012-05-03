@@ -56,6 +56,7 @@ SSHErrorList = BaseErrorList + [
 HgErrorList = BaseErrorList + [
  {'regex': re.compile(r'''^abort:'''), 'level': ERROR},
  {'substr': r'''unknown exception encountered''', 'level': ERROR},
+ {'substr': r'''failed to import extension''', 'level': WARNING},
 ]
 
 PythonErrorList = BaseErrorList + [

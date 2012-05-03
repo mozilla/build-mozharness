@@ -17,7 +17,7 @@ import sys
 sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.dirname(sys.path[0]))))
 
 from mozharness.base.errors import HgErrorList, VCSException
-from mozharness.base.log import LogMixin
+from mozharness.base.log import LogMixin, FATAL
 from mozharness.base.script import ShellMixin, OSMixin
 
 HG_OPTIONS = ['--config', 'ui.merge=internal:merge']
@@ -123,7 +123,7 @@ class MercurialVCS(ShellMixin, OSMixin, LogMixin, object):
         self.debug("Running hg version %s" % str(ver))
         return ver
 
-    def update(self, dest, branch=None, revision=None):
+    def update(self, dest, branch=None, revision=None, error_level=FATAL):
         """Updates working copy `dest` to `branch` or `revision`.
         If revision is set, branch will be ignored.
         If neither is set then the working copy will be updated to the
@@ -139,7 +139,9 @@ class MercurialVCS(ShellMixin, OSMixin, LogMixin, object):
         self.info("%s." % msg)
         if revision is not None:
             cmd = self.hg + ['update', '-C', '-r', revision]
-            self.run_command(cmd, cwd=dest, error_list=HgErrorList)
+            if self.run_command(cmd, cwd=dest, error_list=HgErrorList):
+                self.log("Unable to update %s to %s!" % (dest, revision),
+                         level=error_level)
         else:
             # Check & switch branch
             local_branch = self.get_branch_from_path(dest)
@@ -150,7 +152,8 @@ class MercurialVCS(ShellMixin, OSMixin, LogMixin, object):
             if branch and branch != local_branch:
                 cmd.append(branch)
 
-            self.run_command(cmd, cwd=dest, error_list=HgErrorList)
+            if self.run_command(cmd, cwd=dest, error_list=HgErrorList):
+                self.log("Unable to update %s!" % dest, level=error_level)
         return self.get_revision_from_path(dest)
 
     def clone(self, repo, dest, branch=None, revision=None, update_dest=True):
