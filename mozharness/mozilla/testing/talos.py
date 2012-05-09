@@ -95,6 +95,7 @@ class Talos(TestingMixin, BaseScript):
         if self.results_url is None:
             # use a results_url by default based on the class name in the working directory
             self.results_url = 'file://%s' % os.path.join(self.workdir, self.__class__.__name__.lower() + '.txt')
+        self.installer_url = self.config.get("installer_url")
 
     def _pre_config_lock(self, rw_config):
         """setup and sanity check"""
@@ -108,7 +109,7 @@ class Talos(TestingMixin, BaseScript):
         # binary path
         binary_path = self.binary_path or self.config.get('binary_path')
         if not binary_path:
-            self.error("Talos requires a path to the binary")
+            self.fatal("Talos requires a path to the binary")
 
         # talos options
         options = ['-v', '--develop'] # hardcoded options (for now)
@@ -131,7 +132,7 @@ class Talos(TestingMixin, BaseScript):
 
         # extra arguments
         if args is None:
-            args = self.config.get('perfconfigurator_options', [])
+            args = self.config.get('talos_options', [])
         options += args
 
         return options
