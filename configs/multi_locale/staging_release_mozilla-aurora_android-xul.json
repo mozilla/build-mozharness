@@ -2,7 +2,7 @@
     "work_dir": ".",
     "log_name": "multilocale",
     "objdir": "obj-firefox",
-    "locales_file": "build/configs/mozilla/l10n-changesets_mobile-beta.json",
+    "locales_file": "build/configs/mozilla/l10n-changesets_mobile-aurora.json",
     "locales_platform": "android-multilocale",
     "locales_dir": "mobile/xul/locales",
     "ignore_locales": ["en-US", "multi"],
