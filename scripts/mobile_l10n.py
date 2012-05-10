@@ -298,6 +298,23 @@ class MobileSingleLocale(LocalesMixin, ReleaseMixin, MobileSigningMixin,
                                   c['objdir'])
             self.rmtree(objdir)
 
+    def _setup_configure(self):
+        c = self.config
+        dirs = self.query_abs_dirs()
+        env = self.query_repack_env()
+        make = self.query_exe("make")
+        self.run_command([make, "-f", "client.mk", "configure"],
+                         cwd=dirs['abs_mozilla_dir'],
+                         env=env,
+                         error_list=MakefileErrorList,
+                         halt_on_failure=True)
+        for make_dir in c.get('make_dirs', []):
+            self.run_command([make],
+                             cwd=os.path.join(dirs['abs_objdir'], make_dir),
+                             env=env,
+                             error_list=MakefileErrorList,
+                             halt_on_failure=True)
+
     def setup(self):
         c = self.config
         dirs = self.query_abs_dirs()
@@ -310,17 +327,7 @@ class MobileSingleLocale(LocalesMixin, ReleaseMixin, MobileSigningMixin,
         make = self.query_exe("make")
         self.run_command([cat, mozconfig_path])
         env = self.query_repack_env()
-        self.run_command([make, "-f", "client.mk", "configure"],
-                         cwd=dirs['abs_mozilla_dir'],
-                         env=env,
-                         error_list=MakefileErrorList,
-                         halt_on_failure=True)
-        for make_dir in c.get('make_dirs', []):
-            self.run_command([make],
-                             cwd=os.path.join(dirs['abs_objdir'], make_dir),
-                             env=env,
-                             error_list=MakefileErrorList,
-                             halt_on_failure=True)
+        self._setup_configure()
         self.run_command([make, "wget-en-US"],
                          cwd=dirs['abs_locales_dir'],
                          env=env,
@@ -340,6 +347,8 @@ class MobileSingleLocale(LocalesMixin, ReleaseMixin, MobileSigningMixin,
                          env=env,
                          error_list=BaseErrorList,
                          halt_on_failure=True)
+        # Configure again since the hg update may have invalidated it.
+        self._setup_configure()
 
     def repack(self):
         # TODO per-locale logs and reporting.
