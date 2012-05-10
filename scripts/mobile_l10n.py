@@ -387,13 +387,17 @@ class MobileSingleLocale(LocalesMixin, ReleaseMixin, MobileSigningMixin,
         version = self.query_version()
         upload_env = self.query_upload_env()
         success_count = total_count = 0
+        buildnum = None
+        if c.get('release_config_file'):
+            rc = self.query_release_config()
+            buildnum = rc['buildnum']
         for locale in locales:
             if self.query_failure(locale):
                 self.warning("Skipping previously failed locale %s." % locale)
                 continue
             total_count += 1
             if c.get('base_post_upload_cmd'):
-                upload_env['POST_UPLOAD_CMD'] = c['base_post_upload_cmd'] % {'version': version, 'locale': locale}
+                upload_env['POST_UPLOAD_CMD'] = c['base_post_upload_cmd'] % {'version': version, 'locale': locale, 'buildnum': str(buildnum)}
             output = self.get_output_from_command(
                 # Ugly hack to avoid |make upload| stderr from showing up
                 # as get_output_from_command errors

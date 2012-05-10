@@ -58,7 +58,7 @@ config = {
         "UPLOAD_TO_TEMP": "1",
         "MOZ_PKG_VERSION": "%(version)s",
     },
-    "base_post_upload_cmd": "post_upload.py -p mobile -n 1 -v %(version)s --builddir android/%(locale)s --release-to-mobile-candidates-dir --nightly-dir=candidates",
+    "base_post_upload_cmd": "post_upload.py -p mobile -n %(buildnum)s -v %(version)s --builddir android/%(locale)s --release-to-mobile-candidates-dir --nightly-dir=candidates",
     "merge_locales": True,
     "make_dirs": ['config'],
     "mozilla_dir": MOZILLA_DIR,
