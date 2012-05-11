@@ -29,6 +29,8 @@ config = {
     "tracer_interval": 10,
     # URL or path to the symbols directory for debugging crashes
     "symbols_path": None,
+    # number of times the entire test suite is run
+    "iterations": 10,
 
     "exes": {
         'python': '/tools/buildbot/bin/python',

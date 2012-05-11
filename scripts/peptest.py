@@ -189,6 +189,8 @@ class PepTest(TestingMixin, MercurialScript):
         if (self.config.get('log_level') in
                            ['debug', 'info', 'warning', 'error']):
             cmd.extend(['--log-level', self.config['log_level'].upper()])
+        if self.config.get('iterations'):
+            cmd.extend(self._build_arg('--iterations', self.config.get('iterations')))
 
         code = self.run_command(cmd, error_list=error_list)
         # get status and set summary
