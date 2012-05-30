@@ -78,7 +78,7 @@ VirtualenvErrorList = [
 
 # We may need to have various MakefileErrorLists for differing amounts of
 # warning-ignoring-ness.
-MakefileErrorList = BaseErrorList + [
+MakefileErrorList = BaseErrorList + PythonErrorList + [
  {'substr': r'''No rule to make target ''', 'level': ERROR},
  {'regex': re.compile(r'''akefile.*was not found\.'''), 'level': ERROR},
  {'regex': re.compile(r'''Stop\.$'''), 'level': ERROR},

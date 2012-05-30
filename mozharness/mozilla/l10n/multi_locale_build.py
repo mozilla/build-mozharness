@@ -14,7 +14,7 @@ import sys
 
 sys.path.insert(1, os.path.dirname(os.path.dirname(sys.path[0])))
 
-from mozharness.base.errors import MakefileErrorList
+from mozharness.base.errors import MakefileErrorList, SSHErrorList
 from mozharness.base.log import FATAL
 from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.l10n.locales import LocalesMixin
@@ -96,6 +96,8 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
                                               'pull-locale-source',
                                               'build', 'package-en-US',
                                               'upload-en-US',
+                                              'backup-objdir',
+                                              'restore-objdir',
                                               'add-locales', 'package-multi',
                                               'upload-multi'],
                                  require_config_file=require_config_file)
@@ -133,9 +135,10 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
                       error_level=FATAL)
         command = "make -f client.mk build"
         env = self.query_env()
-        self._process_command(command=command, cwd=dirs['abs_mozilla_dir'],
-                              env=env, error_list=MakefileErrorList,
-                              halt_on_failure=True)
+        if self._process_command(command=command,
+                                 cwd=dirs['abs_mozilla_dir'],
+                                 env=env, error_list=MakefileErrorList):
+            self.fatal("Erroring out after the build failed.")
 
     def add_locales(self):
         c = self.config
@@ -204,6 +207,32 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
     def upload_en_US(self):
         # TODO
         self.info("Not written yet.")
+
+    def backup_objdir(self):
+        dirs = self.query_abs_dirs()
+        if not os.path.isdir(dirs['abs_objdir']):
+            self.warning("%s doesn't exist! Skipping..." % dirs['abs_objdir'])
+            return
+        rsync = self.query_exe('rsync')
+        backup_dir = '%s-bak' % dirs['abs_objdir']
+        self.rmtree(backup_dir)
+        self.mkdir_p(backup_dir)
+        self.run_command([rsync, '-a', '--delete', '--partial',
+                          '%s/' % dirs['abs_objdir'],
+                          '%s/' % backup_dir],
+                         error_list=SSHErrorList)
+
+    def restore_objdir(self):
+        dirs = self.query_abs_dirs()
+        rsync = self.query_exe('rsync')
+        backup_dir = '%s-bak' % dirs['abs_objdir']
+        if not os.path.isdir(dirs['abs_objdir']) or not os.path.isdir(backup_dir):
+            self.warning("Both %s and %s need to exist to restore the objdir! Skipping..." % dirs['abs_objdir'], backup_dir)
+            return
+        self.run_command([rsync, '-a', '--delete', '--partial',
+                          '%s/' % backup_dir,
+                          '%s/' % dirs['abs_objdir']],
+                         error_list=SSHErrorList)
 
     def upload_multi(self):
         # TODO

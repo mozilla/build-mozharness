@@ -125,8 +125,11 @@ class LocalesMixin(ChunkingMixin):
             dirs['abs_l10n_dir'] = os.path.join(dirs['abs_work_dir'],
                                                 c['l10n_dir'])
         if 'objdir' in c:
-            dirs['abs_objdir'] = os.path.join(dirs['abs_mozilla_dir'],
-                                              c['objdir'])
+            if os.path.isabs(c['objdir']):
+                dirs['abs_objdir'] = c['objdir']
+            else:
+                dirs['abs_objdir'] = os.path.join(dirs['abs_mozilla_dir'],
+                                                  c['objdir'])
             dirs['abs_merge_dir'] = os.path.join(dirs['abs_objdir'],
                                                  'merged')
             dirs['abs_locales_dir'] = os.path.join(dirs['abs_objdir'],
