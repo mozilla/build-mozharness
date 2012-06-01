@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 ADDITIONAL_LOCALES = ["en-US", "multi"]
-TAG = "default"
+# override tag for all repos
+TAG = None
 #AUS_SERVER = "dev-stage01.build.mozilla.org"
 AUS_SERVER = "aus3-staging.mozilla.org"
 #FTP_SERVER = "dev-stage01.build.mozilla.org"
@@ -112,8 +113,10 @@ config = {
     "repos": [{
         "repo": "http://hg.mozilla.org/%(user_repo_override)s/tools",
         "dest": "tools",
+        "revision": "default",
     },{
         "repo": "http://hg.mozilla.org/%(user_repo_override)s/buildbot-configs",
         "dest": "buildbot-configs",
+        "revision": "production",
     }],
 }
