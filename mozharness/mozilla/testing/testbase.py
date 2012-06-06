@@ -164,7 +164,10 @@ You can set this by:
 
     def preflight_install(self):
         if not self.installer_path:
-            self.fatal("""installer_path isn't set!
+            if self.config.get('installer_path'):
+                self.installer_path = self.config['installer_path']
+            else:
+                self.fatal("""installer_path isn't set!
 
 You can set this by:
 
