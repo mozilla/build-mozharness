@@ -12,6 +12,7 @@ import shutil
 import sys
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 from mozharness.base.vcs.vcsbase import MercurialScript
+from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_WARNING
 from mozharness.mozilla.testing.talos import Talos
 
 class JetPerf(Talos, MercurialScript):
@@ -50,7 +51,9 @@ class JetPerf(Talos, MercurialScript):
                        'create-virtualenv',
                        'install',
                        'test',
-                       'baseline']
+                       'baseline',
+                       'report-tbpl-status'
+                       ]
 
     default_repos = [{
             "repo": 'http://hg.mozilla.org/projects/addon-sdk',
@@ -78,6 +81,12 @@ class JetPerf(Talos, MercurialScript):
 
         # ensure we have tests
         self.preflight_generate_config()
+
+    def results_filename(self):
+        """return the results file path from self.results_url"""
+        if not self.results_url.startswith('file://'):
+            return None
+        return self.results_url[len('file://'):]
 
     def pull(self):
         """clone the needed repositories"""
@@ -204,8 +213,8 @@ class JetPerf(Talos, MercurialScript):
         self.run_talos('jetperf', *args)
 
         # print the results file location if it is a file
-        if self.results_url.startswith('file://'):
-            filename = self.results_url[len('file://'):]
+        filename = self.results_filename()
+        if filename:
             if not os.path.exists(filename):
                 self.fatal("Results file not found: %s" % filename)
 
@@ -221,6 +230,20 @@ class JetPerf(Talos, MercurialScript):
         if not os.path.exists(filename):
             self.fatal("Results file not found: %s" % filename)
 
+    def report_tbpl_status(self):
+        tbpl_status = TBPL_SUCCESS
+        missing = []
+        if 'test' in self.actions:
+            filename = self.results_filename()
+            if filename and not os.path.exists(filename):
+                missing.append(filename)
+        if 'baseline' in self.actions:
+            if not os.path.exists(self.baseline_results_filename()):
+                missing.append(filename)
+        if missing:
+            tbpl_status = TBPL_WARNING
+            self.warning('Missing results files: %s' % ', '.join(missing))
+        self.buildbot_status(tbpl_status)
 
 def main(args=sys.argv[1:]):
     """CLI entry point"""
