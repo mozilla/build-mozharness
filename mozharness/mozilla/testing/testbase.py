@@ -149,6 +149,7 @@ You can set this by:
                                     parent_dir=dirs['abs_work_dir'],
                                     error_level=FATAL)
         self.installer_path = os.path.realpath(source)
+        self.set_buildbot_property("build_url", self.installer_url, write_to_file=True)
 
     def download_and_extract(self):
         """
