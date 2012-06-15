@@ -321,7 +321,7 @@ class ShellMixin(object):
             self.env = env
         return env
 
-    def query_exe(self, exe_name, exe_dict='exes'):
+    def query_exe(self, exe_name, exe_dict='exes', default=None):
         """One way to work around PATH rewrites.
 
         By default, return exe_name, and we'll fall through to searching
@@ -331,7 +331,9 @@ class ShellMixin(object):
 
         If we need runtime setting, we can build in self.exes support later.
         """
-        return self.config.get(exe_dict, {}).get(exe_name, exe_name)
+        if default is None:
+            default = exe_name
+        return self.config.get(exe_dict, {}).get(exe_name, default)
 
     def run_command(self, command, cwd=None, error_list=None, parse_at_end=False,
                     halt_on_failure=False, success_codes=None,
