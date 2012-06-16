@@ -165,8 +165,6 @@ class Talos(TestingMixin, BaseScript):
         # https://bugzilla.mozilla.org/show_bug.cgi?id=704654
         # is not fixed first
         PerfConfigurator = self.query_python_path('PerfConfigurator')
-        if not os.path.exists(PerfConfigurator):
-            self.fatal("PerfConfigurator not found")
 
         # get command line for PerfConfigurator
         if options is None:
@@ -188,8 +186,6 @@ class Talos(TestingMixin, BaseScript):
 
         # run talos tests
         talos = self.query_python_path('talos')
-        if not os.path.exists(talos):
-            self.fatal("talos script not found")
         command = [talos, '--noisy', talos_conf_path]
         self.return_code = self.run_command(command, cwd=self.workdir,
                                             error_list=TalosErrorList)
