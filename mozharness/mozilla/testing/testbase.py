@@ -182,13 +182,17 @@ Did you run with --create-virtualenv? Is mozinstall in virtualenv_modules?""")
     def install(self):
         """ Dependent on mozinstall """
         # install the application
-        mozinstall = self.query_python_path("mozinstall")
+        mozinstall = self.query_exe("mozinstall", default=self.query_python_path("mozinstall"))
+        if isinstance(mozinstall, list):
+            cmd = mozinstall[:]
+        else:
+            cmd = [mozinstall]
         dirs = self.query_abs_dirs()
         target_dir = dirs.get('abs_app_install_dir',
                               os.path.join(dirs['abs_work_dir'],
                              'application'))
         self.mkdir_p(target_dir)
-        cmd = [mozinstall, '--source', self.installer_path]
-        cmd.extend(['--destination', target_dir])
+        cmd.extend(['--source', self.installer_path,
+                    '--destination', target_dir])
         # TODO we'll need some error checking here
         self.binary_path = self.get_output_from_command(cmd)
