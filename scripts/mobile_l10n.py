@@ -303,11 +303,11 @@ class MobileSingleLocale(LocalesMixin, ReleaseMixin, MobileSigningMixin,
         dirs = self.query_abs_dirs()
         env = self.query_repack_env()
         make = self.query_exe("make")
-        self.run_command([make, "-f", "client.mk", "configure"],
-                         cwd=dirs['abs_mozilla_dir'],
-                         env=env,
-                         error_list=MakefileErrorList,
-                         halt_on_failure=True)
+        if self.run_command([make, "-f", "client.mk", "configure"],
+                            cwd=dirs['abs_mozilla_dir'],
+                            env=env,
+                            error_list=MakefileErrorList):
+            self.fatal("Configure failed!")
         for make_dir in c.get('make_dirs', []):
             self.run_command([make],
                              cwd=os.path.join(dirs['abs_objdir'], make_dir),
