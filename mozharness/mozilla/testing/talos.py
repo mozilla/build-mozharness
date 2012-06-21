@@ -130,6 +130,10 @@ class Talos(TestingMixin, BaseScript):
         for key, value in kw_options.items():
             options.extend(['--%s' % key, value])
 
+        # add datazilla results urls
+        for url in self.config.get('datazilla_urls', []):
+            options.extend(['--datazilla-url', url])
+
         # extra arguments
         if args is None:
             args = self.config.get('talos_options', [])
