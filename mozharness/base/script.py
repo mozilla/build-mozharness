@@ -321,7 +321,8 @@ class ShellMixin(object):
             self.env = env
         return env
 
-    def query_exe(self, exe_name, exe_dict='exes', default=None):
+    def query_exe(self, exe_name, exe_dict='exes', default=None,
+                  return_type=None, error_level=FATAL):
         """One way to work around PATH rewrites.
 
         By default, return exe_name, and we'll fall through to searching
@@ -329,11 +330,28 @@ class ShellMixin(object):
         However, if self.config[exe_dict][exe_name] exists, return that.
         This lets us override exe paths via config file.
 
+        'return_type' can be None (don't do anything to the value),
+        'list' (return a list), or 'string' (return a string).
+
         If we need runtime setting, we can build in self.exes support later.
         """
         if default is None:
             default = exe_name
-        return self.config.get(exe_dict, {}).get(exe_name, default)
+        exe = self.config.get(exe_dict, {}).get(exe_name, default)
+        if isinstance(exe, list):
+            exe = exe[:]
+        elif not isinstance(exe, str):
+            self.log("query_exe: %s is not a string or list: %s!" % (exe_name, str(exe)), level=error_level)
+            return exe
+        if return_type == "list":
+            if isinstance(exe, str):
+                exe = [exe]
+        elif return_type == "string":
+            if isinstance(exe, list):
+                exe = subprocess.list2cmdline(exe)
+        elif return_type is not None:
+            self.log("Unknown return_type type %s requested in query_exe!" % return_type, level=error_level)
+        return exe
 
     def run_command(self, command, cwd=None, error_list=None, parse_at_end=False,
                     halt_on_failure=False, success_codes=None,

@@ -162,11 +162,7 @@ class VirtualenvMixin(object):
         elif install_method == 'easy_install':
             # Allow easy_install to be overridden by
             # self.config['exes']['easy_install']
-            easy_install = self.query_exe('easy_install', default=self.query_python_path('easy_install'))
-            if isinstance(easy_install, list):
-                command = easy_install[:]
-            else:
-                command = [easy_install]
+            command = self.query_exe('easy_install', default=self.query_python_path('easy_install'), return_type="list")
         else:
             self.fatal("install_module() doesn't understand an install_method of %s!" % install_method)
 
