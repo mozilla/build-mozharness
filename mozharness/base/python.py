@@ -32,6 +32,12 @@ virtualenv_config_options = [[
   "dest": "pypi_url",
   "help": "Base URL of Python Package Index (default http://pypi.python.org/simple/)"
   }
+],
+[["--find-links"],
+{"action": "extend",
+ "dest": "find_links",
+ "help": "URL to look for packages at"
+}
 ]]
 
 class VirtualenvMixin(object):
@@ -163,6 +169,11 @@ class VirtualenvMixin(object):
                 command = [easy_install]
         else:
             self.fatal("install_module() doesn't understand an install_method of %s!" % install_method)
+
+        # Add --find-links pages to look at
+        for link in c.get('find_links', []):
+            command.extend(["--find-links", link])
+
         # Allow for errors while building modules, but require a
         # return status of 0.
         if self.run_command(command + [module_url],
