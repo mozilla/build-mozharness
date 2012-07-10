@@ -1,4 +1,4 @@
-BRANCH = "mozilla-beta"
+BRANCH = "mozilla-release"
 MOZ_UPDATE_CHANNEL = "release"
 MOZILLA_DIR = BRANCH
 JAVA_HOME = "/tools/jdk6"
@@ -19,7 +19,7 @@ config = {
     "locales_platform": "android",
     "ignore_locales": ["en-US"],
     "repos": [{
-        "repo": "http://hg.mozilla.org/releases/mozilla-beta",
+        "repo": "http://hg.mozilla.org/releases/mozilla-release",
         "revision": "default",
         "dest": MOZILLA_DIR,
     },{
