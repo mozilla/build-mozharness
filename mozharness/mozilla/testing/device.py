@@ -18,7 +18,7 @@ import sys
 import time
 
 from mozharness.base.errors import ADBErrorList
-from mozharness.base.log import LogMixin, DEBUG, FATAL
+from mozharness.base.log import LogMixin, DEBUG
 from mozharness.base.script import ShellMixin, OSMixin
 
 
@@ -438,7 +438,7 @@ class SUTDeviceHandler(BaseDeviceHandler):
         self.default_port = 20701
         self.default_heartbeat_port = 20700
 
-    def query_devicemanager(self, error_level=FATAL):
+    def query_devicemanager(self):
         if self.devicemanager:
             return self.devicemanager
         c = self.config
@@ -453,7 +453,7 @@ class SUTDeviceHandler(BaseDeviceHandler):
             # TODO configurable?
             self.devicemanager.debug = c.get('devicemanager_debug_level', 0)
         except ImportError, e:
-            self.fatal("Can't import DeviceManagerSUT! %s\nDid you check out talos?" % str(e), level=error_level)
+            self.fatal("Can't import DeviceManagerSUT! %s\nDid you check out talos?" % str(e))
         return self.devicemanager
 
     # maintenance {{{2
@@ -546,7 +546,7 @@ class SUTDeviceHandler(BaseDeviceHandler):
         if not dev_root:
             self.add_device_flag(DEVICE_UNREACHABLE)
             # TODO wait_for_device?
-            self.fatal("dev_root %s not correct!" % str(dev_root))        
+            self.fatal("dev_root %s not correct!" % str(dev_root))
 
         dm = self.query_devicemanager()
 
@@ -582,7 +582,7 @@ class SUTDeviceHandler(BaseDeviceHandler):
                 self.fatal("Remote Device Error: can't run logcat")
         else:
             self.fatal("Remote Device Error: updateApp() call failed - exiting")
-        
+
 
     def reboot_device(self):
         dm = self.query_devicemanager()
@@ -598,6 +598,7 @@ class SUTDeviceHandler(BaseDeviceHandler):
     # device type specific {{{2
     def remove_etc_hosts(self, hosts_file="/system/etc/hosts"):
         c = self.config
+        # TODO figure this out
         if c['device_type'] not in ("tegra250",) or True:
             self.debug("No need to remove /etc/hosts on a non-Tegra250.")
             return

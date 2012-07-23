@@ -39,7 +39,7 @@ class DeviceTalosRunner(DeviceMixin, Talos):
                       'unpack',
                       'pre-cleanup-device',
                       'install-app',
-                      'generate_config',
+                      'generate-config',
                       'run-tests',
                       'post-cleanup-device',
 #                      'upload',
@@ -54,7 +54,7 @@ class DeviceTalosRunner(DeviceMixin, Talos):
                           'download',
                           'unpack',
                           'install-app',
-                          'generate_config',
+                          'generate-config',
                           'run-tests',
                           'post-cleanup-device',
                          ],
@@ -107,8 +107,7 @@ class DeviceTalosRunner(DeviceMixin, Talos):
                          cwd=dirs['abs_application_dir'])
         inifile = os.path.join(dirs['abs_application_dir'], 'application.ini')
         remoteappini = os.path.join(dirs['abs_work_dir'], 'remoteapp.ini')
-        self.info('copying %s to %s' % (inifile, remoteappini))
-        self.run_command(['cp', inifile, remoteappini])
+        self.copyfile(inifile, remoteappini)
 
     # TODO install_app defined in DeviceMixin
 

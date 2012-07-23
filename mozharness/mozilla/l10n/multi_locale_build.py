@@ -227,7 +227,7 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
         rsync = self.query_exe('rsync')
         backup_dir = '%s-bak' % dirs['abs_objdir']
         if not os.path.isdir(dirs['abs_objdir']) or not os.path.isdir(backup_dir):
-            self.warning("Both %s and %s need to exist to restore the objdir! Skipping..." % dirs['abs_objdir'], backup_dir)
+            self.warning("Both %s and %s need to exist to restore the objdir! Skipping..." % (dirs['abs_objdir'], backup_dir))
             return
         self.run_command([rsync, '-a', '--delete', '--partial',
                           '%s/' % backup_dir,
