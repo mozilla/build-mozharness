@@ -5,6 +5,9 @@
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 # ***** END LICENSE BLOCK *****
 """Mercurial VCS support.
+
+Largely copied/ported from
+http://hg.mozilla.org/build/tools/file/cf265ea8fb5e/lib/python/util/hg.py .
 """
 
 import os
@@ -365,7 +368,7 @@ class MercurialVCS(ShellMixin, OSMixin, LogMixin, object):
                 try:
                     self.pull(repo, shared_repo)
                 except subprocess.CalledProcessError:
-                    self.warning("Error pulling changes into %s form %s; clobbering" % (shared_repo, repo))
+                    self.warning("Error pulling changes into %s from %s; clobbering" % (shared_repo, repo))
                     self.dump_exception(level='debug')
                     self.clone(repo, shared_repo)
             else:
@@ -447,7 +450,7 @@ class MercurialVCS(ShellMixin, OSMixin, LogMixin, object):
                 self.pull(repo, dest)
                 return self.update(dest, branch=branch, revision=revision)
             except subprocess.CalledProcessError:
-                self.warning("Error pulling changes into %s form %s; clobbering" % (dest, repo))
+                self.warning("Error pulling changes into %s from %s; clobbering" % (dest, repo))
                 self.dump_exception(level='debug')
                 self.rmtree(dest)
         elif not os.path.exists(os.path.dirname(dest)):

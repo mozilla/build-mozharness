@@ -6,11 +6,8 @@
 # ***** END LICENSE BLOCK *****
 """Generic script objects.
 
-TODO: The various mixins assume that they're used by BaseScript.
-Either every child object will need self.config, or these need some
-work.
-
-TODO: The mixin names kind of need work too?
+script.py, along with config.py and log.py, represents the core of
+mozharness.
 """
 
 import codecs
@@ -369,6 +366,7 @@ class ShellMixin(object):
          {'regex': re.compile('^Error:'), level=ERROR, contextLines='5:5'},
          {'substr': 'THE WORLD IS ENDING', level=FATAL, contextLines='20:'}
         ]
+        (context_lines isn't written yet)
         """
         if error_list is None:
             error_list = []
@@ -418,7 +416,8 @@ class ShellMixin(object):
 
     def get_output_from_command(self, command, cwd=None,
                                 halt_on_failure=False, env=None,
-                                silent=False, tmpfile_base_path='tmpfile',
+                                silent=False, log_level=INFO,
+                                tmpfile_base_path='tmpfile',
                                 return_type='output', save_tmpfiles=False,
                                 throw_exception=False):
         """Similar to run_command, but where run_command is an
@@ -441,7 +440,7 @@ class ShellMixin(object):
                     level = FATAL
                 self.log("Can't run command %s in non-existent directory %s!" % \
                          (command, cwd), level=level)
-                return -1
+                return None
             self.info("Getting output from command: %s in %s" % (command, cwd))
         else:
             self.info("Getting output from command: %s" % command)
@@ -463,7 +462,7 @@ class ShellMixin(object):
                 level = FATAL
             self.log("Can't open %s for writing!" % tmp_stdout_filename + \
                      self.dump_exception(), level=level)
-            return -1
+            return None
         try:
             tmp_stderr = open(tmp_stderr_filename, 'w')
         except IOError:
@@ -472,7 +471,7 @@ class ShellMixin(object):
                 level = FATAL
             self.log("Can't open %s for writing!" % tmp_stderr_filename + \
                      self.dump_exception(), level=level)
-            return -1
+            return None
         shell = True
         if isinstance(command, list):
             shell = False
@@ -488,13 +487,13 @@ class ShellMixin(object):
             output = self.read_from_file(tmp_stdout_filename,
                                          verbose=False)
             if not silent:
-                self.info("Output received:")
+                self.log("Output received:", level=log_level)
                 output_lines = output.rstrip().splitlines()
                 for line in output_lines:
                     if not line or line.isspace():
                         continue
                     line = line.decode("utf-8")
-                    self.info(' %s' % line)
+                    self.log(' %s' % line, level=log_level)
                 output = '\n'.join(output_lines)
         if os.path.exists(tmp_stderr_filename) and os.path.getsize(tmp_stderr_filename):
             return_level = ERROR
@@ -563,12 +562,20 @@ class BaseScript(ShellMixin, OSMixin, LogMixin, object):
         self.info("Run as %s" % rw_config.command_line)
 
     def _pre_config_lock(self, rw_config):
+        """This empty method can allow for config checking and manipulation
+        before the config lock, when overridden in scripts.
+        """
         pass
 
     def _config_lock(self):
+        """After this point, the config is locked and should not be
+        manipulated (based on mozharness.base.config.ReadOnlyDict)
+        """
         self.config.lock()
 
     def _possibly_run_method(self, method_name, error_if_missing=False):
+        """This is here for run().
+        """
         if hasattr(self, method_name) and callable(getattr(self, method_name)):
             return getattr(self, method_name)()
         elif error_if_missing:
@@ -611,7 +618,8 @@ class BaseScript(ShellMixin, OSMixin, LogMixin, object):
             self.copy_to_upload_dir(os.path.join(dirs['abs_log_dir'], log_file),
                                     dest=os.path.join('logs', log_file),
                                     short_desc='%s log' % log_name,
-                                    long_desc='%s log' % log_name)
+                                    long_desc='%s log' % log_name,
+                                    rotate=True)
         sys.exit(self.return_code)
 
     def clobber(self):
@@ -622,6 +630,16 @@ class BaseScript(ShellMixin, OSMixin, LogMixin, object):
         self.rmtree(dirs['abs_work_dir'])
 
     def query_abs_dirs(self):
+        """We want to be able to determine where all the important things
+        are.  Absolute paths lend themselves well to this, though I wouldn't
+        be surprised if this causes some issues somewhere.
+
+        This should be overridden in any script that has additional dirs
+        to query.
+
+        The query_* methods tend to set self.VAR variables as their
+        runtime cache.
+        """
         if self.abs_dirs:
             return self.abs_dirs
         c = self.config
@@ -633,6 +651,8 @@ class BaseScript(ShellMixin, OSMixin, LogMixin, object):
         return self.abs_dirs
 
     def dump_config(self, file_path=None):
+        """Dump self.config to localconfig.json
+        """
         dirs = self.query_abs_dirs()
         if not file_path:
             file_path = os.path.join(dirs['abs_log_dir'], "localconfig.json")
@@ -673,6 +693,11 @@ class BaseScript(ShellMixin, OSMixin, LogMixin, object):
         self.info("#####")
 
     def summary(self):
+        """Print out all the summary lines added via add_summary()
+        throughout the script.
+
+        I'd like to revisit how to do this in a prettier fashion.
+        """
         self.action_message("%s summary:" % self.__class__.__name__)
         if self.summary_list:
             for item in self.summary_list:
@@ -741,16 +766,16 @@ class BaseScript(ShellMixin, OSMixin, LogMixin, object):
                 return -1
             if rotate:
                 # Probably a better way to do this
-                oldest_backup = None
+                oldest_backup = 0
                 backup_regex = re.compile("^%s\.(\d+)$" % dest_file)
                 for filename in os.listdir(dest_dir):
                     r = backup_regex.match(filename)
-                    if r and r.groups()[0] > oldest_backup:
-                        oldest_backup = r.groups()[0]
+                    if r and int(r.groups()[0]) > oldest_backup:
+                        oldest_backup = int(r.groups()[0])
                 for backup_num in range(oldest_backup, 0, -1):
                     # TODO more error checking?
                     if backup_num >= max_backups:
-                        self.rmtree(os.path.join(dest_dir, dest_file, backup_num),
+                        self.rmtree(os.path.join(dest_dir, dest_file, str(backup_num)),
                                     log_level=log_level)
                     else:
                         self.move(os.path.join(dest_dir, dest_file, '.%d' % backup_num),

@@ -190,6 +190,6 @@ class Talos(TestingMixin, BaseScript):
 
         # run talos tests
         talos = self.query_python_path('talos')
-        command = [talos, '--noisy', talos_conf_path]
+        command = [talos, '--noisy', '--debug', talos_conf_path]
         self.return_code = self.run_command(command, cwd=self.workdir,
                                             error_list=TalosErrorList)

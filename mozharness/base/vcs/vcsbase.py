@@ -24,7 +24,12 @@ VCS_DICT = {
 
 # VCSMixin {{{1
 class VCSMixin(object):
+    """Basic VCS methods that are vcs-agnostic.
+    The vcs_class handles all the vcs-specific tasks.
+    """
     def vcs_checkout(self, vcs=None, **kwargs):
+        """ Check out a single repo.
+        """
         c = self.config
         if not vcs:
             if c.get('default_vcs'):
@@ -56,6 +61,8 @@ class VCSMixin(object):
 
     def vcs_checkout_repos(self, repo_list, parent_dir=None,
                            tag_override=None, **kwargs):
+        """Check out a list of repos.
+        """
         orig_dir = os.getcwd()
         c = self.config
         if not parent_dir:

@@ -7,8 +7,9 @@
 """configtest.py
 
 Verify the .json and .py files in the configs/ directory are well-formed.
-
 Further tests to verify validity would be desirable.
+
+This is also a good example script to look at to understand mozharness.
 """
 
 import os
@@ -45,6 +46,10 @@ class ConfigTest(BaseScript):
                             require_config_file=require_config_file)
 
     def query_config_files(self):
+        """This query method, much like others, caches its runtime
+        settings in self.VAR so we don't have to figure out config_files
+        multiple times.
+        """
         if self.config_files:
             return self.config_files
         c = self.config
@@ -64,6 +69,9 @@ class ConfigTest(BaseScript):
         return self.config_files
 
     def list_config_files(self):
+        """ Non-default action that is mainly here to demonstrate how
+        non-default actions work in a mozharness script.
+        """
         config_files = self.query_config_files()
         for config_file in config_files:
             self.info(config_file)
