@@ -202,6 +202,12 @@ class SignAndroid(LocalesMixin, ReleaseMixin, MobileSigningMixin,
         s = "%s:%s" % (platform, locale)
         return super(SignAndroid, self).query_failure(s)
 
+    def query_platform_locales(self, platform):
+        return self.config['platform_config'][platform].get('locales', self.query_locales())
+
+    def query_platform_apk_base_name(self, platform):
+        return self.config['platform_config'][platform].get('apk_base_name', self.config['apk_base_name'])
+
     # Actions {{{2
 
     # passphrase() is in AndroidSigningMixin
@@ -228,17 +234,17 @@ class SignAndroid(LocalesMixin, ReleaseMixin, MobileSigningMixin,
         c = self.config
         rc = self.query_release_config()
         dirs = self.query_abs_dirs()
-        locales = self.query_locales()
-        base_url = c['download_base_url'] + '/' + \
-                   c['download_unsigned_base_subdir'] + '/' + \
-                   c.get('unsigned_apk_base_name', 'gecko-unsigned-unaligned.apk')
         replace_dict = {
             'buildnum': rc['buildnum'],
             'version': rc['version'],
         }
         success_count = total_count = 0
         for platform in c['platforms']:
+            base_url = c['download_base_url'] + '/' + \
+                       c['download_unsigned_base_subdir'] + '/' + \
+                       self.query_platform_apk_base_name(platform)
             replace_dict['platform'] = platform
+            locales = self.query_platform_locales(platform)
             for locale in locales:
                 replace_dict['locale'] = locale
                 url = base_url % replace_dict
@@ -276,17 +282,16 @@ class SignAndroid(LocalesMixin, ReleaseMixin, MobileSigningMixin,
         c = self.config
         rc = self.query_release_config()
         dirs = self.query_abs_dirs()
-        locales = self.query_locales()
         success_count = total_count = 0
         for platform in c['platforms']:
+            locales = self.query_platform_locales(platform)
             for locale in locales:
                 if self.query_failure(platform, locale):
                     self.warning("%s:%s had previous issues; skipping!" % (platform, locale))
                     continue
                 unsigned_path = '%s/unsigned/%s/%s/gecko.ap_' % (dirs['abs_work_dir'], platform, locale)
                 signed_dir = '%s/signed/%s/%s' % (dirs['abs_work_dir'], platform, locale)
-                signed_file_name = c['apk_base_name'] % {'version': rc['version'],
-                                                         'locale': locale}
+                signed_file_name = self.query_platform_apk_base_name(platform) % {'version': rc['version'], 'locale': locale}
                 signed_path = "%s/%s" % (signed_dir, signed_file_name)
                 total_count += 1
                 self.info("Signing %s %s." % (platform, locale))
@@ -313,9 +318,9 @@ class SignAndroid(LocalesMixin, ReleaseMixin, MobileSigningMixin,
             self.info("Signing partner repacks.")
             for partner in c.get("partners", []):
                 for platform in c.get("partner_platforms", []):
+                    locales = self.query_platform_locales(platform)
                     for locale in locales:
-                        file_name = c['apk_base_name'] % {'version': rc['version'],
-                                                          'locale': locale}
+                        file_name = self.query_platform_apk_base_name(platform) % {'version': rc['version'], 'locale': locale}
                         unsigned_path = '%s/unsigned/partner-repacks/%s/%s/%s/%s' % (dirs['abs_work_dir'], partner, platform, locale, file_name)
                         signed_dir = '%s/signed/partner-repacks/%s/%s/%s' % (dirs['abs_work_dir'], partner, platform, locale)
                         signed_path = '%s/%s' % (signed_dir, file_name)
@@ -344,16 +349,15 @@ class SignAndroid(LocalesMixin, ReleaseMixin, MobileSigningMixin,
         c = self.config
         rc = self.query_release_config()
         dirs = self.query_abs_dirs()
-        locales = self.query_locales()
         env = self.query_env(partial_env=c.get("env"))
         for platform in c['platforms']:
+            locales = self.query_platform_locales(platform)
             for locale in locales:
                 if self.query_failure(platform, locale):
                     self.warning("%s:%s had previous issues; skipping!" % (platform, locale))
                     continue
                 signed_path = 'signed/%s/%s/%s' % (platform, locale,
-                    c['apk_base_name'] % {'version': rc['version'],
-                                          'locale': locale})
+                    self.query_platform_apk_base_name(platform) % {'version': rc['version'], 'locale': locale})
                 if not os.path.exists(os.path.join(dirs['abs_work_dir'],
                                                    signed_path)):
                     self.add_failure(platform, locale,
@@ -393,7 +397,6 @@ class SignAndroid(LocalesMixin, ReleaseMixin, MobileSigningMixin,
         c = self.config
         rc = self.query_release_config()
         dirs = self.query_abs_dirs()
-        locales = self.query_locales()
         replace_dict = {
             'version': rc['version'],
             'buildnum': rc['buildnum'],
@@ -410,6 +413,7 @@ class SignAndroid(LocalesMixin, ReleaseMixin, MobileSigningMixin,
                 continue
             replace_dict['platform'] = platform
             replace_dict['buildid'] = buildid
+            locales = self.query_platform_locales(platform)
             for locale in locales:
                 if self.query_failure(platform, locale):
                     self.warning("%s:%s had previous issues; skipping!" % (platform, locale))
@@ -417,7 +421,7 @@ class SignAndroid(LocalesMixin, ReleaseMixin, MobileSigningMixin,
                 replace_dict['locale'] = locale
                 parent_dir = '%s/%s/%s' % (dirs['abs_work_dir'],
                                            platform, locale)
-                replace_dict['apk_name'] = c['apk_base_name'] % replace_dict
+                replace_dict['apk_name'] = self.query_platform_apk_base_name(platform) % replace_dict
                 signed_path = '%s/%s' % (parent_dir, replace_dict['apk_name'])
                 if not os.path.exists(signed_path):
                     self.add_summary("Unable to create snippet for %s:%s: apk doesn't exist!" % (platform, locale), level=ERROR)

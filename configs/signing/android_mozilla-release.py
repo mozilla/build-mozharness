@@ -46,10 +46,22 @@ config = {
     "locales_file": "buildbot-configs/mozilla/l10n-changesets_mobile-release.json",
     "release_config_file": "buildbot-configs/mozilla/release-fennec-mozilla-release.py",
 
-    "platforms": ['android-xul'],
+    "platforms": ['android', 'android-xul'],
+    "platform_config": {
+        'android': {},
+        'android-xul': {
+            'locales': ['en-US', 'multi'],
+        },
+        'android-armv6': {
+            'locales': ['en-US'],
+            'apk_base_name': "fennec-%(version)s.%(locale)s.android-arm-armv6.apk"
+        },
+    },
     "update_platforms": [],
     "update_platform_map": {
         'android': 'Android_arm-eabi-gcc3',
+        'android-xul': 'Android_arm-eabi-gcc3-xul',
+        'android-armv6': 'Android_arm-eabi-gcc3-armv6',
     },
     "enable_partner_repacks": False,
     "partner_platforms": ['android'],
