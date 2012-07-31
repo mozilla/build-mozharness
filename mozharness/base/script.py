@@ -383,6 +383,8 @@ class ShellMixin(object):
             self.info("Running command: %s in %s" % (command, cwd))
         else:
             self.info("Running command: %s" % command)
+        if isinstance(command, list):
+            self.info("Copy/paste: %s" % subprocess.list2cmdline(command))
         if self.config.get('noop'):
             self.info("(Dry run; skipping)")
             return
@@ -444,6 +446,8 @@ class ShellMixin(object):
             self.info("Getting output from command: %s in %s" % (command, cwd))
         else:
             self.info("Getting output from command: %s" % command)
+        if isinstance(command, list):
+            self.info("Copy/paste: %s" % subprocess.list2cmdline(command))
         # This could potentially return something?
         if self.config.get('noop'):
             self.info("(Dry run; skipping)")
