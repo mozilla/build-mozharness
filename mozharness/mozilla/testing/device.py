@@ -222,7 +222,6 @@ class ADBDeviceHandler(BaseDeviceHandler):
         self.info("Running command (in the background): %s" % cmd)
         # This won't exit until much later, but we don't need to wait.
         # However, some error checking would be good.
-        # TODO are we doing something with p?
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE,
                              stderr=subprocess.STDOUT)
         time.sleep(10)
@@ -233,6 +232,9 @@ class ADBDeviceHandler(BaseDeviceHandler):
             status = True
         except DeviceException:
             self.error("Can't reconnect to device!")
+        if p.poll() is None:
+            p.kill()
+        p.wait()
         return status
 
     def cleanup_device(self, reboot=False):
@@ -437,6 +439,7 @@ class SUTDeviceHandler(BaseDeviceHandler):
         self.devicemanager = None
         self.default_port = 20701
         self.default_heartbeat_port = 20700
+        self.DMError = None
 
     def query_devicemanager(self):
         if self.devicemanager:
@@ -446,9 +449,9 @@ class SUTDeviceHandler(BaseDeviceHandler):
         dm_path = os.path.join(site_packages_path, 'mozdevice')
         sys.path.append(dm_path)
         try:
-#            import devicemanagerSUT
             from devicemanagerSUT import DeviceManagerSUT
             from devicemanagerSUT import DMError
+            self.DMError = DMError
             self.devicemanager = DeviceManagerSUT(c['device_ip'])
             # TODO configurable?
             self.devicemanager.debug = c.get('devicemanager_debug_level', 0)
@@ -537,7 +540,7 @@ class SUTDeviceHandler(BaseDeviceHandler):
         try:
             dm.sendCMD(['settime %s' % s])
             return True
-        except DMError, e:
+        except self.DMError, e:
             self.add_device_flag(DEVICE_CANT_SET_TIME)
             self.fatal("Exception while setting device time: %s" % str(e))
 
@@ -608,7 +611,7 @@ class SUTDeviceHandler(BaseDeviceHandler):
             try:
                 dm.sendCMD(['exec mount -o remount,rw -t yaffs2 /dev/block/mtdblock3 /system'])
                 dm.sendCMD(['exec rm %s' % hosts_file])
-            except DMError:
+            except self.DMError:
                 self.add_device_flag(DEVICE_CANT_REMOVE_ETC_HOSTS)
                 self.fatal("Unable to remove %s!" % hosts_file)
             if dm.fileExists(hosts_file):
