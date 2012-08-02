@@ -352,7 +352,8 @@ class ShellMixin(object):
 
     def run_command(self, command, cwd=None, error_list=None, parse_at_end=False,
                     halt_on_failure=False, success_codes=None,
-                    env=None, return_type='status', throw_exception=False):
+                    env=None, return_type='status', throw_exception=False,
+                    output_parser=None):
         """Run a command, with logging and error parsing.
 
         TODO: parse_at_end, context_lines
@@ -360,6 +361,9 @@ class ShellMixin(object):
         TODO: error_level_override?
         TODO: Add a copy-pastable version of |command| if it's a list.
         TODO: print env if set
+
+        output_parser lets you provide an instance of your own OutputParser
+        subclass, or pass None to use OutputParser.
 
         error_list example:
         [{'regex': re.compile('^Error: LOL J/K'), level=IGNORE},
@@ -393,8 +397,11 @@ class ShellMixin(object):
             shell = False
         p = subprocess.Popen(command, shell=shell, stdout=subprocess.PIPE,
                              cwd=cwd, stderr=subprocess.STDOUT, env=env)
-        parser = OutputParser(config=self.config, log_obj=self.log_obj,
-                              error_list=error_list)
+        if output_parser is None:
+            parser = OutputParser(config=self.config, log_obj=self.log_obj,
+                                  error_list=error_list)
+        else:
+            parser = output_parser
         loop = True
         while loop:
             if p.poll() is not None:
