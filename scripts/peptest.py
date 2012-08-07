@@ -13,7 +13,7 @@ import sys
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
 from mozharness.base.errors import PythonErrorList
-from mozharness.base.log import DEBUG, INFO, WARNING, ERROR
+from mozharness.base.log import DEBUG, INFO, WARNING, ERROR, FATAL
 from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_FAILURE
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
@@ -67,6 +67,7 @@ class PepTest(TestingMixin, MercurialScript):
                          'download-and-extract',
                          'create-virtualenv',
                          'install',
+                         'install-tp5n',
                          'run-peptest'],
             default_actions=['clobber',
                              'pull',
@@ -137,8 +138,54 @@ class PepTest(TestingMixin, MercurialScript):
     # preflight_install is in TestingMixin.
     # install is in TestingMixin.
 
+    def preflight_install_tp5n(self):
+        peptest_dir = self.query_abs_dirs()['abs_peptest_dir']
+        if not self.config.get('peptest_use_proxy'):
+            self.fatal("peptest_use_proxy is false. Aborting")
+
+        if not self.config.get('server_path'):
+            self.fatal("No server_path set. Aborting")
+
+        if not self.config.get('tp5n_url'):
+            self.fatal("URL to tp5n.zip not specified. Aborting")
+
+        if os.path.isdir(self.config.get('server_path')):
+            self.tp5n_install_dir = self.config.get('server_path')
+        elif os.path.isdir(os.path.join(peptest_dir, self.config.get('server_path'))):
+            self.tp5n_install_dir = os.path.join(peptest_dir, self.config.get('server_path'))
+        else:
+            self.fatal("Server path '%s' is not a directory. Aborting" %
+                       self.config.get('server_path'))
+
+
+    def install_tp5n(self):
+        """
+        Download and extract tp5n.zip
+        """
+        dirs = self.query_abs_dirs()
+        file_name = None
+        if self.config.get('tp5n_path'):
+            file_name = self.config.get('tp5n_path')
+
+        source = self.download_file(self.config.get('tp5n_url'),
+                                    file_name=file_name,
+                                    parent_dir=dirs['abs_peptest_dir'],
+                                    error_level=FATAL)
+        source = os.path.realpath(source)
+
+        unzip = self.query_exe('unzip')
+        self.run_command([unzip, source],
+                         cwd=self.tp5n_install_dir)
+
+        extract_dir = os.path.join(self.tp5n_install_dir, 'tp5n')
+        for item in os.listdir(extract_dir):
+            self.move(os.path.join(extract_dir, item), self.tp5n_install_dir)
+        self.rmtree(extract_dir)
+
 
     def preflight_run_peptest(self):
+        peptest_dir = self.query_abs_dirs()['abs_peptest_dir']
+
         if not self.config.get('test_manifest'):
             self.fatal("No test manifest specified. Aborting")
 
@@ -147,6 +194,23 @@ class PepTest(TestingMixin, MercurialScript):
 
         if not self.binary_path:
             self.fatal("No binary path specified!\nEither specify |--binary-path PATH| or |--install --installer-url URL|")
+
+        if self.config.get('peptest_use_proxy'):
+            if os.path.isdir(self.config.get('server_path')):
+                self.server_path = self.config.get('server_path')
+            elif os.path.isdir(os.path.join(peptest_dir, self.config.get('server_path'))):
+                self.server_path = os.path.join(peptest_dir, self.config.get('server_path'))
+            else:
+                self.fatal("Server path '%s' is not a directory. Aborting" %
+                           self.config.get('server_path'))
+            
+            if os.path.isfile(self.config.get('server_proxy')):
+                self.server_proxy = self.config.get('server_proxy')
+            elif os.path.isfile(os.path.join(peptest_dir, self.config.get('server_proxy'))):
+                self.server_proxy = os.path.join(peptest_dir, self.config.get('server_proxy'))
+            else:
+                self.fatal("Server proxy '%s' is not a file. Aborting" % 
+                           self.config.get('server_proxy'))
 
 
     def run_peptest(self):
@@ -168,24 +232,28 @@ class PepTest(TestingMixin, MercurialScript):
         cmd.extend(self._build_arg('--profile-path',
                    self.config.get('profile_path')))
         cmd.extend(self._build_arg('--timeout', self.config.get('timeout')))
-        cmd.extend(self._build_arg('--server-path',
-                   self.config.get('server_path')))
-        cmd.extend(self._build_arg('--server-port',
-                   self.config.get('server_port')))
         cmd.extend(self._build_arg('--tracer-threshold',
                    self.config.get('tracer_threshold')))
         cmd.extend(self._build_arg('--tracer-interval',
                    self.config.get('tracer_interval')))
         cmd.extend(self._build_arg('--symbols-path', self.symbols))
+
         if self.config.get('peptest_use_proxy'):
-            # TODO should these be options? config file settings?
-            cmd.extend(['--proxy',
-                        os.path.join(dirs['abs_peptest_dir'],
-                                     'tests/firefox/server-locations.txt')])
+            # set up server proxying
+            if hasattr(self, 'server_proxy'):
+                cmd.extend(['--proxy', self.server_proxy])
+
+            if hasattr(self, 'tp5n_install_dir'):
+                cmd.extend(['--proxy', os.path.join(self.tp5n_install_dir,
+                                                    'server-locations.txt')])
+            
+            if hasattr(self, 'server_path'):
+                cmd.extend(['--server-path', self.server_path])
+
             cmd.append('--proxy-host-dirs')
-            cmd.extend(['--server-path',
-                        os.path.join(dirs['abs_peptest_dir'],
-                                     'tests/firefox/server')])
+            cmd.extend(self._build_arg('--server-port',
+                       self.config.get('server_port')))
+
         if (self.config.get('log_level') in
                            ['debug', 'info', 'warning', 'error']):
             cmd.extend(['--log-level', self.config['log_level'].upper()])
