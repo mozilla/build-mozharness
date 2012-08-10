@@ -25,10 +25,12 @@ config = {
     "timeout": 60,
     # if specified, creates a webserver for hosting test
     # related files at this document root
-    "server_path": None,
+    "server_path": "tests/firefox/server",
+    "server_proxy": "tests/firefox/server-locations.txt",
+    "tp5n_url": "http://build.mozilla.org/talos/zips/tp5n.zip",
     "server_port": None,
     # EventTracer setting, the threshold to count a failure (ms)
-    "tracer_threshold": 50,
+    "tracer_threshold": 0,
     # EventTracer setting, interval at which to send tracer events (ms)
     "tracer_interval": 10,
     # URL or path to the symbols directory for debugging crashes
@@ -49,6 +51,7 @@ config = {
         "download-and-extract",
         "create-virtualenv",
         "install",
+        "install-tp5n",
         "run-peptest",
     ],
     "repos": [{"repo": "http://hg.mozilla.org/build/tools",}],
