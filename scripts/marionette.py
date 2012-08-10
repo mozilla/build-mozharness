@@ -62,8 +62,9 @@ class MarionetteTest(TestingMixin, BaseScript):
         [["--test-manifest"],
         {"action": "store",
          "dest": "test_manifest",
-         "default": None,
-         "help": "Path to test manifest to run",
+         "default": "unit-tests.ini",
+         "help": "Path to test manifest to run relative to the Marionette "
+                 "tests directory",
         }]] + copy.deepcopy(testing_config_options)
 
     error_list = [
@@ -147,10 +148,8 @@ class MarionetteTest(TestingMixin, BaseScript):
         cmd.extend(self._build_arg('--binary', self.binary_path))
         cmd.extend(self._build_arg('--type', self.config['test_type']))
         cmd.extend(self._build_arg('--address', self.config['marionette_address']))
-        manifest = self.config.get('test_manifest')
-        if not manifest:
-            manifest = os.path.join(dirs['abs_marionette_tests_dir'],
-                                    'unit-tests.ini')
+        manifest = os.path.join(dirs['abs_marionette_tests_dir'],
+                                self.config['test_manifest'])
         cmd.append(manifest)
 
         marionette_parser = MarionetteOutputParser(config=self.config,
