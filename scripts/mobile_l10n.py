@@ -31,12 +31,14 @@ from mozharness.mozilla.release import ReleaseMixin
 from mozharness.mozilla.signing import MobileSigningMixin
 from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.l10n.locales import LocalesMixin
+from mozharness.mozilla.mock import MockMixin
 
 
 
 # MobileSingleLocale {{{1
-class MobileSingleLocale(LocalesMixin, ReleaseMixin, MobileSigningMixin,
-                         TransferMixin, BuildbotMixin, MercurialScript):
+class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
+                         MobileSigningMixin, TransferMixin,
+                         BuildbotMixin, MercurialScript):
     config_options = [[
      ['--locale',],
      {"action": "extend",
@@ -161,7 +163,7 @@ class MobileSingleLocale(LocalesMixin, ReleaseMixin, MobileSigningMixin,
             return self.make_ident_output
         env = self.query_repack_env()
         dirs = self.query_abs_dirs()
-        output = self.get_output_from_command(["make", "ident"],
+        output = self.get_output_from_command_m(["make", "ident"],
                                               cwd=dirs['abs_locales_dir'],
                                               env=env,
                                               silent=True,
@@ -207,7 +209,7 @@ class MobileSingleLocale(LocalesMixin, ReleaseMixin, MobileSigningMixin,
         if make_args is None:
             make_args = []
         # TODO error checking
-        output = self.get_output_from_command(
+        output = self.get_output_from_command_m(
             [make, "echo-variable-%s" % variable] + make_args,
             cwd=dirs['abs_locales_dir'], silent=True,
             env=env
@@ -303,13 +305,13 @@ class MobileSingleLocale(LocalesMixin, ReleaseMixin, MobileSigningMixin,
         dirs = self.query_abs_dirs()
         env = self.query_repack_env()
         make = self.query_exe("make")
-        if self.run_command([make, "-f", "client.mk", "configure"],
+        if self.run_command_m([make, "-f", "client.mk", "configure"],
                             cwd=dirs['abs_mozilla_dir'],
                             env=env,
                             error_list=MakefileErrorList):
             self.fatal("Configure failed!")
         for make_dir in c.get('make_dirs', []):
-            self.run_command([make],
+            self.run_command_m([make],
                              cwd=os.path.join(dirs['abs_objdir'], make_dir),
                              env=env,
                              error_list=MakefileErrorList,
@@ -325,15 +327,15 @@ class MobileSingleLocale(LocalesMixin, ReleaseMixin, MobileSigningMixin,
         cat = self.query_exe("cat")
         hg = self.query_exe("hg")
         make = self.query_exe("make")
-        self.run_command([cat, mozconfig_path])
+        self.run_command_m([cat, mozconfig_path])
         env = self.query_repack_env()
         self._setup_configure()
-        self.run_command([make, "wget-en-US"],
+        self.run_command_m([make, "wget-en-US"],
                          cwd=dirs['abs_locales_dir'],
                          env=env,
                          error_list=MakefileErrorList,
                          halt_on_failure=True)
-        self.run_command([make, "unpack"],
+        self.run_command_m([make, "unpack"],
                          cwd=dirs['abs_locales_dir'],
                          env=env,
                          error_list=MakefileErrorList,
@@ -342,7 +344,7 @@ class MobileSingleLocale(LocalesMixin, ReleaseMixin, MobileSigningMixin,
         if not revision:
             self.fatal("Can't determine revision!")
         # TODO do this through VCSMixin instead of hardcoding hg
-        self.run_command([hg, "update", "-r", revision],
+        self.run_command_m([hg, "update", "-r", revision],
                          cwd=dirs["abs_mozilla_dir"],
                          env=env,
                          error_list=BaseErrorList,
@@ -362,10 +364,13 @@ class MobileSingleLocale(LocalesMixin, ReleaseMixin, MobileSigningMixin,
         success_count = total_count = 0
         for locale in locales:
             total_count += 1
-            if self.run_compare_locales(locale):
+            self.enable_mock()
+            result = self.run_compare_locales(locale)
+            self.disable_mock()
+            if result:
                 self.add_failure(locale, message="%s failed in compare-locales!" % locale)
                 continue
-            if self.run_command([make, "installers-%s" % locale],
+            if self.run_command_m([make, "installers-%s" % locale],
                                 cwd=dirs['abs_locales_dir'],
                                 env=repack_env,
                                 error_list=MakefileErrorList,
@@ -374,11 +379,15 @@ class MobileSingleLocale(LocalesMixin, ReleaseMixin, MobileSigningMixin,
                 continue
             signed_path = os.path.join(base_package_dir,
                                        base_package_name % {'locale': locale})
+            # We need to wrap what this function does with mock, since
+            # MobileSigningMixin doesn't know about mock
+            self.enable_mock()
             status = self.verify_android_signature(
                 signed_path,
                 script=c['signature_verification_script'],
                 env=repack_env
             )
+            self.disable_mock()
             if status:
                 self.add_failure(locale, message="Errors verifying %s binary!" % locale)
                 # No need to rm because upload is per-locale
@@ -407,7 +416,7 @@ class MobileSingleLocale(LocalesMixin, ReleaseMixin, MobileSigningMixin,
             total_count += 1
             if c.get('base_post_upload_cmd'):
                 upload_env['POST_UPLOAD_CMD'] = c['base_post_upload_cmd'] % {'version': version, 'locale': locale, 'buildnum': str(buildnum)}
-            output = self.get_output_from_command(
+            output = self.get_output_from_command_m(
                 # Ugly hack to avoid |make upload| stderr from showing up
                 # as get_output_from_command errors
                 "%s upload AB_CD=%s 2>&1" % (make, locale),
@@ -467,7 +476,7 @@ class MobileSingleLocale(LocalesMixin, ReleaseMixin, MobileSigningMixin,
                 self.add_failure(locale, message="Errors creating snippet for %s!  Removing snippet directory." % locale)
                 self.rmtree(aus_abs_dir)
                 continue
-            self.run_command(["touch", os.path.join(aus_abs_dir, "partial.txt")])
+            self.run_command_m(["touch", os.path.join(aus_abs_dir, "partial.txt")])
             success_count += 1
         self.summarize_success_count(success_count, total_count,
                                      message="Created %d of %d snippets successfully.")
