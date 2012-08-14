@@ -174,12 +174,13 @@ class PepTest(TestingMixin, MercurialScript):
         source = os.path.realpath(source)
 
         unzip = self.query_exe('unzip')
-        self.run_command([unzip, source],
+        self.run_command([unzip, '-q', source],
                          cwd=self.tp5n_install_dir)
 
         extract_dir = os.path.join(self.tp5n_install_dir, 'tp5n')
         for item in os.listdir(extract_dir):
-            self.move(os.path.join(extract_dir, item), self.tp5n_install_dir)
+            self.move(os.path.join(extract_dir, item), self.tp5n_install_dir,
+                      log_level=DEBUG)
         self.rmtree(extract_dir)
 
 
