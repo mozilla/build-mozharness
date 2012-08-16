@@ -146,7 +146,11 @@ class OSMixin(object):
             if create_parent_dir and parent_dir:
                 self.mkdir_p(parent_dir, error_level=error_level)
             local_file = open(file_name, 'wb')
-            local_file.write(f.read())
+            while True:
+                block = f.read(1024**2)
+                if not block:
+                    break
+                local_file.write(block)
             local_file.close()
         except urllib2.HTTPError, e:
             self.log("HTTP Error: %s %s" % (e.code, url), level=error_level,
@@ -651,6 +655,20 @@ class BaseScript(ShellMixin, OSMixin, LogMixin, object):
         elif error_if_missing:
             self.error("No such method %s!" % method_name)
 
+    def copy_logs_to_upload_dir(self):
+        """Copies logs to the upload directory"""
+        self.info("Copying logs to upload dir...")
+        log_files = ['localconfig.json']
+        for log_name in self.log_obj.log_files.keys():
+            log_files.append(self.log_obj.log_files[log_name])
+        dirs = self.query_abs_dirs()
+        for log_file in log_files:
+            self.copy_to_upload_dir(os.path.join(dirs['abs_log_dir'], log_file),
+                                    dest=os.path.join('logs', log_file),
+                                    short_desc='%s log' % log_name,
+                                    long_desc='%s log' % log_name,
+                                    rotate=True)
+
     def run(self):
         """Default run method.
         This is the "do everything" method, based on actions and all_actions.
@@ -679,17 +697,7 @@ class BaseScript(ShellMixin, OSMixin, LogMixin, object):
                 self._possibly_run_method(method_name, error_if_missing=True)
                 self._possibly_run_method("postflight_%s" % method_name)
         self.summary()
-        dirs = self.query_abs_dirs()
-        self.info("Copying logs to upload dir...")
-        log_files = ['localconfig.json']
-        for log_name in self.log_obj.log_files.keys():
-            log_files.append(self.log_obj.log_files[log_name])
-        for log_file in log_files:
-            self.copy_to_upload_dir(os.path.join(dirs['abs_log_dir'], log_file),
-                                    dest=os.path.join('logs', log_file),
-                                    short_desc='%s log' % log_name,
-                                    long_desc='%s log' % log_name,
-                                    rotate=True)
+        self.copy_logs_to_upload_dir()
         sys.exit(self.return_code)
 
     def clobber(self):

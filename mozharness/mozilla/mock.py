@@ -103,7 +103,7 @@ class MockMixin(object):
                 super(MockMixin, self).get_output_from_command,
                 mock_target, command, cwd, env, **kwargs)
 
-    def setup_mock(self):
+    def setup_mock(self, mock_target=None, mock_packages=None, mock_files=None):
         """Initializes and installs packages, copies files into mock
         environment given by configuration in self.config.  The mock
         environment is given by self.config['mock_target'], the list of packges
@@ -113,16 +113,23 @@ class MockMixin(object):
             return
 
         c = self.config
-        assert 'mock_target' in c
-        t = c['mock_target']
-        self.init_mock(t)
-        packages = c.get('mock_packages')
-        if packages:
-            self.install_mock_packages(t, packages)
 
-        files = c.get('mock_files')
-        if files:
-            self.copy_mock_files(t, files)
+        if mock_target is None:
+            assert 'mock_target' in c
+            t = c['mock_target']
+        else:
+            t = mock_target
+        self.init_mock(t)
+
+        if mock_packages is None:
+            mock_packages = c.get('mock_packages')
+        if mock_packages:
+            self.install_mock_packages(t, mock_packages)
+
+        if mock_files is None:
+            mock_files = c.get('mock_files')
+        if mock_files:
+            self.copy_mock_files(t, mock_files)
 
         self.done_mock_setup = True
 
