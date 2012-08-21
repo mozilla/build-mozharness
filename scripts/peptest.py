@@ -179,8 +179,8 @@ class PepTest(TestingMixin, MercurialScript):
 
         extract_dir = os.path.join(self.tp5n_install_dir, 'tp5n')
         for item in os.listdir(extract_dir):
-            self.move(os.path.join(extract_dir, item), self.tp5n_install_dir,
-                      log_level=DEBUG)
+            self.move(os.path.join(extract_dir, item),
+                      os.path.join(self.tp5n_install_dir, item), log_level=DEBUG)
         self.rmtree(extract_dir)
 
 
