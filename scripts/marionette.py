@@ -71,14 +71,15 @@ class MarionetteTest(TestingMixin, BaseScript):
         {'substr': r'''FAILED (errors=''', 'level': ERROR},
     ]
 
+    mozbase_dir = os.path.join('tests', 'mozbase')
     virtualenv_modules = [
-     'datazilla',
-     'mozinstall',
-     'mozhttpd',
-     'manifestdestiny',
-     'mozprofile',
-     'mozprocess',
-     'mozrunner',
+        { 'manifestparser': os.path.join(mozbase_dir, 'manifestdestiny') },
+        { 'mozhttpd': os.path.join(mozbase_dir, 'mozhttpd') },
+        { 'mozinfo': os.path.join(mozbase_dir, 'mozinfo') },
+        { 'mozinstall': os.path.join(mozbase_dir, 'mozinstall') },
+        { 'mozprofile': os.path.join(mozbase_dir, 'mozprofile') },
+        { 'mozprocess': os.path.join(mozbase_dir, 'mozprocess') },
+        { 'mozrunner': os.path.join(mozbase_dir, 'mozrunner') },
     ]
 
     def __init__(self, require_config_file=False):
