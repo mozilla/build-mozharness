@@ -18,7 +18,6 @@ import sys
 # load modules from parent dir
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
-from mozharness.base.errors import BaseErrorList
 from mozharness.base.log import ERROR, FATAL
 from mozharness.base.transfer import TransferMixin
 from mozharness.mozilla.release import ReleaseMixin
@@ -79,14 +78,6 @@ class SignAndroid(LocalesMixin, ReleaseMixin, MobileSigningMixin,
       "help": "Specify the key alias"
      }
     ],[
-     ['--update-platform',],
-     {"action": "extend",
-      "dest": "update_platforms",
-      "type": "choice",
-      "choices": SUPPORTED_PLATFORMS,
-      "help": "Specify the platform(s) to create update snippets for"
-     }
-    ],[
      ['--release-config-file',],
      {"action": "store",
       "dest": "release_config_file",
@@ -101,13 +92,6 @@ class SignAndroid(LocalesMixin, ReleaseMixin, MobileSigningMixin,
       "help": "Specify the current version"
      }
     ],[
-     ['--old-version',],
-     {"action": "store",
-      "dest": "old_version",
-      "type": "string",
-      "help": "Specify the version to update from"
-     }
-    ],[
      ['--buildnum',],
      {"action": "store",
       "dest": "buildnum",
@@ -115,15 +99,6 @@ class SignAndroid(LocalesMixin, ReleaseMixin, MobileSigningMixin,
       "default": 1,
       "metavar": "INT",
       "help": "Specify the current release build num (e.g. build1, build2)"
-     }
-    ],[
-     ['--old-buildnum',],
-     {"action": "store",
-      "dest": "old_buildnum",
-      "type": "int",
-      "default": 1,
-      "metavar": "INT",
-      "help": "Specify the release build num to update from (e.g. build1, build2)"
      }
     ],[
      ['--keystore',],
@@ -161,37 +136,11 @@ class SignAndroid(LocalesMixin, ReleaseMixin, MobileSigningMixin,
                 "sign",
                 "verify-signatures",
                 "upload-signed-bits",
-                "create-snippets",
-                "upload-snippets",
             ],
             require_config_file=require_config_file
         )
 
     # Helper methods {{{2
-    def query_buildid(self, platform, base_url, buildnum=None, version=None):
-        rc = self.query_release_config()
-        replace_dict = {
-            'buildnum': rc['buildnum'],
-            'version': rc['version'],
-            'platform': platform,
-        }
-        if buildnum:
-            replace_dict['buildnum'] = buildnum
-        if version:
-            replace_dict['version'] = version
-        url = base_url % replace_dict
-        # ghetto retry.
-        for count in range (1, 11):
-        # TODO stop using curl
-            output = self.get_output_from_command(["curl", "--silent", url])
-            if output.startswith("buildID="):
-                return output.replace("buildID=", "")
-            else:
-                self.warning("Can't get buildID from %s (try %d)" % (url, count))
-        # This will break create-snippets if it isn't set.
-        # Might as well fatal().
-        self.fatal("Can't get buildID from %s!" % url)
-
     def add_failure(self, platform, locale, **kwargs):
         s = "%s:%s" % (platform, locale)
         if 'message' in kwargs:
@@ -392,101 +341,6 @@ class SignAndroid(LocalesMixin, ReleaseMixin, MobileSigningMixin,
                                        rc['ftp_user'], rc['ftp_server'],
                                        ftp_upload_dir,):
             self.return_code += 1
-
-    def create_snippets(self):
-        c = self.config
-        rc = self.query_release_config()
-        dirs = self.query_abs_dirs()
-        replace_dict = {
-            'version': rc['version'],
-            'buildnum': rc['buildnum'],
-        }
-        total_count = {'snippets': 0, 'links': 0}
-        success_count = {'snippets': 0, 'links': 0}
-        for platform in c['update_platforms']:
-            buildid = self.query_buildid(platform, c['buildid_base_url'])
-            old_buildid = self.query_buildid(platform, c['old_buildid_base_url'],
-                                             buildnum=rc['old_buildnum'],
-                                             version=rc['old_version'])
-            if not buildid:
-                self.add_summary("Can't get buildid for %s! Skipping..." % platform, level=ERROR)
-                continue
-            replace_dict['platform'] = platform
-            replace_dict['buildid'] = buildid
-            locales = self.query_platform_locales(platform)
-            for locale in locales:
-                if self.query_failure(platform, locale):
-                    self.warning("%s:%s had previous issues; skipping!" % (platform, locale))
-                    continue
-                replace_dict['locale'] = locale
-                parent_dir = '%s/%s/%s' % (dirs['abs_work_dir'],
-                                           platform, locale)
-                replace_dict['apk_name'] = self.query_platform_apk_base_name(platform) % replace_dict
-                signed_path = '%s/%s' % (parent_dir, replace_dict['apk_name'])
-                if not os.path.exists(signed_path):
-                    self.add_summary("Unable to create snippet for %s:%s: apk doesn't exist!" % (platform, locale), level=ERROR)
-                    continue
-                size = self.query_filesize(signed_path)
-                sha512_hash = self.query_sha512sum(signed_path)
-                for channel, channel_dict in c['update_channels'].items():
-                    total_count['snippets'] += 1
-                    total_count['links'] += 1
-                    url = channel_dict['url'] % replace_dict
-                    # Create complete snippet
-                    self.info("Creating snippet for %s %s %s" % (platform, locale, channel))
-                    snippet_dir = "%s/update/%s/Fennec/snippets/%s/%s" % (
-                      dirs['abs_work_dir'],
-                      channel_dict['dir_base_name'] % (replace_dict),
-                      platform, locale)
-                    snippet_file = "latest-%s" % channel
-                    if self.create_complete_snippet(
-                        signed_path, rc['version'], buildid,
-                        url, snippet_dir, snippet_file,
-                        size, sha512_hash
-                    ):
-                        success_count['snippets'] += 1
-                    else:
-                        self.add_failure(platform, locale,
-                                         message="Errors creating snippet for %(platform)s:%(locale)s!")
-                        continue
-                    # Create previous link
-                    previous_dir = os.path.join(dirs['abs_work_dir'], 'update',
-                                                channel_dict['dir_base_name'] % (replace_dict),
-                                                'Fennec', rc['old_version'],
-                                                c['update_platform_map'][platform],
-                                                old_buildid, locale, channel)
-                    self.mkdir_p(previous_dir)
-                    self.run_command(["touch", "partial.txt"],
-                                     cwd=previous_dir, error_list=BaseErrorList)
-                    status = self.run_command(
-                        ['ln', '-s',
-                         '../../../../../snippets/%s/%s/latest-%s' % (platform, locale, channel),
-                         'complete.txt'],
-                        cwd=previous_dir, error_list=BaseErrorList
-                    )
-                    if not status:
-                        success_count['links'] += 1
-        for k in success_count.keys():
-            self.summarize_success_count(success_count[k], total_count[k],
-                                         "Created %d of %d " + k + " successfully.")
-
-    def upload_snippets(self):
-        c = self.config
-        rc = self.query_release_config()
-        dirs = self.query_abs_dirs()
-        update_dir = os.path.join(dirs['abs_work_dir'], 'update')
-        if not os.path.exists(update_dir):
-            self.error("No such directory %s! Skipping..." % update_dir)
-            return
-        aus_upload_dir = c['aus_upload_base_dir'] % {
-            'version': rc['version'],
-            'buildnum': rc['buildnum'],
-        }
-        if self.rsync_upload_directory(update_dir, rc['aus_ssh_key'],
-                                       rc['aus_user'], rc['aus_server'],
-                                       aus_upload_dir):
-            self.return_code += 1
-
 
 
 # main {{{1

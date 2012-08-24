@@ -38,8 +38,6 @@ class ReleaseMixin():
                 self.fatal("Invalid release config file %s!" % c["release_config_file"])
             self.release_config['version'] = rc['version']
             self.release_config['buildnum'] = rc['buildNumber']
-            self.release_config['old_version'] = rc['oldVersion']
-            self.release_config['old_buildnum'] = rc['oldBuildNumber']
             self.release_config['ftp_server'] = rc['stagingServer']
             self.release_config['ftp_user'] = c.get('ftp_user', rc['hgUsername'])
             self.release_config['ftp_ssh_key'] = c.get('ftp_ssh_key', rc['hgSshKey'])
@@ -48,7 +46,7 @@ class ReleaseMixin():
             self.release_config['aus_ssh_key'] = c.get('aus_ssh_key', '~/.ssh/%s' % rc['ausSshKey'])
         else:
             self.info("No release config file; using default config.")
-            for key in ('version', 'buildnum', 'old_version', 'old_buildnum',
+            for key in ('version', 'buildnum',
                         'ftp_server', 'ftp_user', 'ftp_ssh_key',
                         'aus_server', 'aus_user', 'aus_ssh_key',):
                 self.release_config[key] = c[key]

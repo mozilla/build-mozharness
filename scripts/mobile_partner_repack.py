@@ -88,13 +88,6 @@ class MobilePartnerRepack(LocalesMixin, ReleaseMixin, MobileSigningMixin,
       "help": "Specify the current version"
      }
     ],[
-     ['--old-version',],
-     {"action": "store",
-      "dest": "old_version",
-      "type": "string",
-      "help": "Specify the version to update from"
-     }
-    ],[
      ['--buildnum',],
      {"action": "store",
       "dest": "buildnum",

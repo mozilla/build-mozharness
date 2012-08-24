@@ -98,7 +98,6 @@ config = {
     "download_unsigned_base_subdir": "unsigned/%(platform)s/%(locale)s",
     "download_signed_base_subdir": "%(platform)s/%(locale)s",
     "buildid_base_url": BUILDID_BASE_URL,
-    "old_buildid_base_url": BUILDID_BASE_URL,
     "actions": [
                 "passphrase",
                 "clobber",
