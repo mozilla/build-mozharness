@@ -2,7 +2,7 @@
 
 config = {
 
-    "datazilla_urls": ['http://10.8.73.32/jetperf/load_test'],
+    "datazilla_urls": ['https://datazilla.mozilla.org/jetperf'],
 
     "exes": {
         'python': '/tools/buildbot/bin/python',
