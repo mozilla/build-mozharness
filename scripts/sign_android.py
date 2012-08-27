@@ -26,7 +26,7 @@ from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.l10n.locales import LocalesMixin
 
 # So far this only references the ftp platform name.
-SUPPORTED_PLATFORMS = ["android", "android-xul"]
+SUPPORTED_PLATFORMS = ["android", "android-armv6"]
 
 
 
