@@ -157,7 +157,7 @@ class JetPerf(Talos, MercurialScript):
                 # package.json modified: please re-run 'cfx xpi'
                 # """
                 # see https://bugzilla.mozilla.org/show_bug.cgi?id=613587
-                code = self.run_command([cfx, 'xpi'], cwd=path)
+                code = self.run_command([sys.executable, cfx, 'xpi'], cwd=path)
                 if code:
                     self.fatal("Error creating xpi file")
             xpi = os.path.join(path, '%s.xpi' % package)
