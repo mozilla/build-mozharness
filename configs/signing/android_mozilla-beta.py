@@ -50,7 +50,7 @@ config = {
     "platform_config": {
         'android': {},
         'android-armv6': {
-            'locales': ['en-US'],
+            'locales': ['en-US', 'multi'],
             'apk_base_name': "fennec-%(version)s.%(locale)s.android-arm-armv6.apk"
         },
     },
