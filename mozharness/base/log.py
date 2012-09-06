@@ -96,8 +96,6 @@ class LogMixin(object):
     def fatal(self, message, exit_code=-1):
         self.log(message, level=FATAL, exit_code=exit_code)
 
-
-
 # OutputParser {{{1
 class OutputParser(LogMixin):
     """ Helper object to parse command output.
@@ -118,26 +116,21 @@ otherwise store a list of dictionaries in self.context_buffer that is
 buffered up to self.num_pre_context_lines (set to the largest
 pre-context-line setting in error_list.)
 """
-    def __init__(self, config=None, log_obj=None, error_list=None,
-                 log_output=True):
+    def __init__(self, config=None, log_obj=None, error_list=None, log_output=True):
         self.config = config
         self.log_obj = log_obj
-        self.error_list = error_list
+        self.error_list = error_list or []
         self.log_output = log_output
         self.num_errors = 0
+        self.num_warnings = 0
         # TODO context_lines.
         # Not in use yet, but will be based off error_list.
         self.context_buffer = []
         self.num_pre_context_lines = 0
         self.num_post_context_lines = 0
-        # TODO set self.error_level to the worst error level hit
-        # (WARNING, ERROR, CRITICAL, FATAL)
-        # self.error_level = INFO
+        self.worst_log_level = INFO
 
     def parse_single_line(self, line):
-        if not line or line.isspace():
-            return
-        line = line.decode("utf-8").rstrip()
         for error_check in self.error_list:
             # TODO buffer for context_lines.
             match = False
@@ -148,32 +141,49 @@ pre-context-line setting in error_list.)
                 if error_check['regex'].search(line):
                     match = True
             else:
-                self.warn("error_list: 'substr' and 'regex' not in %s" % \
-                          error_check)
+                self.warning("error_list: 'substr' and 'regex' not in %s" %
+                             error_check)
             if match:
-                level = error_check.get('level', INFO)
+                log_level = error_check.get('level', INFO)
                 if self.log_output:
                     message = ' %s' % line
                     if error_check.get('explanation'):
                         message += '\n %s' % error_check['explanation']
                     if error_check.get('summary'):
-                        self.add_summary(message, level=level)
+                        self.add_summary(message, level=log_level)
                     else:
-                        self.log(message, level=level)
-                if level in (ERROR, CRITICAL, FATAL):
+                        self.log(message, level=log_level)
+                if log_level in (ERROR, CRITICAL, FATAL):
                     self.num_errors += 1
-                # TODO set self.error_status (or something)
-                # that sets the worst error level hit.
+                if log_level == WARNING:
+                    self.num_warnings += 1
+                self.worst_log_level = self.worst_level(log_level,
+                                                        self.worst_log_level)
                 break
         else:
             if self.log_output:
                 self.info(' %s' % line)
 
     def add_lines(self, output):
-        if str(output) == output:
+        if isinstance(output, basestring):
             output = [output]
         for line in output:
+            if not line or line.isspace():
+                continue
+            line = line.decode("utf-8").rstrip()
             self.parse_single_line(line)
+
+    def worst_level(self, target_level, existing_level, levels=None):
+        """returns either existing_level or target level.
+        This depends on which is closest to levels[0]
+        By default, levels is the list of log levels"""
+        if not levels:
+            levels = [FATAL, CRITICAL, ERROR, WARNING, INFO, DEBUG, IGNORE]
+        if target_level not in levels:
+            self.fatal("'%s' not in %s'." % (target_level, levels))
+        for l in levels:
+            if l in (target_level, existing_level):
+                return l
 
 
 # BaseLogger {{{1

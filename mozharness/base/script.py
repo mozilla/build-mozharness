@@ -154,7 +154,7 @@ class OSMixin(object):
             return
         except urllib2.URLError, e:
             self.log("URL Error: %s" % (url), level=error_level,
-                     exit_code=exit_code)
+                                            exit_code=exit_code)
             return
         return file_name
 
@@ -185,6 +185,59 @@ class OSMixin(object):
                 self.dump_exception("Can't copy %s to %s!" % (src, dest),
                                     level=error_level)
                 return -1
+
+    def copytree(self, src, dest, overwrite='no_overwrite', log_level=INFO,
+                 error_level=ERROR):
+        """an implementation of shutil.copytree however it allows for
+        dest to exist and implements differen't overwrite levels.
+        overwrite uses:
+        'no_overwrite' will keep all(any) existing files in destination tree
+        'overwrite_if_exists' will only overwrite destination paths that have
+                   the same path names relative to the root of the src and
+                   destination tree
+        'clobber' will replace the whole destination tree(clobber) if it exists"""
+
+        self.info('copying tree: %s to %s' % (src, dest))
+        try:
+            if overwrite == 'clobber':
+                self.rmtree(dest)
+                shutil.copytree(src, dest)
+            elif overwrite == 'no_overwrite' or overwrite == 'overwrite_if_exists':
+                files = os.listdir(src)
+                for f in files:
+                    abs_src_f = os.path.join(src, f)
+                    abs_dest_f = os.path.join(dest, f)
+                    if not os.path.exists(abs_dest_f):
+                        if os.path.isdir(abs_src_f):
+                            self.mkdir_p(abs_dest_f)
+                            self.copytree(abs_src_f, abs_dest_f,
+                                          overwrite='clobber')
+                        else:
+                            shutil.copy2(abs_src_f, abs_dest_f)
+                    elif overwrite == 'no_overwrite':  # destination path exists
+                        if os.path.isdir(abs_src_f) and os.path.isdir(abs_dest_f):
+                            self.copytree(abs_src_f, abs_dest_f,
+                                          overwrite='no_overwrite')
+                        else:
+                            self.debug('ignoring path: %s as destination: \
+                                    %s exists' % (abs_src_f, abs_dest_f))
+                    else:  # overwrite == 'overwrite_if_exists' and destination exists
+                        self.debug('overwriting: %s with: %s' %
+                                   (abs_dest_f, abs_src_f))
+                        self.rmtree(abs_dest_f)
+
+                        if os.path.isdir(abs_src_f):
+                            self.mkdir_p(abs_dest_f)
+                            self.copytree(abs_src_f, abs_dest_f,
+                                          overwrite='overwrite_if_exists')
+                        else:
+                            shutil.copy2(abs_src_f, abs_dest_f)
+            else:
+                self.fatal("%s is not a valid argument for param overwrite" % (overwrite))
+        except (IOError, shutil.Error):
+            self.dump_exception("There was an error while copying %s to %s!" % (src, dest),
+                                level=error_level)
+            return -1
 
     def write_to_file(self, file_path, contents, verbose=True,
                       open_mode='w', create_parent_dir=False,
@@ -372,8 +425,6 @@ class ShellMixin(object):
         ]
         (context_lines isn't written yet)
         """
-        if error_list is None:
-            error_list = []
         if success_codes is None:
             success_codes = [0]
         if cwd:
@@ -395,8 +446,16 @@ class ShellMixin(object):
         shell = True
         if isinstance(command, list):
             shell = False
-        p = subprocess.Popen(command, shell=shell, stdout=subprocess.PIPE,
-                             cwd=cwd, stderr=subprocess.STDOUT, env=env)
+        try:
+            p = subprocess.Popen(command, shell=shell, stdout=subprocess.PIPE,
+                                 cwd=cwd, stderr=subprocess.STDOUT, env=env)
+        except OSError, e:
+            level = ERROR
+            if halt_on_failure:
+                level = FATAL
+            self.log('caught OS error %s: %s while running %s' % (e.errno,
+                     e.strerror, command), level=level)
+            return -1
         if output_parser is None:
             parser = OutputParser(config=self.config, log_obj=self.log_obj,
                                   error_list=error_list)

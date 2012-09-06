@@ -11,3 +11,5 @@ test.py
 coverage
 htmlcov
 venv
+build/
+logs/

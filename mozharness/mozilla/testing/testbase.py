@@ -130,15 +130,20 @@ You can set this by:
                                     error_level=FATAL)
         self.test_zip_path = os.path.realpath(source)
 
-    def _extract_test_zip(self):
+    def _extract_test_zip(self, target_unzip_dirs=None):
         dirs = self.query_abs_dirs()
         unzip = self.query_exe("unzip")
         test_install_dir = dirs.get('abs_test_install_dir',
                                     os.path.join(dirs['abs_work_dir'], 'tests'))
         self.mkdir_p(test_install_dir)
+        # adding overwrite flag otherwise subprocess.Popen hangs on waiting for
+        # input in a hidden pipe whenever this action is run twice without
+        # clobber
+        unzip_cmd = [unzip, '-o', self.test_zip_path]
+        if target_unzip_dirs:
+            unzip_cmd.extend(target_unzip_dirs)
         # TODO error_list
-        self.run_command([unzip, self.test_zip_path],
-                         cwd=test_install_dir)
+        self.run_command(unzip_cmd, cwd=test_install_dir)
 
     def _download_installer(self):
         file_name = None
@@ -153,7 +158,7 @@ You can set this by:
 
     def download_and_extract(self):
         """
-        Create virtualenv and install dependencies
+        download and extract test zip / download installer
         """
         if self.test_url:
             self._download_test_zip()
@@ -192,7 +197,7 @@ Did you run with --create-virtualenv? Is mozinstall in virtualenv_modules?""")
         dirs = self.query_abs_dirs()
         target_dir = dirs.get('abs_app_install_dir',
                               os.path.join(dirs['abs_work_dir'],
-                             'application'))
+                              'application'))
         self.mkdir_p(target_dir)
         cmd.extend([self.installer_path,
                     '--destination', target_dir])
