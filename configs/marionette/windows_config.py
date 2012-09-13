@@ -15,6 +15,8 @@ config = {
 
     "find_links": ["http://puppetagain.pub.build.mozilla.org/data/python/packages"],
 
+    "buildbot_json_path": "buildprops.json",
+
     "default_actions": [
         'clobber',
         'read-buildbot-config',
