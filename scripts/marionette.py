@@ -15,7 +15,7 @@ sys.path.insert(1, os.path.dirname(sys.path[0]))
 
 from mozharness.base.errors import PythonErrorList
 from mozharness.base.log import INFO, ERROR, OutputParser
-from mozharness.base.script import BaseScript
+from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_WARNING, TBPL_FAILURE
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
 
@@ -45,7 +45,7 @@ class MarionetteOutputParser(OutputParser):
         super(MarionetteOutputParser, self).parse_single_line(line)
 
 
-class MarionetteTest(TestingMixin, BaseScript):
+class MarionetteTest(TestingMixin, MercurialScript):
     config_options = [
         [["--type"],
         {"action": "store",
@@ -87,6 +87,7 @@ class MarionetteTest(TestingMixin, BaseScript):
             config_options=self.config_options,
             all_actions=['clobber',
                          'read-buildbot-config',
+                         'pull',
                          'download-and-extract',
                          'create-virtualenv',
                          'install',
@@ -132,6 +133,12 @@ class MarionetteTest(TestingMixin, BaseScript):
         if not value:
             return []
         return [str(option), str(value)]
+
+    def pull(self):
+        if self.config.get('repos'):
+            dirs = self.query_abs_dirs()
+            self.vcs_checkout_repos(self.config['repos'],
+                                    parent_dir=dirs['abs_work_dir'])
 
     def run_marionette(self):
         """

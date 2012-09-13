@@ -11,6 +11,8 @@ config = {
         'virtualenv': ['/tools/buildbot/bin/python', '/tools/misc-python/virtualenv.py'],
     },
 
+    "repos": [{"repo": "http://hg.mozilla.org/build/tools",}],
+
     "find_links": ["http://puppetagain.pub.build.mozilla.org/data/python/packages"],
 
     "buildbot_json_path": "buildprops.json",
@@ -18,6 +20,7 @@ config = {
     "default_actions": [
         'clobber',
         'read-buildbot-config',
+        'pull',
         'download-and-extract',
         'create-virtualenv',
         'install',
