@@ -11,6 +11,7 @@ config = {
     "exes": {
         'python': 'c:/mozilla-build/python27/python',
         'virtualenv': ['c:/mozilla-build/python27/python', 'c:/mozilla-build/buildbotve/virtualenv.py'],
+        'hg': 'c:/mozilla-build/hg/hg',
     },
 
     "repos": [{"repo": "http://hg.mozilla.org/build/tools",}],
