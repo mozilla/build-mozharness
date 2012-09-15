@@ -300,7 +300,7 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
                                   c['objdir'])
             self.rmtree(objdir)
 
-    def _setup_configure(self):
+    def _setup_configure(self, buildid=None):
         c = self.config
         dirs = self.query_abs_dirs()
         env = self.query_repack_env()
@@ -316,6 +316,12 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
                              env=env,
                              error_list=MakefileErrorList,
                              halt_on_failure=True)
+            if buildid:
+                self.run_command_m([make, 'export',
+                                    'MOZ_BUILD_DATE=%s' % str(buildid)],
+                                   cwd=os.path.join(dirs['abs_objdir'], make_dir),
+                                   env=env,
+                                   error_list=MakefileErrorList)
 
     def setup(self):
         c = self.config
@@ -350,7 +356,8 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
                          error_list=BaseErrorList,
                          halt_on_failure=True)
         # Configure again since the hg update may have invalidated it.
-        self._setup_configure()
+        buildid = self.query_buildid()
+        self._setup_configure(buildid=buildid)
 
     def repack(self):
         # TODO per-locale logs and reporting.
