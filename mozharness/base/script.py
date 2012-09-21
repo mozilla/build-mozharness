@@ -61,7 +61,9 @@ class OSMixin(object):
             if not self.config.get('noop'):
                 if os.path.isdir(path):
                     if self._is_windows():
-                        self._rmdir_recursive(path)
+                        # bug 789520: using rmdir /s /q instead of
+                        # self._rmdir_recursive
+                        self.run_command('rmdir /S /Q "%s"' % path)
                     else:
                         shutil.rmtree(path)
                 else:
