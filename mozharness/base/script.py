@@ -472,7 +472,10 @@ class ShellMixin(object):
             if p.poll() is not None:
                 """Avoid losing the final lines of the log?"""
                 loop = False
-            for line in p.stdout:
+            while True:
+                line = p.stdout.readline()
+                if not line:
+                    break
                 parser.add_lines(line)
         return_level = INFO
         if p.returncode not in success_codes:

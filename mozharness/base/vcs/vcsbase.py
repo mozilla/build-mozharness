@@ -16,10 +16,12 @@ sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.dirname(sys.path[0]))
 from mozharness.base.errors import VCSException
 from mozharness.base.script import BaseScript
 from mozharness.base.vcs.mercurial import MercurialVCS
+from mozharness.base.vcs.hgtool import HgtoolVCS
 
 # Update this with supported VCS name : VCS object
 VCS_DICT = {
     'hg': MercurialVCS,
+    'hgtool': HgtoolVCS,
 }
 
 # VCSMixin {{{1

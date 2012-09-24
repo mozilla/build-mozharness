@@ -60,6 +60,7 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
                                 'download-gonk',
                                 'unpack-gonk',
                                 'build',
+                                'make-updates',
                                 'prep-upload',
                                 'upload',
                             ],
@@ -75,7 +76,7 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
                             config={
                                 'repo': 'http://hg.mozilla.org/mozilla-central',  # from buildprops
                                 'branch': 'mozilla-central',                      # from buildprops
-                                'default_vcs': 'hg',
+                                'default_vcs': 'hgtool',
                                 'vcs_share_base': os.environ.get('HG_SHARE_BASE_DIR'),
                                 'ccache': True,
                                 'buildbot_json_path': os.environ.get('PROPERTIES_FILE'),
@@ -84,6 +85,7 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
                                 'ssh_user': None,
                                 'upload_remote_host': None,
                                 'upload_remote_basepath': None,
+                                'enable_try_uploads': False,
                             },
                             )
 
@@ -147,16 +149,21 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
         if buildid:
             return buildid.group(1)
 
+    def query_revision(self):
+        if 'revision' in self.buildbot_properties:
+            return self.buildbot_properties['revision']
+
+        if self.buildbot_config and 'sourcestamp' in self.buildbot_config:
+            return self.buildbot_config['sourcestamp']['revision']
+
+        return None
+
     # Actions {{{2
     def checkout_gecko(self):
         dirs = self.query_abs_dirs()
 
         repo = self.query_repo()
-        if self.buildbot_config and 'sourcestamp' in self.buildbot_config:
-            rev = self.vcs_checkout(repo=repo, dest=dirs['src'], revision=self.buildbot_config['sourcestamp']['revision'])
-        else:
-            rev = self.vcs_checkout(repo=repo, dest=dirs['src'])
-
+        rev = self.vcs_checkout(repo=repo, dest=dirs['src'], revision=self.query_revision())
         self.set_buildbot_property('revision', rev, write_to_file=True)
 
     def download_gonk(self):
@@ -189,7 +196,7 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
     def build(self):
         dirs = self.query_abs_dirs()
         gecko_config = self.load_gecko_config()
-        cmd = ['./build.sh']
+        cmd = ['./build.sh', 'boottarball', 'systemtarball', 'userdatatarball']
         env = self.query_env()
         env.update(gecko_config.get('env', {}))
         if self.config['ccache']:
@@ -222,6 +229,30 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
         if retval != 0:
             self.fatal("failed to build", exit_code=2)
 
+    def make_updates(self):
+        dirs = self.query_abs_dirs()
+        gecko_config = self.load_gecko_config()
+        cmd = ['./build.sh', 'gecko-update-full']
+        env = self.query_env()
+        env.update(gecko_config.get('env', {}))
+
+        # Write .userconfig to point to the correct object directory for gecko
+        # Normally this is embedded inside the .config file included with the snapshot
+        # TODO: factor this out so it doesn't get run twice
+        user_config = open(os.path.join(dirs['work_dir'], '.userconfig'), 'w')
+        user_config.write("GECKO_OBJDIR=%s/objdir-gecko\n" % dirs['work_dir'])
+        user_config.close()
+
+        if 'mock_target' in gecko_config:
+            # initialize mock
+            self.setup_mock(gecko_config['mock_target'], gecko_config['mock_packages'])
+            retval = self.run_mock_command(gecko_config['mock_target'], cmd, cwd=dirs['work_dir'], env=env, error_list=MakefileErrorList)
+        else:
+            retval = self.run_command(cmd, cwd=dirs['work_dir'], env=env, error_list=MakefileErrorList)
+
+        if retval != 0:
+            self.fatal("failed to create complete update", exit_code=2)
+
     def prep_upload(self):
         # Copy stuff into build/upload directory
         dirs = self.query_abs_dirs()
@@ -235,23 +266,46 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
             self.info("copying %s to upload directory" % f)
             self.copy_to_upload_dir(f)
 
-        for f in glob.glob("%s/*.img" % output_dir):
+        for f in glob.glob("%s/*.tar.bz2" % output_dir):
             self.info("copying %s to upload directory" % f)
             self.copy_to_upload_dir(f)
             f = os.path.join(dirs['abs_upload_dir'], os.path.basename(f))
-            self.info("compressing %s" % f)
-            self.run_command(['gzip', '-f', f])
+
+        objdir = os.path.join(dirs['work_dir'], 'objdir-gecko')
+        for f in glob.glob("%s/dist/b2g-update/*.mar" % objdir):
+            self.info("copying %s to upload directory" % f)
+            self.copy_to_upload_dir(f)
+            f = os.path.join(dirs['abs_upload_dir'], os.path.basename(f))
+
+        for f in glob.glob("%s/dist/b2g-*.tar.gz" % objdir):
+            self.info("copying %s to upload directory" % f)
+            self.copy_to_upload_dir(f)
+            f = os.path.join(dirs['abs_upload_dir'], os.path.basename(f))
 
         self.copy_logs_to_upload_dir()
 
     def upload(self):
         dirs = self.query_abs_dirs()
-        upload_path = "%(basepath)s/%(branch)s-%(target)s/%(buildid)s" % dict(
-            basepath=self.config['upload_remote_basepath'],
-            branch=self.query_branch(),
-            buildid=self.query_buildid(),
-            target=self.config['target'],
-        )
+        c = self.config
+        if c['enable_try_uploads']:
+            try:
+                user = self.buildbot_config['sourcestamp']['changes'][0]['who']
+            except KeyError:
+                user = "unknown"
+            upload_path = "%(basepath)s/%(user)s-%(rev)s/%(branch)s-%(target)s" % dict(
+                basepath=self.config['upload_remote_basepath'],
+                branch=self.query_branch(),
+                target=self.config['target'],
+                user=user,
+                rev=self.query_revision(),
+            )
+        else:
+            upload_path = "%(basepath)s/%(branch)s-%(target)s/%(buildid)s" % dict(
+                basepath=self.config['upload_remote_basepath'],
+                branch=self.query_branch(),
+                buildid=self.query_buildid(),
+                target=self.config['target'],
+            )
 
         retval = self.rsync_upload_directory(
             dirs['abs_upload_dir'],
