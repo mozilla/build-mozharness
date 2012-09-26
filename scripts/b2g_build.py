@@ -162,6 +162,10 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
     def checkout_gecko(self):
         dirs = self.query_abs_dirs()
 
+        # Make sure the parent directory to gecko exists so that 'hg share ...
+        # build/gecko' works
+        self.mkdir_p(os.path.dirname(dirs['src']))
+
         repo = self.query_repo()
         rev = self.vcs_checkout(repo=repo, dest=dirs['src'], revision=self.query_revision())
         self.set_buildbot_property('revision', rev, write_to_file=True)
