@@ -122,14 +122,7 @@ class PepTest(TestingMixin, MercurialScript):
 
     # Actions {{{1
     # clobber is in BaseScript.
-
-    def pull(self):
-        if self.config.get('repos'):
-            dirs = self.query_abs_dirs()
-            self.vcs_checkout_repos(self.config['repos'],
-                                    parent_dir=dirs['abs_work_dir'])
-
-
+    # pull is in VCSScript.
     # read_buildbot_config is in BuildbotMixin.
     # postflight_read_buildbot_config is in TestingMixin.
     # preflight_download_and_extract is in TestingMixin.

@@ -84,6 +84,12 @@ class VCSScript(VCSMixin, BaseScript):
     def __init__(self, **kwargs):
         super(VCSScript, self).__init__(**kwargs)
 
+    def pull(self):
+        if self.config.get('repos'):
+            dirs = self.query_abs_dirs()
+            self.vcs_checkout_repos(self.config['repos'],
+                                    parent_dir=dirs['abs_work_dir'])
+
 # Specific VCS stubs {{{1
 # For ease of use.
 # This is here instead of mercurial.py because importing MercurialVCS into

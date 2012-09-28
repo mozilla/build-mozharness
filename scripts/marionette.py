@@ -134,12 +134,6 @@ class MarionetteTest(TestingMixin, MercurialScript):
             return []
         return [str(option), str(value)]
 
-    def pull(self):
-        if self.config.get('repos'):
-            dirs = self.query_abs_dirs()
-            self.vcs_checkout_repos(self.config['repos'],
-                                    parent_dir=dirs['abs_work_dir'])
-
     def run_marionette(self):
         """
         Run the Marionette tests

@@ -13,7 +13,6 @@ author: Jordan Lund
 import os
 import sys
 import copy
-import platform
 import shutil
 
 # load modules from parent dir
@@ -146,7 +145,7 @@ class DesktopUnittest(TestingMixin, MercurialScript):
             "action": "append",
             "dest": "specified_mochitest_suites",
             "type": "string",
-            "help": "Specify which mochi suite to run."
+            "help": "Specify which mochi suite to run. "
                     "Suites are defined in the config file.\n"
                     "Examples: 'all', 'plain1', 'plain5', 'chrome', or 'a11y'"}
          ],
@@ -154,7 +153,7 @@ class DesktopUnittest(TestingMixin, MercurialScript):
             "action": "append",
             "dest": "specified_reftest_suites",
             "type": "string",
-            "help": "Specify which reftest suite to run."
+            "help": "Specify which reftest suite to run. "
                     "Suites are defined in the config file.\n"
                     "Examples: 'all', 'crashplan', or 'jsreftest'"}
          ],
@@ -162,7 +161,7 @@ class DesktopUnittest(TestingMixin, MercurialScript):
             "action": "append",
             "dest": "specified_xpcshell_suites",
             "type": "string",
-            "help": "Specify which xpcshell suite to run."
+            "help": "Specify which xpcshell suite to run. "
                     "Suites are defined in the config file\n."
                     "Examples: 'xpcshell'"}
          ],
@@ -170,17 +169,10 @@ class DesktopUnittest(TestingMixin, MercurialScript):
             "action": "store_true",
             "dest": "run_all_suites",
             "default": False,
-            "help": "This will run all suites that are specified"
+            "help": "This will run all suites that are specified "
                     "in the config file. You do not need to specify "
                     "any other suites.\nBeware, this may take a while ;)"}
          ],
-        [['--enable-preflight-run-commands', ], {
-            "action": "store_false",
-            "dest": "preflight_run_commands_disabled",
-            "default": True,
-            "help": "This will enable any run commands that are specified"
-                    "in the config file under: preflight_run_cmd_suites"}
-         ]
     ] + copy.deepcopy(testing_config_options)
 
     virtualenv_modules = [
@@ -380,45 +372,8 @@ class DesktopUnittest(TestingMixin, MercurialScript):
             self._extract_test_zip(target_unzip_dirs=unzip_tests_dirs)
         self._download_installer()
 
-    def pull(self):
-        dirs = self.query_abs_dirs()
-        c = self.config
-        if c.get('repos'):
-            dirs = self.query_abs_dirs()
-            self.vcs_checkout_repos(c['repos'],
-                                    parent_dir=dirs['abs_work_dir'])
-
-    def preflight_run_tests(self):
-        """preflight commands for all tests"""
-        c = self.config
-        dirs = self.query_abs_dirs()
-
-        if not c.get('preflight_run_commands_disabled'):
-            arch = platform.architecture()[0]
-            for suite in c['preflight_run_cmd_suites']:
-                # XXX platform.architecture() may give incorrect values for some
-                # platforms like mac as excutable files may be universal
-                # files containing multiple architectures
-                # NOTE 'enabled' is only here while we have unconsolidated configs
-                if suite['enabled'] and arch in suite['architectures']:
-                    cmd = suite['cmd']
-                    name = suite['name']
-                    self.info("Running pre test command %(name)s with '%(cmd)s'"
-                              % {'name': name, 'cmd': ' '.join(cmd)})
-                    if self.buildbot_config:  # this cmd is for buildbot
-                        # TODO rather then checking for formatting on every string
-                        # in every preflight enabled cmd: find a better solution!
-                        # maybe I can implement WithProperties in mozharness?
-                        cmd = [x % (self.buildbot_config.get('properties'))
-                               for x in cmd]
-                    self.run_command(cmd,
-                                     cwd=dirs['abs_work_dir'],
-                                     error_list=BaseErrorList,
-                                     halt_on_failure=suite['halt_on_failure'])
-        else:
-            self.warning("Proceeding without running prerun test commands."
-                         " These are often OS specific and disabling them may"
-                         " result in spurious test results!")
+    # pull defined in VCSScript.
+    # preflight_run_tests defined in TestingMixin.
 
     def run_tests(self):
         self._run_category_suites('mochitest')

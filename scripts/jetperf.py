@@ -88,10 +88,6 @@ class JetPerf(Talos, MercurialScript):
             return None
         return self.results_url[len('file://'):]
 
-    def pull(self):
-        """clone the needed repositories"""
-        self.vcs_checkout_repos(self.config['repos'])
-
     def cfx(self):
         """returns path to cfx"""
         path = os.path.join(self.addon_sdk, 'bin', 'cfx')

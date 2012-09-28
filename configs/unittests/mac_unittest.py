@@ -71,6 +71,7 @@ config = {
         "xpcshell": ["--manifest=tests/xpcshell/tests/all-test-dirs.list",
         "application/" + APP_NAME_DIR + "/" + XPCSHELL_NAME]
     },
+    "run_cmd_checks_enabled": True,
     "preflight_run_cmd_suites": [
         # NOTE 'enabled' is only here while we have unconsolidated configs
         {

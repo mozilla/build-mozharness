@@ -82,6 +82,15 @@ class OSMixin(object):
         if system.startswith("CYGWIN"):
             return True
 
+    def query_msys_path(self, path):
+        if not isinstance(path, basestring):
+            return path
+        path = path.replace("\\", "/")
+        def repl(m):
+            return '/%s/' % m.group(1)
+        path = re.sub(r'''^([a-zA-Z]):/''', repl, path)
+        return path
+
     def _rmdir_recursive(self, path):
         """This is a replacement for shutil.rmtree that works better under
         windows. Thanks to Bear at the OSAF for the code."""
@@ -187,15 +196,15 @@ class OSMixin(object):
         if not self.config.get('noop'):
             try:
                 shutil.copyfile(src, dest)
-            except (IOError, shutil.Error):
-                self.dump_exception("Can't copy %s to %s!" % (src, dest),
-                                    level=error_level)
+            except (IOError, shutil.Error), e:
+                self.log("Can't copy %s to %s: %s!" % (src, dest, str(e)),
+                         level=error_level)
                 return -1
 
     def copytree(self, src, dest, overwrite='no_overwrite', log_level=INFO,
                  error_level=ERROR):
         """an implementation of shutil.copytree however it allows for
-        dest to exist and implements differen't overwrite levels.
+        dest to exist and implements different overwrite levels.
         overwrite uses:
         'no_overwrite' will keep all(any) existing files in destination tree
         'overwrite_if_exists' will only overwrite destination paths that have

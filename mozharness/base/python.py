@@ -177,7 +177,7 @@ class VirtualenvMixin(object):
                             cwd=dirs['abs_work_dir']) != 0:
             self.fatal("Unable to install %s!" % module_url)
 
-    def create_virtualenv(self):
+    def create_virtualenv(self, modules=None):
         """
         Create a python virtualenv.
 
@@ -240,11 +240,14 @@ class VirtualenvMixin(object):
                          cwd=dirs['abs_work_dir'],
                          error_list=VirtualenvErrorList,
                          halt_on_failure=True)
-        for module in c.get('virtualenv_modules', []):
+        if not modules:
+            modules = c.get('virtualenv_modules', [])
+        for module in modules:
             module_url = module
             if isinstance(module, dict):
                 (module, module_url) = module.items()[0]
-            module_url = self.config.get('%s_url' % module, module_url)
+            else:
+                module_url = self.config.get('%s_url' % module, module_url)
             install_method = 'pip'
             if module in ('pywin32',):
                 install_method = 'easy_install'

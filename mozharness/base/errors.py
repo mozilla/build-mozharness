@@ -21,7 +21,7 @@ warning; etc.) or platform or language or whatever.
 
 import re
 
-from mozharness.base.log import WARNING, ERROR, CRITICAL, FATAL
+from mozharness.base.log import DEBUG, WARNING, ERROR, CRITICAL, FATAL
 
 # Exceptions
 class VCSException(Exception):
@@ -76,6 +76,7 @@ VirtualenvErrorList = [
  {'substr': r'''not found or a compiler error:''', 'level': ERROR},
  {'regex': re.compile('''\d+: error: '''), 'level': ERROR},
  {'regex': re.compile('''\d+: warning: '''), 'level': WARNING},
+ {'regex': re.compile(r'''Downloading .* \(.*\): *([0-9]+%)? *[0-9\.]+[kmKM]b'''), 'level': DEBUG},
 ] + PythonErrorList
 
 
@@ -89,6 +90,16 @@ MakefileErrorList = BaseErrorList + PythonErrorList + [
  {'regex': re.compile(r'''make\[\d+\]: \*\*\* \[.*\] Error \d+'''), 'level': ERROR},
  {'regex': re.compile(r''':\d+: warning:'''), 'level': WARNING},
  {'substr': r'''Warning: ''', 'level': WARNING},
+]
+
+TarErrorList = BaseErrorList + [
+ {'substr': r'''(stdin) is not a bzip2 file.''', 'level': ERROR},
+ {'regex': re.compile(r'''Child returned status [1-9]'''), 'level': ERROR},
+ {'substr': r'''Error exit delayed from previous errors''', 'level': ERROR},
+ {'substr': r'''stdin: unexpected end of file''', 'level': ERROR},
+ {'substr': r'''stdin: not in gzip format''', 'level': ERROR},
+ {'substr': r'''Cannot exec: No such file or directory''', 'level': ERROR},
+ {'substr': r''': Error is not recoverable: exiting now''', 'level': ERROR},
 ]
 
 ADBErrorList = BaseErrorList + [

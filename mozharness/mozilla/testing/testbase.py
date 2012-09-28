@@ -7,10 +7,14 @@
 
 import copy
 import os
+import platform
 
+from mozharness.base.errors import BaseErrorList
 from mozharness.base.log import FATAL
 from mozharness.base.python import virtualenv_config_options, VirtualenvMixin
 from mozharness.mozilla.buildbot import BuildbotMixin
+
+INSTALLER_SUFFIXES = ('.tar.bz2', '.zip', '.dmg', '.exe', '.apk')
 
 testing_config_options = [
     [["--installer-url"],
@@ -36,7 +40,13 @@ testing_config_options = [
      "dest": "test_url",
      "default": None,
      "help": "URL to the zip file containing the actual tests",
-    }]
+    }],
+    [["--download-symbols"],
+    {"action": "store_true",
+     "dest": "download_symbols",
+     "default": False,
+     "help": "Download and extract crash reporter symbols.",
+    }],
 ] + copy.deepcopy(virtualenv_config_options)
 
 
@@ -53,6 +63,20 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin):
     binary_path = None
     test_url = None
     test_zip_path = None
+    symbols_url = None
+    symbols_path = None
+
+    def query_symbols_url(self):
+        if self.symbols_url:
+            return self.symbols_url
+        if not self.installer_url:
+            self.fatal("Can't figure out symbols_url without an installer_url!")
+        for suffix in INSTALLER_SUFFIXES:
+            if self.installer_url.endswith(suffix):
+                self.symbols_url = self.installer_url[:-len(suffix)] + '.crashreporter-symbols.zip'
+                return self.symbols_url
+        else:
+            self.fatal("Can't figure out symbols_url from installer_url %s!" % self.installer_url)
 
     # read_buildbot_config is in BuildbotMixin.
 
@@ -156,6 +180,22 @@ You can set this by:
         self.installer_path = os.path.realpath(source)
         self.set_buildbot_property("build_url", self.installer_url, write_to_file=True)
 
+    def _download_and_extract_symbols(self):
+        dirs = self.query_abs_dirs()
+        self.symbols_url = self.query_symbols_url()
+        if self.config.get('download_symbols') == 'ondemand':
+            self.symbols_path=self.symbols_url
+            return
+        if not self.symbols_path:
+            self.symbols_path = os.path.join(dirs['abs_work_dir'], 'symbols')
+        self.mkdir_p(self.symbols_path)
+        source = self.download_file(self.symbols_url,
+                                    parent_dir=self.symbols_path,
+                                    error_level=FATAL)
+        self.set_buildbot_property("symbols_url", self.symbols_url,
+                                   write_to_file=True)
+        self.run_command(['unzip', source], cwd=self.symbols_path)
+
     def download_and_extract(self):
         """
         download and extract test zip / download installer
@@ -164,6 +204,8 @@ You can set this by:
             self._download_test_zip()
             self._extract_test_zip()
         self._download_installer()
+        if self.config.get('download_symbols'):
+            self._download_and_extract_symbols()
 
 
     # create_virtualenv is in VirtualenvMixin.
@@ -203,3 +245,49 @@ Did you run with --create-virtualenv? Is mozinstall in virtualenv_modules?""")
                     '--destination', target_dir])
         # TODO we'll need some error checking here
         self.binary_path = self.get_output_from_command(cmd)
+
+    def _run_cmd_checks(self, suites):
+        if not suites:
+            return
+        dirs = self.query_abs_dirs()
+        for suite in suites:
+            # XXX platform.architecture() may give incorrect values for some
+            # platforms like mac as excutable files may be universal
+            # files containing multiple architectures
+            # NOTE 'enabled' is only here while we have unconsolidated configs
+            if not suite['enabled']:
+                continue
+            if suite.get('architectures'):
+                arch = platform.architecture()[0]
+                if arch not in suite['architectures']:
+                    continue
+            cmd = suite['cmd']
+            name = suite['name']
+            self.info("Running pre test command %(name)s with '%(cmd)s'"
+                      % {'name': name, 'cmd': ' '.join(cmd)})
+            if self.buildbot_config:  # this cmd is for buildbot
+                # TODO rather then checking for formatting on every string
+                # in every preflight enabled cmd: find a better solution!
+                # maybe I can implement WithProperties in mozharness?
+                cmd = [x % (self.buildbot_config.get('properties'))
+                       for x in cmd]
+            self.run_command(cmd,
+                             cwd=dirs['abs_work_dir'],
+                             error_list=BaseErrorList,
+                             halt_on_failure=suite['halt_on_failure'])
+
+    def preflight_run_tests(self):
+        """preflight commands for all tests"""
+        c = self.config
+        if c.get('run_cmd_checks_enabled'):
+            self._run_cmd_checks(c.get('preflight_run_cmd_suites', []))
+        elif c.get('preflight_run_cmd_suites'):
+            self.warning("Proceeding without running prerun test commands."
+                         " These are often OS specific and disabling them may"
+                         " result in spurious test results!")
+
+    def postflight_run_tests(self):
+        """preflight commands for all tests"""
+        c = self.config
+        if c.get('run_cmd_checks_enabled'):
+            self._run_cmd_checks(c.get('postflight_run_cmd_suites', []))
