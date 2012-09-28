@@ -21,7 +21,6 @@ config = {
     "exes": {
         'python': PYTHON,
         'virtualenv': [PYTHON, 'c:/mozilla-build/buildbotve/virtualenv.py'],
-        'hg': 'c:/mozilla-build/hg/hg',
         'easy_install': ['%s/scripts/python' % VENV_PATH,
                          '%s/scripts/easy_install-2.7-script.py' % VENV_PATH],
         'mozinstall': ['%s/scripts/python' % VENV_PATH,
@@ -32,14 +31,12 @@ config = {
     "default_actions": [
         "clobber",
         "read-buildbot-config",
-        "pull",
         "download-and-extract",
         "create-virtualenv",
         "install",
         "generate-config",
         "run-tests",
     ],
-    "repos": [{"repo": "http://hg.mozilla.org/build/tools",}],
     "python_webserver": False,
     "webroot": 'c:/talos-slave/talos-data',
     "populate_webroot": True,

@@ -11,10 +11,7 @@ config = {
     "exes": {
         'python': 'c:/mozilla-build/python27/python',
         'virtualenv': ['c:/mozilla-build/python27/python', 'c:/mozilla-build/buildbotve/virtualenv.py'],
-        'hg': 'c:/mozilla-build/hg/hg',
     },
-
-    "repos": [{"repo": "http://hg.mozilla.org/build/tools",}],
 
     "find_links": ["http://puppetagain.pub.build.mozilla.org/data/python/packages"],
 
@@ -23,7 +20,6 @@ config = {
     "default_actions": [
         'clobber',
         'read-buildbot-config',
-        'pull',
         'download-and-extract',
         'create-virtualenv',
         'install',

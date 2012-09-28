@@ -19,11 +19,6 @@ config = {
     "binary_path": APP_NAME_DIR + "/" + BINARY_PATH,
     "xpcshell_name": XPCSHELL_NAME,
     "simplejson_url": "http://build.mozilla.org/talos/zips/simplejson-2.2.1.tar.gz",
-    "repos": [{
-        "repo": "http://hg.mozilla.org/build/tools",
-        "revision": "default",
-        "dest": "tools"
-    }],
     "run_file_names": {
         "mochitest": "runtests.py",
         "reftest": "runreftest.py",

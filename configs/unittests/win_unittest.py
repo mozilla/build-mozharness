@@ -12,7 +12,6 @@ config = {
     "exes": {
         'python': 'c:/mozilla-build/python27/python',
         'virtualenv': ['c:/mozilla-build/python27/python', 'c:/mozilla-build/buildbotve/virtualenv.py'],
-        'hg': 'c:/mozilla-build/hg/hg',
     },
     ###
     "app_name_dir": APP_NAME_DIR,
@@ -22,11 +21,6 @@ config = {
     "virtualenv_path": 'c:/talos-slave/test/build/venv',
     "virtualenv_python_dll": 'c:/mozilla-build/python27/python27.dll',
     "simplejson_url": "http://build.mozilla.org/talos/zips/simplejson-2.2.1.tar.gz",
-    "repos": [{
-        "repo": "http://hg.mozilla.org/build/tools",
-        "revision": "default",
-        "dest": "tools"
-    }],
     "run_file_names": {
         "mochitest": "runtests.py",
         "reftest": "runreftest.py",

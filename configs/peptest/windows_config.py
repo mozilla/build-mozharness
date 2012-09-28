@@ -41,12 +41,10 @@ config = {
     "exes": {
         'python': 'c:/mozilla-build/python25/python',
         'virtualenv': ['c:/mozilla-build/python25/python', 'c:/mozilla-build/buildbotve/virtualenv.py'],
-        'hg': 'c:/mozilla-build/hg/hg',
     },
 
     "default_actions": [
         "clobber",
-        "pull",
         "read-buildbot-config",
         "download-and-extract",
         "create-virtualenv",
@@ -54,5 +52,4 @@ config = {
         "install-tp5n",
         "run-peptest",
     ],
-    "repos": [{"repo": "http://hg.mozilla.org/build/tools",}],
 }

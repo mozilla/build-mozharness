@@ -15,7 +15,7 @@ import re
 from mozharness.base.config import parse_config_file
 from mozharness.base.errors import PythonErrorList, TarErrorList
 from mozharness.base.log import OutputParser, DEBUG, ERROR, CRITICAL, FATAL
-from mozharness.base.vcs.vcsbase import MercurialScript
+from mozharness.base.script import BaseScript
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options, INSTALLER_SUFFIXES
 
 TalosErrorList = PythonErrorList + [
@@ -41,7 +41,7 @@ class TalosOutputParser(OutputParser):
             line.replace("RETURN:", "TinderboxPrint:")
         super(TalosOutputParser, self).parse_single_line(line)
 
-class Talos(TestingMixin, MercurialScript):
+class Talos(TestingMixin, BaseScript):
     """
     install and run Talos tests:
     https://wiki.mozilla.org/Buildbot/Talos
@@ -105,7 +105,6 @@ class Talos(TestingMixin, MercurialScript):
         kwargs.setdefault('config_options', self.config_options)
         kwargs.setdefault('all_actions', ['clobber',
                                           'read-buildbot-config',
-                                          'pull',
                                           'download-and-extract',
                                           'create-virtualenv',
                                           'install',
@@ -121,7 +120,7 @@ class Talos(TestingMixin, MercurialScript):
                                              ])
         kwargs.setdefault('config', {})
         kwargs['config'].setdefault('virtualenv_modules', ["talos", "mozinstall"])
-        MercurialScript.__init__(self, **kwargs)
+        BaseScript.__init__(self, **kwargs)
 
         self.workdir = self.query_abs_dirs()['abs_work_dir'] # convenience
 
@@ -185,6 +184,8 @@ class Talos(TestingMixin, MercurialScript):
                                              error_level=FATAL)
 
     def query_talos_json_config(self):
+        """Return the talos json config; download and read from the
+        talos_json_url if need be."""
         if self.talos_json_config:
             return self.talos_json_config
         c = self.config
@@ -203,7 +204,10 @@ class Talos(TestingMixin, MercurialScript):
         return self.talos_json_config
 
     def query_tests(self):
-        """Determine if we have tests to run
+        """Determine if we have tests to run.
+
+        Currently talos json will take precedence over config and command
+        line options; if that's not a good default we can switch the order.
         """
         if self.tests is not None:
             return self.tests
@@ -235,12 +239,18 @@ class Talos(TestingMixin, MercurialScript):
         return options
 
     def query_talos_url(self):
+        """Where do we install the talos python package from?
+        This needs to be overrideable by the talos json.
+        """
         if self.query_talos_json_config():
             return self.talos_json_config['global']['talos_url']
         else:
             return self.config.get('talos_url')
 
     def query_pagesets_url(self):
+        """Certain suites require external pagesets to be downloaded and
+        extracted.
+        """
         if self.pagesets_url:
             return self.pagesets_url
         if self.query_talos_json_config():
@@ -365,7 +375,6 @@ class Talos(TestingMixin, MercurialScript):
     # Action methods. {{{1
     # clobber defined in BaseScript
     # read_buildbot_config defined in BuildbotMixin
-    # pull defined in VCSScript
 
     def download_and_extract(self):
         super(Talos, self).download_and_extract()
