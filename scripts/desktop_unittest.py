@@ -20,7 +20,7 @@ sys.path.insert(1, os.path.dirname(sys.path[0]))
 
 from mozharness.base.errors import BaseErrorList
 from mozharness.mozilla.testing.errors import TinderBoxPrintRe
-from mozharness.base.script import BaseScript
+from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
 from mozharness.base.log import OutputParser, WARNING, INFO
 from mozharness.mozilla.buildbot import TBPL_WARNING, TBPL_FAILURE
@@ -138,7 +138,7 @@ class DesktopUnittestOutputParser(OutputParser):
 
 
 # DesktopUnittest {{{1
-class DesktopUnittest(TestingMixin, BaseScript):
+class DesktopUnittest(TestingMixin, MercurialScript):
 
     config_options = [
         [['--mochitest-suite', ], {
@@ -198,13 +198,14 @@ class DesktopUnittest(TestingMixin, BaseScript):
     def __init__(self, require_config_file=True):
         # abs_dirs defined already in BaseScript but is here to make pylint happy
         self.abs_dirs = None
-        BaseScript.__init__(
+        MercurialScript.__init__(
             self,
             config_options=self.config_options,
             all_actions=[
                 'clobber',
                 'read-buildbot-config',
                 'download-and-extract',
+                'pull',
                 'create-virtualenv',
                 'install',
                 'run-tests',
@@ -379,6 +380,7 @@ class DesktopUnittest(TestingMixin, BaseScript):
             self._extract_test_zip(target_unzip_dirs=unzip_tests_dirs)
         self._download_installer()
 
+    # pull defined in VCSScript.
     # preflight_run_tests defined in TestingMixin.
 
     def run_tests(self):
