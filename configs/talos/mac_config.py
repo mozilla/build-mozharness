@@ -12,7 +12,7 @@ import os
 import socket
 
 PYTHON = '/tools/buildbot/bin/python'
-VENV_PATH = '/Users/cltbld/talos-slave/test/build/venv'
+VENV_PATH = '%s/build/venv' % os.getcwd()
 
 config = {
     "log_name": "talos",
@@ -38,7 +38,7 @@ config = {
         "run-tests",
     ],
     "python_webserver": False,
-    "webroot": '/Users/cltbld/talos-slave/talos-data',
+    "webroot": '%s/../talos-data' % os.getcwd(),
     "populate_webroot": True,
     "run_cmd_checks_enabled": True,
     "preflight_run_cmd_suites": [
