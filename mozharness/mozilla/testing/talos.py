@@ -325,13 +325,6 @@ class Talos(TestingMixin, BaseScript):
             return conf
         return os.path.join(self.workdir, conf)
 
-    def _download_unzip(self, url, parent_dir):
-        zipfile = self.download_file(url, parent_dir=self.workdir,
-                                     error_level=FATAL)
-        command = self.query_exe('unzip', return_type='list')
-        command.extend(['-q', zipfile])
-        self.run_command(command, cwd=parent_dir, halt_on_failure=True)
-
     def _populate_webroot(self):
         """Populate the production test slaves' webroots"""
         c = self.config

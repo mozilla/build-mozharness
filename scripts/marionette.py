@@ -56,8 +56,22 @@ class MarionetteTest(TestingMixin, BaseScript):
         [["--marionette-address"],
         {"action": "store",
          "dest": "marionette_address",
-         "default": "localhost:2828",
-         "help": "The host:port of the Marionette server running inside Gecko",
+         "default": None,
+         "help": "The host:port of the Marionette server running inside Gecko.  Unused for emulator testing",
+        }],
+        [["--emulator"],
+        {"action": "store",
+         "type": "choice",
+         "choices": ['arm'],
+         "dest": "emulator",
+         "default": None,
+         "help": "Use an emulator for testing",
+        }],
+        [["--emulator-path"],
+        {"action": "store",
+         "dest": "emulator_path",
+         "default": None,
+         "help": "Path to the emulator for emulator testing",
         }],
         [["--test-manifest"],
         {"action": "store",
@@ -107,6 +121,14 @@ class MarionetteTest(TestingMixin, BaseScript):
         self.binary_path = c.get('binary_path')
         self.test_url = self.config.get('test_url')
 
+    def _pre_config_lock(self, rw_config):
+        if self.config.get('emulator'):
+            if not self.config.get('emulator_path'):
+                self.fatal("You must specify --emulator-path for emulator tests!")
+        else:
+            if not self.config.get('marionette_address'):
+                self.fatal("You need to specify a --marionette-address for non-emulator tests! (Try --marionette-address localhost:2828 )")
+
     def query_abs_dirs(self):
         if self.abs_dirs:
             return self.abs_dirs
@@ -133,6 +155,20 @@ class MarionetteTest(TestingMixin, BaseScript):
             return []
         return [str(option), str(value)]
 
+    def download_and_extract(self):
+        super(MarionetteTest, self).download_and_extract()
+        if self.config.get('emulator'):
+            # This assumes the emulator zip's top level directory is the
+            # same as the final directory in emulator_path.
+            self._download_unzip(self.config['emulator_url'],
+                                 os.path.dirname(self.config['emulator_path']))
+
+    def install(self):
+        if self.config.get('emulator'):
+            self.info("Emulator tests; skipping.")
+        else:
+            super(MarionetteTest, self).install()
+
     def run_marionette(self):
         """
         Run the Marionette tests
@@ -146,7 +182,13 @@ class MarionetteTest(TestingMixin, BaseScript):
         python = self.query_python_path('python')
         cmd = [python, '-u', os.path.join(dirs['abs_marionette_dir'],
                                           'runtests.py')]
-        cmd.extend(self._build_arg('--binary', self.binary_path))
+        if self.config.get('emulator'):
+            cmd.extend(self._build_arg('--emulator', self.config['emulator']))
+            cmd.extend(self._build_arg('--gecko-path', self.installer_path))
+            cmd.extend(self._build_arg('--homedir', self.config['emulator_path']))
+
+        else:
+            cmd.extend(self._build_arg('--binary', self.binary_path))
         cmd.extend(self._build_arg('--type', self.config['test_type']))
         cmd.extend(self._build_arg('--address', self.config['marionette_address']))
         manifest = os.path.join(dirs['abs_marionette_tests_dir'],
