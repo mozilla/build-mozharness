@@ -2,6 +2,7 @@
 import os
 config = {
     "default_actions": [
+        'purge-builds',
         'checkout-gecko',
         'download-gonk',
         'unpack-gonk',
@@ -28,4 +29,5 @@ config = {
         "CCACHE_COMPRESS": "1",
         "CCACHE_UMASK": "002",
     },
+    "purge_minsize": 10,
 }

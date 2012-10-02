@@ -17,6 +17,7 @@ from mozharness.base.errors import MakefileErrorList
 from mozharness.mozilla.mock import MockMixin
 from mozharness.mozilla.tooltool import TooltoolMixin
 from mozharness.mozilla.buildbot import BuildbotMixin
+from mozharness.mozilla.purge import PurgeMixin
 
 try:
     import simplejson as json
@@ -25,7 +26,7 @@ except ImportError:
     import json
 
 
-class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, BuildbotMixin):
+class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, BuildbotMixin, PurgeMixin):
     config_options = [
         [["--repo"], {
             "dest": "repo",
@@ -55,6 +56,7 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
                             config_options=self.config_options,
                             all_actions=[
                                 'clobber',  # From BaseScript
+                                'purge-builds',  # From PurgeMixin
                                 'checkout-gecko',
                                 # Download via tooltool repo in gecko checkout or via explicit url
                                 'download-gonk',
