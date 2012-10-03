@@ -13,7 +13,7 @@ import sys
 # load modules from parent dir
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
-from mozharness.base.errors import PythonErrorList
+from mozharness.base.errors import PythonErrorList, TarErrorList
 from mozharness.base.log import INFO, ERROR, OutputParser
 from mozharness.base.script import BaseScript
 from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_WARNING, TBPL_FAILURE
@@ -141,6 +141,8 @@ class MarionetteTest(TestingMixin, BaseScript):
         dirs['abs_marionette_tests_dir'] = os.path.join(
             dirs['abs_test_install_dir'], 'marionette', 'tests', 'testing',
             'marionette', 'client', 'marionette', 'tests')
+        dirs['abs_gecko_dir'] = os.path.join(
+            dirs['abs_work_dir'], 'gecko')
         for key in dirs.keys():
             if key not in abs_dirs:
                 abs_dirs[key] = dirs[key]
@@ -158,10 +160,17 @@ class MarionetteTest(TestingMixin, BaseScript):
     def download_and_extract(self):
         super(MarionetteTest, self).download_and_extract()
         if self.config.get('emulator'):
+            dirs = self.query_abs_dirs()
             # This assumes the emulator zip's top level directory is the
             # same as the final directory in emulator_path.
             self._download_unzip(self.config['emulator_url'],
                                  os.path.dirname(self.config['emulator_path']))
+            self.mkdir_p(dirs['abs_gecko_dir'])
+            tar = self.query_exe('tar', return_type='list')
+            self.run_command(tar + ['zxf', self.installer_path],
+                             cwd=dirs['abs_gecko_dir'],
+                             error_list=TarErrorList,
+                             halt_on_failure=True)
 
     def install(self):
         if self.config.get('emulator'):
@@ -184,7 +193,7 @@ class MarionetteTest(TestingMixin, BaseScript):
                                           'runtests.py')]
         if self.config.get('emulator'):
             cmd.extend(self._build_arg('--emulator', self.config['emulator']))
-            cmd.extend(self._build_arg('--gecko-path', self.installer_path))
+            cmd.extend(self._build_arg('--gecko-path', dirs['abs_gecko_dir']))
             cmd.extend(self._build_arg('--homedir', self.config['emulator_path']))
 
         else:

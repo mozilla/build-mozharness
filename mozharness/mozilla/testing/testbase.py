@@ -14,7 +14,7 @@ from mozharness.base.log import FATAL
 from mozharness.base.python import virtualenv_config_options, VirtualenvMixin
 from mozharness.mozilla.buildbot import BuildbotMixin
 
-INSTALLER_SUFFIXES = ('.tar.bz2', '.zip', '.dmg', '.exe', '.apk')
+INSTALLER_SUFFIXES = ('.tar.bz2', '.zip', '.dmg', '.exe', '.apk', '.tar.gz')
 
 testing_config_options = [
     [["--installer-url"],
