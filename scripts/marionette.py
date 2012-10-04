@@ -82,7 +82,7 @@ class MarionetteTest(TestingMixin, BaseScript):
         }]] + copy.deepcopy(testing_config_options)
 
     error_list = [
-        {'substr': r'''FAILED (errors=''', 'level': ERROR},
+        {'substr': 'FAILED (errors=', 'level': ERROR},
     ]
 
     mozbase_dir = os.path.join('tests', 'mozbase')
@@ -142,7 +142,7 @@ class MarionetteTest(TestingMixin, BaseScript):
             dirs['abs_test_install_dir'], 'marionette', 'tests', 'testing',
             'marionette', 'client', 'marionette', 'tests')
         dirs['abs_gecko_dir'] = os.path.join(
-            dirs['abs_work_dir'], 'gecko')
+            abs_dirs['abs_work_dir'], 'gecko')
         for key in dirs.keys():
             if key not in abs_dirs:
                 abs_dirs[key] = dirs[key]
