@@ -2,10 +2,9 @@
 
 config = {
     # marionette options
-    "type": "b2g",
+    "test_type": "b2g",
     "emulator": "arm",
-    "emulator_path": "/path/to/emulator",
-    "emulator_url": "http://url/to/emulator",
+    "emulator_url": "http://runtime-binaries.pvt.build.mozilla.org/tooltool/sha512/69cba761fc84f8db3b5f536c60027b6515acd5b3084156c67319bdb8e18b06170aedff64333692a80ea1ef8f9c5bdc6fc688b559703b59b5071aebb1bd6ffddf",
     "test_manifest": "unit-tests.ini",
 
     "exes": {
