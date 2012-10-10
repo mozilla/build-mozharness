@@ -2,7 +2,7 @@
 
 config = {
     # marionette options
-    "type": "browser",
+    "test_type": "browser",
     "marionette_address": "localhost:2828",
     "test_manifest": "unit-tests.ini",
 
