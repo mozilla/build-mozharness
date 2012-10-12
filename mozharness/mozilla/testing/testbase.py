@@ -158,7 +158,8 @@ You can set this by:
         """Generic download+unzip.
         This is hardcoded to halt on failure.
         We should probably change some other methods to call this."""
-        zipfile = self.download_file(url, parent_dir=self.workdir,
+        dirs = self.query_abs_dirs()
+        zipfile = self.download_file(url, parent_dir=dirs['abs_work_dir'],
                                      error_level=FATAL)
         command = self.query_exe('unzip', return_type='list')
         command.extend(['-q', '-o', zipfile])
@@ -240,6 +241,8 @@ Did you run with --create-virtualenv? Is mozinstall in virtualenv_modules?""")
         """ Dependent on mozinstall """
         # install the application
         cmd = self.query_exe("mozinstall", default=self.query_python_path("mozinstall"), return_type="list")
+        if self.config.get('application'):
+            cmd.extend(['--app', self.config['application']])
         # Remove the below when we no longer need to support mozinstall 0.3
         self.info("Detecting whether we're running mozinstall >=1.0...")
         output = self.get_output_from_command(cmd + ['-h'])
