@@ -84,6 +84,7 @@ class MarionetteTest(TestingMixin, BaseScript):
         { 'manifestparser': os.path.join(mozbase_dir, 'manifestdestiny') },
         { 'mozhttpd': os.path.join(mozbase_dir, 'mozhttpd') },
         { 'mozinfo': os.path.join(mozbase_dir, 'mozinfo') },
+        { 'mozfile': os.path.join(mozbase_dir, 'mozfile') },
         { 'mozinstall': os.path.join(mozbase_dir, 'mozinstall') },
         { 'mozprofile': os.path.join(mozbase_dir, 'mozprofile') },
         { 'mozprocess': os.path.join(mozbase_dir, 'mozprocess') },
