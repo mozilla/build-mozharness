@@ -188,6 +188,7 @@ class DesktopUnittest(TestingMixin, MercurialScript):
         {'mozlog': os.path.join('tests', 'mozbase', 'mozlog')},
         {'mozinfo': os.path.join('tests', 'mozbase', 'mozinfo')},
         {'mozhttpd': os.path.join('tests', 'mozbase', 'mozhttpd')},
+        {'mozfile': os.path.join('tests', 'mozbase', 'mozfile')},
         {'mozinstall': os.path.join('tests', 'mozbase', 'mozinstall')},
         {'manifestdestiny': os.path.join('tests', 'mozbase', 'manifestdestiny')},
         {'mozprofile': os.path.join('tests', 'mozbase', 'mozprofile')},
