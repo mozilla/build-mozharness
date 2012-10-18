@@ -185,7 +185,7 @@ class B2GEmulatorTest(TestingMixin, BaseScript):
         cmd.extend(self._build_arg('--gecko-path', os.path.dirname(self.binary_path)))
         cmd.extend([
             '--run-only-tests', self.test_manifest,
-            '--xre-path', dirs['abs_xpcshell_dir'],
+            '--xre-path', os.path.join(dirs['abs_xpcshell_dir'], 'bin'),
             '--adbpath', self.adb_path,
         ])
         return cmd
