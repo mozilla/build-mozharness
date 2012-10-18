@@ -81,7 +81,7 @@ config = {
             "cmd": [
                 # when configs are consolidated this python path will only show
                 # for windows.
-                "python", "tools/scripts/support/mouse_and_screen_resolution.py",
+                "python", "../scripts/external_tools/mouse_and_screen_resolution.py",
                 "--configuration-url",
                 "http://hg.mozilla.org/%(branch)s/raw-file/%(revision)s/" +
                     "testing/machine-configuration.json"],
