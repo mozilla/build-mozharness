@@ -21,6 +21,6 @@ config = {
         'download-and-extract',
         'create-virtualenv',
         'install',
-        'run-marionette',
+        'run-tests',
     ],
 }
