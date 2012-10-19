@@ -82,7 +82,7 @@ class DesktopUnittestOutputParser(OutputParser):
                                                 levels=TBPL_STATUS_DICT.keys())
             full_harness_match = self.full_harness_error_re.match(line)
             if full_harness_match:
-                r = harness_match.group(1)
+                r = full_harness_match.group(1)
                 if r == "Browser crashed (minidump found)":
                     self.crashed = True
                 elif r == "missing output line for total leaks!":
