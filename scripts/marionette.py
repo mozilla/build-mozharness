@@ -184,6 +184,7 @@ class MarionetteTest(TestingMixin, BaseScript):
         cmd = [python, '-u', os.path.join(dirs['abs_marionette_dir'],
                                           'runtests.py')]
         if self.config.get('emulator'):
+            cmd.extend(self._build_arg('--logcat-dir', dirs['abs_work_dir']))
             cmd.extend(self._build_arg('--emulator', self.config['emulator']))
             cmd.extend(self._build_arg('--gecko-path',
                                        os.path.join(dirs['abs_gecko_dir'], 'b2g')))
@@ -218,15 +219,26 @@ class MarionetteTest(TestingMixin, BaseScript):
 
         # generate the TinderboxPrint line for TBPL
         emphasize_fail_text = '<em class="testfail">%s</em>'
+        failed = "0"
         if marionette_parser.passed == 0 and marionette_parser.failed == 0:
             tsummary = emphasize_fail_text % "T-FAIL"
         else:
-            failed = "0"
             if marionette_parser.failed > 0:
                 failed = emphasize_fail_text % str(marionette_parser.failed)
             tsummary = "%d/%s/%d" % (marionette_parser.passed,
                                      failed,
                                      marionette_parser.todo)
+
+        # dump logcat output if there were failures
+        if self.config.get('emulator') and (failed != "0" or 'T-FAIL' in tsummary):
+            logcat = os.path.join(dirs['abs_work_dir'], 'emulator-5554.log')
+            if os.access(logcat, os.F_OK):
+                self.info('dumping logcat')
+                with open(logcat) as f:
+                    self.info(f.read())
+            else:
+                self.info('no logcat file found')
+
         self.info("TinderboxPrint: marionette<br/>%s\n" % tsummary)
 
         self.add_summary("Marionette exited with return code %s: %s" % (code,
