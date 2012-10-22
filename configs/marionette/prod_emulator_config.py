@@ -4,7 +4,7 @@ config = {
     # marionette options
     "test_type": "b2g",
     "emulator": "arm",
-    "emulator_url": "http://runtime-binaries.pvt.build.mozilla.org/tooltool/sha512/69cba761fc84f8db3b5f536c60027b6515acd5b3084156c67319bdb8e18b06170aedff64333692a80ea1ef8f9c5bdc6fc688b559703b59b5071aebb1bd6ffddf",
+    "emulator_url": "http://runtime-binaries.pvt.build.mozilla.org/tooltool/sha512/66f9f7f58a100b67d151e64d4c9069dc06105cbf08a10170c341100154c4999708f0304530d7adffbc0ce84c18cdd9f2b49b21365fa8f08b73027e424c4ce68b",
     "test_manifest": "unit-tests.ini",
 
     "exes": {
