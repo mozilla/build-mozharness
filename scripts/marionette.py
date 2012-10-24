@@ -89,6 +89,7 @@ class MarionetteTest(TestingMixin, BaseScript):
         { 'mozprofile': os.path.join(mozbase_dir, 'mozprofile') },
         { 'mozprocess': os.path.join(mozbase_dir, 'mozprocess') },
         { 'mozrunner': os.path.join(mozbase_dir, 'mozrunner') },
+        { 'mozdevice': os.path.join(mozbase_dir, 'mozdevice') },
     ]
 
     def __init__(self, require_config_file=False):
