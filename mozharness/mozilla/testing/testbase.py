@@ -89,7 +89,7 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin):
             c = self.config
             message = "Unable to set %s from the buildbot config"
             try:
-                files = self.buildbot_config['sourcestamp']['changes'][0]['files']
+                files = self.buildbot_config['sourcestamp']['changes'][-1]['files']
                 expected_length = 1
                 if c.get("require_test_zip"):
                     expected_length = 2
