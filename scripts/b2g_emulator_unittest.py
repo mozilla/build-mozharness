@@ -12,10 +12,10 @@ import sys
 # load modules from parent dir
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
-from mozharness.base.errors import PythonErrorList
-from mozharness.base.log import INFO, ERROR, OutputParser
+from desktop_unittest import DesktopUnittestOutputParser
+from mozharness.base.errors import BaseErrorList
+from mozharness.base.log import ERROR
 from mozharness.base.script import BaseScript
-from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_WARNING, TBPL_FAILURE
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
 
 
@@ -76,7 +76,7 @@ class B2GEmulatorTest(TestingMixin, BaseScript):
         }]] + copy.deepcopy(testing_config_options)
 
     error_list = [
-        {'substr': r'''FAILED (errors=''', 'level': ERROR},
+        {'substr': 'FAILED (errors=', 'level': ERROR},
     ]
 
     mozbase_dir = os.path.join('tests', 'mozbase')
@@ -241,7 +241,7 @@ class B2GEmulatorTest(TestingMixin, BaseScript):
         dirs = self.query_abs_dirs()
 
         error_list = self.error_list
-        error_list.extend(PythonErrorList)
+        error_list.extend(BaseErrorList)
 
         if self.config['test_suite'] == 'mochitests':
             cmd = self._build_mochitest_args()
@@ -257,39 +257,24 @@ class B2GEmulatorTest(TestingMixin, BaseScript):
         # In the short term, I'm ok with some duplication of code if it
         # expedites things; please file bugs to merge if that happens.
 
-        # TODO cwd, error_list
-        # left over cruft from marionette
-        parser = OutputParser()
-        code = self.run_command(cmd, cwd=cwd)
-        level = INFO
-        if code == 0:
-            status = "success"
-            tbpl_status = TBPL_SUCCESS
-        elif code == 10:
-            status = "test failures"
-            tbpl_status = TBPL_WARNING
-        else:
-            status = "harness failures"
-            level = ERROR
-            tbpl_status = TBPL_FAILURE
+        suite_names = ['mochitest', 'reftest', 'xpcshell']
+        suite_name = [x for x in suite_names if x in self.config['test_suite']][0]
+        suite = '%s-%s' % (suite_name, self.config['this_chunk'])
 
-        # generate the TinderboxPrint line for TBPL
-        emphasize_fail_text = '<em class="testfail">%s</em>'
-        if parser.passed == 0 and parser.failed == 0:
-            tsummary = emphasize_fail_text % "T-FAIL"
-        else:
-            failed = "0"
-            if parser.failed > 0:
-                failed = emphasize_fail_text % str(parser.failed)
-            tsummary = "%d/%s/%d" % (parser.passed,
-                                     failed,
-                                     parser.todo)
-        self.info("TinderboxPrint: b2g_emulator_unittest<br/>%s\n" % tsummary)
+        parser = DesktopUnittestOutputParser(suite_category=suite_name,
+                                             config=self.config,
+                                             log_obj=self.log_obj,
+                                             error_list=BaseErrorList)
+        return_code = self.run_command(cmd, cwd=cwd,
+                                       output_parser=parser)
 
-        self.add_summary("b2g_emulator_unittest exited with return code %s: %s" % (code, status),
-                         level=level)
-        self.buildbot_status(tbpl_status)
+        tbpl_status, log_level = parser.evaluate_parser(return_code)
+        parser.append_tinderboxprint_line(suite_name)
 
+        self.buildbot_status(tbpl_status, level=log_level)
+        self.add_summary("The %s suite: %s ran with return status: %s" %
+                         (suite_name, suite, tbpl_status),
+                         level=log_level)
 
 if __name__ == '__main__':
     emulatorTest = B2GEmulatorTest()
