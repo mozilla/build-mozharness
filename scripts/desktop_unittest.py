@@ -114,7 +114,8 @@ class DesktopUnittestOutputParser(OutputParser):
         # buildbot evaluation or result status IIUC.
         emphasize_fail_text = '<em class="testfail">%s</em>'
 
-        if self.pass_count < 0 or self.fail_count < 0 or self.known_fail_count < 0:
+        if self.pass_count < 0 or self.fail_count < 0 or \
+                (self.known_fail_count is not None and self.known_fail_count < 0):
             summary = emphasize_fail_text % 'T-FAIL'
         elif self.pass_count == 0 and self.fail_count == 0 and \
                 (self.known_fail_count == 0 or self.known_fail_count is None):
