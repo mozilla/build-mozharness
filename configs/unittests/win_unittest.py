@@ -1,7 +1,9 @@
+import os
+
 #### OS Specifics ####
-APP_NAME_DIR = "firefox"
-BINARY_PATH = "firefox.exe"
-INSTALLER_PATH = "installer.zip"
+ABS_WORK_DIR = os.path.join(os.getcwd(), "build")
+BINARY_PATH = os.path.join(ABS_WORK_DIR, "firefox", "firefox.exe")
+INSTALLER_PATH = os.path.join(ABS_WORK_DIR, "installer.zip")
 XPCSHELL_NAME = 'xpcshell.exe'
 DISABLE_SCREEN_SAVER = False
 ADJUST_MOUSE_AND_SCREEN = True
@@ -14,9 +16,8 @@ config = {
         'virtualenv': ['c:/mozilla-build/python27/python', 'c:/mozilla-build/buildbotve/virtualenv.py'],
     },
     ###
-    "app_name_dir": APP_NAME_DIR,
     "installer_path": INSTALLER_PATH,
-    "binary_path": APP_NAME_DIR + "/" + BINARY_PATH,
+    "binary_path": BINARY_PATH,
     "xpcshell_name": XPCSHELL_NAME,
     "virtualenv_path": 'c:/talos-slave/test/build/venv',
     "virtualenv_python_dll": 'c:/mozilla-build/python27/python27.dll',
@@ -68,14 +69,14 @@ config = {
     },
     "all_xpcshell_suites": {
         "xpcshell": ["--manifest=tests/xpcshell/tests/all-test-dirs.list",
-        "application/" + APP_NAME_DIR + "/" + XPCSHELL_NAME]
+        "%(abs_app_dir)s/" + XPCSHELL_NAME]
     },
     "run_cmd_checks_enabled": True,
     "preflight_run_cmd_suites": [
         # NOTE 'enabled' is only here while we have unconsolidated configs
         {
             "name": "disable_screen_saver",
-            "cmd": ["xset", "s", "reset"],
+            "cmd": ["xset", "s", "off", "s", "reset"],
             "architectures": ["32bit", "64bit"],
             "halt_on_failure": False,
             "enabled": DISABLE_SCREEN_SAVER

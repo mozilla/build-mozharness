@@ -1,7 +1,7 @@
+import os
+
 #### OS Specifics ####
-APP_NAME_DIR = "FirefoxNightly.app/Contents/MacOS"
-BINARY_PATH = "firefox-bin"
-INSTALLER_PATH = "installer.dmg"
+INSTALLER_PATH = os.path.join(os.getcwd(), "installer.dmg")
 XPCSHELL_NAME = 'xpcshell'
 DISABLE_SCREEN_SAVER = False
 ADJUST_MOUSE_AND_SCREEN = False
@@ -14,9 +14,7 @@ config = {
         'virtualenv': ['/tools/buildbot/bin/python', '/tools/misc-python/virtualenv.py'],
     },
     ###
-    "app_name_dir": APP_NAME_DIR,
     "installer_path": INSTALLER_PATH,
-    "binary_path": APP_NAME_DIR + "/" + BINARY_PATH,
     "xpcshell_name": XPCSHELL_NAME,
     "simplejson_url": "http://build.mozilla.org/talos/zips/simplejson-2.2.1.tar.gz",
     "run_file_names": {
@@ -64,14 +62,14 @@ config = {
     },
     "all_xpcshell_suites": {
         "xpcshell": ["--manifest=tests/xpcshell/tests/all-test-dirs.list",
-        "application/" + APP_NAME_DIR + "/" + XPCSHELL_NAME]
+        "%(abs_app_dir)s/" + XPCSHELL_NAME]
     },
     "run_cmd_checks_enabled": True,
     "preflight_run_cmd_suites": [
         # NOTE 'enabled' is only here while we have unconsolidated configs
         {
             "name": "disable_screen_saver",
-            "cmd": ["xset", "s", "reset"],
+            "cmd": ["xset", "s", "off", "s", "reset"],
             "architectures": ["32bit", "64bit"],
             "halt_on_failure": False,
             "enabled": DISABLE_SCREEN_SAVER

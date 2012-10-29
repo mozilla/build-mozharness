@@ -219,12 +219,11 @@ class DesktopUnittest(TestingMixin, BaseScript):
         self.installer_url = c.get('installer_url')
         self.test_url = c.get('test_url')
         self.symbols_url = c.get('symbols_url')
-        # this is so mozinstall in install() doesn't bug out if we don't run the
-        # download_and_extract action
-        self.installer_path = os.path.join(self.abs_dirs['abs_work_dir'],
-                                           c.get('installer_path'))
-        self.binary_path = os.path.join(self.abs_dirs['abs_app_install_dir'],
-                                        c.get('binary_path'))
+        # this is so mozinstall in install() doesn't bug out if we don't run
+        # the download_and_extract action
+        self.installer_path = c.get('installer_path')
+        self.binary_path = c.get('binary_path')
+        self.abs_app_dir = None
 
     ###### helper methods
     def _pre_config_lock(self, rw_config):
@@ -248,9 +247,6 @@ class DesktopUnittest(TestingMixin, BaseScript):
         c = self.config
         dirs = {}
         dirs['abs_app_install_dir'] = os.path.join(abs_dirs['abs_work_dir'], 'application')
-        dirs['abs_app_dir'] = os.path.join(dirs['abs_app_install_dir'], c['app_name_dir'])
-        dirs['abs_app_plugins_dir'] = os.path.join(dirs['abs_app_dir'], 'plugins')
-        dirs['abs_app_components_dir'] = os.path.join(dirs['abs_app_dir'], 'components')
         dirs['abs_test_install_dir'] = os.path.join(abs_dirs['abs_work_dir'], 'tests')
         dirs['abs_test_bin_dir'] = os.path.join(dirs['abs_test_install_dir'], 'bin')
         dirs['abs_test_bin_plugins_dir'] = os.path.join(dirs['abs_test_bin_dir'],
@@ -270,6 +266,17 @@ class DesktopUnittest(TestingMixin, BaseScript):
         self.abs_dirs = abs_dirs
 
         return self.abs_dirs
+
+    def query_abs_app_dir(self):
+        """We can't set this in advance, because OSX install directories
+        change depending on branding and opt/debug.
+        """
+        if self.abs_app_dir:
+            return self.abs_app_dir
+        if not self.binary_path:
+            self.fatal("Can't determine abs_app_dir (binary_path not set!)")
+        self.abs_app_dir = os.path.dirname(self.binary_path)
+        return self.abs_app_dir
 
     def _query_symbols_url(self):
         """query the full symbols URL based upon binary URL"""
@@ -391,18 +398,21 @@ class DesktopUnittest(TestingMixin, BaseScript):
     def preflight_xpcshell(self, suites):
         c = self.config
         dirs = self.query_abs_dirs()
+        abs_app_dir = self.query_abs_app_dir()
+        abs_app_components_dir = os.path.join(abs_app_dir, 'components')
+        abs_app_plugins_dir = os.path.join(abs_app_dir, 'plugins')
         if suites:  # there are xpcshell suites to run
-            self.mkdir_p(dirs['abs_app_plugins_dir'])
+            self.mkdir_p(abs_app_plugins_dir)
             self.info('copying %s to %s' % (os.path.join(dirs['abs_test_bin_dir'],
-                      c['xpcshell_name']), os.path.join(dirs['abs_app_dir'],
+                      c['xpcshell_name']), os.path.join(abs_app_dir,
                                                         c['xpcshell_name'])))
             shutil.copy2(os.path.join(dirs['abs_test_bin_dir'], c['xpcshell_name']),
-                         os.path.join(dirs['abs_app_dir'], c['xpcshell_name']))
+                         os.path.join(abs_app_dir, c['xpcshell_name']))
             self.copytree(dirs['abs_test_bin_components_dir'],
-                          dirs['abs_app_components_dir'],
+                          abs_app_components_dir,
                           overwrite='overwrite_if_exists')
             self.copytree(dirs['abs_test_bin_plugins_dir'],
-                          dirs['abs_app_plugins_dir'],
+                          abs_app_plugins_dir,
                           overwrite='overwrite_if_exists')
 
     def _run_category_suites(self, suite_category, preflight_run_method=None):
@@ -410,13 +420,19 @@ class DesktopUnittest(TestingMixin, BaseScript):
         dirs = self.query_abs_dirs()
         abs_base_cmd = self._query_abs_base_cmd(suite_category)
         suites = self._query_specified_suites(suite_category)
+        abs_app_dir = self.query_abs_app_dir()
 
         if preflight_run_method:
             preflight_run_method(suites)
         if suites:
             self.info('#### Running %s suites' % suite_category)
             for suite in suites:
-                cmd = abs_base_cmd + suites[suite]
+                cmd = abs_base_cmd
+                replace_dict = {
+                    'abs_app_dir': abs_app_dir,
+                }
+                for arg in suites[suite]:
+                    cmd.append(arg % replace_dict)
                 suite_name = suite_category + '-' + suite
                 tbpl_status, log_level = None, None
                 parser = DesktopUnittestOutputParser(suite_category,
