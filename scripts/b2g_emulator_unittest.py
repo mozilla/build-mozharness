@@ -55,7 +55,7 @@ class B2GEmulatorTest(TestingMixin, BaseScript):
         {"action": "store",
          "dest": "test_suite",
          "type": "choice",
-         "choices": ('reftests', 'mochitests'),
+         "choices": ('reftest', 'mochitest'),
          "help": "Which test suite to run",
         }],
         [["--adb-path"],
@@ -225,9 +225,9 @@ class B2GEmulatorTest(TestingMixin, BaseScript):
         c = self.config
         # set default test manifest by suite if none specified
         if not self.test_manifest:
-            if c['test_suite'] == 'mochitests':
+            if c['test_suite'] == 'mochitest':
                 self.test_manifest = 'b2g.json'
-            elif c['test_suite'] == 'reftests':
+            elif c['test_suite'] == 'reftest':
                 self.test_manifest = os.path.join('tests', 'layout',
                                                   'reftests', 'reftest.list')
 
@@ -243,10 +243,10 @@ class B2GEmulatorTest(TestingMixin, BaseScript):
         error_list = self.error_list
         error_list.extend(BaseErrorList)
 
-        if self.config['test_suite'] == 'mochitests':
+        if self.config['test_suite'] == 'mochitest':
             cmd = self._build_mochitest_args()
             cwd = dirs['abs_mochitest_dir']
-        elif self.config['test_suite'] == 'reftests':
+        elif self.config['test_suite'] == 'reftest':
             cmd = self._build_reftest_args()
             cwd = dirs['abs_reftest_dir']
         else:

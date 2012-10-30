@@ -3,7 +3,7 @@
 config = {
     # mozharness script options
     "application": "b2g",
-    "test_suite": "reftests",                               # reftests or mochitests
+    "test_suite": "reftest",                                # reftest or mochitest
 
     "emulator_url": "http://127.0.1.1/b2g/emulator.zip",    # url to emulator zip file
     "installer_url": "http://127.0.1.1/b2g/b2g.tar.gz",     # url to gecko build

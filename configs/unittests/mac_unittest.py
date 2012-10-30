@@ -54,7 +54,7 @@ config = {
                     '--setpref=dom.ipc.plugins.enabled.x86_64=false',
                     '--ipcplugins']
     },
-    #local reftests suites
+    #local reftest suites
     "all_reftest_suites": {
         "reftest": ["tests/reftest/tests/layout/reftests/reftest.list"],
         "crashtest": ["tests/reftest/tests/testing/crashtest/crashtests.list"],

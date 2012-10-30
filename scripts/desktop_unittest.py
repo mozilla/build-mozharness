@@ -324,7 +324,7 @@ class DesktopUnittest(TestingMixin, BaseScript):
                 return_code = self.run_command(cmd, cwd=dirs['abs_work_dir'],
                                                output_parser=parser)
 
-                # mochitests, reftests, and xpcshell suites do not return
+                # mochitest, reftest, and xpcshell suites do not return
                 # appropriate return codes. Therefore, we must parse the output
                 # to determine what the tbpl_status and worst_log_level must
                 # be. We do this by:
