@@ -34,11 +34,16 @@ TalosErrorList = PythonErrorList + [
 # TODO: check for running processes on script invocation
 
 class TalosOutputParser(OutputParser):
+    minidump_regex = re.compile(r'''talosError: "error executing: '(\S+) (\S+) (\S+)'"''')
+    minidump_output = None
     def parse_single_line(self, line):
         """ In Talos land, every line that starts with RETURN: needs to be
         printed with a TinderboxPrint:"""
         if line.startswith("RETURN:"):
             line.replace("RETURN:", "TinderboxPrint:")
+        m = self.minidump_regex.search(line)
+        if m:
+            self.minidump_output = (m.group(1), m.group(2), m.group(3))
         super(TalosOutputParser, self).parse_single_line(line)
 
 class Talos(TestingMixin, BaseScript):
@@ -448,3 +453,7 @@ class Talos(TestingMixin, BaseScript):
                                    error_list=TalosErrorList)
         self.return_code = self.run_command(command, cwd=self.workdir,
                                             output_parser=parser)
+        if parser.minidump_output:
+            self.info("Looking at the minidump files for debugging purposes...")
+            for item in parser.minidump_output:
+                self.run_command(["ls", "-l", item])
