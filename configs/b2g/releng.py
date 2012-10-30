@@ -7,7 +7,6 @@ config = {
         'download-gonk',
         'unpack-gonk',
         'build',
-        'make-updates',
         'prep-upload',
         'upload',
     ],

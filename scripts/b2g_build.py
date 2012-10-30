@@ -190,11 +190,16 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
             gonk_url = gecko_config['gonk_snapshot_url']
 
         if gonk_url:
-            self.download_file(gonk_url, os.path.join(dirs['work_dir'], 'gonk.tar.xz'))
+            retval = self.download_file(gonk_url, os.path.join(dirs['work_dir'], 'gonk.tar.xz'))
+            if retval is None:
+                self.fatal("failed to download gonk", exit_code=2)
 
     def unpack_gonk(self):
         dirs = self.query_abs_dirs()
-        self.run_command(["tar", "xf", "gonk.tar.xz", "--strip-components", "1"], cwd=dirs['work_dir'])
+        retval = self.run_command(["tar", "xf", "gonk.tar.xz", "--strip-components", "1"], cwd=dirs['work_dir'])
+
+        if retval != 0:
+            self.fatal("failed to unpack gonk", exit_code=2)
 
         # output our sources.xml
         self.run_command(["cat", "sources.xml"], cwd=dirs['work_dir'])
@@ -202,7 +207,8 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
     def build(self):
         dirs = self.query_abs_dirs()
         gecko_config = self.load_gecko_config()
-        cmd = ['./build.sh', 'boottarball', 'systemtarball', 'userdatatarball']
+        build_targets = gecko_config.get('build_targets', [])
+        cmd = ['./build.sh'] + build_targets
         env = self.query_env()
         env.update(gecko_config.get('env', {}))
         if self.config['ccache']:
@@ -262,31 +268,24 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
     def prep_upload(self):
         # Copy stuff into build/upload directory
         dirs = self.query_abs_dirs()
+        gecko_config = self.load_gecko_config()
 
         output_dir = os.path.join(dirs['work_dir'], 'out', 'target', 'product', self.config['target'])
+        objdir = os.path.join(dirs['work_dir'], 'objdir-gecko')
+
         self.info("copying files to upload directory")
         files = []
+
         files.append(os.path.join(output_dir, 'system', 'build.prop'))
-        files.append(os.path.join(dirs['work_dir'], 'sources.xml'))
+
+        for pattern in gecko_config.get('upload_files', []):
+            pattern = pattern.format(objdir=objdir, workdir=dirs['work_dir'], srcdir=dirs['src'])
+            for f in glob.glob(pattern):
+                files.append(f)
+
         for f in files:
             self.info("copying %s to upload directory" % f)
             self.copy_to_upload_dir(f)
-
-        for f in glob.glob("%s/*.tar.bz2" % output_dir):
-            self.info("copying %s to upload directory" % f)
-            self.copy_to_upload_dir(f)
-            f = os.path.join(dirs['abs_upload_dir'], os.path.basename(f))
-
-        objdir = os.path.join(dirs['work_dir'], 'objdir-gecko')
-        for f in glob.glob("%s/dist/b2g-update/*.mar" % objdir):
-            self.info("copying %s to upload directory" % f)
-            self.copy_to_upload_dir(f)
-            f = os.path.join(dirs['abs_upload_dir'], os.path.basename(f))
-
-        for f in glob.glob("%s/dist/b2g-*.tar.gz" % objdir):
-            self.info("copying %s to upload directory" % f)
-            self.copy_to_upload_dir(f)
-            f = os.path.join(dirs['abs_upload_dir'], os.path.basename(f))
 
         self.copy_logs_to_upload_dir()
 
