@@ -208,7 +208,7 @@ class B2GEmulatorTest(TestingMixin, BaseScript):
         # self.binary_path gets set by super(B2GEmulatorTest, self).install()
         cmd.extend(self._build_arg('--gecko-path', os.path.dirname(self.binary_path)))
         cmd.extend([
-            '--xre-path', dirs['abs_xpcshell_dir'],
+            '--xre-path', os.path.join(dirs['abs_xpcshell_dir'], 'bin'),
             '--adbpath', self.adb_path,
         ])
         cmd.append(self.test_manifest)
