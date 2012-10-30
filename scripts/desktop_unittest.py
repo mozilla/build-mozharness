@@ -62,14 +62,6 @@ class DesktopUnittest(TestingMixin, BaseScript):
                     "in the config file. You do not need to specify "
                     "any other suites.\nBeware, this may take a while ;)"}
          ],
-        # Need to keep this until buildbot stops calling with this option
-        [['--enable-preflight-run-commands', ], {
-            "action": "store_false",
-            "dest": "preflight_run_commands_disabled",
-            "default": True,
-            "help": "This will enable any run commands that are specified"
-                    "in the config file under: preflight_run_cmd_suites"}
-         ]
     ] + copy.deepcopy(testing_config_options)
 
     virtualenv_modules = [
