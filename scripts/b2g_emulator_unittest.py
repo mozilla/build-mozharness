@@ -12,11 +12,11 @@ import sys
 # load modules from parent dir
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
-from desktop_unittest import DesktopUnittestOutputParser
 from mozharness.base.errors import BaseErrorList
 from mozharness.base.log import ERROR
 from mozharness.base.script import BaseScript
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
+from mozharness.mozilla.testing.unittest import DesktopUnittestOutputParser
 
 
 class B2GEmulatorTest(TestingMixin, BaseScript):
