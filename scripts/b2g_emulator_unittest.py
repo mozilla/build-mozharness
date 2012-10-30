@@ -89,8 +89,8 @@ class B2GEmulatorTest(TestingMixin, BaseScript):
         { 'mozprofile': os.path.join(mozbase_dir, 'mozprofile') },
         { 'mozprocess': os.path.join(mozbase_dir, 'mozprocess') },
         { 'mozrunner': os.path.join(mozbase_dir, 'mozrunner') },
-        { 'marionette': os.path.join('tests', 'marionette') },
         { 'mozdevice': os.path.join(mozbase_dir, 'mozdevice') },
+        { 'marionette': os.path.join('tests', 'marionette') },
     ]
 
     def __init__(self, require_config_file=False):
