@@ -61,6 +61,7 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
                                 # Download via tooltool repo in gecko checkout or via explicit url
                                 'download-gonk',
                                 'unpack-gonk',
+                                'clobber-gaia-profile',
                                 'build',
                                 'make-updates',
                                 'prep-upload',
@@ -203,6 +204,13 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
 
         # output our sources.xml
         self.run_command(["cat", "sources.xml"], cwd=dirs['work_dir'])
+
+    def clobber_gaia_profile(self):
+        dirs = self.query_abs_dirs()
+        retval = self.run_command(["rm", "-rf", "gaia/profile"], cwd=dirs['work_dir'])
+
+        if retval != 0:
+            self.fatal("failed to clean gaia profile", exit_code=2)
 
     def build(self):
         dirs = self.query_abs_dirs()
