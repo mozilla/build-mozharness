@@ -8,7 +8,7 @@ config = {
         'unpack-gonk',
         'clobber-gaia-profile',
         'build',
-        'build-symbols',
+        #'build-symbols',
         'make-updates',
         'prep-upload',
         'upload',

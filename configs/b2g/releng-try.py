@@ -7,6 +7,7 @@ config = {
         'download-gonk',
         'unpack-gonk',
         'build',
+        #'build-symbols',
         'prep-upload',
         'upload',
     ],
