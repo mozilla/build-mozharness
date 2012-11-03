@@ -70,6 +70,11 @@ class BuildbotMixin(object):
     def query_buildbot_property(self, prop_name):
         return self.buildbot_properties.get(prop_name)
 
+    def query_is_nightly(self):
+        if self.buildbot_config and 'properties' in self.buildbot_config:
+            return self.buildbot_config['properties'].get('nightly_build')
+        return False
+
     def dump_buildbot_properties(self, prop_list=None, file_name="properties", error_level=ERROR):
         c = self.config
         if not os.path.isabs(file_name):

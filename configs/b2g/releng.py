@@ -2,12 +2,14 @@
 import os
 config = {
     "default_actions": [
-        'purge-builds',
+        'clobber',
         'checkout-gecko',
         'download-gonk',
         'unpack-gonk',
         'clobber-gaia-profile',
         'build',
+        'build-symbols',
+        'make-updates',
         'prep-upload',
         'upload',
     ],
@@ -27,8 +29,15 @@ config = {
         "CCACHE_DIR": "/builds/ccache",
         "CCACHE_COMPRESS": "1",
         "CCACHE_UMASK": "002",
+        "SYMBOL_SERVER_HOST": "symbols1.dmz.phx1.mozilla.com",
+        #"SYMBOL_SERVER_HOST": "dev-stage01.srv.releng.scl3.mozilla.com",
+        "SYMBOL_SERVER_USER": "b2gbld",
+        "SYMBOL_SERVER_SSH_KEY": "/home/mock_mozilla/.ssh/b2gbld_dsa",
+        "SYMBOL_SERVER_PATH": "/mnt/netapp/breakpad/symbols_b2g/",
+        "POST_SYMBOL_UPLOAD_CMD": "/usr/local/bin/post-symbol-upload.py",
     },
     "purge_minsize": 10,
     #"clobberer_url": "http://clobberer-stage.pvt.build.mozilla.org/index.php",
     "clobberer_url": "http://clobberer.pvt.build.mozilla.org/index.php",
+    "is_automation": True,
 }

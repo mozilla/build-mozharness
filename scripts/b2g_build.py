@@ -56,13 +56,13 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
                             config_options=self.config_options,
                             all_actions=[
                                 'clobber',  # From BaseScript
-                                'purge-builds',  # From PurgeMixin
                                 'checkout-gecko',
                                 # Download via tooltool repo in gecko checkout or via explicit url
                                 'download-gonk',
                                 'unpack-gonk',
                                 'clobber-gaia-profile',
                                 'build',
+                                'build-symbols',
                                 'make-updates',
                                 'prep-upload',
                                 'upload',
@@ -162,6 +162,24 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
         return None
 
     # Actions {{{2
+    def clobber(self):
+        c = self.config
+        if c.get('is_automation'):
+            # Nightly builds always clobber
+            do_clobber = False
+            if self.query_is_nightly():
+                self.info("Clobbering because we're a nightly build")
+                do_clobber = True
+            if c.get('force_clobber'):
+                self.info("Clobbering because our config forced us to")
+                do_clobber = True
+            if do_clobber:
+                super(B2GBuild, self).clobber()
+            # run purge_builds / check clobberer
+            self.purge_builds()
+        else:
+            super(B2GBuild, self).clobber()
+
     def checkout_gecko(self):
         dirs = self.query_abs_dirs()
 
@@ -191,12 +209,25 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
             gonk_url = gecko_config['gonk_snapshot_url']
 
         if gonk_url:
-            retval = self.download_file(gonk_url, os.path.join(dirs['work_dir'], 'gonk.tar.xz'))
-            if retval is None:
-                self.fatal("failed to download gonk", exit_code=2)
+            if os.path.exists("gonk.tar.xz"):
+                self.info("Skipping download of %s because we have a local copy already" % gonk_url)
+            else:
+                retval = self.download_file(gonk_url, os.path.join(dirs['work_dir'], 'gonk.tar.xz'))
+                if retval is None:
+                    self.fatal("failed to download gonk", exit_code=2)
 
     def unpack_gonk(self):
         dirs = self.query_abs_dirs()
+        mtime = int(os.path.getmtime(os.path.join(dirs['abs_work_dir'], 'gonk.tar.xz')))
+        mtime_file = os.path.join(dirs['abs_work_dir'], '.gonk_mtime')
+        try:
+            prev_mtime = int(open(mtime_file).read())
+            if mtime == prev_mtime:
+                self.info("We already have this gonk unpacked; skipping")
+                return
+        except:
+            pass
+
         retval = self.run_command(["tar", "xf", "gonk.tar.xz", "--strip-components", "1"], cwd=dirs['work_dir'])
 
         if retval != 0:
@@ -204,6 +235,9 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
 
         # output our sources.xml
         self.run_command(["cat", "sources.xml"], cwd=dirs['work_dir'])
+
+        self.info("Writing %s to %s" % (mtime, mtime_file))
+        open(mtime_file, "w").write(str(mtime))
 
     def clobber_gaia_profile(self):
         dirs = self.query_abs_dirs()
@@ -232,7 +266,7 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
 
         if 'mock_target' in gecko_config:
             # initialize mock
-            self.setup_mock(gecko_config['mock_target'], gecko_config['mock_packages'])
+            self.setup_mock(gecko_config['mock_target'], gecko_config['mock_packages'], gecko_config.get('mock_files'))
             if self.config['ccache']:
                 self.run_mock_command(gecko_config['mock_target'], 'ccache -z', cwd=dirs['work_dir'], env=env)
 
@@ -249,7 +283,50 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
         if retval != 0:
             self.fatal("failed to build", exit_code=2)
 
+    def build_symbols(self):
+        dirs = self.query_abs_dirs()
+        gecko_config = self.load_gecko_config()
+        cmd = ['./build.sh', 'buildsymbols']
+        env = self.query_env()
+        env.update(gecko_config.get('env', {}))
+        if self.config['ccache']:
+            env['CCACHE_BASEDIR'] = dirs['work_dir']
+
+        # TODO: make sure we pass MOZ_BUILD_DATE
+
+        # Write .userconfig to point to the correct object directory for gecko
+        # Normally this is embedded inside the .config file included with the snapshot
+        user_config = open(os.path.join(dirs['work_dir'], '.userconfig'), 'w')
+        user_config.write("GECKO_OBJDIR=%s/objdir-gecko\n" % dirs['work_dir'])
+        user_config.close()
+
+        if 'mock_target' in gecko_config:
+            # initialize mock
+            self.setup_mock(gecko_config['mock_target'], gecko_config['mock_packages'], gecko_config.get('mock_files'))
+            retval = self.run_mock_command(gecko_config['mock_target'], cmd, cwd=dirs['work_dir'], env=env, error_list=MakefileErrorList)
+        else:
+            retval = self.run_command(cmd, cwd=dirs['work_dir'], env=env, error_list=MakefileErrorList)
+
+        if retval != 0:
+            self.fatal("failed to build symbols", exit_code=2)
+
+        if self.query_is_nightly():
+            # Upload symbols
+            self.info("Uploading symbols")
+            cmd = ['./build.sh', 'uploadsymbols']
+            # TODO: Need to copy in ssh keys...
+            if 'mock_target' in gecko_config:
+                retval = self.run_mock_command(gecko_config['mock_target'], cmd, cwd=dirs['work_dir'], env=env, error_list=MakefileErrorList)
+            else:
+                retval = self.run_command(cmd, cwd=dirs['work_dir'], env=env, error_list=MakefileErrorList)
+
+            if retval != 0:
+                self.fatal("failed to upload symbols", exit_code=2)
+
     def make_updates(self):
+        if not self.query_is_nightly():
+            self.info("Not a nightly build. Skipping...")
+            return
         dirs = self.query_abs_dirs()
         gecko_config = self.load_gecko_config()
         cmd = ['./build.sh', 'gecko-update-full']
@@ -265,7 +342,7 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
 
         if 'mock_target' in gecko_config:
             # initialize mock
-            self.setup_mock(gecko_config['mock_target'], gecko_config['mock_packages'])
+            self.setup_mock(gecko_config['mock_target'], gecko_config['mock_packages'], gecko_config.get('mock_files'))
             retval = self.run_mock_command(gecko_config['mock_target'], cmd, cwd=dirs['work_dir'], env=env, error_list=MakefileErrorList)
         else:
             retval = self.run_command(cmd, cwd=dirs['work_dir'], env=env, error_list=MakefileErrorList)
@@ -274,8 +351,11 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
             self.fatal("failed to create complete update", exit_code=2)
 
     def prep_upload(self):
-        # Copy stuff into build/upload directory
         dirs = self.query_abs_dirs()
+        # Delete the upload dir so we don't upload previous stuff by accident
+        self.rmtree(dirs['abs_upload_dir'])
+
+        # Copy stuff into build/upload directory
         gecko_config = self.load_gecko_config()
 
         output_dir = os.path.join(dirs['work_dir'], 'out', 'target', 'product', self.config['target'])
@@ -292,6 +372,16 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
                 files.append(f)
 
         for f in files:
+            if f.endswith(".img"):
+                if self.query_is_nightly():
+                    # Compress it
+                    self.info("compressing %s" % f)
+                    self.run_command(["bzip2", f])
+                    f += ".bz2"
+                else:
+                    # Skip it
+                    self.info("not uploading %s for non-nightly build" % f)
+                    continue
             self.info("copying %s to upload directory" % f)
             self.copy_to_upload_dir(f)
 

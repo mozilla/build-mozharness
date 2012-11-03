@@ -2,7 +2,7 @@
 import os
 config = {
     "default_actions": [
-        'purge-builds',
+        'clobber',
         'checkout-gecko',
         'download-gonk',
         'unpack-gonk',
@@ -31,4 +31,6 @@ config = {
     "purge_minsize": 10,
     #"clobberer_url": "http://clobberer-stage.pvt.build.mozilla.org/index.php",
     "clobberer_url": "http://clobberer.pvt.build.mozilla.org/index.php",
+    "is_automation": True,
+    "force_clobber": True,
 }
