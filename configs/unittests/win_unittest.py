@@ -14,6 +14,7 @@ config = {
     "exes": {
         'python': 'c:/mozilla-build/python27/python',
         'virtualenv': ['c:/mozilla-build/python27/python', 'c:/mozilla-build/buildbotve/virtualenv.py'],
+        'hg': 'c:/mozilla-build/hg/hg',
     },
     ###
     "installer_path": INSTALLER_PATH,
@@ -95,4 +96,7 @@ config = {
             "enabled": ADJUST_MOUSE_AND_SCREEN
         },
     ],
+    "repos": [{"repo": "http://hg.mozilla.org/build/tools",}],
+    "minidump_stackwalk_path": "%(abs_work_dir)s/tools/breakpad/win32/minidump_stackwalk",
+    "minidump_save_path": "%(abs_work_dir)s/../minidumps",
 }

@@ -11,6 +11,7 @@ author: Jordan Lund
 """
 
 import os
+import re
 import sys
 import copy
 import shutil
@@ -19,7 +20,8 @@ import shutil
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
 from mozharness.base.errors import BaseErrorList
-from mozharness.base.script import BaseScript
+from mozharness.base.log import INFO, ERROR
+from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
 from mozharness.mozilla.testing.unittest import DesktopUnittestOutputParser
 
@@ -27,7 +29,7 @@ SUITE_CATEGORIES = ['mochitest', 'reftest', 'xpcshell']
 
 
 # DesktopUnittest {{{1
-class DesktopUnittest(TestingMixin, BaseScript):
+class DesktopUnittest(TestingMixin, MercurialScript):
 
     config_options = [
         [['--mochitest-suite', ], {
@@ -80,13 +82,14 @@ class DesktopUnittest(TestingMixin, BaseScript):
     def __init__(self, require_config_file=True):
         # abs_dirs defined already in BaseScript but is here to make pylint happy
         self.abs_dirs = None
-        BaseScript.__init__(
+        MercurialScript.__init__(
             self,
             config_options=self.config_options,
             all_actions=[
                 'clobber',
                 'read-buildbot-config',
                 'download-and-extract',
+                'pull',
                 'create-virtualenv',
                 'install',
                 'run-tests',
@@ -268,6 +271,7 @@ class DesktopUnittest(TestingMixin, BaseScript):
             self._extract_test_zip(target_unzip_dirs=unzip_tests_dirs)
         self._download_installer()
 
+    # pull defined in VCSScript.
     # preflight_run_tests defined in TestingMixin.
 
     def run_tests(self):
@@ -298,6 +302,7 @@ class DesktopUnittest(TestingMixin, BaseScript):
 
     def _run_category_suites(self, suite_category, preflight_run_method=None):
         """run suite(s) to a specific category"""
+        c = self.config
         dirs = self.query_abs_dirs()
         abs_base_cmd = self._query_abs_base_cmd(suite_category)
         suites = self._query_specified_suites(suite_category)
@@ -316,13 +321,23 @@ class DesktopUnittest(TestingMixin, BaseScript):
                     cmd.append(arg % replace_dict)
                 suite_name = suite_category + '-' + suite
                 tbpl_status, log_level = None, None
+                error_list = BaseErrorList + [{
+                    'regex': re.compile(r'''PROCESS-CRASH.*minidump found'''),
+                    'level': ERROR,
+                }]
                 parser = DesktopUnittestOutputParser(suite_category,
                                                      config=self.config,
-                                                     error_list=BaseErrorList,
+                                                     error_list=error_list,
                                                      log_obj=self.log_obj)
-
+                env = {}
+                if c.get('minidump_stackwalk_path'):
+                    env['MINIDUMP_STACKWALK'] = c['minidump_stackwalk_path']
+                if c.get('minidump_save_path'):
+                    env['MINIDUMP_SAVE_PATH'] = c['minidump_save_path']
+                env = self.query_env(partial_env=env, log_level=INFO)
                 return_code = self.run_command(cmd, cwd=dirs['abs_work_dir'],
-                                               output_parser=parser)
+                                               output_parser=parser,
+                                               env=env)
 
                 # mochitest, reftest, and xpcshell suites do not return
                 # appropriate return codes. Therefore, we must parse the output

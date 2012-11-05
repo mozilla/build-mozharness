@@ -1,4 +1,5 @@
 import os
+import platform
 
 #### OS Specifics ####
 ABS_WORK_DIR = os.path.join(os.getcwd(), 'build')
@@ -7,6 +8,11 @@ INSTALLER_PATH = os.path.join(ABS_WORK_DIR, "installer.tar.bz2")
 XPCSHELL_NAME = "xpcshell"
 DISABLE_SCREEN_SAVER = True
 ADJUST_MOUSE_AND_SCREEN = False
+if platform.architecture()[0] == '64bit':
+    MINIDUMP_STACKWALK_PATH = "%(abs_work_dir)s/tools/breakpad/linux64/minidump_stackwalk"
+else:
+    MINIDUMP_STACKWALK_PATH = "%(abs_work_dir)s/tools/breakpad/linux/minidump_stackwalk"
+
 #####
 config = {
     ### BUILDBOT
@@ -92,4 +98,7 @@ config = {
             "enabled": ADJUST_MOUSE_AND_SCREEN
         },
     ],
+    "repos": [{"repo": "http://hg.mozilla.org/build/tools",}],
+    "minidump_stackwalk_path": MINIDUMP_STACKWALK_PATH,
+    "minidump_save_path": "%(abs_work_dir)s/../minidumps",
 }

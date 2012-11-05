@@ -351,7 +351,7 @@ class ShellMixin(object):
         self.env = None
 
     def query_env(self, partial_env=None, replace_dict=None,
-                  set_self_env=None):
+                  set_self_env=None, log_level=DEBUG):
         """Environment query/generation method.
 
         The default, self.query_env(), will look for self.config['env']
@@ -381,7 +381,7 @@ class ShellMixin(object):
                     replace_dict[key] = default_replace_dict[key]
         for key in partial_env.keys():
             env[key] = partial_env[key] % replace_dict
-            self.debug("ENV: %s is now %s" % (key, env[key]))
+            self.log("ENV: %s is now %s" % (key, env[key]), level=log_level)
         if set_self_env:
             self.env = env
         return env
