@@ -13,11 +13,16 @@ sys.path.insert(1, os.path.dirname(sys.path[0]))
 from mozharness.base.script import BaseScript
 from mozharness.base.vcs.vcsbase import VCSMixin
 from mozharness.base.transfer import TransferMixin
-from mozharness.base.errors import MakefileErrorList
+from mozharness.base.errors import MakefileErrorList, WARNING
 from mozharness.mozilla.mock import MockMixin
 from mozharness.mozilla.tooltool import TooltoolMixin
 from mozharness.mozilla.buildbot import BuildbotMixin
 from mozharness.mozilla.purge import PurgeMixin
+
+# B2G builds complain about java...but it doesn't seem to be a problem
+# Let's turn those into WARNINGS instead
+B2GMakefileErrorList = MakefileErrorList[:]
+B2GMakefileErrorList.insert(0, {'substr': r'/bin/bash: java: command not found', 'level': WARNING})
 
 try:
     import simplejson as json
@@ -60,7 +65,7 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
                                 # Download via tooltool repo in gecko checkout or via explicit url
                                 'download-gonk',
                                 'unpack-gonk',
-                                'clobber-gaia-profile',
+                                'checkout-gaia',
                                 'build',
                                 'build-symbols',
                                 'make-updates',
@@ -239,12 +244,20 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
         self.info("Writing %s to %s" % (mtime, mtime_file))
         open(mtime_file, "w").write(str(mtime))
 
-    def clobber_gaia_profile(self):
+    def checkout_gaia(self):
         dirs = self.query_abs_dirs()
         retval = self.run_command(["rm", "-rf", "gaia/profile"], cwd=dirs['work_dir'])
 
         if retval != 0:
             self.fatal("failed to clean gaia profile", exit_code=2)
+
+        gecko_config = self.load_gecko_config()
+        if 'gaia' in gecko_config:
+            dest = os.path.join(dirs['abs_work_dir'], 'gaia')
+            repo = gecko_config['gaia']['repo']
+            vcs = gecko_config['gaia']['vcs']
+            rev = self.vcs_checkout(repo=repo, dest=dest, vcs=vcs)
+            self.set_buildbot_property('gaia_revision', rev, write_to_file=True)
 
     def build(self):
         dirs = self.query_abs_dirs()
@@ -270,13 +283,13 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
             if self.config['ccache']:
                 self.run_mock_command(gecko_config['mock_target'], 'ccache -z', cwd=dirs['work_dir'], env=env)
 
-            retval = self.run_mock_command(gecko_config['mock_target'], cmd, cwd=dirs['work_dir'], env=env, error_list=MakefileErrorList)
+            retval = self.run_mock_command(gecko_config['mock_target'], cmd, cwd=dirs['work_dir'], env=env, error_list=B2GMakefileErrorList)
             if self.config['ccache']:
                 self.run_mock_command(gecko_config['mock_target'], 'ccache -s', cwd=dirs['work_dir'], env=env)
         else:
             if self.config['ccache']:
                 self.run_command('ccache -z', cwd=dirs['work_dir'], env=env)
-            retval = self.run_command(cmd, cwd=dirs['work_dir'], env=env, error_list=MakefileErrorList)
+            retval = self.run_command(cmd, cwd=dirs['work_dir'], env=env, error_list=B2GMakefileErrorList)
             if self.config['ccache']:
                 self.run_command('ccache -s', cwd=dirs['work_dir'], env=env)
 
@@ -303,9 +316,9 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
         if 'mock_target' in gecko_config:
             # initialize mock
             self.setup_mock(gecko_config['mock_target'], gecko_config['mock_packages'], gecko_config.get('mock_files'))
-            retval = self.run_mock_command(gecko_config['mock_target'], cmd, cwd=dirs['work_dir'], env=env, error_list=MakefileErrorList)
+            retval = self.run_mock_command(gecko_config['mock_target'], cmd, cwd=dirs['work_dir'], env=env, error_list=B2GMakefileErrorList)
         else:
-            retval = self.run_command(cmd, cwd=dirs['work_dir'], env=env, error_list=MakefileErrorList)
+            retval = self.run_command(cmd, cwd=dirs['work_dir'], env=env, error_list=B2GMakefileErrorList)
 
         if retval != 0:
             self.fatal("failed to build symbols", exit_code=2)
@@ -314,11 +327,10 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
             # Upload symbols
             self.info("Uploading symbols")
             cmd = ['./build.sh', 'uploadsymbols']
-            # TODO: Need to copy in ssh keys...
             if 'mock_target' in gecko_config:
-                retval = self.run_mock_command(gecko_config['mock_target'], cmd, cwd=dirs['work_dir'], env=env, error_list=MakefileErrorList)
+                retval = self.run_mock_command(gecko_config['mock_target'], cmd, cwd=dirs['work_dir'], env=env, error_list=B2GMakefileErrorList)
             else:
-                retval = self.run_command(cmd, cwd=dirs['work_dir'], env=env, error_list=MakefileErrorList)
+                retval = self.run_command(cmd, cwd=dirs['work_dir'], env=env, error_list=B2GMakefileErrorList)
 
             if retval != 0:
                 self.fatal("failed to upload symbols", exit_code=2)
@@ -343,9 +355,9 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
         if 'mock_target' in gecko_config:
             # initialize mock
             self.setup_mock(gecko_config['mock_target'], gecko_config['mock_packages'], gecko_config.get('mock_files'))
-            retval = self.run_mock_command(gecko_config['mock_target'], cmd, cwd=dirs['work_dir'], env=env, error_list=MakefileErrorList)
+            retval = self.run_mock_command(gecko_config['mock_target'], cmd, cwd=dirs['work_dir'], env=env, error_list=B2GMakefileErrorList)
         else:
-            retval = self.run_command(cmd, cwd=dirs['work_dir'], env=env, error_list=MakefileErrorList)
+            retval = self.run_command(cmd, cwd=dirs['work_dir'], env=env, error_list=B2GMakefileErrorList)
 
         if retval != 0:
             self.fatal("failed to create complete update", exit_code=2)

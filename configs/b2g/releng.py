@@ -6,7 +6,7 @@ config = {
         'checkout-gecko',
         'download-gonk',
         'unpack-gonk',
-        'clobber-gaia-profile',
+        'checkout-gaia',
         'build',
         #'build-symbols',
         'make-updates',

@@ -6,6 +6,7 @@ config = {
         'checkout-gecko',
         'download-gonk',
         'unpack-gonk',
+        'checkout-gaia',
         'build',
         #'build-symbols',
         'prep-upload',
