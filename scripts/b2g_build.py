@@ -13,7 +13,7 @@ sys.path.insert(1, os.path.dirname(sys.path[0]))
 from mozharness.base.script import BaseScript
 from mozharness.base.vcs.vcsbase import VCSMixin
 from mozharness.base.transfer import TransferMixin
-from mozharness.base.errors import MakefileErrorList, WARNING
+from mozharness.base.errors import MakefileErrorList, WARNING, ERROR
 from mozharness.mozilla.mock import MockMixin
 from mozharness.mozilla.tooltool import TooltoolMixin
 from mozharness.mozilla.buildbot import BuildbotMixin
@@ -21,7 +21,9 @@ from mozharness.mozilla.purge import PurgeMixin
 
 # B2G builds complain about java...but it doesn't seem to be a problem
 # Let's turn those into WARNINGS instead
-B2GMakefileErrorList = MakefileErrorList[:]
+B2GMakefileErrorList = MakefileErrorList + [
+ {'substr': r'''NS_ERROR_FILE_ALREADY_EXISTS: Component returned failure code''', 'level': ERROR},
+]
 B2GMakefileErrorList.insert(0, {'substr': r'/bin/bash: java: command not found', 'level': WARNING})
 
 try:
