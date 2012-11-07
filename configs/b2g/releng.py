@@ -8,7 +8,7 @@ config = {
         'unpack-gonk',
         'checkout-gaia',
         'build',
-        #'build-symbols',
+        'build-symbols',
         'make-updates',
         'prep-upload',
         'upload',

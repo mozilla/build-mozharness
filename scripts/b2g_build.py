@@ -299,6 +299,10 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
     def build_symbols(self):
         dirs = self.query_abs_dirs()
         gecko_config = self.load_gecko_config()
+        if gecko_config.get('config_version', 0) < 1:
+            self.info("Skipping build_symbols for old configuration")
+            return
+
         cmd = ['./build.sh', 'buildsymbols']
         env = self.query_env()
         env.update(gecko_config.get('env', {}))
