@@ -16,6 +16,8 @@ external_tools_path = os.path.join(
     'external_tools',
 )
 
+from mozharness.base.log import ERROR
+
 
 # PurgeMixin {{{1
 # Depends on ShellMixin for self.run_command,
@@ -89,7 +91,11 @@ class PurgeMixin(object):
             cmd.extend(['-t', str(periodic_clobber)])
 
         cmd.extend([clobberer_url, branch, buildername, builddir, slave, master])
+        error_list = [{
+            'substr': 'Error contacting server', 'level': ERROR,
+            'explanation': 'Error contacting server for clobberer information.'
+        }]
 
-        retval = self.run_command(cmd, cwd=os.path.dirname(self.buildbot_config['properties']['basedir']))
+        retval = self.run_command(cmd, cwd=os.path.dirname(self.buildbot_config['properties']['basedir']), error_list=error_list)
         if retval != 0:
             self.fatal("failed to clobber build", exit_code=2)
