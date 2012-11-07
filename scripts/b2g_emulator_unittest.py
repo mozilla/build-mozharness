@@ -77,6 +77,7 @@ class B2GEmulatorTest(TestingMixin, BaseScript):
 
     error_list = [
         {'substr': 'FAILED (errors=', 'level': ERROR},
+        {'substr': r'''Could not successfully complete transport of message to Gecko, socket closed''', 'level': ERROR},
     ]
 
     mozbase_dir = os.path.join('tests', 'mozbase')
