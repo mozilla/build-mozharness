@@ -78,6 +78,8 @@ class MarionetteTest(TestingMixin, BaseScript):
     error_list = [
         {'substr': 'FAILED (errors=', 'level': ERROR},
         {'substr': r'''Could not successfully complete transport of message to Gecko, socket closed''', 'level': ERROR},
+        {'substr': 'Timeout waiting for the b2g process to terminate', 'level': ERROR},
+        {'substr': 'Timeout waiting for marionette on port', 'level': ERROR},
     ]
 
     mozbase_dir = os.path.join('tests', 'mozbase')
