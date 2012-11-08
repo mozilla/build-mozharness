@@ -1,5 +1,7 @@
-from mozharness.base.errors import PythonErrorList
+import os
 
+from mozharness.base.errors import PythonErrorList
+from mozharness.base.log import FATAL
 
 class TooltoolMixin(object):
     """Mixin class for handling tooltool manifests.
@@ -13,3 +15,13 @@ class TooltoolMixin(object):
             cmd.extend(['--url', s])
         cmd.extend(['fetch', '-m', manifest, '-o'])
         self.run_command(cmd, cwd=output_dir, error_list=PythonErrorList)
+
+    def create_tooltool_manifest(self, contents, path=None):
+        """ Currently just creates a manifest, given the contents.
+        We may want a template and individual values in the future?
+        """
+        if path is None:
+            dirs = self.query_abs_dirs()
+            path = os.path.join(dirs['abs_work_dir'], 'tooltool.tt')
+        self.write_to_file(path, contents, error_level=FATAL)
+        return path

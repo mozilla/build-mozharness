@@ -18,6 +18,8 @@ from mozharness.base.log import INFO, ERROR, OutputParser
 from mozharness.base.script import BaseScript
 from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_WARNING, TBPL_FAILURE
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
+from mozharness.mozilla.testing.unittest import EmulatorMixin
+from mozharness.mozilla.tooltool import TooltoolMixin
 
 
 class MarionetteOutputParser(OutputParser):
@@ -45,7 +47,7 @@ class MarionetteOutputParser(OutputParser):
         super(MarionetteOutputParser, self).parse_single_line(line)
 
 
-class MarionetteTest(TestingMixin, BaseScript):
+class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
     config_options = [
         [["--test-type"],
         {"action": "store",
@@ -159,8 +161,7 @@ class MarionetteTest(TestingMixin, BaseScript):
         if self.config.get('emulator'):
             dirs = self.query_abs_dirs()
             self.workdir = dirs['abs_work_dir']
-            self.mkdir_p(dirs['abs_emulator_dir'])
-            self._download_unzip(self.config['emulator_url'], dirs['abs_emulator_dir'])
+            self.install_emulator()
             self.mkdir_p(dirs['abs_gecko_dir'])
             tar = self.query_exe('tar', return_type='list')
             self.run_command(tar + ['zxf', self.installer_path],

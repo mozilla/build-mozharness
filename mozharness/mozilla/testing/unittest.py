@@ -5,6 +5,8 @@
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 # ***** END LICENSE BLOCK *****
 
+import os
+
 from mozharness.mozilla.testing.errors import TinderBoxPrintRe
 from mozharness.base.log import OutputParser, WARNING, INFO
 from mozharness.mozilla.buildbot import TBPL_WARNING, TBPL_FAILURE
@@ -120,3 +122,19 @@ class DesktopUnittestOutputParser(OutputParser):
                 (self.leaked and "LEAK") or "L-FAIL")
         # Return the summary.
         self.info("TinderboxPrint: %s<br/>%s\n" % (suite_name, summary))
+
+class EmulatorMixin(object):
+    """ Currently dependent on both TooltoolMixin and TestingMixin)"""
+    def install_emulator(self):
+        dirs = self.query_abs_dirs()
+        self.mkdir_p(dirs['abs_emulator_dir'])
+        if self.config.get('emulator_url'):
+            self._download_unzip(self.config['emulator_url'], dirs['abs_emulator_dir'])
+        elif self.config.get('emulator_manifest'):
+            manifest_path = self.create_tooltool_manifest(self.config['emulator_manifest'])
+            if self.tooltool_fetch(manifest_path, output_dir=dirs['abs_work_dir']):
+                self.fatal("Unable to download emulator via tooltool!")
+            unzip = self.query_exe("unzip", return_type="list")
+            self.run_command(unzip + [os.path.join(dirs['abs_work_dir'], "emulator.zip")], cwd=dirs['abs_emulator_dir'], halt_on_failure=True)
+        else:
+            self.fatal("Can't get emulator; set emulator_url or emulator_manifest in the config!")

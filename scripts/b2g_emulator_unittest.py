@@ -16,10 +16,11 @@ from mozharness.base.errors import BaseErrorList
 from mozharness.base.log import ERROR
 from mozharness.base.script import BaseScript
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
-from mozharness.mozilla.testing.unittest import DesktopUnittestOutputParser
+from mozharness.mozilla.testing.unittest import DesktopUnittestOutputParser, EmulatorMixin
+from mozharness.mozilla.tooltool import TooltoolMixin
 
 
-class B2GEmulatorTest(TestingMixin, BaseScript):
+class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
     config_options = [
         [["--type"],
         {"action": "store",
@@ -141,6 +142,8 @@ class B2GEmulatorTest(TestingMixin, BaseScript):
             abs_dirs['abs_work_dir'], 'xpcshell')
         dirs['abs_emulator_dir'] = os.path.join(
             abs_dirs['abs_work_dir'], 'emulator')
+        dirs['abs_b2g-distro_dir'] = os.path.join(
+            dirs['abs_emulator_dir'], 'b2g-distro')
         dirs['abs_mochitest_dir'] = os.path.join(
             dirs['abs_test_install_dir'], 'mochitest')
         dirs['abs_reftest_dir'] = os.path.join(
@@ -162,11 +165,7 @@ class B2GEmulatorTest(TestingMixin, BaseScript):
     def download_and_extract(self):
         super(B2GEmulatorTest, self).download_and_extract()
         dirs = self.query_abs_dirs()
-        # XXX assumes emulator extracts to 'b2g-distro'
-        self._download_unzip(self.config['emulator_url'],
-                             dirs['abs_work_dir'])
-        self.move(os.path.join(dirs['abs_work_dir'], 'b2g-distro'),
-                  dirs['abs_emulator_dir'])
+        self.install_emulator()
 
         self.mkdir_p(dirs['abs_xpcshell_dir'])
         self._download_unzip(self.config['xpcshell_url'],
@@ -180,7 +179,7 @@ class B2GEmulatorTest(TestingMixin, BaseScript):
             python, os.path.join(dirs['abs_mochitest_dir'], 'runtestsb2g.py'),
             '--emulator', c['emulator'],
             '--console-level', 'INFO',
-            '--b2gpath', dirs['abs_emulator_dir'],
+            '--b2gpath', dirs['abs_b2g-distro_dir'],
             '--remote-webserver', c['remote_webserver'],
         ]
         cmd.extend(self._build_arg('--total-chunks', c.get('total_chunks')))
@@ -203,7 +202,7 @@ class B2GEmulatorTest(TestingMixin, BaseScript):
             '--emulator', c['emulator'],
             '--emulator-res', '800x1000',
             '--ignore-window-size',
-            '--b2gpath', dirs['abs_emulator_dir'],
+            '--b2gpath', dirs['abs_b2g-distro_dir'],
             '--remote-webserver', c['remote_webserver'],
         ]
         cmd.extend(self._build_arg('--total-chunks', c.get('total_chunks')))
@@ -220,7 +219,7 @@ class B2GEmulatorTest(TestingMixin, BaseScript):
     def _query_adb(self):
         return self.which('adb') or \
                os.getenv('ADB_PATH') or \
-               os.path.join(self.query_abs_dirs()['abs_emulator_dir'],
+               os.path.join(self.query_abs_dirs()['abs_b2g-distro_dir'],
                             'out', 'host', 'linux-x86', 'bin', 'adb')
 
     def preflight_run_tests(self):
