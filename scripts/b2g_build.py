@@ -194,8 +194,13 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
         # build/gecko' works
         self.mkdir_p(os.path.dirname(dirs['src']))
 
-        repo = self.query_repo()
-        rev = self.vcs_checkout(repo=repo, dest=dirs['src'], revision=self.query_revision())
+        repos = [{
+            'repo': self.query_repo(),
+            'revision': self.query_revision(),
+            'dest': os.path.basename(dirs['src']),
+        }]
+        num_retries = self.config.get("global_retries", 10)
+        rev = self.vcs_checkout_repos(repos, num_retries=num_retries)
         self.set_buildbot_property('revision', rev, write_to_file=True)
 
     def download_gonk(self):
@@ -255,10 +260,13 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
 
         gecko_config = self.load_gecko_config()
         if 'gaia' in gecko_config:
-            dest = os.path.join(dirs['abs_work_dir'], 'gaia')
-            repo = gecko_config['gaia']['repo']
-            vcs = gecko_config['gaia']['vcs']
-            rev = self.vcs_checkout(repo=repo, dest=dest, vcs=vcs)
+            repos = [{
+                'repo': gecko_config['gaia']['repo'],
+                'vcs': gecko_config['gaia']['vcs'],
+                'dest': os.path.join(dirs['abs_work_dir'], 'gaia'),
+            }]
+            num_retries = self.config.get("global_retries", 10)
+            rev = self.vcs_checkout_repos(repos, num_retries=num_retries)
             self.set_buildbot_property('gaia_revision', rev, write_to_file=True)
 
     def build(self):

@@ -149,6 +149,7 @@ class LocalesMixin(ChunkingMixin):
         self.mkdir_p(dirs['abs_l10n_dir'])
         repos = []
         replace_dict = {}
+        num_retries = c.get('global_retries', 10)
         # Replace %(user_repo_override)s with c['user_repo_override']
         if c.get("user_repo_override"):
             replace_dict['user_repo_override'] = c['user_repo_override']
@@ -158,7 +159,8 @@ class LocalesMixin(ChunkingMixin):
         else:
             repos = c.get("l10n_repos")
         if repos:
-            self.vcs_checkout_repos(repos, tag_override=c.get('tag_override'))
+            self.vcs_checkout_repos(repos, tag_override=c.get('tag_override'),
+                                    num_retries=num_retries)
         locales = self.query_locales()
         locale_repos = []
         hg_l10n_base = c['hg_l10n_base']
@@ -174,7 +176,8 @@ class LocalesMixin(ChunkingMixin):
             })
         self.vcs_checkout_repos(repo_list=locale_repos,
                                 parent_dir=dirs['abs_l10n_dir'],
-                                tag_override=c.get('tag_override'))
+                                tag_override=c.get('tag_override'),
+                                num_retries=num_retries)
 
 # __main__ {{{1
 

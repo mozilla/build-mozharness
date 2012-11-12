@@ -142,8 +142,10 @@ class MobilePartnerRepack(LocalesMixin, ReleaseMixin, MobileSigningMixin,
                 repos.append(repo_dict)
         else:
             repos = c['repos']
+        num_retries = c.get("global_retries", 10)
         self.vcs_checkout_repos(repos, parent_dir=dirs['abs_work_dir'],
-                                tag_override=c.get('tag_override'))
+                                tag_override=c.get('tag_override'),
+                                num_retries=num_retries)
 
     def download(self):
         c = self.config

@@ -20,7 +20,7 @@ import sys
 sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.dirname(sys.path[0]))))
 
 from mozharness.base.errors import HgErrorList, VCSException
-from mozharness.base.log import LogMixin, FATAL
+from mozharness.base.log import LogMixin
 from mozharness.base.script import ShellMixin, OSMixin
 
 HG_OPTIONS = ['--config', 'ui.merge=internal:merge']
@@ -126,7 +126,7 @@ class MercurialVCS(ShellMixin, OSMixin, LogMixin, object):
         self.debug("Running hg version %s" % str(ver))
         return ver
 
-    def update(self, dest, branch=None, revision=None, error_level=FATAL):
+    def update(self, dest, branch=None, revision=None):
         """Updates working copy `dest` to `branch` or `revision`.
         If revision is set, branch will be ignored.
         If neither is set then the working copy will be updated to the
@@ -143,8 +143,7 @@ class MercurialVCS(ShellMixin, OSMixin, LogMixin, object):
         if revision is not None:
             cmd = self.hg + ['update', '-C', '-r', revision]
             if self.run_command(cmd, cwd=dest, error_list=HgErrorList):
-                self.log("Unable to update %s to %s!" % (dest, revision),
-                         level=error_level)
+                raise VCSException, "Unable to update %s to %s!" % (dest, revision)
         else:
             # Check & switch branch
             local_branch = self.get_branch_from_path(dest)
@@ -156,7 +155,7 @@ class MercurialVCS(ShellMixin, OSMixin, LogMixin, object):
                 cmd.append(branch)
 
             if self.run_command(cmd, cwd=dest, error_list=HgErrorList):
-                self.log("Unable to update %s!" % dest, level=error_level)
+                raise VCSException, "Unable to update %s!" % dest
         return self.get_revision_from_path(dest)
 
     def clone(self, repo, dest, branch=None, revision=None, update_dest=True):
@@ -335,7 +334,7 @@ class MercurialVCS(ShellMixin, OSMixin, LogMixin, object):
         revision = c.get('revision')
         branch = c.get('branch')
         if not self.query_can_share():
-            self.fatal("%s called when sharing is not allowed!" % __name__)
+            raise VCSException, "%s called when sharing is not allowed!" % __name__
 
         # If the working directory already exists and isn't using share
         # when we want to use share, clobber.
