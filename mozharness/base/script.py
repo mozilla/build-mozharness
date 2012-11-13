@@ -750,6 +750,7 @@ class BaseScript(ShellMixin, OSMixin, LogMixin, object):
             return self.abs_dirs
         c = self.config
         dirs = {}
+        dirs['base_work_dir'] = c['base_work_dir']
         dirs['abs_work_dir'] = os.path.join(c['base_work_dir'], c['work_dir'])
         dirs['abs_upload_dir'] = os.path.join(dirs['abs_work_dir'], 'upload')
         dirs['abs_log_dir'] = os.path.join(c['base_work_dir'], c.get('log_dir', 'logs'))

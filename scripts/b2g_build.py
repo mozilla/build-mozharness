@@ -96,6 +96,7 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
                                 'upload_remote_host': None,
                                 'upload_remote_basepath': None,
                                 'enable_try_uploads': False,
+                                'tools_repo': 'http://hg.mozilla.org/build/tools',
                             },
                             )
 
@@ -367,6 +368,54 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
 
         if retval != 0:
             self.fatal("failed to create complete update", exit_code=2)
+
+        # Sign the updates
+        self.sign_updates()
+
+    def sign_updates(self):
+        if 'MOZ_SIGNING_SERVERS' not in os.environ:
+            self.info("Skipping signing since no MOZ_SIGNING_SERVERS set")
+            return
+
+        dirs = self.query_abs_dirs()
+
+        # We need hg.m.o/build/tools checked out
+        self.info("Checking out tools")
+        repos = [{
+            'repo': self.config['tools_repo'],
+            'vcs': "hgtool",
+            'dest': os.path.join(dirs['abs_work_dir'], "tools")
+        }]
+        #num_retries = self.config.get("global_retries", 10)
+        rev = self.vcs_checkout(**repos[0])
+        self.set_buildbot_property("tools_revision", rev, write_to_file=True)
+
+        objdir = os.path.join(dirs['work_dir'], 'objdir-gecko')
+        marfile = "%s/dist/b2g-update/b2g-gecko-update.mar" % objdir
+        signing_dir = os.path.join(dirs['abs_work_dir'], 'tools', 'release', 'signing')
+        cache_dir = os.path.join(dirs['abs_work_dir'], 'signing_cache')
+        token = os.path.join(dirs['base_work_dir'], 'token')
+        nonce = os.path.join(dirs['base_work_dir'], 'nonce')
+        host_cert = os.path.join(signing_dir, 'host.cert')
+        python = self.query_exe('python')
+        cmd = [
+            python,
+            os.path.join(signing_dir, 'signtool.py'),
+            '--cachedir', cache_dir,
+            '-t', token,
+            '-n', nonce,
+            '-c', host_cert,
+            '-f', 'b2gmar',
+        ]
+
+        for h in os.environ['MOZ_SIGNING_SERVERS'].split(","):
+            cmd += ['-H', h]
+
+        cmd.append(marfile)
+
+        retval = self.run_command(cmd)
+        if retval != 0:
+            self.fatal("failed to sign complete update", exit_code=2)
 
     def prep_upload(self):
         dirs = self.query_abs_dirs()
