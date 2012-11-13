@@ -31,10 +31,13 @@ class VCSMixin(object):
     """Basic VCS methods that are vcs-agnostic.
     The vcs_class handles all the vcs-specific tasks.
     """
-    def vcs_checkout(self, vcs=None, **kwargs):
+    def vcs_checkout(self, vcs=None, num_retries=None, error_level=FATAL,
+                     **kwargs):
         """ Check out a single repo.
         """
         c = self.config
+        if num_retries is None:
+            num_retries = self.config.get("global_retries", 10)
         if not vcs:
             if c.get('default_vcs'):
                 vcs = c['default_vcs']
@@ -57,15 +60,23 @@ class VCSMixin(object):
          config=self.config,
          vcs_config=kwargs,
         )
-        got_revision = vcs_obj.ensure_repo_and_revision()
-        if got_revision:
-            return got_revision
+        try_num = 0
+        while try_num <= num_retries:
+            try:
+                got_revision = vcs_obj.ensure_repo_and_revision()
+                if got_revision:
+                    return got_revision
+            except VCSException, e:
+                try_num += 1
+                self.warning("Try %d: Can't checkout %s: %s!" % (try_num, kwargs['repo'], str(e)))
+                sleep_time = try_num * 2
+                self.info("Sleeping %d..." % sleep_time)
+                time.sleep(sleep_time)
         else:
-            raise VCSException, "No got_revision from ensure_repo_and_revision()"
+            self.log("Can't checkout %s after %d tries!" % (kwargs['repo'], try_num), level=error_level)
 
     def vcs_checkout_repos(self, repo_list, parent_dir=None,
-                           tag_override=None, num_retries=0,
-                           error_level=FATAL):
+                           tag_override=None, **kwargs):
         """Check out a list of repos.
         """
         orig_dir = os.getcwd()
@@ -74,24 +85,16 @@ class VCSMixin(object):
             parent_dir = os.path.join(c['base_work_dir'], c['work_dir'])
         self.mkdir_p(parent_dir)
         self.chdir(parent_dir)
+        revision_list = []
+        kwargs_orig = deepcopy(kwargs)
         for repo_dict in repo_list:
-            kwargs = deepcopy(repo_dict)
-            try_num = 0
+            kwargs = deepcopy(kwargs_orig)
+            kwargs.update(repo_dict)
             if tag_override:
                 kwargs['revision'] = tag_override
-            while try_num <= num_retries:
-                try:
-                    self.vcs_checkout(**kwargs)
-                    break
-                except VCSException, e:
-                    try_num += 1
-                    self.warning("Try %d: Can't checkout %s: %s!" % (try_num, kwargs['repo'], str(e)))
-                    sleep_time = try_num * 2
-                    self.info("Sleeping %d..." % sleep_time)
-                    time.sleep(sleep_time)
-            else:
-                self.log("Can't checkout %s after %d tries!" % (repo_dict['repo'], try_num), level=error_level)
+            revision_list.append(self.vcs_checkout(**kwargs))
         self.chdir(orig_dir)
+        return revision_list
 
 class VCSScript(VCSMixin, BaseScript):
     def __init__(self, **kwargs):
@@ -103,8 +106,6 @@ class VCSScript(VCSMixin, BaseScript):
             self.info("Pull has nothing to do!")
             return
         dirs = self.query_abs_dirs()
-        if num_retries is None:
-            num_retries = self.config.get("global_retries", 10)
         self.vcs_checkout_repos(self.config['repos'],
                                 parent_dir=dirs['abs_work_dir'],
                                 num_retries=num_retries)
