@@ -163,7 +163,7 @@ class VirtualenvMixin(object):
             # Allow easy_install to be overridden by
             # self.config['exes']['easy_install']
             default = 'easy_install'
-            if self._is_windows:
+            if self._is_windows():
                 # Don't invoke `easy_install` directly on windows since
                 # the 'install' in the executable name hits UAC
                 # - http://answers.microsoft.com/en-us/windows/forum/windows_7-security/uac-message-do-you-want-to-allow-the-following/bea30ad8-9ef8-4897-aab4-841a65f7af71
