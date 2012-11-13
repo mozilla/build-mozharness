@@ -102,9 +102,9 @@ class DeviceTalosRunner(DeviceMixin, Talos):
         # We need a generic extract() again.
         dirs = self.query_abs_dirs()
         unzip = self.query_exe("unzip")
+        unzip_cmd = [unzip, '-q', self.installer_path]
         self.mkdir_p(dirs['abs_application_dir'])
-        self.run_command([unzip, self.installer_path],
-                         cwd=dirs['abs_application_dir'])
+        self.run_command(unzip_cmd, cwd=dirs['abs_application_dir'])
         inifile = os.path.join(dirs['abs_application_dir'], 'application.ini')
         remoteappini = os.path.join(dirs['abs_work_dir'], 'remoteapp.ini')
         self.copyfile(inifile, remoteappini)

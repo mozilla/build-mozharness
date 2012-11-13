@@ -203,7 +203,7 @@ class MobilePartnerRepack(LocalesMixin, ReleaseMixin, MobileSigningMixin,
                               'pref("app.partner.%s", "%s");' % (partner, partner)
                              ) is None:
             return
-        if self.run_command([unzip_bin, file_name, 'omni.ja'],
+        if self.run_command([unzip_bin, '-q', file_name, 'omni.ja'],
                             error_list=ZipErrorList,
                             return_type='num_errors',
                             cwd=tmp_dir):

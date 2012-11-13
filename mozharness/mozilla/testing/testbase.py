@@ -174,7 +174,7 @@ You can set this by:
         # adding overwrite flag otherwise subprocess.Popen hangs on waiting for
         # input in a hidden pipe whenever this action is run twice without
         # clobber
-        unzip_cmd = [unzip, '-o', self.test_zip_path]
+        unzip_cmd = [unzip, '-q', '-o', self.test_zip_path]
         if target_unzip_dirs:
             unzip_cmd.extend(target_unzip_dirs)
         # TODO error_list
@@ -205,7 +205,7 @@ You can set this by:
                                     error_level=FATAL)
         self.set_buildbot_property("symbols_url", self.symbols_url,
                                    write_to_file=True)
-        self.run_command(['unzip', source], cwd=self.symbols_path)
+        self.run_command(['unzip', '-q', source], cwd=self.symbols_path)
 
     def download_and_extract(self):
         """

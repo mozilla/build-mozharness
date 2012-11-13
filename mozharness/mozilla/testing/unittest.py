@@ -134,7 +134,8 @@ class EmulatorMixin(object):
             manifest_path = self.create_tooltool_manifest(self.config['emulator_manifest'])
             if self.tooltool_fetch(manifest_path, output_dir=dirs['abs_work_dir']):
                 self.fatal("Unable to download emulator via tooltool!")
-            unzip = self.query_exe("unzip", return_type="list")
-            self.run_command(unzip + [os.path.join(dirs['abs_work_dir'], "emulator.zip")], cwd=dirs['abs_emulator_dir'], halt_on_failure=True)
+            unzip = self.query_exe("unzip")
+            unzip_cmd = [unzip, '-q', os.path.join(dirs['abs_work_dir'], "emulator.zip")]
+            self.run_command(unzip_cmd, cwd=dirs['abs_emulator_dir'], halt_on_failure=True)
         else:
             self.fatal("Can't get emulator; set emulator_url or emulator_manifest in the config!")
