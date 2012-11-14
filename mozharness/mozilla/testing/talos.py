@@ -239,7 +239,7 @@ class Talos(TestingMixin, BaseScript):
         c = self.config
         if self.query_talos_json_config():
             options += self.talos_json_config['suites'][c['suite']].get('talos_options', [])
-        if c['talos_options']:
+        if c.get('talos_options'):
             options += c['talos_options']
         return options
 
