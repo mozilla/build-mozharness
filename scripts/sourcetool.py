@@ -197,7 +197,6 @@ You need to either specify --repo or specify it after the options:
               'vcs_share_base': self.config.get('vcs_shared_dir'),
               'allow_unshared_local_clones': self.config.get('vcs_allow_unshared_local_clones'),
               'halt_on_failure': self.config.get('halt_on_failure', True),
-              'noop': self.config.get('noop'),
              }
             )
         else:

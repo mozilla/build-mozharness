@@ -178,7 +178,7 @@ You can set this by:
         if target_unzip_dirs:
             unzip_cmd.extend(target_unzip_dirs)
         # TODO error_list
-        self.run_command(unzip_cmd, cwd=test_install_dir)
+        self.run_command(unzip_cmd, cwd=test_install_dir, halt_on_failure=True)
 
     def _download_installer(self):
         file_name = None
@@ -205,7 +205,8 @@ You can set this by:
                                     error_level=FATAL)
         self.set_buildbot_property("symbols_url", self.symbols_url,
                                    write_to_file=True)
-        self.run_command(['unzip', '-q', source], cwd=self.symbols_path)
+        self.run_command(['unzip', '-q', source], cwd=self.symbols_path,
+                         halt_on_failure=True)
 
     def download_and_extract(self):
         """

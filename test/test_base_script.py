@@ -40,11 +40,6 @@ def get_debug_script_obj():
                           initial_config_file='test/test.json')
     return s
 
-def get_noop_script_obj():
-    s = script.BaseScript(config={'noop': True},
-                          initial_config_file='test/test.json')
-    return s
-
 class TestScript(unittest.TestCase):
     def setUp(self):
         cleanup()
@@ -68,41 +63,12 @@ class TestScript(unittest.TestCase):
         self.assertTrue(os.path.isdir('test_dir/foo/bar/baz'),
                         msg="mkdir_p error when dir exists")
 
-    def test_noop_mkdir_p(self):
-        self.s = get_noop_script_obj()
-        self.s.mkdir_p('test_dir/foo/bar/baz')
-        self.assertFalse(os.path.exists('test_dir'),
-                         msg="mkdir_p noop error")
-
-    def test_noop_mkdir_p(self):
-        self.s = get_noop_script_obj()
-        self.s.download_file("http://www.mozilla.com", file_name="test_logs/mozilla.com",
-                        error_level=IGNORE)
-        self.assertFalse(os.path.exists('test_logs/mozilla.com'),
-                         msg="download_file noop error")
-
-    def test_noop_get_output_from_command(self):
-        self.s = get_noop_script_obj()
-        contents1 = self.s.get_output_from_command("cat test/test.json", cwd="configs")
-        self.assertEqual(contents1, '',
-                         msg="get_output_from_command noop error")
-
-    def test_noop_run_command(self):
-        self.s = get_noop_script_obj()
-        self.s.run_command("touch test_logs/foo")
-        self.assertFalse(os.path.exists('test_logs/foo'),
-                         msg="run_command noop error")
-
     def test_chdir(self):
-        self.s = get_noop_script_obj()
+        self.s = script.BaseScript(initial_config_file='test/test.json')
         cwd = os.getcwd()
-        self.s.chdir('test_logs', ignore_if_noop=True)
-        self.assertEqual(cwd, os.getcwd(),
-                         msg="chdir noop error")
-        os.chdir(cwd)
         self.s.chdir('test_logs')
         self.assertEqual(os.path.join(cwd, "test_logs"), os.getcwd(),
-                         msg="chdir noop noignore error")
+                         msg="chdir error")
         self.s.chdir(cwd)
 
     def _test_log_helper(self, obj):

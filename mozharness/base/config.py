@@ -227,13 +227,6 @@ class BaseConfig(object):
         self.config_parser.add_option_group(log_option_group)
 
 
-        # TODO deal with noop properly.
-        #self.config_parser.add_option(
-        # "--noop", "--dry-run", action="store_true", default=False,
-        # dest="noop",
-        # help="Echo commands without executing them."
-        #)
-
         # Actions
         action_option_group = OptionGroup(self.config_parser, "Actions",
          "Use these options to list or enable/disable actions.")

@@ -29,7 +29,7 @@ except ImportError:
 
 from mozharness.base.config import BaseConfig
 from mozharness.base.log import SimpleFileLogger, MultiFileLogger, \
-     LogMixin, OutputParser, DEBUG, INFO, ERROR, FATAL
+     LogMixin, OutputParser, DEBUG, INFO, ERROR, WARNING, FATAL
 
 # OSMixin {{{1
 class OSMixin(object):
@@ -43,13 +43,12 @@ class OSMixin(object):
         """
         if not os.path.exists(path):
             self.info("mkdir: %s" % path)
-            if not self.config.get('noop'):
-                try:
-                    os.makedirs(path)
-                except OSError:
-                    self.log("Can't create directory %s!" % path,
-                             level=error_level)
-                    return -1
+            try:
+                os.makedirs(path)
+            except OSError:
+                self.log("Can't create directory %s!" % path,
+                         level=error_level)
+                return -1
         else:
             self.debug("mkdir_p: %s Already exists." % path)
 
@@ -145,12 +144,9 @@ class OSMixin(object):
     # TODO thinking about creating a transfer object.
     def download_file(self, url, file_name=None, parent_dir=None,
                       create_parent_dir=True, error_level=ERROR,
-                      exit_code=-1):
+                      num_retries=None, exit_code=-1):
         """Python wget.
-        TODO: should noop touch the filename? seems counter-noop.
-        TODO: the initial log line should say "Downloading url to file_name"
         """
-        message = ""
         if not file_name:
             try:
                 file_name = self.get_filename_from_url(url)
@@ -160,60 +156,74 @@ class OSMixin(object):
                 return
         if parent_dir:
             file_name = os.path.join(parent_dir, file_name)
-        parent_dir = os.path.dirname(file_name)
-        if self.config.get('noop'):
-            self.info("Downloading %s%s" % (url, message))
-            return file_name
-        req = urllib2.Request(url)
-        try:
-            self.info("Downloading %s%s" % (url, message))
-            f = urllib2.urlopen(req)
-            if create_parent_dir and parent_dir:
+            if create_parent_dir:
                 self.mkdir_p(parent_dir, error_level=error_level)
-            local_file = open(file_name, 'wb')
-            while True:
-                block = f.read(1024**2)
-                if not block:
-                    break
-                local_file.write(block)
-            local_file.close()
-        except urllib2.HTTPError, e:
-            self.log("HTTP Error: %s %s" % (e.code, url), level=error_level,
-                     exit_code=exit_code)
-            return
-        except urllib2.URLError, e:
-            self.log("URL Error: %s" % (url), level=error_level,
-                                            exit_code=exit_code)
-            return
-        return file_name
+        if num_retries is None:
+            num_retries = self.config.get("global_retries", 5)
+        self.info("Downloading %s to %s" % (url, file_name))
+        try_num = 0
+        while try_num <= num_retries:
+            try_num += 1
+            level = WARNING
+            if try_num > num_retries:
+                level = error_level
+            try:
+                f = urllib2.urlopen(url)
+                local_file = open(file_name, 'wb')
+                while True:
+                    block = f.read(1024**2)
+                    if not block:
+                        break
+                    local_file.write(block)
+                local_file.close()
+                return file_name
+            except urllib2.HTTPError, e:
+                self.log("Try %d: Server returned status %s %s for %s" % (try_num, str(e.code), str(e), url),
+                         level=level, exit_code=exit_code)
+            except urllib2.URLError, e:
+                if try_num > num_retries:
+                    remote_host = urlparse.urlsplit(url)[1]
+                    if not remote_host:
+                        return
+                    nslookup = self.query_exe('nslookup')
+                    error_list = [{
+                        'substr': "server can't find %s" % remote_host,
+                        'level': ERROR,
+                        'explanation': "Either %s is an invalid hostname, or DNS is busted." % remote_host,
+                    }]
+                    self.run_command([nslookup, remote_host],
+                                     error_list=error_list)
+                self.log("Try %d: URL Error: %s" % (try_num, url), level=level,
+                         exit_code=exit_code)
+            if try_num <= num_retries:
+                sleep_time = try_num * 20
+                self.info("Sleeping %d seconds..." % sleep_time)
+                time.sleep(sleep_time)
 
     def move(self, src, dest, log_level=INFO, error_level=ERROR,
              exit_code=-1):
         self.log("Moving %s to %s" % (src, dest), level=log_level)
-        if not self.config.get('noop'):
-            try:
-                shutil.move(src, dest)
-            # http://docs.python.org/tutorial/errors.html
-            except IOError, e:
-                self.log("IO error: %s" % str(e),
-                         level=error_level, exit_code=exit_code)
-                return -1
+        try:
+            shutil.move(src, dest)
+        # http://docs.python.org/tutorial/errors.html
+        except IOError, e:
+            self.log("IO error: %s" % str(e),
+                     level=error_level, exit_code=exit_code)
+            return -1
         return 0
 
     def chmod(self, path, mode):
         self.info("Chmoding %s to %s" % (path, str(oct(mode))))
-        if not self.config.get('noop'):
-            os.chmod(path, mode)
+        os.chmod(path, mode)
 
     def copyfile(self, src, dest, log_level=INFO, error_level=ERROR):
         self.log("Copying %s to %s" % (src, dest), level=log_level)
-        if not self.config.get('noop'):
-            try:
-                shutil.copyfile(src, dest)
-            except (IOError, shutil.Error), e:
-                self.log("Can't copy %s to %s: %s!" % (src, dest, str(e)),
-                         level=error_level)
-                return -1
+        try:
+            shutil.copyfile(src, dest)
+        except (IOError, shutil.Error), e:
+            self.log("Can't copy %s to %s: %s!" % (src, dest, str(e)),
+                     level=error_level)
+            return -1
 
     def copytree(self, src, dest, overwrite='no_overwrite', log_level=INFO,
                  error_level=ERROR):
@@ -321,12 +331,9 @@ class OSMixin(object):
             self.log("%s can't be opened for reading!" % file_path,
                      level=error_level)
 
-    def chdir(self, dir_name, ignore_if_noop=False):
+    def chdir(self, dir_name):
         self.log("Changing directory to %s." % dir_name)
-        if self.config.get('noop') and ignore_if_noop:
-            self.info("noop: not changing dir")
-        else:
-            os.chdir(dir_name)
+        os.chdir(dir_name)
 
     def which(self, program):
         """
@@ -469,9 +476,6 @@ class ShellMixin(object):
             self.info("Running command: %s" % command)
         if isinstance(command, list):
             self.info("Copy/paste: %s" % subprocess.list2cmdline(command))
-        if self.config.get('noop'):
-            self.info("(Dry run; skipping)")
-            return
         shell = True
         if isinstance(command, list):
             shell = False
@@ -547,9 +551,6 @@ class ShellMixin(object):
         if isinstance(command, list):
             self.info("Copy/paste: %s" % subprocess.list2cmdline(command))
         # This could potentially return something?
-        if self.config.get('noop'):
-            self.info("(Dry run; skipping)")
-            return ''
         tmp_stdout = None
         tmp_stderr = None
         tmp_stdout_filename = '%s_stdout' % tmpfile_base_path

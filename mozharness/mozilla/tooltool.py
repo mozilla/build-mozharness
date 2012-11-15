@@ -1,7 +1,12 @@
 import os
+import time
 
 from mozharness.base.errors import PythonErrorList
-from mozharness.base.log import FATAL
+from mozharness.base.log import ERROR, FATAL
+
+TooltoolErrorList = PythonErrorList + [{
+    'substr': 'ERROR - ', 'level': ERROR
+}]
 
 class TooltoolMixin(object):
     """Mixin class for handling tooltool manifests.
@@ -14,7 +19,18 @@ class TooltoolMixin(object):
         for s in self.config['tooltool_servers']:
             cmd.extend(['--url', s])
         cmd.extend(['fetch', '-m', manifest, '-o'])
-        self.run_command(cmd, cwd=output_dir, error_list=PythonErrorList)
+        num_retries = self.config.get("global_retries", 5)
+        try_num = 0
+        while try_num <= num_retries:
+            try_num += 1
+            if not self.run_command(cmd, cwd=output_dir, error_list=TooltoolErrorList):
+                return
+            if try_num <= num_retries:
+                sleep_time = 2 * try_num
+                self.warning("Try %d failed; sleeping %d..." % (try_num, sleep_time))
+                time.sleep(sleep_time)
+            else:
+                self.fatal("Tooltool %s fetch failed after %d tries!" % (manifest, try_num))
 
     def create_tooltool_manifest(self, contents, path=None):
         """ Currently just creates a manifest, given the contents.
