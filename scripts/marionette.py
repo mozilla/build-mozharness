@@ -37,6 +37,7 @@ class MarionetteOutputParser(OutputParser):
         super(MarionetteOutputParser, self).__init__(**kwargs)
 
     def parse_single_line(self, line):
+        super(MarionetteOutputParser, self).parse_single_line(line)
         m = self.summary.match(line)
         if m:
             try:
@@ -44,7 +45,6 @@ class MarionetteOutputParser(OutputParser):
             except ValueError:
                 # ignore bad values
                 pass
-        super(MarionetteOutputParser, self).parse_single_line(line)
 
 
 class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
@@ -80,8 +80,8 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
     error_list = [
         {'substr': 'FAILED (errors=', 'level': ERROR},
         {'substr': r'''Could not successfully complete transport of message to Gecko, socket closed''', 'level': ERROR},
-        {'substr': 'Timeout waiting for the b2g process to terminate', 'level': ERROR},
         {'substr': 'Timeout waiting for marionette on port', 'level': ERROR},
+        {'regex': re.compile(r'''(Timeout|NoSuchAttribute|Javascript|NoSuchElement|XPathLookup|NoSuchWindow|StaleElement|ScriptTimeout|ElementNotVisible|NoSuchFrame|InvalidElementState|NoAlertPresent|InvalidCookieDomain|UnableToSetCookie|InvalidSelector|MoveTargetOutOfBounds)Exception'''), 'level': ERROR},
     ]
 
     mozbase_dir = os.path.join('tests', 'mozbase')

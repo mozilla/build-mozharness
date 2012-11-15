@@ -7,6 +7,7 @@
 
 import copy
 import os
+import re
 import sys
 
 # load modules from parent dir
@@ -79,8 +80,8 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
     error_list = [
         {'substr': 'FAILED (errors=', 'level': ERROR},
         {'substr': r'''Could not successfully complete transport of message to Gecko, socket closed''', 'level': ERROR},
-        {'substr': 'Timeout waiting for the b2g process to terminate', 'level': ERROR},
         {'substr': 'Timeout waiting for marionette on port', 'level': ERROR},
+        {'regex': re.compile(r'''(Timeout|NoSuchAttribute|Javascript|NoSuchElement|XPathLookup|NoSuchWindow|StaleElement|ScriptTimeout|ElementNotVisible|NoSuchFrame|InvalidElementState|NoAlertPresent|InvalidCookieDomain|UnableToSetCookie|InvalidSelector|MoveTargetOutOfBounds)Exception'''), 'level': ERROR},
     ]
 
     mozbase_dir = os.path.join('tests', 'mozbase')
