@@ -46,7 +46,7 @@ config = {
     "locales_file": "buildbot-configs/mozilla/l10n-changesets_mobile-release.json",
     "release_config_file": "buildbot-configs/mozilla/release-fennec-mozilla-release.py",
 
-    "platforms": ['android'],
+    "platforms": ['android', 'android-armv6'],
     "platform_config": {
         'android': {},
         'android-armv6': {
