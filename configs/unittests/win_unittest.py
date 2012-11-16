@@ -89,7 +89,7 @@ config = {
                 # for windows.
                 "C:\\mozilla-build\\python25\\python.exe", "../scripts/external_tools/mouse_and_screen_resolution.py",
                 "--configuration-url",
-                "http://hg.mozilla.org/%(branch)s/raw-file/%(revision)s/" +
+                "http://hg.mozilla.org/%(repo_path)s/raw-file/%(revision)s/" +
                     "testing/machine-configuration.json"],
             "architectures": ["32bit"],
             "halt_on_failure": True,
