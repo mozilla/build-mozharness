@@ -267,7 +267,7 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
         parser = DesktopUnittestOutputParser(suite_category=suite_name,
                                              config=self.config,
                                              log_obj=self.log_obj,
-                                             error_list=BaseErrorList)
+                                             error_list=error_list)
         return_code = self.run_command(cmd, cwd=cwd,
                                        output_parser=parser)
 
