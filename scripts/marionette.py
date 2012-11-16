@@ -16,7 +16,7 @@ sys.path.insert(1, os.path.dirname(sys.path[0]))
 from mozharness.base.errors import PythonErrorList, TarErrorList
 from mozharness.base.log import INFO, ERROR, OutputParser
 from mozharness.base.script import BaseScript
-from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_WARNING, TBPL_FAILURE
+from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_WARNING, TBPL_FAILURE, TBPL_RETRY
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
 from mozharness.mozilla.testing.unittest import EmulatorMixin
 from mozharness.mozilla.tooltool import TooltoolMixin
@@ -28,15 +28,19 @@ class MarionetteOutputParser(OutputParser):
     passed/failed/todo tests from the output.
     """
 
+    bad_gecko_install = re.compile(r'Error installing gecko!')
     summary = re.compile(r'(passed|failed|todo): (\d+)')
 
     def __init__(self, **kwargs):
         self.failed = 0
         self.passed = 0
         self.todo = 0
+        self.install_gecko_failed = False
         super(MarionetteOutputParser, self).__init__(**kwargs)
 
     def parse_single_line(self, line):
+        if self.bad_gecko_install.search(line):
+            self.install_gecko_failed = True
         super(MarionetteOutputParser, self).parse_single_line(line)
         m = self.summary.match(line)
         if m:
@@ -205,11 +209,20 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
                                 self.config['test_manifest'])
         cmd.append(manifest)
 
-        marionette_parser = MarionetteOutputParser(config=self.config,
-                                                   log_obj=self.log_obj,
-                                                   error_list=error_list)
-        code = self.run_command(cmd,
-                                output_parser=marionette_parser)
+        for i in range(0, 5):
+            # We retry the run because sometimes installing gecko on the
+            # emulator can cause B2G not to restart properly - Bug 812935.
+            marionette_parser = MarionetteOutputParser(config=self.config,
+                                                       log_obj=self.log_obj,
+                                                       error_list=error_list)
+            code = self.run_command(cmd,
+                                    output_parser=marionette_parser)
+            if not marionette_parser.install_gecko_failed:
+                break
+        else:
+            self.buildbot_status(TBPL_RETRY)
+            self.fatal("Failed to install gecko 5 times in a row, aborting")
+
         level = INFO
         if code == 0:
             status = "success"
