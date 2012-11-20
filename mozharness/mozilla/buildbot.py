@@ -45,9 +45,6 @@ class BuildbotMixin(object):
             # TODO try/except?
             self.buildbot_config = parse_config_file(c['buildbot_json_path'])
             self.info(pprint.pformat(self.buildbot_config))
-            # I think tbpl still wants this
-            if self.buildbot_config.get('properties', {}).get('slavename'):
-                self.info("TinderboxPrint: s: %s" % self.buildbot_config['properties']['slavename'])
 
     def tryserver_email(self):
         pass
