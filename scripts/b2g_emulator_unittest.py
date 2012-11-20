@@ -246,6 +246,7 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
 
     def _dump_logcat(self, parser):
         if parser.fail_count != 0 or parser.crashed or parser.leaked:
+            dirs = self.query_abs_dirs()
             logcat = os.path.join(dirs['abs_work_dir'], 'emulator-5554.log')
             if os.access(logcat, os.F_OK):
                 self.info('dumping logcat')
