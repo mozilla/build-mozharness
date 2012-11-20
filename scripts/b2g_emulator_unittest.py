@@ -201,6 +201,7 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
             '--console-level', 'INFO',
             '--b2gpath', dirs['abs_b2g-distro_dir'],
             '--remote-webserver', c['remote_webserver'],
+            '--logcat-dir', dirs['abs_work_dir'],
         ]
         cmd.extend(self._build_arg('--total-chunks', c.get('total_chunks')))
         cmd.extend(self._build_arg('--this-chunk', c.get('this_chunk')))
@@ -224,6 +225,7 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
             '--ignore-window-size',
             '--b2gpath', dirs['abs_b2g-distro_dir'],
             '--remote-webserver', c['remote_webserver'],
+            '--logcat-dir', dirs['abs_work_dir'],
         ]
         cmd.extend(self._build_arg('--total-chunks', c.get('total_chunks')))
         cmd.extend(self._build_arg('--this-chunk', c.get('this_chunk')))
@@ -241,6 +243,16 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
                os.getenv('ADB_PATH') or \
                os.path.join(self.query_abs_dirs()['abs_b2g-distro_dir'],
                             'out', 'host', 'linux-x86', 'bin', 'adb')
+
+    def _dump_logcat(self, parser):
+        if parser.fail_count != 0 or parser.crashed or parser.leaked:
+            logcat = os.path.join(dirs['abs_work_dir'], 'emulator-5554.log')
+            if os.access(logcat, os.F_OK):
+                self.info('dumping logcat')
+                with open(logcat) as f:
+                    self.info(f.read())
+            else:
+                self.info('no logcat file found')
 
     def preflight_run_tests(self):
         super(B2GEmulatorTest, self).preflight_run_tests()
@@ -293,9 +305,11 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
             return_code = self.run_command(cmd, cwd=cwd,
                                            output_parser=parser)
             if not parser.install_gecko_failed:
+                self._dump_logcat(parser)
                 break
         else:
             self.buildbot_status(TBPL_RETRY)
+            self._dump_logcat(parser)
             self.fatal("Failed to install gecko 5 times in a row, aborting")
 
         tbpl_status, log_level = parser.evaluate_parser(return_code)
