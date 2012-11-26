@@ -230,7 +230,7 @@ class VirtualenvMixin(object):
             target = self.query_python_path(dll_name)
             scripts_dir = os.path.dirname(target)
             self.mkdir_p(scripts_dir)
-            self.copyfile(c['virtualenv_python_dll'], target)
+            self.copyfile(c['virtualenv_python_dll'], target, error_level=WARNING)
         else:
             self.mkdir_p(dirs['abs_work_dir'])
 
