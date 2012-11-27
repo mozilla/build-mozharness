@@ -249,11 +249,6 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
 
     def checkout_gaia(self):
         dirs = self.query_abs_dirs()
-        retval = self.run_command(["rm", "-rf", "gaia/profile"], cwd=dirs['work_dir'])
-
-        if retval != 0:
-            self.fatal("failed to clean gaia profile", exit_code=2)
-
         gecko_config = self.load_gecko_config()
         if 'gaia' in gecko_config:
             dest = os.path.join(dirs['abs_work_dir'], 'gaia')
