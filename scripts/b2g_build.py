@@ -5,6 +5,7 @@ import sys
 import os
 import glob
 import re
+import tempfile
 
 # load modules from parent dir
 sys.path.insert(1, os.path.dirname(sys.path[0]))
@@ -24,7 +25,7 @@ from mozharness.mozilla.purge import PurgeMixin
 # B2G builds complain about java...but it doesn't seem to be a problem
 # Let's turn those into WARNINGS instead
 B2GMakefileErrorList = MakefileErrorList + [
- {'substr': r'''NS_ERROR_FILE_ALREADY_EXISTS: Component returned failure code''', 'level': ERROR},
+    {'substr': r'''NS_ERROR_FILE_ALREADY_EXISTS: Component returned failure code''', 'level': ERROR},
 ]
 B2GMakefileErrorList.insert(0, {'substr': r'/bin/bash: java: command not found', 'level': WARNING})
 
@@ -448,6 +449,32 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
 
         output_dir = os.path.join(dirs['work_dir'], 'out', 'target', 'product', self.config['target'])
         objdir = os.path.join(dirs['work_dir'], 'objdir-gecko')
+
+        # Zip up stuff
+        files = []
+        for pattern in gecko_config.get('zip_files', []):
+            pattern = pattern.format(objdir=objdir, workdir=dirs['work_dir'], srcdir=dirs['src'])
+            for f in glob.glob(pattern):
+                files.append(f)
+
+        if files:
+            zip_name = os.path.join(dirs['work_dir'], self.config['target'] + ".zip")
+            self.info("creating %s" % zip_name)
+            tmpdir = tempfile.mkdtemp()
+            try:
+                zip_dir = os.path.join(tmpdir, 'b2g-distro')
+                self.mkdir_p(zip_dir)
+                for f in files:
+                    dst = os.path.join(zip_dir, os.path.basename(f))
+                    self.copyfile(f, dst, copystat=True)
+
+                cmd = ['zip', '-r', '-9', '-u', zip_name, 'b2g-distro']
+                if self.run_command(cmd, cwd=tmpdir) != 0:
+                    self.fatal("problem zipping up files")
+                self.copy_to_upload_dir(zip_name)
+            finally:
+                self.debug("removing %s" % tmpdir)
+                self.rmtree(tmpdir)
 
         self.info("copying files to upload directory")
         files = []

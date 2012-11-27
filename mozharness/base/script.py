@@ -216,10 +216,12 @@ class OSMixin(object):
         self.info("Chmoding %s to %s" % (path, str(oct(mode))))
         os.chmod(path, mode)
 
-    def copyfile(self, src, dest, log_level=INFO, error_level=ERROR):
+    def copyfile(self, src, dest, log_level=INFO, error_level=ERROR, copystat=False):
         self.log("Copying %s to %s" % (src, dest), level=log_level)
         try:
             shutil.copyfile(src, dest)
+            if copystat:
+                shutil.copystat(src, dest)
         except (IOError, shutil.Error), e:
             self.log("Can't copy %s to %s: %s!" % (src, dest, str(e)),
                      level=error_level)
