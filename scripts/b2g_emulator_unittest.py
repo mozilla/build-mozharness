@@ -14,7 +14,7 @@ import sys
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
 from mozharness.base.errors import BaseErrorList
-from mozharness.base.log import ERROR
+from mozharness.base.log import WARNING, ERROR
 from mozharness.base.script import BaseScript
 from mozharness.mozilla.buildbot import TBPL_RETRY
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
@@ -100,6 +100,8 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
         {'substr': 'FAILED (errors=', 'level': ERROR},
         {'substr': r'''Could not successfully complete transport of message to Gecko, socket closed''', 'level': ERROR},
         {'substr': 'Timeout waiting for marionette on port', 'level': ERROR},
+        {'substr': 'Fatal signal 11 (SIGSEGV)', 'level': ERROR, 'explanation': 'This usually indicates the B2G process has crashed'},
+        {'substr': '[Javascript Error:', 'level': WARNING},
         {'regex': re.compile(r'''(Timeout|NoSuchAttribute|Javascript|NoSuchElement|XPathLookup|NoSuchWindow|StaleElement|ScriptTimeout|ElementNotVisible|NoSuchFrame|InvalidElementState|NoAlertPresent|InvalidCookieDomain|UnableToSetCookie|InvalidSelector|MoveTargetOutOfBounds)Exception'''), 'level': ERROR},
     ]
 
