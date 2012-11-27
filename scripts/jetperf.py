@@ -79,9 +79,6 @@ class JetPerf(Talos, MercurialScript):
         self.addonsdir = os.path.join(self.workdir, 'addons')
         self.test_addons_clone = self.config.get('test_addons_clone_path', os.path.join(self.workdir, 'addons_clone'))
 
-        # ensure we have tests
-        self.preflight_generate_config()
-
     def results_filename(self):
         """return the results file path from self.results_url"""
         if not self.results_url.startswith('file://'):
@@ -175,13 +172,9 @@ class JetPerf(Talos, MercurialScript):
         # get PerfConfigurator options
         args = list(args)
         args += self.config.get('talos_options', [])
-        options = self.PerfConfigurator_options(args=args, output=yml, **kw)
 
-        # run PerfConfigurator
-        self.generate_config(conf=yml, options=options)
-
-        # run talos
-        self.run_tests(conf=yml)
+        # run Talos
+        self.run_tests(args=args, output=yml, **kw)
 
     def test(self):
         """run talos tests"""

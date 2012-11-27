@@ -46,26 +46,28 @@ class TalosOutputParser(OutputParser):
             self.minidump_output = (m.group(1), m.group(2), m.group(3))
         super(TalosOutputParser, self).parse_single_line(line)
 
+
+talos_config_options = [
+    [["-a", "--tests"],
+     {'action': 'extend',
+      "dest": "tests",
+      "default": [],
+      "help": "Specify the tests to run"
+      }],
+    [["--results-url"],
+     {'action': 'store',
+      'dest': 'results_url',
+      'default': None,
+      'help': "URL to send results to"
+      }],
+    ]
+
+
 class Talos(TestingMixin, BaseScript):
     """
     install and run Talos tests:
     https://wiki.mozilla.org/Buildbot/Talos
     """
-
-    talos_options = [
-        [["-a", "--tests"],
-         {'action': 'extend',
-          "dest": "tests",
-          "default": [],
-          "help": "Specify the tests to run"
-          }],
-        [["--results-url"],
-         {'action': 'store',
-          'dest': 'results_url',
-          'default': None,
-          'help': "URL to send results to"
-          }],
-        ]
 
     config_options = [
         [["--talos-url"],
@@ -100,11 +102,11 @@ class Talos(TestingMixin, BaseScript):
            }],
         [["--add-option"],
           {"action": "extend",
-           "dest": "talos_options",
+           "dest": "talos_extra_options",
            "default": None,
-           "help": "extra options to PerfConfigurator"
+           "help": "extra options to talos"
            }],
-        ] + talos_options + testing_config_options
+        ] + talos_config_options + testing_config_options
 
     def __init__(self, **kwargs):
         kwargs.setdefault('config_options', self.config_options)
@@ -113,14 +115,12 @@ class Talos(TestingMixin, BaseScript):
                                           'download-and-extract',
                                           'create-virtualenv',
                                           'install',
-                                          'generate-config',
                                           'run-tests',
                                          ])
         kwargs.setdefault('default_actions', ['clobber',
                                               'download-and-extract',
                                               'create-virtualenv',
                                               'install',
-                                              'generate-config',
                                               'run-tests',
                                              ])
         kwargs.setdefault('config', {})
@@ -142,8 +142,8 @@ class Talos(TestingMixin, BaseScript):
         self.pagesets_url = None
         self.pagesets_parent_dir_path = None
         self.pagesets_manifest_path = None
-        if 'generate-config' in self.actions:
-            self.preflight_generate_config()
+        if 'run-tests' in self.actions:
+            self.preflight_run_tests()
 
     def query_talos_json_url(self):
         """Hacky, but I haven't figured out a better way to get the
@@ -239,8 +239,8 @@ class Talos(TestingMixin, BaseScript):
         c = self.config
         if self.query_talos_json_config():
             options += self.talos_json_config['suites'][c['suite']].get('talos_options', [])
-        if c.get('talos_options'):
-            options += c['talos_options']
+        if c.get('talos_extra_options'):
+            options += c['talos_extra_options']
         return options
 
     def query_talos_url(self):
@@ -285,8 +285,8 @@ class Talos(TestingMixin, BaseScript):
             self.pagesets_manifest_path = self.talos_json_config['suites'][self.config['suite']].get('pagesets_manifest_path')
             return self.pagesets_manifest_path
 
-    def PerfConfigurator_options(self, args=None, **kw):
-        """return options to PerfConfigurator"""
+    def talos_options(self, args=None, **kw):
+        """return options to talos"""
         # binary path
         binary_path = self.binary_path or self.config.get('binary_path')
         if not binary_path:
@@ -410,45 +410,19 @@ class Talos(TestingMixin, BaseScript):
             self.mkdir_p(os.path.dirname(manifest_target))
             self.copyfile(manifest_source, manifest_target)
 
-    def preflight_generate_config(self):
+    def preflight_run_tests(self):
         if not self.query_tests():
             self.fatal("No tests specified; please specify --tests")
 
-    def generate_config(self, conf='talos.yml', options=None):
-        """generate talos configuration"""
-        # XXX note: conf *must* match what is in options, if the latter is given
+    def run_tests(self, args=None, **kw):
+        """run Talos tests"""
 
-        # find the path to the talos .yml configuration
-        # and remove if it exists
-        talos_conf_path = self.talos_conf_path(conf)
-        if os.path.exists(talos_conf_path):
-            os.remove(talos_conf_path)
+        # get talos options
+        options = self.talos_options(args=args, **kw)
 
-        # find PerfConfigurator console script
-        # TODO: support remotePerfConfigurator if
-        # https://bugzilla.mozilla.org/show_bug.cgi?id=704654
-        # is not fixed first
-        PerfConfigurator = self.query_python_path('PerfConfigurator')
-
-        # get command line for PerfConfigurator
-        if options is None:
-            options = self.PerfConfigurator_options(output=talos_conf_path)
-        command = [PerfConfigurator] + options
-
-        # run PerfConfigurator and ensure conf creation
-        self.run_command(command, cwd=self.workdir,
-                         error_list=TalosErrorList)
-        if not os.path.exists(talos_conf_path):
-            self.fatal("PerfConfigurator invokation failed: configuration file '%s' not found" % talos_conf_path)
-
-    def run_tests(self, conf='talos.yml'):
-        # generate configuration if necessary
-        talos_conf_path = self.talos_conf_path(conf)
-        if not os.path.exists(talos_conf_path):
-            self.generate_config(conf)
         # run talos tests
         talos = self.query_python_path('talos')
-        command = [talos, '--noisy', '--debug', talos_conf_path]
+        command = [talos, '--noisy', '--debug'] + options
         parser = TalosOutputParser(config=self.config, log_obj=self.log_obj,
                                    error_list=TalosErrorList)
         self.return_code = self.run_command(command, cwd=self.workdir,

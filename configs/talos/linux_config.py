@@ -24,7 +24,6 @@ config = {
         "download-and-extract",
         "create-virtualenv",
         "install",
-        "generate-config",
         "run-tests",
     ],
     "python_webserver": False,
