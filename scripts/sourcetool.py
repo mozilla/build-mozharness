@@ -176,7 +176,6 @@ You need to either specify --repo or specify it after the options:
                 self.config['vcs_branch'] = js['sourcestamp']['branch']
 
     def source(self):
-        c = self.config
         vcs_obj = None
         if self.config['vcs'] == 'hg':
             vcs_obj = MercurialVCS(
