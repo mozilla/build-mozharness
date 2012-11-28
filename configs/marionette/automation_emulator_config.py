@@ -1,8 +1,8 @@
 # This is a template config file for marionette production.
 
 EMULATOR_MANIFEST = """[{
-"size": 622054113,
-"digest": "920f00abcc52c8f475dc861d4a4d7a4f4b8ff309f16926c8c780602e5f41ed7c7e79c9bc68076fd4641520ce1b3803c64fd4e3f60bf9081a9e6529b4aee1bff9",
+"size": 616293696,
+"digest": "d45d05f83804991eea7ecc95c801d0de17809532e3e770dbd491445de05b451155f33859139952a69d156d1b402f7366f942e5790561b1a3008d83af4144ca02",
 "algorithm": "sha512",
 "filename": "emulator.zip"
 }]
