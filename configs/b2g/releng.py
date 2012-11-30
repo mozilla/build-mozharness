@@ -7,6 +7,7 @@ config = {
         'download-gonk',
         'unpack-gonk',
         'checkout-gaia',
+        'checkout-gaia-l10n',
         'build',
         'build-symbols',
         'make-updates',

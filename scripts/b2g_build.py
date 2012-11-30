@@ -10,10 +10,12 @@ import re
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
 # import the guts
+from mozharness.base.config import parse_config_file
 from mozharness.base.script import BaseScript
 from mozharness.base.vcs.vcsbase import VCSMixin
 from mozharness.base.transfer import TransferMixin
 from mozharness.base.errors import MakefileErrorList, WARNING, ERROR
+from mozharness.mozilla.l10n.locales import GaiaLocalesMixin
 from mozharness.mozilla.mock import MockMixin
 from mozharness.mozilla.tooltool import TooltoolMixin
 from mozharness.mozilla.buildbot import BuildbotMixin
@@ -33,7 +35,7 @@ except ImportError:
     import json
 
 
-class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, BuildbotMixin, PurgeMixin):
+class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, BuildbotMixin, PurgeMixin, GaiaLocalesMixin):
     config_options = [
         [["--repo"], {
             "dest": "repo",
@@ -56,9 +58,14 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
             "action": "store_false",
             "help": "disable ccache",
         }],
+        [["--gaia-languages-file"], {
+            "dest": "gaia_languages_file",
+            "help": "languages file for gaia multilocale profile",
+        }],
     ]
 
     def __init__(self, require_config_file=False):
+        self.gecko_config = None
         BaseScript.__init__(self,
                             config_options=self.config_options,
                             all_actions=[
@@ -68,6 +75,7 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
                                 'download-gonk',
                                 'unpack-gonk',
                                 'checkout-gaia',
+                                'checkout-gaia-l10n',
                                 'build',
                                 'build-symbols',
                                 'make-updates',
@@ -100,8 +108,6 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
                             },
                             )
 
-        self.gecko_config = None
-
     def _pre_config_lock(self, rw_config):
         super(B2GBuild, self)._pre_config_lock(rw_config)
 
@@ -121,6 +127,7 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
         dirs = {
             'src': os.path.join(c['work_dir'], 'gecko'),
             'work_dir': os.path.abspath(c['work_dir']),
+            'gaia_l10n_base_dir': os.path.join(os.path.abspath(c['work_dir']), 'gaia-l10n')
         }
 
         abs_dirs.update(dirs)
@@ -250,12 +257,28 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
     def checkout_gaia(self):
         dirs = self.query_abs_dirs()
         gecko_config = self.load_gecko_config()
-        if 'gaia' in gecko_config:
+        gaia_config = gecko_config.get('gaia')
+        if gaia_config:
             dest = os.path.join(dirs['abs_work_dir'], 'gaia')
-            repo = gecko_config['gaia']['repo']
-            vcs = gecko_config['gaia']['vcs']
+            repo = gaia_config['repo']
+            vcs = gaia_config['vcs']
             rev = self.vcs_checkout(repo=repo, dest=dest, vcs=vcs)
             self.set_buildbot_property('gaia_revision', rev, write_to_file=True)
+
+    def checkout_gaia_l10n(self):
+        if not self.config.get('gaia_languages_file'):
+            self.info('Skipping checkout_gaia_l10n because no gaia language file was specified.')
+            return
+
+        l10n_config = self.load_gecko_config().get('gaia', {}).get('l10n')
+        if not l10n_config:
+            self.fatal("gaia.l10n is required in the gecko config when --gaia-languages-file is specified.")
+
+        abs_work_dir = self.query_abs_dirs()['abs_work_dir']
+        languages_file = os.path.join(abs_work_dir, 'gaia', self.config['gaia_languages_file'])
+        l10n_base_dir = self.query_abs_dirs()['gaia_l10n_base_dir']
+
+        self.pull_gaia_locale_source(l10n_config, parse_config_file(languages_file).keys(), l10n_base_dir)
 
     def build(self):
         dirs = self.query_abs_dirs()
@@ -264,6 +287,8 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
         cmd = ['./build.sh'] + build_targets
         env = self.query_env()
         env.update(gecko_config.get('env', {}))
+        env['LOCALE_BASEDIR'] = dirs['gaia_l10n_base_dir']
+        env['LOCALES_FILE'] = self.config['gaia_languages_file']
         if self.config['ccache']:
             env['CCACHE_BASEDIR'] = dirs['work_dir']
 

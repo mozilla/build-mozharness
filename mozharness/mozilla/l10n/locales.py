@@ -8,6 +8,7 @@
 """
 
 import os
+from urlparse import urljoin
 import sys
 
 sys.path.insert(1, os.path.dirname(sys.path[0]))
@@ -178,6 +179,25 @@ class LocalesMixin(ChunkingMixin):
                                 parent_dir=dirs['abs_l10n_dir'],
                                 tag_override=c.get('tag_override'),
                                 num_retries=num_retries)
+
+# GaiaLocalesMixin {{{1
+
+class GaiaLocalesMixin(object):
+    def pull_gaia_locale_source(self, l10n_config, locales, base_dir):
+        root = l10n_config['root']
+        # urljoin will strip the last part of root if it doesn't end with "/"
+        if not root.endswith('/'):
+            root = root + '/'
+        vcs = l10n_config['vcs']
+        repos = []
+        for locale in locales:
+            repos.append({
+                'repo': urljoin(root, locale),
+                'dest': locale,
+                'vcs': vcs,
+            })
+        self.vcs_checkout_repos(repo_list=repos, parent_dir=base_dir)
+
 
 # __main__ {{{1
 
