@@ -287,8 +287,9 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
         cmd = ['./build.sh'] + build_targets
         env = self.query_env()
         env.update(gecko_config.get('env', {}))
-        env['LOCALE_BASEDIR'] = dirs['gaia_l10n_base_dir']
-        env['LOCALES_FILE'] = self.config['gaia_languages_file']
+        if self.config.get('gaia_languages_file'):
+            env['LOCALE_BASEDIR'] = dirs['gaia_l10n_base_dir']
+            env['LOCALES_FILE'] = self.config['gaia_languages_file']
         if self.config['ccache']:
             env['CCACHE_BASEDIR'] = dirs['work_dir']
 
