@@ -3,9 +3,13 @@ import re
 import urlparse
 
 from mozharness.base.script import ShellMixin, OSMixin
-from mozharness.base.log import LogMixin, OutputParser
+from mozharness.base.log import LogMixin, OutputParser, WARNING
 from mozharness.base.errors import HgErrorList, VCSException
 
+HgtoolErrorList = [{
+    'substr': 'abort: HTTP Error 404: Not Found',
+    'level': WARNING,
+}] + HgErrorList
 
 class HgtoolParser(OutputParser):
     """
@@ -79,8 +83,8 @@ class HgtoolVCS(ShellMixin, OSMixin, LogMixin):
 
         cmd.extend([repo, dest])
         parser = HgtoolParser(config=self.config, log_obj=self.log_obj,
-                              error_list=HgErrorList)
-        retval = self.run_command(cmd, error_list=HgErrorList, env=env, output_parser=parser)
+                              error_list=HgtoolErrorList)
+        retval = self.run_command(cmd, error_list=HgtoolErrorList, env=env, output_parser=parser)
 
         if retval != 0:
             raise VCSException("Unable to checkout")
