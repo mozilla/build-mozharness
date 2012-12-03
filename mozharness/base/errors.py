@@ -62,6 +62,8 @@ HgErrorList = BaseErrorList + [
   'explanation': 'Automation Error: hg extension missing'},
 ]
 
+GitErrorList = BaseErrorList
+
 PythonErrorList = BaseErrorList + [
  {'substr': r'''Traceback (most recent call last)''', 'level': ERROR},
  {'substr': r'''SyntaxError: ''', 'level': ERROR},

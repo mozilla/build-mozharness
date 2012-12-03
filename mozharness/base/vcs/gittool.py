@@ -3,18 +3,14 @@ import re
 import urlparse
 
 from mozharness.base.script import ShellMixin, OSMixin
-from mozharness.base.log import LogMixin, OutputParser, WARNING
-from mozharness.base.errors import HgErrorList, VCSException
+from mozharness.base.log import LogMixin, OutputParser
+from mozharness.base.errors import GitErrorList, VCSException
 
-HgtoolErrorList = [{
-    'substr': 'abort: HTTP Error 404: Not Found',
-    'level': WARNING,
-}] + HgErrorList
 
-class HgtoolParser(OutputParser):
+class GittoolParser(OutputParser):
     """
     A class that extends OutputParser such that it can find the "Got revision"
-    string from hgtool.py output
+    string from gittool.py output
     """
 
     got_revision_exp = re.compile(r'Got revision (\w+)')
@@ -24,12 +20,12 @@ class HgtoolParser(OutputParser):
         m = self.got_revision_exp.match(line)
         if m:
             self.got_revision = m.group(1)
-        super(HgtoolParser, self).parse_single_line(line)
+        super(GittoolParser, self).parse_single_line(line)
 
 
-class HgtoolVCS(ShellMixin, OSMixin, LogMixin):
+class GittoolVCS(ShellMixin, OSMixin, LogMixin):
     def __init__(self, log_obj=None, config=None, vcs_config=None):
-        super(HgtoolVCS, self).__init__()
+        super(GittoolVCS, self).__init__()
 
         self.log_obj = log_obj
         if config:
@@ -37,7 +33,6 @@ class HgtoolVCS(ShellMixin, OSMixin, LogMixin):
         else:
             self.config = {}
         # vcs_config = {
-        #  hg_host: hg_host,
         #  repo: repository,
         #  branch: branch,
         #  revision: revision,
@@ -45,7 +40,7 @@ class HgtoolVCS(ShellMixin, OSMixin, LogMixin):
         #  ssh_key: ssh_key,
         # }
         self.vcs_config = vcs_config
-        self.hgtool = self.query_exe('hgtool.py', return_type='list')
+        self.gittool = self.query_exe('gittool.py', return_type='list')
 
     def ensure_repo_and_revision(self):
         """Makes sure that `dest` is has `revision` or `branch` checked out
@@ -61,30 +56,26 @@ class HgtoolVCS(ShellMixin, OSMixin, LogMixin):
         repo = c['repo']
         revision = c.get('revision')
         branch = c.get('branch')
-        share_base = c.get('vcs_share_base', os.environ.get("HG_SHARE_BASE_DIR", None))
+        share_base = c.get('vcs_share_base', os.environ.get("GIT_SHARE_BASE_DIR", None))
         env = {'PATH': os.environ.get('PATH')}
         if share_base is not None:
-            env['HG_SHARE_BASE_DIR'] = share_base
+            env['GIT_SHARE_BASE_DIR'] = share_base
 
-        cmd = self.hgtool[:]
+        cmd = self.gittool[:]
         if branch:
             cmd.extend(['-b', branch])
         if revision:
             cmd.extend(['-r', revision])
 
-        for base_mirror_url in self.config.get('hgtool_base_mirror_urls', self.config.get('vcs_base_mirror_urls', [])):
+        for base_mirror_url in self.config.get('gittool_base_mirror_urls', self.config.get('vcs_base_mirror_urls', [])):
             bits = urlparse.urlparse(repo)
             mirror_url = urlparse.urljoin(base_mirror_url, bits.path)
             cmd.extend(['--mirror', mirror_url])
 
-        for base_bundle_url in self.config.get('hgtool_base_bundle_urls', self.config.get('vcs_base_bundle_urls', [])):
-            bundle_url = "%s/%s.hg" % (base_bundle_url, os.path.basename(repo))
-            cmd.extend(['--bundle', bundle_url])
-
         cmd.extend([repo, dest])
-        parser = HgtoolParser(config=self.config, log_obj=self.log_obj,
-                              error_list=HgtoolErrorList)
-        retval = self.run_command(cmd, error_list=HgtoolErrorList, env=env, output_parser=parser)
+        parser = GittoolParser(config=self.config, log_obj=self.log_obj,
+                               error_list=GitErrorList)
+        retval = self.run_command(cmd, error_list=GitErrorList, env=env, output_parser=parser)
 
         if retval != 0:
             raise VCSException("Unable to checkout")

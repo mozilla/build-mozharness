@@ -19,11 +19,13 @@ from mozharness.base.log import FATAL
 from mozharness.base.script import BaseScript
 from mozharness.base.vcs.mercurial import MercurialVCS
 from mozharness.base.vcs.hgtool import HgtoolVCS
+from mozharness.base.vcs.gittool import GittoolVCS
 
 # Update this with supported VCS name : VCS object
 VCS_DICT = {
     'hg': MercurialVCS,
     'hgtool': HgtoolVCS,
+    'gittool': GittoolVCS,
 }
 
 # VCSMixin {{{1
@@ -48,13 +50,13 @@ class VCSMixin(object):
                     pass
         vcs_class = VCS_DICT.get(vcs)
         if not vcs_class:
-            self.error("Running vcs_checkout with kwargs %s" % str(**kwargs))
+            self.error("Running vcs_checkout with kwargs %s" % str(kwargs))
             raise VCSException, "No VCS set!"
         # need a better way to do this.
         if 'dest' not in kwargs:
             kwargs['dest'] = os.path.basename(kwargs['repo'])
         if 'vcs_share_base' not in kwargs:
-            kwargs['vcs_share_base'] = c.get('vcs_share_base')
+            kwargs['vcs_share_base'] = c.get('%s_share_base' % vcs, c.get('vcs_share_base'))
         vcs_obj = vcs_class(
          log_obj=self.log_obj,
          config=self.config,

@@ -294,8 +294,9 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
         if gaia_config:
             dest = os.path.join(dirs['abs_work_dir'], 'gaia')
             repo = gaia_config['repo']
+            branch = gaia_config.get('branch')
             vcs = gaia_config['vcs']
-            rev = self.vcs_checkout(repo=repo, dest=dest, vcs=vcs)
+            rev = self.vcs_checkout(repo=repo, dest=dest, vcs=vcs, branch=branch)
             self.set_buildbot_property('gaia_revision', rev, write_to_file=True)
 
     def checkout_gaia_l10n(self):
