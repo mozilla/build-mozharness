@@ -48,17 +48,23 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
          "default": "browser",
          "help": "The type of tests to run",
         }],
+        [["--busybox-url"],
+        {"action": "store",
+         "dest": "busybox_url",
+         "default": None,
+         "help": "URL to the busybox binary",
+        }],
         [["--emulator-url"],
         {"action": "store",
          "dest": "emulator_url",
          "default": None,
          "help": "URL to the emulator zip",
         }],
-        [["--xpcshell-url"],
+        [["--xre-url"],
         {"action": "store",
-         "dest": "xpcshell_url",
+         "dest": "xre_url",
          "default": None,
-         "help": "URL to the desktop xpcshell zip",
+         "help": "URL to the desktop xre zip",
         }],
         [["--gecko-url"],
         {"action": "store",
@@ -76,7 +82,7 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
         {"action": "store",
          "dest": "test_suite",
          "type": "choice",
-         "choices": ('reftest', 'mochitest'),
+         "choices": ('reftest', 'mochitest', 'xpcshell'),
          "help": "Which test suite to run",
         }],
         [["--adb-path"],
@@ -150,6 +156,7 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
         self.installer_path = c.get('installer_path')
         self.test_url = c.get('test_url')
         self.test_manifest = c.get('test_manifest')
+        self.busybox_path = None
 
     # TODO detect required config items and fail if not set
 
@@ -160,8 +167,8 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
         dirs = {}
         dirs['abs_test_install_dir'] = os.path.join(
             abs_dirs['abs_work_dir'], 'tests')
-        dirs['abs_xpcshell_dir'] = os.path.join(
-            abs_dirs['abs_work_dir'], 'xpcshell')
+        dirs['abs_xre_dir'] = os.path.join(
+            abs_dirs['abs_work_dir'], 'xre')
         dirs['abs_emulator_dir'] = os.path.join(
             abs_dirs['abs_work_dir'], 'emulator')
         dirs['abs_b2g-distro_dir'] = os.path.join(
@@ -170,6 +177,8 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
             dirs['abs_test_install_dir'], 'mochitest')
         dirs['abs_reftest_dir'] = os.path.join(
             dirs['abs_test_install_dir'], 'reftest')
+        dirs['abs_xpcshell_dir'] = os.path.join(
+            dirs['abs_test_install_dir'], 'xpcshell')
         for key in dirs.keys():
             if key not in abs_dirs:
                 abs_dirs[key] = dirs[key]
@@ -189,9 +198,15 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
         dirs = self.query_abs_dirs()
         self.install_emulator()
 
-        self.mkdir_p(dirs['abs_xpcshell_dir'])
-        self._download_unzip(self.config['xpcshell_url'],
-                             dirs['abs_xpcshell_dir'])
+        self.mkdir_p(dirs['abs_xre_dir'])
+        self._download_unzip(self.config['xre_url'],
+                             dirs['abs_xre_dir'])
+
+        if self.config['busybox_url']:
+            self.download_file(self.config['busybox_url'],
+                               file_name='busybox',
+                               parent_dir=dirs['abs_work_dir'])
+            self.busybox_path = os.path.join(dirs['abs_work_dir'], 'busybox')
 
     def _build_mochitest_args(self):
         c = self.config
@@ -211,7 +226,7 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
         cmd.extend(self._build_arg('--gecko-path', os.path.dirname(self.binary_path)))
         cmd.extend([
             '--run-only-tests', self.test_manifest,
-            '--xre-path', os.path.join(dirs['abs_xpcshell_dir'], 'bin'),
+            '--xre-path', os.path.join(dirs['abs_xre_dir'], 'bin'),
             '--adbpath', self.adb_path,
         ])
         return cmd
@@ -234,10 +249,31 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
         # self.binary_path gets set by super(B2GEmulatorTest, self).install()
         cmd.extend(self._build_arg('--gecko-path', os.path.dirname(self.binary_path)))
         cmd.extend([
-            '--xre-path', os.path.join(dirs['abs_xpcshell_dir'], 'bin'),
+            '--xre-path', os.path.join(dirs['abs_xre_dir'], 'bin'),
             '--adbpath', self.adb_path,
         ])
         cmd.append(self.test_manifest)
+        return cmd
+
+    def _build_xpcshell_args(self):
+        c = self.config
+        dirs = self.query_abs_dirs()
+        python = self.query_python_path('python')
+        cmd = [
+            python, 'runtestsb2g.py',
+            '--adbpath', self.adb_path,
+            '--b2gpath', dirs['abs_b2g-distro_dir'],
+            '--emulator', c['emulator'],
+            '--gecko-path', os.path.dirname(self.binary_path),
+            '--logcat-dir', dirs['abs_work_dir'],
+            '--manifest', self.test_manifest,
+            '--testing-modules-dir', os.path.join(dirs['abs_xpcshell_dir'],
+                                                  'tests', 'modules'),
+            '--use-device-libs',
+        ]
+        cmd.extend(self._build_arg('--total-chunks', c.get('total_chunks')))
+        cmd.extend(self._build_arg('--this-chunk', c.get('this_chunk')))
+        cmd.extend(self._build_arg('--busybox', self.busybox_path))
         return cmd
 
     def _query_adb(self):
@@ -259,14 +295,16 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
 
     def preflight_run_tests(self):
         super(B2GEmulatorTest, self).preflight_run_tests()
-        c = self.config
+        suite = self.config['test_suite']
         # set default test manifest by suite if none specified
         if not self.test_manifest:
-            if c['test_suite'] == 'mochitest':
+            if suite == 'mochitest':
                 self.test_manifest = 'b2g.json'
-            elif c['test_suite'] == 'reftest':
+            elif suite == 'reftest':
                 self.test_manifest = os.path.join('tests', 'layout',
                                                   'reftests', 'reftest.list')
+            elif suite == 'xpcshell':
+                self.test_manifest = os.path.join('tests', 'xpcshell.ini')
 
         if not os.path.isfile(self.adb_path):
             self.fatal("The adb binary '%s' is not a valid file!" % self.adb_path)
@@ -286,6 +324,9 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
         elif self.config['test_suite'] == 'reftest':
             cmd = self._build_reftest_args()
             cwd = dirs['abs_reftest_dir']
+        elif self.config['test_suite'] == 'xpcshell':
+            cmd = self._build_xpcshell_args()
+            cwd = dirs['abs_xpcshell_dir']
         else:
             self.fatal("Don't know how to run --test-suite '%s'!" % self.config['test_suite'])
         # TODO we probably have to move some of the code in
