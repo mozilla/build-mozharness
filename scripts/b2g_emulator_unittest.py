@@ -337,7 +337,10 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
 
         suite_names = ['mochitest', 'reftest', 'xpcshell']
         suite_name = [x for x in suite_names if x in self.config['test_suite']][0]
-        suite = '%s-%s' % (suite_name, self.config['this_chunk'])
+        if self.config.get('this_chunk'):
+            suite = '%s-%s' % (suite_name, self.config['this_chunk'])
+        else:
+            suite = suite_name
 
         for i in range(0, 5):
             # We retry the run because sometimes installing gecko on the
