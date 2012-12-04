@@ -11,6 +11,8 @@ config = {
         'build',
         'build-symbols',
         'make-updates',
+        'make-update-xml',
+        'upload-updates',
         'prep-upload',
         'upload',
     ],
@@ -24,6 +26,14 @@ config = {
     "vcs_base_bundle_urls": ["http://ftp.mozilla.org/pub/mozilla.org/firefox/bundles"],
     "exes": {
         "tooltool.py": "/tools/tooltool.py",
+    },
+    "update": {
+        "upload_remote_host": "update.boot2gecko.org",
+        "upload_remote_basepath": "/data/update-channels/nightly",
+        "base_url": "http://update.boot2gecko.org/nightly/",
+        "ssh_key": os.path.expanduser("~/.ssh/b2gbld_dsa"),
+        "ssh_user": "ec2-user",
+        "autopublish": True,
     },
     "env": {
         "CCACHE_DIR": "/builds/ccache",

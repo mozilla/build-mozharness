@@ -21,6 +21,7 @@ from mozharness.mozilla.mock import MockMixin
 from mozharness.mozilla.tooltool import TooltoolMixin
 from mozharness.mozilla.buildbot import BuildbotMixin
 from mozharness.mozilla.purge import PurgeMixin
+from mozharness.mozilla.signing import SigningMixin
 
 # B2G builds complain about java...but it doesn't seem to be a problem
 # Let's turn those into WARNINGS instead
@@ -36,7 +37,8 @@ except ImportError:
     import json
 
 
-class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, BuildbotMixin, PurgeMixin, GaiaLocalesMixin):
+class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
+               BuildbotMixin, PurgeMixin, GaiaLocalesMixin, SigningMixin):
     config_options = [
         [["--repo"], {
             "dest": "repo",
@@ -82,6 +84,8 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
                                 'make-updates',
                                 'prep-upload',
                                 'upload',
+                                'make-update-xml',
+                                'upload-updates',
                             ],
                             default_actions=[
                                 'checkout-gecko',
@@ -108,6 +112,10 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
                                 'tools_repo': 'http://hg.mozilla.org/build/tools',
                             },
                             )
+
+        dirs = self.query_abs_dirs()
+        self.objdir = os.path.join(dirs['work_dir'], 'objdir-gecko')
+        self.marfile = "%s/dist/b2g-update/b2g-gecko-update.mar" % self.objdir
 
     def _pre_config_lock(self, rw_config):
         super(B2GBuild, self)._pre_config_lock(rw_config)
@@ -163,10 +171,20 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
         platform_ini = os.path.join(dirs['work_dir'], 'out', 'target',
                                     'product', self.config['target'], 'system',
                                     'b2g', 'platform.ini')
-        data = open(platform_ini).read()
+        data = self.read_from_file(platform_ini)
         buildid = re.search("^BuildID=(\d+)$", data, re.M)
         if buildid:
             return buildid.group(1)
+
+    def query_version(self):
+        dirs = self.query_abs_dirs()
+        application_ini = os.path.join(dirs['work_dir'], 'out', 'target',
+                                       'product', self.config['target'],
+                                       'system', 'b2g', 'application.ini')
+        data = self.read_from_file(application_ini)
+        version = re.search("^Version=(.+)$", data, re.M)
+        if version:
+            return version.group(1)
 
     def query_revision(self):
         if 'revision' in self.buildbot_properties:
@@ -237,7 +255,7 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
         mtime = int(os.path.getmtime(os.path.join(dirs['abs_work_dir'], 'gonk.tar.xz')))
         mtime_file = os.path.join(dirs['abs_work_dir'], '.gonk_mtime')
         try:
-            prev_mtime = int(open(mtime_file).read())
+            prev_mtime = int(self.read_from_file(mtime_file))
             if mtime == prev_mtime:
                 self.info("We already have this gonk unpacked; skipping")
                 return
@@ -253,7 +271,7 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
         self.run_command(["cat", "sources.xml"], cwd=dirs['work_dir'])
 
         self.info("Writing %s to %s" % (mtime, mtime_file))
-        open(mtime_file, "w").write(str(mtime))
+        self.write_to_file(mtime_file, str(mtime))
 
     def checkout_gaia(self):
         dirs = self.query_abs_dirs()
@@ -298,9 +316,9 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
 
         # Write .userconfig to point to the correct object directory for gecko
         # Normally this is embedded inside the .config file included with the snapshot
-        user_config = open(os.path.join(dirs['work_dir'], '.userconfig'), 'w')
-        user_config.write("GECKO_OBJDIR=%s/objdir-gecko\n" % dirs['work_dir'])
-        user_config.close()
+        self.write_to_file(
+            os.path.join(dirs['work_dir'], '.userconfig'),
+            "GECKO_OBJDIR=%s\n" % self.objdir)
 
         if 'mock_target' in gecko_config:
             # initialize mock
@@ -338,9 +356,9 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
 
         # Write .userconfig to point to the correct object directory for gecko
         # Normally this is embedded inside the .config file included with the snapshot
-        user_config = open(os.path.join(dirs['work_dir'], '.userconfig'), 'w')
-        user_config.write("GECKO_OBJDIR=%s/objdir-gecko\n" % dirs['work_dir'])
-        user_config.close()
+        self.write_to_file(
+            os.path.join(dirs['work_dir'], '.userconfig'),
+            "GECKO_OBJDIR=%s\n" % self.objdir)
 
         if 'mock_target' in gecko_config:
             # initialize mock
@@ -377,9 +395,9 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
         # Write .userconfig to point to the correct object directory for gecko
         # Normally this is embedded inside the .config file included with the snapshot
         # TODO: factor this out so it doesn't get run twice
-        user_config = open(os.path.join(dirs['work_dir'], '.userconfig'), 'w')
-        user_config.write("GECKO_OBJDIR=%s/objdir-gecko\n" % dirs['work_dir'])
-        user_config.close()
+        self.write_to_file(
+            os.path.join(dirs['work_dir'], '.userconfig'),
+            "GECKO_OBJDIR=%s\n" % self.objdir)
 
         if 'mock_target' in gecko_config:
             # initialize mock
@@ -412,8 +430,6 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
         rev = self.vcs_checkout(**repos[0])
         self.set_buildbot_property("tools_revision", rev, write_to_file=True)
 
-        objdir = os.path.join(dirs['work_dir'], 'objdir-gecko')
-        marfile = "%s/dist/b2g-update/b2g-gecko-update.mar" % objdir
         signing_dir = os.path.join(dirs['abs_work_dir'], 'tools', 'release', 'signing')
         cache_dir = os.path.join(dirs['abs_work_dir'], 'signing_cache')
         token = os.path.join(dirs['base_work_dir'], 'token')
@@ -433,7 +449,7 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
         for h in os.environ['MOZ_SIGNING_SERVERS'].split(","):
             cmd += ['-H', h]
 
-        cmd.append(marfile)
+        cmd.append(self.marfile)
 
         retval = self.run_command(cmd)
         if retval != 0:
@@ -448,7 +464,6 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
         gecko_config = self.load_gecko_config()
 
         output_dir = os.path.join(dirs['work_dir'], 'out', 'target', 'product', self.config['target'])
-        objdir = os.path.join(dirs['work_dir'], 'objdir-gecko')
 
         # Zip up stuff
         files = []
@@ -482,7 +497,7 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
         files.append(os.path.join(output_dir, 'system', 'build.prop'))
 
         for pattern in gecko_config.get('upload_files', []):
-            pattern = pattern.format(objdir=objdir, workdir=dirs['work_dir'], srcdir=dirs['src'])
+            pattern = pattern.format(objdir=self.objdir, workdir=dirs['work_dir'], srcdir=dirs['src'])
             for f in glob.glob(pattern):
                 files.append(f)
 
@@ -543,6 +558,82 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin, Bu
             )
 
             self.info("Upload successful: %s" % upload_url)
+
+    def make_update_xml(self):
+        if not self.query_is_nightly():
+            self.info("Not a nightly build. Skipping...")
+            return
+        if not self.config.get('update'):
+            self.info("No updates. Skipping...")
+            return
+
+        dirs = self.query_abs_dirs()
+        upload_dir = dirs['abs_upload_dir'] + '-updates'
+        # Delete the upload dir so we don't upload previous stuff by accident
+        self.rmtree(upload_dir)
+
+        suffix = self.query_buildid()
+        dated_mar = "b2g_update_%s.mar" % suffix
+        dated_update_xml = "update_%s.xml" % suffix
+        mar_url = self.config['update']['base_url'] + dated_mar
+
+        if not self.create_update_xml(self.marfile, self.query_version(),
+                                      self.query_buildid(),
+                                      mar_url,
+                                      upload_dir):
+            self.fatal("Failed to generate update.xml")
+
+        self.copy_to_upload_dir(
+            self.marfile,
+            os.path.join(upload_dir, dated_mar)
+        )
+        # copy update.xml to update_${buildid}.xml to keep history of updates
+        self.copy_to_upload_dir(
+            os.path.join(upload_dir, "update.xml"),
+            os.path.join(upload_dir, dated_update_xml)
+        )
+
+    def upload_updates(self):
+        if not self.query_is_nightly():
+            self.info("Not a nightly build. Skipping...")
+            return
+        if not self.config.get('update'):
+            self.info("No updates. Skipping...")
+            return
+        dirs = self.query_abs_dirs()
+        upload_dir = dirs['abs_upload_dir'] + '-updates'
+        # upload dated files first to be sure that update.xml doesn't
+        # point to not existing files
+        retval = self.rsync_upload_directory(
+            upload_dir,
+            self.config['update']['ssh_key'],
+            self.config['update']['ssh_user'],
+            self.config['update']['upload_remote_host'],
+            self.config['update']['upload_remote_basepath'],
+            rsync_options=['-azv', "--exclude=update.xml"]
+        )
+        if retval is not None:
+            self.error("failed to upload")
+            self.return_code = 2
+        else:
+            self.info("Upload successful")
+
+        if self.config['update'].get('autopublish'):
+            # rsync everything, including update.xml
+            retval = self.rsync_upload_directory(
+                upload_dir,
+                self.config['update']['ssh_key'],
+                self.config['update']['ssh_user'],
+                self.config['update']['upload_remote_host'],
+                self.config['update']['upload_remote_basepath'],
+            )
+
+            if retval is not None:
+                self.error("failed to upload")
+                self.return_code = 2
+            else:
+                self.info("Upload successful")
+
 
 # main {{{1
 if __name__ == '__main__':

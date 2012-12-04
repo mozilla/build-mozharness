@@ -11,6 +11,8 @@ config = {
         'build',
         'build-symbols',
         'make-updates',
+        'make-update-xml',
+        'upload-updates',
         'prep-upload',
         'upload',
     ],
@@ -25,6 +27,14 @@ config = {
     "exes": {
         "tooltool.py": "/tools/tooltool.py",
     },
+    "update": {
+        "upload_remote_host": "update.boot2gecko.org",
+        "upload_remote_basepath": "/data/update-channels/stable",
+        "base_url": "http://update.boot2gecko.org/stable/",
+        "ssh_key": os.path.expanduser("~/.ssh/b2gbld_dsa"),
+        "ssh_user": "ec2-user",
+        "autopublish": False,
+    },
     "env": {
         "CCACHE_DIR": "/builds/ccache",
         "CCACHE_COMPRESS": "1",
@@ -34,6 +44,7 @@ config = {
         "SYMBOL_SERVER_SSH_KEY": "/home/mock_mozilla/.ssh/b2gbld_dsa",
         "SYMBOL_SERVER_PATH": "/mnt/netapp/breakpad/symbols_b2g/",
         "POST_SYMBOL_UPLOAD_CMD": "/usr/local/bin/post-symbol-upload.py",
+        "B2G_UPDATE_CHANNEL": "stable",
     },
     "purge_minsize": 10,
     "clobberer_url": "http://clobberer.pvt.build.mozilla.org/index.php",
