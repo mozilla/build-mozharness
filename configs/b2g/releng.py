@@ -18,6 +18,7 @@ config = {
     "ssh_user": "b2gbld",
     "upload_remote_host": "pvtbuilds2.dmz.scl3.mozilla.com",
     "upload_remote_basepath": "/pub/mozilla.org/b2g/tinderbox-builds",
+    "upload_remote_nightly_basepath": "/pub/mozilla.org/b2g/nightly",
     "tooltool_servers": ["http://runtime-binaries.pvt.build.mozilla.org/tooltool/"],
     "vcs_share_base": "/builds/hg-shared",
     "vcs_base_mirror_urls": ["http://hg-internal.dmz.scl3.mozilla.com"],

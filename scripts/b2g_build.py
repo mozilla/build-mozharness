@@ -6,6 +6,7 @@ import os
 import glob
 import re
 import tempfile
+from datetime import datetime
 
 # load modules from parent dir
 sys.path.insert(1, os.path.dirname(sys.path[0]))
@@ -531,6 +532,30 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
                 user=user,
                 rev=self.query_revision(),
             )
+        elif self.query_is_nightly():
+            # Dates should be based on buildid
+            buildid = self.query_buildid()
+            if buildid:
+                try:
+                    buildid = datetime.strptime(buildid, "%Y%m%d%H%M%S")
+                except ValueError:
+                    buildid = None
+
+            if buildid is None:
+                # Default to now
+                buildid = datetime.now()
+
+            upload_path = "%(basepath)s/%(branch)s-%(target)s/%(year)04i/%(month)02i/%(year)04i-%(month)02i-%(day)02i-%(hour)02i-%(minute)02i-%(second)02i" % dict(
+                basepath=self.config['upload_remote_nightly_basepath'],
+                branch=self.query_branch(),
+                target=self.config['target'],
+                year=buildid.year,
+                month=buildid.month,
+                day=buildid.day,
+                hour=buildid.hour,
+                minute=buildid.minute,
+                second=buildid.second,
+            )
         else:
             upload_path = "%(basepath)s/%(branch)s-%(target)s/%(buildid)s" % dict(
                 basepath=self.config['upload_remote_basepath'],
@@ -557,6 +582,28 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
             )
 
             self.info("Upload successful: %s" % upload_url)
+
+            if self.query_is_nightly():
+                # Create a symlink
+                symlink_path = "%(basepath)s/%(branch)s-%(target)s/latest" % dict(
+                    basepath=self.config['upload_remote_nightly_basepath'],
+                    branch=self.query_branch(),
+                    target=self.config['target'],
+                )
+
+                ssh = self.query_exe('ssh')
+                rel_path = os.path.relpath(upload_path, os.path.dirname(symlink_path))
+                cmd = [ssh,
+                       '-l', self.config['ssh_user'],
+                       '-i', self.config['ssh_key'],
+                       self.config['upload_remote_host'],
+                       'ln -sf %s %s' % (rel_path, symlink_path),
+                       ]
+                retval = self.run_command(cmd)
+                if retval != 0:
+                    self.error("failed to create latest symlink")
+                    self.return_code = 2
+
             if self.config["target"] == "panda" and self.config.get('sendchange_masters'):
                 buildbot = self.query_exe("buildbot", return_type="list")
                 retcode = self.run_command(
