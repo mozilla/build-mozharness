@@ -29,11 +29,11 @@ config = {
     },
     "update": {
         "upload_remote_host": "update.boot2gecko.org",
-        "upload_remote_basepath": "/data/update-channels/stable",
-        "base_url": "http://update.boot2gecko.org/stable/",
+        "upload_remote_basepath": "/data/update-channels/stable-stage",
+        "base_url": "http://update.boot2gecko.org/stable-stage/",
         "ssh_key": os.path.expanduser("~/.ssh/b2gbld_dsa"),
         "ssh_user": "ec2-user",
-        "autopublish": False,
+        "autopublish": True,
     },
     "env": {
         "CCACHE_DIR": "/builds/ccache",

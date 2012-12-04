@@ -33,7 +33,7 @@ config = {
         "base_url": "http://update.boot2gecko.org/nightly/",
         "ssh_key": os.path.expanduser("~/.ssh/b2gbld_dsa"),
         "ssh_user": "ec2-user",
-        "autopublish": True,
+        "autopublish": False,
     },
     "env": {
         "CCACHE_DIR": "/builds/ccache",

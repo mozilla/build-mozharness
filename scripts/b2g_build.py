@@ -116,6 +116,9 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
         dirs = self.query_abs_dirs()
         self.objdir = os.path.join(dirs['work_dir'], 'objdir-gecko')
         self.marfile = "%s/dist/b2g-update/b2g-gecko-update.mar" % self.objdir
+        self.application_ini = os.path.join(
+            dirs['work_dir'], 'out', 'target', 'product',
+            self.config['target'], 'system', 'b2g', 'application.ini')
 
     def _pre_config_lock(self, rw_config):
         super(B2GBuild, self)._pre_config_lock(rw_config)
@@ -177,11 +180,7 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
             return buildid.group(1)
 
     def query_version(self):
-        dirs = self.query_abs_dirs()
-        application_ini = os.path.join(dirs['work_dir'], 'out', 'target',
-                                       'product', self.config['target'],
-                                       'system', 'b2g', 'application.ini')
-        data = self.read_from_file(application_ini)
+        data = self.read_from_file(self.application_ini)
         version = re.search("^Version=(.+)$", data, re.M)
         if version:
             return version.group(1)
@@ -468,7 +467,7 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
         # Zip up stuff
         files = []
         for pattern in gecko_config.get('zip_files', []):
-            pattern = pattern.format(objdir=objdir, workdir=dirs['work_dir'], srcdir=dirs['src'])
+            pattern = pattern.format(objdir=self.objdir, workdir=dirs['work_dir'], srcdir=dirs['src'])
             for f in glob.glob(pattern):
                 files.append(f)
 
@@ -575,8 +574,10 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
         suffix = self.query_buildid()
         dated_mar = "b2g_update_%s.mar" % suffix
         dated_update_xml = "update_%s.xml" % suffix
+        dated_application_ini = "application_%s.ini" % suffix
         mar_url = self.config['update']['base_url'] + dated_mar
 
+        self.info("Generating update.xml for %s" % mar_url)
         if not self.create_update_xml(self.marfile, self.query_version(),
                                       self.query_buildid(),
                                       mar_url,
@@ -586,6 +587,10 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
         self.copy_to_upload_dir(
             self.marfile,
             os.path.join(upload_dir, dated_mar)
+        )
+        self.copy_to_upload_dir(
+            self.application_ini,
+            os.path.join(upload_dir, dated_application_ini)
         )
         # copy update.xml to update_${buildid}.xml to keep history of updates
         self.copy_to_upload_dir(
