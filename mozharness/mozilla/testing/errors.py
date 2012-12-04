@@ -15,7 +15,7 @@ whether IGNORE, DEBUG, INFO, WARNING, ERROR, CRITICAL, or FATAL.
 """
 
 import re
-from mozharness.base.log import INFO
+from mozharness.base.log import INFO, WARNING, ERROR
 
 # ErrorLists {{{1
 TinderBoxPrintRe = {
@@ -45,4 +45,10 @@ TinderBoxPrintRe = {
 
 TestPassed = [
     {'regex': re.compile('''(TEST-INFO|TEST-KNOWN-FAIL|TEST-PASS|INFO \| )'''), 'level': INFO},
+]
+
+LogcatErrorList = [
+    {'substr': 'Fatal signal 11 (SIGSEGV)', 'level': ERROR, 'explanation': 'This usually indicates the B2G process has crashed'},
+    {'substr': 'Fatal signal 7 (SIGBUS)', 'level': ERROR, 'explanation': 'This usually indicates the B2G process has crashed'},
+    {'substr': '[Javascript Error:', 'level': WARNING},
 ]
