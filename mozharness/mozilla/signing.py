@@ -88,7 +88,7 @@ class SigningMixin(BaseSigningMixin):
         contents = snippet_template % replace_dict
         self.mkdir_p(snippet_dir)
         snippet_path = os.path.join(snippet_dir, snippet_file)
-        if self.write_to_file(snippet_path, contents, verbose=False) is None:
+        if self.write_to_file(snippet_path, contents) is None:
             self.log("Unable to write complete snippet to %s!" % snippet_path,
                      level=error_level)
             return False
