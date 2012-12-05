@@ -584,7 +584,7 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
             self.info("Upload successful: %s" % upload_url)
 
             if self.query_is_nightly():
-                # Create a symlink
+                # Create a symlink to the latest nightly
                 symlink_path = "%(basepath)s/%(branch)s-%(target)s/latest" % dict(
                     basepath=self.config['upload_remote_nightly_basepath'],
                     branch=self.query_branch(),
@@ -592,6 +592,18 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
                 )
 
                 ssh = self.query_exe('ssh')
+                # First delete the symlink if it exists
+                cmd = [ssh,
+                       '-l', self.config['ssh_user'],
+                       '-i', self.config['ssh_key'],
+                       self.config['upload_remote_host'],
+                       'rm -f %s' % symlink_path,
+                       ]
+                retval = self.run_command(cmd)
+                if retval != 0:
+                    self.error("failed to delete latest symlink")
+                    self.return_code = 2
+                # Now create the symlink
                 rel_path = os.path.relpath(upload_path, os.path.dirname(symlink_path))
                 cmd = [ssh,
                        '-l', self.config['ssh_user'],
