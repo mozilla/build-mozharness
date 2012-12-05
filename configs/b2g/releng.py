@@ -25,6 +25,7 @@ config = {
     "sendchange_masters": ["buildbot-master36.build.mozilla.org:9301"],
     "exes": {
         "tooltool.py": "/tools/tooltool.py",
+        "buildbot": "/tools/buildbot-0.8.4-pre-moz2/bin/buildbot",
     },
     "env": {
         "CCACHE_DIR": "/builds/ccache",
