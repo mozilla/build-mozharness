@@ -22,6 +22,7 @@ config = {
     "vcs_share_base": "/builds/hg-shared",
     "vcs_base_mirror_urls": ["http://hg-internal.dmz.scl3.mozilla.com"],
     "vcs_base_bundle_urls": ["http://ftp.mozilla.org/pub/mozilla.org/firefox/bundles"],
+    "sendchange_masters": ["buildbot-master36.build.mozilla.org:9301"],
     "exes": {
         "tooltool.py": "/tools/tooltool.py",
     },

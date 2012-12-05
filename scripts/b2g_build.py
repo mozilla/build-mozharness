@@ -557,6 +557,24 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
             )
 
             self.info("Upload successful: %s" % upload_url)
+            if self.config["target"] == "panda" and self.config.get('sendchange_masters'):
+                buildbot = self.query_exe("buildbot", return_type="list")
+                retcode = self.run_command(
+                    buildbot + ['sendchange',
+                    '--master', self.config.get("sendchange_masters")[0],
+                    '--username', 'sendchange-unittest',
+                    '--branch', '%s-b2g_panda-opt-unittest' % self.buildbot_config["properties"]["branch"],
+                    '--revision', self.buildbot_config['sourcestamp']["revision"],
+                    '--who', self.buildbot_config['sourcestamp']['changes'][0]['who'],
+                    '--comments', self.buildbot_config['sourcestamp']['changes'][0]['comments'],
+                    '--property', "buildid:%s" % self.buildbot_config["properties"]["buildid"],
+                    '--property', 'pgo_build:False',
+                    '--property', "builduid:%s" % self.buildbot_config["properties"]["builduid"],
+                    upload_url]
+                )
+
+                if retcode != 0:
+                    self.info("The sendchange failed but we don't want to turn the build orange: %s" % retcode)
 
     def make_update_xml(self):
         if not self.query_is_nightly():
