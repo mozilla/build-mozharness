@@ -21,6 +21,7 @@ config = {
     "upload_remote_host": "pvtbuilds2.dmz.scl3.mozilla.com",
     "upload_remote_basepath": "/pub/mozilla.org/b2g/tinderbox-builds",
     "tooltool_servers": ["http://runtime-binaries.pvt.build.mozilla.org/tooltool/"],
+    "upload_remote_nightly_basepath": "/pub/mozilla.org/b2g/nightly",
     "vcs_share_base": "/builds/hg-shared",
     "vcs_base_mirror_urls": ["http://hg-internal.dmz.scl3.mozilla.com"],
     "vcs_base_bundle_urls": ["http://ftp.mozilla.org/pub/mozilla.org/firefox/bundles"],
