@@ -467,10 +467,15 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
 
         # Zip up stuff
         files = []
-        for pattern in gecko_config.get('zip_files', []):
+        for item in gecko_config.get('zip_files', []):
+            if isinstance(item, list):
+                pattern, target = item
+            else:
+                pattern, target = item, None
+
             pattern = pattern.format(objdir=self.objdir, workdir=dirs['work_dir'], srcdir=dirs['src'])
             for f in glob.glob(pattern):
-                files.append(f)
+                files.append((f, target))
 
         if files:
             zip_name = os.path.join(dirs['work_dir'], self.config['target'] + ".zip")
@@ -479,8 +484,15 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
             try:
                 zip_dir = os.path.join(tmpdir, 'b2g-distro')
                 self.mkdir_p(zip_dir)
-                for f in files:
-                    dst = os.path.join(zip_dir, os.path.basename(f))
+                for f, target in files:
+                    if target is None:
+                        dst = os.path.join(zip_dir, os.path.basename(f))
+                    elif target.endswith('/'):
+                        dst = os.path.join(zip_dir, target, os.path.basename(f))
+                    else:
+                        dst = os.path.join(zip_dir, target)
+                    if not os.path.exists(os.path.dirname(dst)):
+                        self.mkdir_p(os.path.dirname(dst))
                     self.copyfile(f, dst, copystat=True)
 
                 cmd = ['zip', '-r', '-9', '-u', zip_name, 'b2g-distro']
@@ -619,17 +631,18 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
             if self.config["target"] == "panda" and self.config.get('sendchange_masters'):
                 buildbot = self.query_exe("buildbot", return_type="list")
                 retcode = self.run_command(
-                    buildbot + ['sendchange',
-                    '--master', self.config.get("sendchange_masters")[0],
-                    '--username', 'sendchange-unittest',
-                    '--branch', '%s-b2g_panda-opt-unittest' % self.buildbot_config["properties"]["branch"],
-                    '--revision', self.buildbot_config['sourcestamp']["revision"],
-                    '--who', self.buildbot_config['sourcestamp']['changes'][0]['who'],
-                    '--comments', self.buildbot_config['sourcestamp']['changes'][0]['comments'],
-                    '--property', "buildid:%s" % self.buildbot_config["properties"]["buildid"],
-                    '--property', 'pgo_build:False',
-                    '--property', "builduid:%s" % self.buildbot_config["properties"]["builduid"],
-                    upload_url]
+                    buildbot + [
+                        'sendchange',
+                        '--master', self.config.get("sendchange_masters")[0],
+                        '--username', 'sendchange-unittest',
+                        '--branch', '%s-b2g_panda-opt-unittest' % self.buildbot_config["properties"]["branch"],
+                        '--revision', self.buildbot_config['sourcestamp']["revision"],
+                        '--who', self.buildbot_config['sourcestamp']['changes'][0]['who'],
+                        '--comments', self.buildbot_config['sourcestamp']['changes'][0]['comments'],
+                        '--property', "buildid:%s" % self.buildbot_config["properties"]["buildid"],
+                        '--property', 'pgo_build:False',
+                        '--property', "builduid:%s" % self.buildbot_config["properties"]["builduid"],
+                        upload_url]
                 )
 
                 if retcode != 0:
