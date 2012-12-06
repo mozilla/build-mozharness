@@ -592,6 +592,9 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
                 upload_remote_host=self.config['upload_remote_host'],
                 upload_path=upload_path,
             )
+            download_url = "http://pvtbuilds.pvt.build.mozilla.org/%(upload_path)s" % dict(
+                upload_path=upload_path,
+            )
 
             self.info("Upload successful: %s" % upload_url)
 
@@ -630,19 +633,23 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
 
             if self.config["target"] == "panda" and self.config.get('sendchange_masters'):
                 buildbot = self.query_exe("buildbot", return_type="list")
+                sendchange = [
+                    'sendchange',
+                    '--master', self.config.get("sendchange_masters")[0],
+                    '--username', 'sendchange-unittest',
+                    '--branch', '%s-b2g_panda-opt-unittest' % self.buildbot_config["properties"]["branch"],
+                    '--revision', self.buildbot_config['sourcestamp']["revision"],
+                    '--comments', self.buildbot_config['sourcestamp']['changes'][0]['comments'],
+                    '--property', "buildid:%s" % self.query_buildid(),
+                    '--property', 'pgo_build:False'
+                ]
+                if self.buildbot_config['sourcestamp']['changes'][0].get('who'):
+                    sendchange += ['--who', self.buildbot_config['sourcestamp']['changes'][0]['who']]
+                if self.buildbot_config["properties"].get("builduid"):
+                    sendchange += ['--property', "builduid:%s" % self.buildbot_config["properties"]["builduid"]]
+                sendchange.append(download_url)
                 retcode = self.run_command(
-                    buildbot + [
-                        'sendchange',
-                        '--master', self.config.get("sendchange_masters")[0],
-                        '--username', 'sendchange-unittest',
-                        '--branch', '%s-b2g_panda-opt-unittest' % self.buildbot_config["properties"]["branch"],
-                        '--revision', self.buildbot_config['sourcestamp']["revision"],
-                        '--who', self.buildbot_config['sourcestamp']['changes'][0]['who'],
-                        '--comments', self.buildbot_config['sourcestamp']['changes'][0]['comments'],
-                        '--property', "buildid:%s" % self.buildbot_config["properties"]["buildid"],
-                        '--property', 'pgo_build:False',
-                        '--property', "builduid:%s" % self.buildbot_config["properties"]["builduid"],
-                        upload_url]
+                    buildbot + sendchange
                 )
 
                 if retcode != 0:
