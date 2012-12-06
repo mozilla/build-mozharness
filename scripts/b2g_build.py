@@ -638,16 +638,21 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
                     '--master', self.config.get("sendchange_masters")[0],
                     '--username', 'sendchange-unittest',
                     '--branch', '%s-b2g_panda-opt-unittest' % self.buildbot_config["properties"]["branch"],
-                    '--revision', self.buildbot_config['sourcestamp']["revision"],
-                    '--comments', self.buildbot_config['sourcestamp']['changes'][0]['comments'],
-                    '--property', "buildid:%s" % self.query_buildid(),
-                    '--property', 'pgo_build:False'
                 ]
-                if self.buildbot_config['sourcestamp']['changes'][0].get('who'):
-                    sendchange += ['--who', self.buildbot_config['sourcestamp']['changes'][0]['who']]
+                if self.buildbot_config['sourcestamp'].get("revision"):
+                    sendchange += elf.buildbot_config['sourcestamp']["revision"]
+                if len(self.buildbot_config['sourcestamp']['changes']) > 0:
+                    if self.buildbot_config['sourcestamp']['changes'][0].get('who'):
+                        sendchange += ['--who', self.buildbot_config['sourcestamp']['changes'][0]['who']]
+                    if self.buildbot_config['sourcestamp']['changes'][0].get('comments'):
+                        sendchange += ['--comments', self.buildbot_config['sourcestamp']['changes'][0]['comments']]
                 if self.buildbot_config["properties"].get("builduid"):
                     sendchange += ['--property', "builduid:%s" % self.buildbot_config["properties"]["builduid"]]
-                sendchange.append(download_url)
+                sendchange += [
+                    '--property', "buildid:%s" % self.query_buildid(),
+                    '--property', 'pgo_build:False',
+                    download_url
+                ]
                 retcode = self.run_command(
                     buildbot + sendchange
                 )

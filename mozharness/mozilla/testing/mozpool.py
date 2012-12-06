@@ -162,7 +162,7 @@ class MozpoolHandler(ShellMixin, OSMixin, LogMixin):
         if num_retries is None:
             num_retries = self.config.get("global_retries", 10)
         if good_statuses is None:
-            good_statuses = [200, 201, 202, 302]
+            good_statuses = [200, 201, 202, 204, 302]
         try_num = 0
         while try_num <= num_retries:
             try_num += 1

@@ -57,49 +57,40 @@ class PandaTest(TestingMixin, BaseScript, VirtualenvMixin, MozpoolMixin, Buildbo
             all_actions=['clobber',
                          'read-buildbot-config',
                          'create-virtualenv',
+                         'download-and-extract',
                          'request-device',
                          'run-test',
                          'close-request'],
             default_actions=['clobber',
                              'create-virtualenv',
+                             'download-and-extract',
                              'request-device',
                              'run-test',
                              'close-request'],
             require_config_file=require_config_file,
             config={'virtualenv_modules': self.virtualenv_modules,
-                    'require_test_zip': True,})
+                    'require_test_zip': False,})
 
-        # these are necessary since self.config is read only
-        self.mozpool_device = self.config.get('mozpool_device')
-        if self.mozpool_device is None:
-            self.fatal('--mozpool-device is required')
-        self.mozpool_assignee = self.config.get('mozpool_assignee')
-        if self.mozpool_assignee is None:
-            self.mozpool_assignee = self.buildbot_config.get('properties')["slavename"]
-        if self.mozpool_assignee is None:
-            self.fatal('--mozpool-assignee is required')
-        self.mozpool_b2gbase = self.config.get('mozpool_b2gbase')
+        self.foopyname = self.query_env()["HOSTNAME"].split(".")[0]
+        self.mozpool_assignee = self.config.get('mozpool_assignee', \
+                self.foopyname)
         self.request_url = None
 
-    def retry_sleep(self, sleep_time=1, max_retries=5, error_message=None, tbpl_status=None):
-        for x in range(1, max_retries + 1):
-            yield x
-            sleep(sleep_time)
-        if error_message:
-            self.error(error_message)
-        if tbpl_status:
-            self.buildbot_status(tbpl_status)
-        self.fatal('Retries limit exceeded')
+    def postflight_read_buildbot_config(self):
+        super(PandaTest, self).postflight_read_buildbot_config()
+        self.mozpool_device = self.config.get('mozpool_device', \
+                self.buildbot_config.get('properties')["slavename"])
 
     def request_device(self):
         mph = self.query_mozpool_handler()
-        for retry in self.retry_sleep(sleep_time=RETRY_INTERVAL, max_retries=MAX_RETRIES,
+        for retry in self._retry_sleep(sleep_time=RETRY_INTERVAL, max_retries=MAX_RETRIES,
                 error_message="INFRA-ERROR: Could not request device '%s'" % self.mozpool_device,
                 tbpl_status=TBPL_RETRY):
             try:
                 duration = REQUEST_DURATION
                 image = 'b2g'
-                b2gbase = self.mozpool_b2gbase
+                b2gbase = self.config.get('mozpool_b2g_base', \
+                        self.installer_url)
 
                 response = mph.request_device(self.mozpool_device, self.mozpool_assignee, image, duration, \
                                b2gbase=b2gbase, pxe_config=None)
@@ -109,11 +100,41 @@ class PandaTest(TestingMixin, BaseScript, VirtualenvMixin, MozpoolMixin, Buildbo
 
         self.request_url = response['request']['url']
         self.info("Got request, url=%s" % self.request_url)
-        self.wait_for_request_ready()
+        self._wait_for_request_ready()
 
-    def wait_for_request_ready(self):
+    def download_and_extract(self):
+        # XXX
+        # This is a dummy test zip
+        self.test_url = 'http://people.mozilla.com/~armenzg/pandas/tests.zip'
+        self._download_test_zip()
+        self._extract_test_zip()
+
+    def run_test(self):
+        """
+        Run the Panda tests
+        """
+        self.run_command("python /builds/tools/sut_tools/check_b2g_application_ini.py " + \
+                         "--device %s" % self.mozpool_device)
+
+    def close_request(self):
         mph = self.query_mozpool_handler()
-        for retry in self.retry_sleep(sleep_time=RETRY_INTERVAL, max_retries=MAX_RETRIES,
+        mph.close_request(self.request_url)
+        self.info("Request '%s' deleted on cleanup" % self.request_url)
+        self.request_url = None
+
+    def _retry_sleep(self, sleep_time=1, max_retries=5, error_message=None, tbpl_status=None):
+        for x in range(1, max_retries + 1):
+            yield x
+            sleep(sleep_time)
+        if error_message:
+            self.error(error_message)
+        if tbpl_status:
+            self.buildbot_status(tbpl_status)
+        self.fatal('Retries limit exceeded')
+
+    def _wait_for_request_ready(self):
+        mph = self.query_mozpool_handler()
+        for retry in self._retry_sleep(sleep_time=RETRY_INTERVAL, max_retries=MAX_RETRIES,
                 error_message="INFRA-ERROR: Request did not become ready in time",
                 tbpl_status=TBPL_RETRY):
             response = mph.query_request_status(self.request_url)
@@ -121,31 +142,6 @@ class PandaTest(TestingMixin, BaseScript, VirtualenvMixin, MozpoolMixin, Buildbo
             if state == 'ready':
                 return
             self.info("Waiting for request 'ready' stage.  Current state: '%s'" % state)
-
-    def run_test(self):
-        """
-        Run the Panda tests
-        """
-
-        '''
-        level = INFO
-        if code == 0:
-            status = "success"
-            tbpl_status = TBPL_SUCCESS
-        elif code == 10:
-            status = "test failures"
-            tbpl_status = TBPL_WARNING
-        else:
-            status = "harness failures"
-            level = ERROR
-            tbpl_status = TBPL_FAILURE
-        '''
-
-    def close_request(self):
-        mph = self.query_mozpool_handler()
-        mph.close_request(self.request_url)
-        print("Request '%s' deleted on cleanup" % self.request_url)
-        self.request_url = None
 
 if __name__ == '__main__':
     pandaTest = PandaTest()

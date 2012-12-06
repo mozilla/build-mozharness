@@ -12,7 +12,7 @@ config = {
     "mozpool_api_url": "http://mobile-imaging-001.p1.releng.scl1.mozilla.com",
     "default_actions": [
         'clobber',
-        #'read-buildbot-config',
+        'read-buildbot-config',
         'create-virtualenv',
         'request-device',
         'run-test',
