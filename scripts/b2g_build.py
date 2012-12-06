@@ -643,7 +643,7 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
                     '--branch', '%s-b2g_panda-opt-unittest' % self.buildbot_config["properties"]["branch"],
                 ]
                 if self.buildbot_config['sourcestamp'].get("revision"):
-                    sendchange += self.buildbot_config['sourcestamp']["revision"]
+                    sendchange += ['-r', self.buildbot_config['sourcestamp']["revision"]]
                 if len(self.buildbot_config['sourcestamp']['changes']) > 0:
                     if self.buildbot_config['sourcestamp']['changes'][0].get('who'):
                         sendchange += ['--who', self.buildbot_config['sourcestamp']['changes'][0]['who']]
