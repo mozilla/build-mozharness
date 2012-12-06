@@ -532,6 +532,9 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
     def upload(self):
         dirs = self.query_abs_dirs()
         c = self.config
+        target = self.config['target']
+        if c.get("target_suffix"):
+            target += c["target_suffix"]
         if c['enable_try_uploads']:
             try:
                 user = self.buildbot_config['sourcestamp']['changes'][0]['who']
@@ -540,7 +543,7 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
             upload_path = "%(basepath)s/%(user)s-%(rev)s/%(branch)s-%(target)s" % dict(
                 basepath=self.config['upload_remote_basepath'],
                 branch=self.query_branch(),
-                target=self.config['target'],
+                target=target,
                 user=user,
                 rev=self.query_revision(),
             )
@@ -560,7 +563,7 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
             upload_path = "%(basepath)s/%(branch)s-%(target)s/%(year)04i/%(month)02i/%(year)04i-%(month)02i-%(day)02i-%(hour)02i-%(minute)02i-%(second)02i" % dict(
                 basepath=self.config['upload_remote_nightly_basepath'],
                 branch=self.query_branch(),
-                target=self.config['target'],
+                target=target,
                 year=buildid.year,
                 month=buildid.month,
                 day=buildid.day,
@@ -573,7 +576,7 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
                 basepath=self.config['upload_remote_basepath'],
                 branch=self.query_branch(),
                 buildid=self.query_buildid(),
-                target=self.config['target'],
+                target=target,
             )
 
         retval = self.rsync_upload_directory(
@@ -603,7 +606,7 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
                 symlink_path = "%(basepath)s/%(branch)s-%(target)s/latest" % dict(
                     basepath=self.config['upload_remote_nightly_basepath'],
                     branch=self.query_branch(),
-                    target=self.config['target'],
+                    target=target,
                 )
 
                 ssh = self.query_exe('ssh')
