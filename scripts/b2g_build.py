@@ -16,7 +16,8 @@ from mozharness.base.config import parse_config_file
 from mozharness.base.script import BaseScript
 from mozharness.base.vcs.vcsbase import VCSMixin
 from mozharness.base.transfer import TransferMixin
-from mozharness.base.errors import MakefileErrorList, WARNING, ERROR
+from mozharness.base.errors import MakefileErrorList
+from mozharness.base.log import WARNING, ERROR, INFO
 from mozharness.mozilla.l10n.locales import GaiaLocalesMixin
 from mozharness.mozilla.mock import MockMixin
 from mozharness.mozilla.tooltool import TooltoolMixin
@@ -98,8 +99,6 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
 
                             # Default configuration
                             config={
-                                'repo': 'http://hg.mozilla.org/mozilla-central',  # from buildprops
-                                'branch': 'mozilla-central',                      # from buildprops
                                 'default_vcs': 'hgtool',
                                 'vcs_share_base': os.environ.get('HG_SHARE_BASE_DIR'),
                                 'ccache': True,
@@ -130,6 +129,9 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
 
         if 'target' not in self.config:
             self.fatal("Must specify --target!")
+
+        if not (self.buildbot_config and 'properties' in self.buildbot_config) and 'repo' not in self.config:
+            self.fatal("Must specify --repo")
 
     def query_abs_dirs(self):
         if self.abs_dirs:
@@ -254,13 +256,14 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
         dirs = self.query_abs_dirs()
         mtime = int(os.path.getmtime(os.path.join(dirs['abs_work_dir'], 'gonk.tar.xz')))
         mtime_file = os.path.join(dirs['abs_work_dir'], '.gonk_mtime')
-        try:
-            prev_mtime = int(self.read_from_file(mtime_file))
-            if mtime == prev_mtime:
-                self.info("We already have this gonk unpacked; skipping")
-                return
-        except:
-            pass
+        if os.path.exists(mtime_file):
+            try:
+                prev_mtime = int(self.read_from_file(mtime_file, error_level=INFO))
+                if mtime == prev_mtime:
+                    self.info("We already have this gonk unpacked; skipping")
+                    return
+            except:
+                pass
 
         retval = self.run_command(["tar", "xf", "gonk.tar.xz", "--strip-components", "1"], cwd=dirs['work_dir'])
 
