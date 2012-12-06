@@ -22,7 +22,7 @@ class RequestDevice(BaseMozpoolTest):
         for request in response['requests']:
             for request_key in request.keys():
                 self.assertIn(request_key, ['assigned_device', 'assignee', 'boot_config', 'device_state',
-                    'expires', 'id', 'imaging_server', 'requested_device', 'state'])
+                    'expires', 'id', 'imaging_server', 'requested_device', 'state', 'environment'])
             self.assertNotIn(request['state'], ['closed'])
 
         response = self.mph.query_all_requests(include_closed_requests=True)
@@ -31,7 +31,7 @@ class RequestDevice(BaseMozpoolTest):
         for request in response['requests']:
             for request_key in request.keys():
                 self.assertIn(request_key, ['assigned_device', 'assignee', 'boot_config', 'device_state',
-                    'expires', 'id', 'imaging_server', 'requested_device', 'state'])
+                    'expires', 'id', 'imaging_server', 'requested_device', 'state', 'environment'])
 
     def _test_renew_request(self, request_url, old_expires):
         """ Reset the lifetime of a request.

@@ -246,7 +246,7 @@ class MozpoolHandler(ShellMixin, OSMixin, LogMixin):
                      level=error_level)
 
     def request_device(self, device_id, assignee, image, duration, pxe_config=None,
-                       b2gbase=None, error_level=WARNING, **kwargs):
+                       b2gbase=None, environment='any', error_level=WARNING, **kwargs):
         """ requests the given device. {id} may be "any" to let MozPool choose an
             unassigned device. The body must be a JSON object with at least the keys
             "requester", "duration", and "image". The value for "requester" takes an
@@ -283,7 +283,7 @@ class MozpoolHandler(ShellMixin, OSMixin, LogMixin):
             assert b2gbase is not None, "b2gbase must be supplied when image=='b2gbase'"
         assert duration == int(duration)
 
-        data = {'assignee': assignee, 'duration': duration, 'image': image}
+        data = {'assignee': assignee, 'duration': duration, 'image': image, 'environment': environment}
         if pxe_config is not None:
             data['pxe_config'] = pxe_config
         if b2gbase is not None:

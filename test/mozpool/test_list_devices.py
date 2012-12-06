@@ -25,8 +25,10 @@ class QueryAllDeviceDetails(BaseMozpoolTest):
             self.assertIsInstance(d, dict)
             for k, v in d.items():
                 self.assertIsInstance(k, basestring)
-                if k in ['fqdn', 'imaging_server', 'mac_address', 'name', 'relay_info', 'state']:
-                    self.assertIsInstance(v, basestring)
+                if k in ['fqdn', 'imaging_server', 'mac_address', 'name', 'relay_info', \
+                         'state', 'last_pxe_config', 'comments', 'environment']:
+                    if v is not None:
+                        self.assertIsInstance(v, basestring)
                 elif k in ['id', 'inventory_id']:
                     self.assertIsInstance(v, int)
                 else:
