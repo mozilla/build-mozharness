@@ -315,7 +315,9 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
         if self.config['ccache']:
             env['CCACHE_BASEDIR'] = dirs['work_dir']
 
-        # TODO: make sure we pass MOZ_BUILD_DATE
+        # If we get a buildid from buildbot, pass that in as MOZ_BUILD_DATE
+        if 'buildid' in self.buildbot_config.get('properties', {}):
+            env['MOZ_BUILD_DATE'] = self.buildbot_config['properties']['buildid']
 
         # Write .userconfig to point to the correct object directory for gecko
         # Normally this is embedded inside the .config file included with the snapshot
@@ -342,6 +344,9 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
         if retval != 0:
             self.fatal("failed to build", exit_code=2)
 
+        buildid = self.query_buildid()
+        self.set_buildbot_property('buildid', buildid, write_to_file=True)
+
     def build_symbols(self):
         dirs = self.query_abs_dirs()
         gecko_config = self.load_gecko_config()
@@ -354,8 +359,6 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
         env.update(gecko_config.get('env', {}))
         if self.config['ccache']:
             env['CCACHE_BASEDIR'] = dirs['work_dir']
-
-        # TODO: make sure we pass MOZ_BUILD_DATE
 
         # Write .userconfig to point to the correct object directory for gecko
         # Normally this is embedded inside the .config file included with the snapshot
