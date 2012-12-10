@@ -79,10 +79,14 @@ class LocalesMixin(ChunkingMixin):
             locales_json = parse_config_file(locales_file)
             self.locale_dict = {}
             for locale in locales_json.keys():
-                if platform and platform not in locales_json[locale]['platforms']:
-                    continue
+                if isinstance(locales_json[locale], dict):
+                    if platform and platform not in locales_json[locale]['platforms']:
+                        continue
+                    self.locale_dict[locale] = locales_json[locale]['revision']
+                else:
+                    # some other way of getting this?
+                    self.locale_dict[locale] = 'default'
                 locales.append(locale)
-                self.locale_dict[locale] = locales_json[locale]['revision']
         else:
             locales = self.read_from_file(locales_file).split()
         return locales
@@ -144,24 +148,27 @@ class LocalesMixin(ChunkingMixin):
         return self.abs_dirs
 
     # This requires self to inherit a VCSMixin.
-    def pull_locale_source(self):
+    def pull_locale_source(self, parent_dir=None, vcs='hg'):
         c = self.config
-        dirs = self.query_abs_dirs()
-        self.mkdir_p(dirs['abs_l10n_dir'])
+        if parent_dir is None:
+            parent_dir = self.query_abs_dirs()['abs_l10n_dir']
+        self.mkdir_p(parent_dir)
         repos = []
         replace_dict = {}
         num_retries = c.get('global_retries', 10)
-        # Replace %(user_repo_override)s with c['user_repo_override']
-        if c.get("user_repo_override"):
-            replace_dict['user_repo_override'] = c['user_repo_override']
-            for repo_dict in c.get('l10n_repos', []):
-                repo_dict['repo'] = repo_dict['repo'] % replace_dict
-                repos.append(repo_dict)
-        else:
-            repos = c.get("l10n_repos")
-        if repos:
+        # This block is to allow for pulling buildbot-configs in Fennec
+        # release builds, since we don't pull it in MBF anymore.
+        if c.get("l10n_repos"):
+            if c.get("user_repo_override"):
+                replace_dict['user_repo_override'] = c['user_repo_override']
+                for repo_dict in c['l10n_repos']:
+                    repo_dict['repo'] = repo_dict['repo'] % replace_dict
+                    repos.append(repo_dict)
+            else:
+                repos = c.get("l10n_repos")
             self.vcs_checkout_repos(repos, tag_override=c.get('tag_override'),
                                     num_retries=num_retries)
+        # Pull locales
         locales = self.query_locales()
         locale_repos = []
         hg_l10n_base = c['hg_l10n_base']
@@ -173,10 +180,11 @@ class LocalesMixin(ChunkingMixin):
                 tag = self.locale_dict[locale]
             locale_repos.append({
                 'repo': "%s/%s" % (hg_l10n_base, locale),
-                'tag': tag
+                'tag': tag,
+                'vcs': vcs
             })
         self.vcs_checkout_repos(repo_list=locale_repos,
-                                parent_dir=dirs['abs_l10n_dir'],
+                                parent_dir=parent_dir,
                                 tag_override=c.get('tag_override'),
                                 num_retries=num_retries)
 

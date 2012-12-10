@@ -23,6 +23,10 @@ from mozharness.mozilla.l10n.locales import LocalesMixin
 
 # MultiLocaleBuild {{{1
 class MultiLocaleBuild(LocalesMixin, MercurialScript):
+    """ This class targets Fennec multilocale builds.
+        We were considering this for potential Firefox desktop multilocale.
+        Now that we have a different approach for B2G multilocale,
+        it's most likely misnamed. """
     config_options = [[
      ["--locale",],
      {"action": "extend",
