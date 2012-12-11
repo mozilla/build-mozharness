@@ -14,6 +14,7 @@ config = {
         'clobber',
         'read-buildbot-config',
         'create-virtualenv',
+        'download-and-extract',
         'request-device',
         'run-test',
         'close-request',

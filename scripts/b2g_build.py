@@ -693,8 +693,10 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
                 sendchange += [
                     '--property', "buildid:%s" % self.query_buildid(),
                     '--property', 'pgo_build:False',
-                    download_url
+                    download_url,
+                    "%s/%s" % (download_url, "gaia-tests.zip")
                 ]
+
                 retcode = self.run_command(
                     buildbot + sendchange
                 )

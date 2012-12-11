@@ -69,7 +69,7 @@ class PandaTest(TestingMixin, BaseScript, VirtualenvMixin, MozpoolMixin, Buildbo
                              'close-request'],
             require_config_file=require_config_file,
             config={'virtualenv_modules': self.virtualenv_modules,
-                    'require_test_zip': False,})
+                    'require_test_zip': True,})
 
         self.foopyname = self.query_env()["HOSTNAME"].split(".")[0]
         self.mozpool_assignee = self.config.get('mozpool_assignee', \
@@ -101,13 +101,6 @@ class PandaTest(TestingMixin, BaseScript, VirtualenvMixin, MozpoolMixin, Buildbo
         self.request_url = response['request']['url']
         self.info("Got request, url=%s" % self.request_url)
         self._wait_for_request_ready()
-
-    def download_and_extract(self):
-        # XXX
-        # This is a dummy test zip
-        self.test_url = 'http://people.mozilla.com/~armenzg/pandas/tests.zip'
-        self._download_test_zip()
-        self._extract_test_zip()
 
     def run_test(self):
         """
