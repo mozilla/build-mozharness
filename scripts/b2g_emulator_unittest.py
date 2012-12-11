@@ -340,6 +340,11 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
         else:
             suite = suite_name
 
+        # bug 773703
+        success_codes = None
+        if suite_name == 'xpcshell':
+            success_codes = [0, 1]
+
         for i in range(0, 5):
             # We retry the run because sometimes installing gecko on the
             # emulator can cause B2G not to restart properly - Bug 812935.
@@ -348,7 +353,8 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
                                                     log_obj=self.log_obj,
                                                     error_list=error_list)
             return_code = self.run_command(cmd, cwd=cwd,
-                                           output_parser=parser)
+                                           output_parser=parser,
+                                           success_codes=success_codes)
             if not parser.install_gecko_failed:
                 self._dump_logcat(parser)
                 break
