@@ -7,6 +7,7 @@ config = {
         'download-gonk',
         'unpack-gonk',
         'checkout-gaia',
+        'update-source-manifest',
         'build',
         'build-symbols',
         'prep-upload',

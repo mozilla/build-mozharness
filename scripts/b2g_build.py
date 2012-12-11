@@ -81,6 +81,7 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
                                 'unpack-gonk',
                                 'checkout-gaia',
                                 'checkout-gaia-l10n',
+                                'update-source-manifest',
                                 'build',
                                 'build-symbols',
                                 'make-updates',
@@ -88,6 +89,7 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
                                 'upload',
                                 'make-update-xml',
                                 'upload-updates',
+                                'upload-source-manifest',
                             ],
                             default_actions=[
                                 'checkout-gecko',
@@ -260,6 +262,14 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
             try:
                 prev_mtime = int(self.read_from_file(mtime_file, error_level=INFO))
                 if mtime == prev_mtime:
+                    # transition code - help existing build dirs without a sources.xml.original
+                    sourcesfile = os.path.join(dirs['work_dir'], 'sources.xml')
+                    sourcesfile_orig = sourcesfile + '.original'
+                    if not os.path.exists(sourcesfile_orig):
+                        self.run_command(["tar", "xf", "gonk.tar.xz", "--strip-components", "1", "B2G_default_*/sources.xml"],
+                                         cwd=dirs['work_dir'])
+                        self.run_command(["cp", "-p", sourcesfile, sourcesfile_orig], cwd=dirs['work_dir'])
+                    # end transition code
                     self.info("We already have this gonk unpacked; skipping")
                     return
             except:
@@ -270,8 +280,9 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
         if retval != 0:
             self.fatal("failed to unpack gonk", exit_code=2)
 
-        # output our sources.xml
+        # output our sources.xml, make a copy for update_sources_xml()
         self.run_command(["cat", "sources.xml"], cwd=dirs['work_dir'])
+        self.run_command(["cp", "-p", "sources.xml", "sources.xml.original"], cwd=dirs['work_dir'])
 
         self.info("Writing %s to %s" % (mtime, mtime_file))
         self.write_to_file(mtime_file, str(mtime))
@@ -301,6 +312,28 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
         l10n_base_dir = self.query_abs_dirs()['gaia_l10n_base_dir']
 
         self.pull_gaia_locale_source(l10n_config, parse_config_file(languages_file).keys(), l10n_base_dir)
+
+    def update_source_manifest(self):
+        dirs = self.query_abs_dirs()
+        gecko_config = self.load_gecko_config()
+        gaia_config = gecko_config.get('gaia')
+
+        sourcesfile = os.path.join(dirs['work_dir'], 'sources.xml')
+        sourcesfile_orig = sourcesfile + '.original'
+        sources = self.read_from_file(sourcesfile_orig, verbose=False)
+        new_sources = []
+
+        for line in sources.splitlines():
+            new_sources.append(line)
+            if 'Gonk specific things' in line:
+                new_sources.append('  <!-- Mercurial-Information: <remote fetch="http://hg.mozilla.org/" name="hgmozillaorg"> -->')
+                new_sources.append('  <!-- Mercurial-Information: <project name="%s" path="gecko" remote="hgmozillaorg" revision="%s"/> -->' % \
+                                     (self.buildbot_config['properties']['repo_path'], self.buildbot_properties['revision']))
+                new_sources.append('  <!-- Mercurial-Information: <project name="%s" path="gaia" remote="hgmozillaorg" revision="%s"/> -->' % \
+                                     (gaia_config['repo'].replace('http://hg.mozilla.org/',''), self.buildbot_properties['gaia_revision']))
+
+        self.write_to_file(sourcesfile, "\n".join(new_sources), verbose=False)
+        self.run_command(["diff", "-u", sourcesfile_orig, sourcesfile])
 
     def build(self):
         dirs = self.query_abs_dirs()
@@ -668,6 +701,78 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
 
                 if retcode != 0:
                     self.info("The sendchange failed but we don't want to turn the build orange: %s" % retcode)
+
+    def upload_source_manifest(self):
+        if not self.query_is_nightly():
+            self.info("Not a nightly build. Skipping...")
+            return
+        manifest_config = self.config.get('manifest')
+        branch = self.buildbot_config['properties'].get('branch')
+        if not manifest_config or not branch:
+            self.info("No manifest config or can't get branch from build. Skipping...")
+            return
+        if branch not in manifest_config['branches']:
+            self.info("Manifest upload not enabled for this branch. Skipping...")
+            return
+
+        dirs = self.query_abs_dirs()
+        upload_dir = dirs['abs_upload_dir'] + '-manifest'
+        # Delete the upload dir so we don't upload previous stuff by accident
+        self.rmtree(upload_dir)
+
+        # Dates should be based on buildid
+        buildid = self.query_buildid()
+        if buildid:
+            try:
+                buildid = datetime.strptime(buildid, "%Y%m%d%H%M%S")
+            except ValueError:
+                buildid = None
+
+        if buildid is None:
+            # Default to now
+            buildid = datetime.now()
+
+        target = self.config['target']
+        if self.config['manifest'].get('target_suffix'):
+            target += self.config['manifest']['target_suffix']
+        # TODO support twice daily builds by including hour
+        # emulator builds will disappear out of latest/ because they're once-daily
+        xmlfilename = 'source_%(target)s_%(year)04i-%(month)02i-%(day)02i.xml' % dict(
+            target=target,
+            year=buildid.year,
+            month=buildid.month,
+            day=buildid.day,
+        )
+        self.copy_to_upload_dir(
+            os.path.join(dirs['work_dir'], 'sources.xml'),
+            os.path.join(upload_dir, xmlfilename)
+        )
+        retval = self.rsync_upload_directory(
+            upload_dir,
+            self.config['manifest']['ssh_key'],
+            self.config['manifest']['ssh_user'],
+            self.config['manifest']['upload_remote_host'],
+            self.config['manifest']['upload_remote_basepath'],
+        )
+        if retval is not None:
+            self.error("Failed to upload")
+            self.return_code = 2
+
+        # run jgriffin's orgranize.py to shuffle the files around
+        # https://github.com/jonallengriffin/b2gautomation/blob/master/b2gautomation/organize.py
+        ssh = self.query_exe('ssh')
+        cmd = [ssh,
+               '-l', self.config['manifest']['ssh_user'],
+               '-i', self.config['manifest']['ssh_key'],
+               self.config['upload_remote_host'],
+               'python ~/organize.py --directory %s' % self.config['manifest']['upload_remote_basepath'],
+               ]
+        retval = self.run_command(cmd)
+        if retval != 0:
+            self.error("Failed to move manifest to final location")
+            self.return_code = 2
+        else:
+            self.info("Upload successful")
 
     def make_update_xml(self):
         if not self.query_is_nightly():

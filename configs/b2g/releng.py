@@ -8,11 +8,13 @@ config = {
         'unpack-gonk',
         'checkout-gaia',
         'checkout-gaia-l10n',
+        'update-source-manifest',
         'build',
         'build-symbols',
         'make-updates',
         'prep-upload',
         'upload',
+        'upload-source-manifest',
     ],
     "ssh_key": os.path.expanduser("~/.ssh/b2gbld_dsa"),
     "ssh_user": "b2gbld",
@@ -27,6 +29,13 @@ config = {
     "exes": {
         "tooltool.py": "/tools/tooltool.py",
         "buildbot": "/tools/buildbot/bin/buildbot",
+    },
+    "manifest": {
+        "upload_remote_host": "stage.mozilla.org",
+        "upload_remote_basepath": "/pub/mozilla.org/b2g/manifests",
+        "ssh_key": os.path.expanduser("~/.ssh/b2gbld_dsa"),
+        "ssh_user": "b2gbld",
+        "branches": ['mozilla-beta'],
     },
     "env": {
         "CCACHE_DIR": "/builds/ccache",
