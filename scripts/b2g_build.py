@@ -54,6 +54,10 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
             "dest": "target",
             "help": "specify which build type to do",
         }],
+        [["--b2g-config-dir"], {
+            "dest": "b2g_config_dir",
+            "help": "specify which in-tree config directory to use, relative to b2g/config/ (defaults to --target)",
+        }],
         [["--gecko-config"], {
             "dest": "gecko_config",
             "help": "specfiy alternate location for gecko config",
@@ -158,7 +162,11 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
         dirs = self.query_abs_dirs()
         conf_file = self.config.get('gecko_config')
         if conf_file is None:
-            conf_file = os.path.join(dirs['src'], 'b2g', 'config', self.config['target'], 'config.json')
+            conf_file = os.path.join(
+                dirs['src'], 'b2g', 'config',
+                self.config.get('b2g_config_dir', self.config['target']),
+                'config.json'
+            )
         self.gecko_config = json.load(open(conf_file))
         return self.gecko_config
 
@@ -240,7 +248,8 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
             gecko_config = self.load_gecko_config()
             if 'tooltool_manifest' in gecko_config:
                 # The manifest is relative to the gecko config
-                config_dir = os.path.join(dirs['src'], 'b2g', 'config', self.config['target'])
+                config_dir = os.path.join(dirs['src'], 'b2g', 'config',
+                    self.config.get('b2g_config_dir', self.config['target']))
                 manifest = os.path.abspath(os.path.join(config_dir, gecko_config['tooltool_manifest']))
                 self.tooltool_fetch(manifest, dirs['work_dir'])
                 return
