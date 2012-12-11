@@ -776,7 +776,7 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
         cmd = [ssh,
                '-l', self.config['manifest']['ssh_user'],
                '-i', self.config['manifest']['ssh_key'],
-               self.config['upload_remote_host'],
+               self.config['manifest']['upload_remote_host'],
                'python ~/organize.py --directory %s' % self.config['manifest']['upload_remote_basepath'],
                ]
         retval = self.run_command(cmd)
