@@ -343,7 +343,7 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
                                      (gaia_config['repo'].replace('http://hg.mozilla.org/',''), self.buildbot_properties['gaia_revision']))
 
         self.write_to_file(sourcesfile, "\n".join(new_sources), verbose=False)
-        self.run_command(["diff", "-u", sourcesfile_orig, sourcesfile])
+        self.run_command(["diff", "-u", sourcesfile_orig, sourcesfile], success_codes = [1])
 
     def build(self):
         dirs = self.query_abs_dirs()
