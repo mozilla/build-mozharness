@@ -7,6 +7,8 @@ import glob
 import re
 import tempfile
 from datetime import datetime
+import urllib2
+import time
 
 # load modules from parent dir
 sys.path.insert(1, os.path.dirname(sys.path[0]))
@@ -207,6 +209,26 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
 
         return None
 
+    def query_translated_revision(self, url, project, rev, attempts=5, sleeptime=15):
+        url = '%s/%s/git/%s' % (url, project, rev)
+        n = 1
+        while n <= attempts:
+            try:
+                r = urllib2.urlopen(url, timeout=10)
+                j = json.loads(r.readline())
+                return j['git_rev']
+            except Exception, err:
+                self.error('Error retrieving %s - %s' % (url, str(err)))
+                if n == attempts:
+                    self.fatal('Giving up')
+                    return 'null'
+                if sleeptime > 0:
+                    self.info('Sleeping %i seconds before retrying' % sleeptime)
+                    time.sleep(sleeptime)
+                continue
+            finally:
+                n += 1
+
     # Actions {{{2
     def clobber(self):
         c = self.config
@@ -327,6 +349,8 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
         dirs = self.query_abs_dirs()
         gecko_config = self.load_gecko_config()
         gaia_config = gecko_config.get('gaia')
+        manifest_config = self.config.get('manifest', {})
+        branch = self.buildbot_config['properties'].get('branch')
 
         sourcesfile = os.path.join(dirs['work_dir'], 'sources.xml')
         sourcesfile_orig = sourcesfile + '.original'
@@ -341,6 +365,14 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
                                      (self.buildbot_config['properties']['repo_path'], self.buildbot_properties['revision']))
                 new_sources.append('  <!-- Mercurial-Information: <project name="%s" path="gaia" remote="hgmozillaorg" revision="%s"/> -->' % \
                                      (gaia_config['repo'].replace('http://hg.mozilla.org/',''), self.buildbot_properties['gaia_revision']))
+
+                if self.query_is_nightly() and branch in manifest_config['branches'] and \
+                   manifest_config.get('translate_hg_to_git'):
+                    url = manifest_config['translate_base_url']
+                    gecko_git = self.query_translated_revision(url, 'gecko', self.buildbot_properties['revision'])
+                    gaia_git =  self.query_translated_revision(url, 'gaia', self.buildbot_properties['gaia_revision'])
+                    new_sources.append('  <project name="releases/gecko.git" path="gecko" remote="mozillaorg" revision="%s"/>' % gecko_git)
+                    new_sources.append('  <project name="releases/gaia.git" path="gaia" remote="mozillaorg" revision="%s"/>' % gaia_git)
 
         self.write_to_file(sourcesfile, "\n".join(new_sources), verbose=False)
         self.run_command(["diff", "-u", sourcesfile_orig, sourcesfile], success_codes = [1])

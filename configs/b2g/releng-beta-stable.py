@@ -47,7 +47,9 @@ config = {
         "ssh_key": os.path.expanduser("~/.ssh/b2gbld_dsa"),
         "ssh_user": "b2gbld",
         "target_suffix": "-stable",
-        "branches": ['mozilla-beta'],
+        "branches": ['mozilla-b2g18'],
+        "translate_hg_to_git": True,
+        "translate_base_url": "http://cruncher.build.mozilla.org/mapper",
     },
     "env": {
         "CCACHE_DIR": "/builds/ccache",
