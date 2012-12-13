@@ -237,6 +237,7 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
 
     def query_translated_revision(self, url, project, rev, attempts=5, sleeptime=15):
         url = '%s/%s/git/%s' % (url, project, rev)
+        self.info('Mapping revision from hg to git using %s' % url)
         n = 1
         while n <= attempts:
             try:
@@ -244,7 +245,7 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
                 j = json.loads(r.readline())
                 return j['git_rev']
             except Exception, err:
-                self.error('Error retrieving %s - %s' % (url, str(err)))
+                self.warning('Error: %s' % str(err))
                 if n == attempts:
                     self.fatal('Giving up')
                     return 'null'
@@ -397,7 +398,7 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
         gecko_config = self.load_gecko_config()
         gaia_config = gecko_config.get('gaia')
         manifest_config = self.config.get('manifest', {})
-        branch = self.buildbot_config['properties'].get('branch')
+        branch = self.query_branch()
 
         sourcesfile = os.path.join(dirs['work_dir'], 'sources.xml')
         sourcesfile_orig = sourcesfile + '.original'
@@ -805,7 +806,7 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
             self.info("Not a nightly build. Skipping...")
             return
         manifest_config = self.config.get('manifest')
-        branch = self.buildbot_config['properties'].get('branch')
+        branch = self.query_branch()
         if not manifest_config or not branch:
             self.info("No manifest config or can't get branch from build. Skipping...")
             return
