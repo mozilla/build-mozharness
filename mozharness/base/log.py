@@ -170,7 +170,7 @@ pre-context-line setting in error_list.)
         for line in output:
             if not line or line.isspace():
                 continue
-            line = line.decode("utf-8").rstrip()
+            line = line.decode("utf-8", 'replace').rstrip()
             self.parse_single_line(line)
 
     def worst_level(self, target_level, existing_level, levels=None):
