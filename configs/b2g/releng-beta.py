@@ -8,6 +8,8 @@ config = {
         'unpack-gonk',
         'checkout-gaia',
         'checkout-gaia-l10n',
+        'checkout-gecko-l10n',
+        'checkout-compare-locales',
         'update-source-manifest',
         'build',
         'build-symbols',

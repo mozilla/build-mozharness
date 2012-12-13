@@ -148,7 +148,9 @@ class LocalesMixin(ChunkingMixin):
         return self.abs_dirs
 
     # This requires self to inherit a VCSMixin.
-    def pull_locale_source(self, parent_dir=None, vcs='hg'):
+    def pull_locale_source(self, hg_l10n_base=None, parent_dir=None, vcs='hg'):
+        if not hg_l10n_base:
+            hg_l10n_base = c['hg_l10n_base']
         c = self.config
         if parent_dir is None:
             parent_dir = self.query_abs_dirs()['abs_l10n_dir']
@@ -171,7 +173,6 @@ class LocalesMixin(ChunkingMixin):
         # Pull locales
         locales = self.query_locales()
         locale_repos = []
-        hg_l10n_base = c['hg_l10n_base']
         if c.get("user_repo_override"):
             hg_l10n_base = hg_l10n_base % {"user_repo_override": c["user_repo_override"]}
         for locale in locales:

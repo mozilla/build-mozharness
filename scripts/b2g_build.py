@@ -19,8 +19,8 @@ from mozharness.base.script import BaseScript
 from mozharness.base.vcs.vcsbase import VCSMixin
 from mozharness.base.transfer import TransferMixin
 from mozharness.base.errors import MakefileErrorList
-from mozharness.base.log import WARNING, ERROR, INFO
-from mozharness.mozilla.l10n.locales import GaiaLocalesMixin
+from mozharness.base.log import WARNING, ERROR, INFO, FATAL
+from mozharness.mozilla.l10n.locales import GaiaLocalesMixin, LocalesMixin
 from mozharness.mozilla.mock import MockMixin
 from mozharness.mozilla.tooltool import TooltoolMixin
 from mozharness.mozilla.buildbot import BuildbotMixin
@@ -41,7 +41,7 @@ except ImportError:
     import json
 
 
-class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
+class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
                BuildbotMixin, PurgeMixin, GaiaLocalesMixin, SigningMixin):
     config_options = [
         [["--repo"], {
@@ -73,10 +73,23 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
             "dest": "gaia_languages_file",
             "help": "languages file for gaia multilocale profile",
         }],
+        [["--gecko-languages-file"], {
+            "dest": "locales_file",
+            "help": "languages file for gecko multilocale",
+        }],
+        [["--gecko-l10n-base-dir"], {
+            "dest": "l10n_dir",
+            "help": "dir to clone gecko l10n repos into, relative to the work directory",
+        }],
+        [["--merge-locales"], {
+            "dest": "merge_locales",
+            "help": "Dummy option to keep from burning. We now always merge",
+        }],
     ]
 
     def __init__(self, require_config_file=False):
         self.gecko_config = None
+        LocalesMixin.__init__(self)
         BaseScript.__init__(self,
                             config_options=self.config_options,
                             all_actions=[
@@ -87,6 +100,8 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
                                 'unpack-gonk',
                                 'checkout-gaia',
                                 'checkout-gaia-l10n',
+                                'checkout-gecko-l10n',
+                                'checkout-compare-locales',
                                 'update-source-manifest',
                                 'build',
                                 'build-symbols',
@@ -118,6 +133,16 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
                                 'upload_remote_basepath': None,
                                 'enable_try_uploads': False,
                                 'tools_repo': 'http://hg.mozilla.org/build/tools',
+                                'locales_dir': 'gecko/b2g/locales',
+                                'l10n_dir': 'gecko-l10n',
+                                'ignore_locales': ['en-US', 'multi'],
+                                'locales_file': 'gecko/b2g/locales/all-locales',
+                                'mozilla_dir': 'build/gecko',
+                                'objdir': 'build/objdir-gecko',
+                                'merge_locales': True,
+                                'compare_locales_repo': 'http://hg.mozilla.org/build/compare-locales',
+                                'compare_locales_rev': 'RELEASE_AUTOMATION',
+                                'compare_locales_vcs': 'hgtool',
                             },
                             )
 
@@ -144,13 +169,14 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
     def query_abs_dirs(self):
         if self.abs_dirs:
             return self.abs_dirs
-        abs_dirs = super(B2GBuild, self).query_abs_dirs()
+        abs_dirs = LocalesMixin.query_abs_dirs(self)
 
         c = self.config
         dirs = {
             'src': os.path.join(c['work_dir'], 'gecko'),
             'work_dir': os.path.abspath(c['work_dir']),
-            'gaia_l10n_base_dir': os.path.join(os.path.abspath(c['work_dir']), 'gaia-l10n')
+            'gaia_l10n_base_dir': os.path.join(os.path.abspath(c['work_dir']), 'gaia-l10n'),
+            'compare_locales_dir': os.path.join(c['base_work_dir'], 'compare-locales'),
         }
 
         abs_dirs.update(dirs)
@@ -345,6 +371,27 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
 
         self.pull_gaia_locale_source(l10n_config, parse_config_file(languages_file).keys(), l10n_base_dir)
 
+    def checkout_gecko_l10n(self):
+        hg_l10n_base = self.load_gecko_config().get('gecko_l10n_root')
+        self.pull_locale_source(hg_l10n_base=hg_l10n_base)
+        gecko_locales = self.query_locales()
+        # populate b2g/overrides, which isn't in gecko atm
+        dirs = self.query_abs_dirs()
+        for locale in gecko_locales:
+            self.mkdir_p(os.path.join(dirs['abs_l10n_dir'], locale, 'b2g', 'chrome', 'overrides'))
+            self.copytree(os.path.join(dirs['abs_l10n_dir'], locale, 'mobile', 'overrides'),
+                          os.path.join(dirs['abs_l10n_dir'], locale, 'b2g', 'chrome', 'overrides'),
+                          error_level=FATAL)
+
+    def checkout_compare_locales(self):
+        dirs = self.query_abs_dirs()
+        dest = dirs['compare_locales_dir']
+        repo = self.config['compare_locales_repo']
+        rev = self.config['compare_locales_rev']
+        vcs = self.config['compare_locales_vcs']
+        abs_rev = self.vcs_checkout(repo=repo, dest=dest, revision=rev, vcs=vcs)
+        self.set_buildbot_property('compare_locales_revision', abs_rev, write_to_file=True)
+
     def update_source_manifest(self):
         dirs = self.query_abs_dirs()
         gecko_config = self.load_gecko_config()
@@ -387,6 +434,13 @@ class B2GBuild(MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
         if self.config.get('gaia_languages_file'):
             env['LOCALE_BASEDIR'] = dirs['gaia_l10n_base_dir']
             env['LOCALES_FILE'] = os.path.join(dirs['abs_work_dir'], 'gaia', self.config['gaia_languages_file'])
+        if self.config.get('locales_file'):
+            env['L10NBASEDIR'] = dirs['abs_l10n_dir']
+            env['MOZ_CHROME_MULTILOCALE'] = " ".join(self.locales)
+            env['PATH'] = os.environ.get('PATH')
+            env['PATH'] += ':%s' % os.path.join(dirs['compare_locales_dir'], 'scripts')
+            env['PYTHONPATH'] = os.environ.get('PYTHONPATH', '')
+            env['PYTHONPATH'] += ':%s' % os.path.join(dirs['compare_locales_dir'], 'lib')
         if self.config['ccache']:
             env['CCACHE_BASEDIR'] = dirs['work_dir']
 
