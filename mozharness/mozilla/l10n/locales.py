@@ -149,9 +149,9 @@ class LocalesMixin(ChunkingMixin):
 
     # This requires self to inherit a VCSMixin.
     def pull_locale_source(self, hg_l10n_base=None, parent_dir=None, vcs='hg'):
+        c = self.config
         if not hg_l10n_base:
             hg_l10n_base = c['hg_l10n_base']
-        c = self.config
         if parent_dir is None:
             parent_dir = self.query_abs_dirs()['abs_l10n_dir']
         self.mkdir_p(parent_dir)
