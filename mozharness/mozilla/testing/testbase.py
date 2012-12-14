@@ -258,7 +258,7 @@ Did you run with --create-virtualenv? Is mozinstall in virtualenv_modules?""")
         cmd.extend([self.installer_path,
                     '--destination', target_dir])
         # TODO we'll need some error checking here
-        self.binary_path = self.get_output_from_command(cmd)
+        self.binary_path = self.get_output_from_command(cmd, halt_on_failure=True)
 
     def _run_cmd_checks(self, suites):
         if not suites:
