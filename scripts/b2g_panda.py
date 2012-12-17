@@ -12,11 +12,10 @@ from time import sleep
 # load modules from parent dir
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
-from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_WARNING, TBPL_FAILURE, TBPL_RETRY, BuildbotMixin
+from mozharness.mozilla.buildbot import TBPL_RETRY, BuildbotMixin
 from mozharness.base.python import VirtualenvMixin
 from mozharness.base.script import BaseScript
 from mozharness.mozilla.testing.testbase import TestingMixin
-from mozharness.base.log import WARNING, ERROR
 from mozharness.mozilla.testing.mozpool import MozpoolMixin, MozpoolConflictException
 
 #TODO - adjust these values
