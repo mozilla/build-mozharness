@@ -162,12 +162,20 @@ class B2gMultilocale(LocalesMixin, BaseScript, VCSMixin, GaiaLocalesMixin):
                 'MOZ_CHROME_MULTILOCALE': 'en-US ' + ' '.join(gecko_locales),
             }
         )
+        merge_env = self.query_env(
+            partial_env={
+                'PATH': '%(PATH)s:' + os.path.join(dirs['abs_compare_locales_dir'], 'scripts'),
+                'PYTHONPATH': os.path.join(dirs['abs_compare_locales_dir'],
+                                           'lib'),
+
+            }
+        )
         for locale in gecko_locales:
-            self.run_compare_locales(locale)
             command = 'make merge-%s L10NBASEDIR=%s LOCALE_MERGEDIR=%s' % (locale, dirs['abs_l10n_dir'], dirs['abs_merge_dir'])
             status = self.run_command(command,
                                       cwd=dirs['abs_locales_dir'],
-                                      error_list=MakefileErrorList)
+                                      error_list=MakefileErrorList,
+                                      env=merge_env)
             command = 'make chrome-%s L10NBASEDIR=%s LOCALE_MERGEDIR=%s' % (locale, dirs['abs_l10n_dir'], dirs['abs_merge_dir'])
             status = self.run_command(command,
                                       cwd=dirs['abs_locales_dir'],
