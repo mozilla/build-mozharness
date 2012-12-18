@@ -256,6 +256,14 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
             finally:
                 n += 1
 
+    def query_do_upload(self):
+        # always upload nightlies, but not dep builds for some platforms
+        if self.query_is_nightly():
+            return True
+        if self.config['target'] in self.config.get('upload_dep_target_exclusions'):
+            return False
+        return True
+
     # Actions {{{2
     def clobber(self):
         c = self.config
@@ -592,6 +600,10 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
             self.fatal("failed to sign complete update", exit_code=2)
 
     def prep_upload(self):
+        if not self.query_do_upload():
+            self.info("Uploads disabled for this build. Skipping...")
+            return
+
         dirs = self.query_abs_dirs()
         # Delete the upload dir so we don't upload previous stuff by accident
         self.rmtree(dirs['abs_upload_dir'])
@@ -666,6 +678,10 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
         self.copy_logs_to_upload_dir()
 
     def upload(self):
+        if not self.query_do_upload():
+            self.info("Uploads disabled for this build. Skipping...")
+            return
+
         dirs = self.query_abs_dirs()
         c = self.config
         target = self.config['target']

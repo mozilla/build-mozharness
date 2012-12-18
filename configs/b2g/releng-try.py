@@ -21,6 +21,7 @@ config = {
     "upload_remote_host": "pvtbuilds2.dmz.scl3.mozilla.com",
     #"upload_remote_host": "dev-stage01.srv.releng.scl3.mozilla.com",
     "upload_remote_basepath": "/pub/mozilla.org/b2g/try-builds",
+    "upload_dep_target_exclusions": [],
     "enable_try_uploads": True,
     "tooltool_servers": ["http://runtime-binaries.pvt.build.mozilla.org/tooltool/"],
     "gittool_share_base": "/builds/git-shared/git",
