@@ -71,9 +71,11 @@ class VCSMixin(object):
             except VCSException, e:
                 try_num += 1
                 self.warning("Try %d: Can't checkout %s: %s!" % (try_num, kwargs['repo'], str(e)))
-                sleep_time = try_num * 2
-                self.info("Sleeping %d..." % sleep_time)
-                time.sleep(sleep_time)
+                if try_num <= num_retries:
+                    self.rmtree(kwargs['dest'])
+                    sleep_time = try_num * 2
+                    self.info("Sleeping %d..." % sleep_time)
+                    time.sleep(sleep_time)
         else:
             self.log("Can't checkout %s after %d tries!" % (kwargs['repo'], try_num), level=error_level)
 
