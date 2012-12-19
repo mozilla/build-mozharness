@@ -174,6 +174,8 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
             dirs['abs_emulator_dir'], 'b2g-distro')
         dirs['abs_mochitest_dir'] = os.path.join(
             dirs['abs_test_install_dir'], 'mochitest')
+        dirs['abs_modules_dir'] = os.path.join(
+            dirs['abs_test_install_dir'], 'modules')
         dirs['abs_reftest_dir'] = os.path.join(
             dirs['abs_test_install_dir'], 'reftest')
         dirs['abs_xpcshell_dir'] = os.path.join(
@@ -266,8 +268,7 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
             '--gecko-path', os.path.dirname(self.binary_path),
             '--logcat-dir', dirs['abs_work_dir'],
             '--manifest', self.test_manifest,
-            '--testing-modules-dir', os.path.join(dirs['abs_xpcshell_dir'],
-                                                  'tests', 'modules'),
+            '--testing-modules-dir', dirs['abs_modules_dir'],
             '--use-device-libs',
         ]
         cmd.extend(self._build_arg('--total-chunks', c.get('total_chunks')))
