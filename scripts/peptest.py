@@ -274,10 +274,8 @@ class PepTest(TestingMixin, BaseScript):
 
         # TODO create a better summary for peptest
         #      for now just display return code
-        self.add_summary("%s exited with return code %s: %s" % (cmd[0],
-                                                                code,
-                                                                status),
-                         level=level)
+        self.log("%s exited with return code %s: %s" % (cmd[0], code, status),
+                 level=level)
         self.buildbot_status(tbpl_status)
 
 

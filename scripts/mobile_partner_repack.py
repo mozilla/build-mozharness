@@ -112,6 +112,7 @@ class MobilePartnerRepack(LocalesMixin, ReleaseMixin, MobileSigningMixin,
                 "upload-unsigned-bits",
                 "sign",
                 "upload-signed-bits",
+                "summary",
             ],
             require_config_file=require_config_file
         )

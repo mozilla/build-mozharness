@@ -73,6 +73,7 @@ config = {
         "setup",
         "repack",
         "upload-repacks",
+        "summary",
     ],
     # Mock
     "mock_target": "mozilla-centos6-i386",

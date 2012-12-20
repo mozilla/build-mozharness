@@ -103,7 +103,7 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
                                               'backup-objdir',
                                               'restore-objdir',
                                               'add-locales', 'package-multi',
-                                              'upload-multi'],
+                                              'upload-multi', 'summary'],
                                  require_config_file=require_config_file)
 
     def clobber(self):

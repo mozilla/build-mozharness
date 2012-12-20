@@ -73,11 +73,13 @@ class MozmillUpdate(VirtualenvMixin, MercurialScript):
 # TODO
 #                      'upload',
 #                      'notify',
+                      'summary',
                       ],
          default_actions=['preclean',
                           'pull',
                           'download',
                           'run-mozmill',
+                          'summary',
                           ],
          require_config_file=require_config_file,
          config={"virtualenv_modules": ["mercurial", "mozmill"]},

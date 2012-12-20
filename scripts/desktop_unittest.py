@@ -351,9 +351,8 @@ class DesktopUnittest(TestingMixin, MercurialScript):
                 parser.append_tinderboxprint_line(suite_name)
 
                 self.buildbot_status(tbpl_status, level=log_level)
-                self.add_summary("The %s suite: %s ran with return status: %s" %
-                                 (suite_category, suite, tbpl_status),
-                                 level=log_level)
+                self.log("The %s suite: %s ran with return status: %s" %
+                         (suite_category, suite, tbpl_status), level=log_level)
         else:
             self.debug('There were no suites to run for %s' % suite_category)
 

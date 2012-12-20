@@ -33,7 +33,7 @@ config = {
 
     "release_config_file": "buildbot-configs/mozilla/release-fennec-mozilla-release.py",
 
-    "default_actions": ["clobber", "pull", "download", "repack", "upload-unsigned-bits"],
+    "default_actions": ["clobber", "pull", "download", "repack", "upload-unsigned-bits", "summary"],
 
     # signing (optional)
     "keystore": KEYSTORE,

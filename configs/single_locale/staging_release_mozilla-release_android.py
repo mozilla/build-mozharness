@@ -72,5 +72,6 @@ config = {
         "setup",
         "repack",
         "upload-repacks",
+        "summary",
     ],
 }

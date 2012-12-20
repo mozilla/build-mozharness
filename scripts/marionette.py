@@ -260,9 +260,8 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
 
         self.info("TinderboxPrint: marionette<br/>%s\n" % tsummary)
 
-        self.add_summary("Marionette exited with return code %s: %s" % (code,
-                                                                        status),
-                         level=level)
+        self.log("Marionette exited with return code %s: %s" % (code, status),
+                 level=level)
         self.buildbot_status(tbpl_status)
 
 

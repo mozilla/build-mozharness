@@ -368,9 +368,8 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
         parser.append_tinderboxprint_line(suite_name)
 
         self.buildbot_status(tbpl_status, level=log_level)
-        self.add_summary("The %s suite: %s ran with return status: %s" %
-                         (suite_name, suite, tbpl_status),
-                         level=log_level)
+        self.log("The %s suite: %s ran with return status: %s" %
+                 (suite_name, suite, tbpl_status), level=log_level)
 
 if __name__ == '__main__':
     emulatorTest = B2GEmulatorTest()

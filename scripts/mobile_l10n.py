@@ -110,6 +110,7 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
                 "upload-repacks",
                 "create-nightly-snippets",
                 "upload-nightly-snippets",
+                "summary",
             ],
             require_config_file=require_config_file
         )

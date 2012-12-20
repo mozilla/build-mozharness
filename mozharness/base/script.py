@@ -716,8 +716,6 @@ class BaseScript(ShellMixin, OSMixin, LogMixin, object):
 
         Postflight is quick testing for success after an action.
 
-        Run self.summary() at the end.
-
         """
         self.dump_config()
         for action in self.all_actions:
@@ -729,7 +727,6 @@ class BaseScript(ShellMixin, OSMixin, LogMixin, object):
                 self._possibly_run_method("preflight_%s" % method_name)
                 self._possibly_run_method(method_name, error_if_missing=True)
                 self._possibly_run_method("postflight_%s" % method_name)
-        self.summary()
         self.copy_logs_to_upload_dir()
         sys.exit(self.return_code)
 

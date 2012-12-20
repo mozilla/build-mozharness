@@ -46,5 +46,6 @@ config = {
         "restore-objdir",
         "add-locales",
         "package-multi",
+        "summary",
     ],
 }

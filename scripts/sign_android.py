@@ -136,6 +136,7 @@ class SignAndroid(LocalesMixin, ReleaseMixin, MobileSigningMixin,
                 "sign",
                 "verify-signatures",
                 "upload-signed-bits",
+                "summary",
             ],
             require_config_file=require_config_file
         )

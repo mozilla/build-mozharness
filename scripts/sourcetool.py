@@ -202,7 +202,7 @@ You need to either specify --repo or specify it after the options:
             self.fatal("I don't know how to handle vcs '%s'!" % self.config['vcs'])
         got_revision = vcs_obj.ensure_repo_and_revision()
 
-        self.add_summary("Got revision %s\n" % got_revision)
+        self.info("Got revision %s\n" % got_revision)
 
 # __main__ {{{1
 if __name__ == '__main__':

@@ -99,6 +99,7 @@ config = {
                 "sign",
                 "verify-signatures",
                 "upload-signed-bits",
+                "summary",
                ],
 
     "keystore": KEYSTORE,

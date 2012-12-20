@@ -75,6 +75,7 @@ class B2gMultilocale(LocalesMixin, BaseScript, VCSMixin, GaiaLocalesMixin):
                             all_actions=[
                                 'pull',
                                 'build',
+                                'summary',
                             ],
                             require_config_file=require_config_file,
 
