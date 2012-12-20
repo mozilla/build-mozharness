@@ -96,6 +96,9 @@ class PandaTest(TestingMixin, BaseScript, VirtualenvMixin, MozpoolMixin, Buildbo
                 break
             except MozpoolConflictException:
                 self.warning("Device unavailable.  Retry#%i.." % retry)
+            except MozpoolException, e:
+                self.buildbot_status(TBPL_RETRY)
+                self.fatal("We could not request the device: %s" % str(e))
 
         self.request_url = response['request']['url']
         self.info("Got request, url=%s" % self.request_url)
