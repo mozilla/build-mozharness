@@ -85,6 +85,10 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
             "dest": "merge_locales",
             "help": "Dummy option to keep from burning. We now always merge",
         }],
+        [["--variant"], {
+            "dest": "variant",
+            "help": "b2g build variant. overrides gecko config's value",
+        }],
     ]
 
     def __init__(self, require_config_file=False):
@@ -260,9 +264,26 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
         # always upload nightlies, but not dep builds for some platforms
         if self.query_is_nightly():
             return True
-        if self.config['target'] in self.config.get('upload_dep_target_exclusions'):
+        if self.config['target'] in self.config.get('upload_dep_target_exclusions', []):
             return False
         return True
+
+    def query_build_env(self):
+        """Retrieves the environment for building"""
+        dirs = self.query_abs_dirs()
+        gecko_config = self.load_gecko_config()
+        env = self.query_env()
+        env.update(gecko_config.get('env', {}))
+        if self.config.get('variant'):
+            v = str(self.config['variant'])
+            env['VARIANT'] = v
+        if self.config.get('ccache'):
+            env['CCACHE_BASEDIR'] = dirs['work_dir']
+        # If we get a buildid from buildbot, pass that in as MOZ_BUILD_DATE
+        if 'buildid' in self.buildbot_config.get('properties', {}):
+            env['MOZ_BUILD_DATE'] = self.buildbot_config['properties']['buildid']
+
+        return env
 
     # Actions {{{2
     def clobber(self):
@@ -306,7 +327,7 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
             if 'tooltool_manifest' in gecko_config:
                 # The manifest is relative to the gecko config
                 config_dir = os.path.join(dirs['src'], 'b2g', 'config',
-                    self.config.get('b2g_config_dir', self.config['target']))
+                                          self.config.get('b2g_config_dir', self.config['target']))
                 manifest = os.path.abspath(os.path.join(config_dir, gecko_config['tooltool_manifest']))
                 self.tooltool_fetch(manifest, dirs['work_dir'])
                 return
@@ -417,10 +438,10 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
             new_sources.append(line)
             if 'Gonk specific things' in line:
                 new_sources.append('  <!-- Mercurial-Information: <remote fetch="http://hg.mozilla.org/" name="hgmozillaorg"> -->')
-                new_sources.append('  <!-- Mercurial-Information: <project name="%s" path="gecko" remote="hgmozillaorg" revision="%s"/> -->' % \
-                                     (self.buildbot_config['properties']['repo_path'], self.buildbot_properties['revision']))
-                new_sources.append('  <!-- Mercurial-Information: <project name="%s" path="gaia" remote="hgmozillaorg" revision="%s"/> -->' % \
-                                     (gaia_config['repo'].replace('http://hg.mozilla.org/',''), self.buildbot_properties['gaia_revision']))
+                new_sources.append('  <!-- Mercurial-Information: <project name="%s" path="gecko" remote="hgmozillaorg" revision="%s"/> -->' %
+                                   (self.buildbot_config['properties']['repo_path'], self.buildbot_properties['revision']))
+                new_sources.append('  <!-- Mercurial-Information: <project name="%s" path="gaia" remote="hgmozillaorg" revision="%s"/> -->' %
+                                   (gaia_config['repo'].replace('http://hg.mozilla.org/', ''), self.buildbot_properties['gaia_revision']))
 
                 if self.query_is_nightly() and branch in manifest_config['branches'] and \
                    manifest_config.get('translate_hg_to_git'):
@@ -438,8 +459,7 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
         gecko_config = self.load_gecko_config()
         build_targets = gecko_config.get('build_targets', [])
         cmd = ['./build.sh'] + build_targets
-        env = self.query_env()
-        env.update(gecko_config.get('env', {}))
+        env = self.query_build_env()
         if self.config.get('gaia_languages_file'):
             env['LOCALE_BASEDIR'] = dirs['gaia_l10n_base_dir']
             env['LOCALES_FILE'] = os.path.join(dirs['abs_work_dir'], 'gaia', self.config['gaia_languages_file'])
@@ -450,12 +470,6 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
             env['PATH'] += ':%s' % os.path.join(dirs['compare_locales_dir'], 'scripts')
             env['PYTHONPATH'] = os.environ.get('PYTHONPATH', '')
             env['PYTHONPATH'] += ':%s' % os.path.join(dirs['compare_locales_dir'], 'lib')
-        if self.config['ccache']:
-            env['CCACHE_BASEDIR'] = dirs['work_dir']
-
-        # If we get a buildid from buildbot, pass that in as MOZ_BUILD_DATE
-        if 'buildid' in self.buildbot_config.get('properties', {}):
-            env['MOZ_BUILD_DATE'] = self.buildbot_config['properties']['buildid']
 
         # Write .userconfig to point to the correct object directory for gecko
         # Normally this is embedded inside the .config file included with the snapshot
@@ -493,10 +507,7 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
             return
 
         cmd = ['./build.sh', 'buildsymbols']
-        env = self.query_env()
-        env.update(gecko_config.get('env', {}))
-        if self.config['ccache']:
-            env['CCACHE_BASEDIR'] = dirs['work_dir']
+        env = self.query_build_env()
 
         # Write .userconfig to point to the correct object directory for gecko
         # Normally this is embedded inside the .config file included with the snapshot
@@ -533,8 +544,7 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
         dirs = self.query_abs_dirs()
         gecko_config = self.load_gecko_config()
         cmd = ['./build.sh', 'gecko-update-full']
-        env = self.query_env()
-        env.update(gecko_config.get('env', {}))
+        env = self.query_build_env()
 
         # Write .userconfig to point to the correct object directory for gecko
         # Normally this is embedded inside the .config file included with the snapshot
