@@ -16,7 +16,7 @@ from mozharness.mozilla.buildbot import TBPL_RETRY, BuildbotMixin
 from mozharness.base.python import VirtualenvMixin
 from mozharness.base.script import BaseScript
 from mozharness.mozilla.testing.testbase import TestingMixin
-from mozharness.mozilla.testing.mozpool import MozpoolMixin, MozpoolConflictException
+from mozharness.mozilla.testing.mozpool import MozpoolMixin, MozpoolConflictException, MozpoolException
 
 #TODO - adjust these values
 MAX_RETRIES = 20
