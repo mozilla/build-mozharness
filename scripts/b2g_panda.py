@@ -45,9 +45,9 @@ class PandaTest(TestingMixin, BaseScript, VirtualenvMixin, MozpoolMixin, Buildbo
 
     error_list = []
 
-    mozbase_dir = os.path.join('tests', 'mozbase')
     virtualenv_modules = [
         'requests',
+        'mozdevice',
     ]
 
     def __init__(self, require_config_file=False):
@@ -108,8 +108,28 @@ class PandaTest(TestingMixin, BaseScript, VirtualenvMixin, MozpoolMixin, Buildbo
         """
         Run the Panda tests
         """
-        self.run_command("python /builds/tools/sut_tools/check_b2g_application_ini.py " + \
-                         "--device %s" % self.mozpool_device)
+        sys.path.append(self.query_python_site_packages_path())
+        from mozdevice.devicemanagerSUT import DeviceManagerSUT
+        APP_INI_LOCATION = '/system/b2g/application.ini'
+        dm = None
+        try:
+            self.info("Connecting to: %s" % device)
+            dm = DeviceManagerSUT(device)
+        except:
+            self.buildbot_status(TBPL_RETRY)
+            self.fatal("ERROR: Unable to properly connect to SUT Port on device.")
+        # No need for 300 second SUT socket timeouts here
+        dm.default_timeout = 30
+        if not dm.fileExists(APP_INI_LOCATION):
+            self.buildbot_status(TBPL_RETRY)
+            self.fatal("ERROR: expected file (%s) not found" % APP_INI_LOCATION)
+        file_contents = dm.catFile(APP_INI_LOCATION)
+        if file_contents is None:
+            self.buildbot_status(TBPL_RETRY)
+            self.fatal("ERROR: Unable to read file (%s)" % APP_INI_LOCATION)
+        self.info("Read of file (%s) follows" % APP_INI_LOCATION)
+        self.info("===========================")
+        self.info(file_contents)
 
     def close_request(self):
         mph = self.query_mozpool_handler()
