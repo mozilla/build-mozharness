@@ -16,7 +16,7 @@ sys.path.insert(1, os.path.dirname(sys.path[0]))
 from mozharness.base.errors import PythonErrorList, TarErrorList
 from mozharness.base.log import INFO, ERROR, OutputParser
 from mozharness.base.script import BaseScript
-from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_WARNING, TBPL_FAILURE, TBPL_RETRY
+from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_WARNING, TBPL_FAILURE
 from mozharness.mozilla.testing.errors import LogcatErrorList
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
 from mozharness.mozilla.testing.unittest import EmulatorMixin
@@ -222,7 +222,6 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
             if not marionette_parser.install_gecko_failed:
                 break
         else:
-            self.buildbot_status(TBPL_RETRY)
             self.fatal("Failed to install gecko 5 times in a row, aborting")
 
         level = INFO

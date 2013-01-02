@@ -16,7 +16,6 @@ sys.path.insert(1, os.path.dirname(sys.path[0]))
 from mozharness.base.errors import BaseErrorList
 from mozharness.base.log import ERROR
 from mozharness.base.script import BaseScript
-from mozharness.mozilla.buildbot import TBPL_RETRY
 from mozharness.mozilla.testing.errors import LogcatErrorList
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
 from mozharness.mozilla.testing.unittest import DesktopUnittestOutputParser, EmulatorMixin
@@ -360,7 +359,6 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
                 self._dump_logcat(parser)
                 break
         else:
-            self.buildbot_status(TBPL_RETRY)
             self._dump_logcat(parser)
             self.fatal("Failed to install gecko 5 times in a row, aborting")
 
