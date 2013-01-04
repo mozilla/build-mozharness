@@ -12,7 +12,8 @@ from time import sleep
 # load modules from parent dir
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
-from mozharness.mozilla.buildbot import TBPL_RETRY, BuildbotMixin
+from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_FAILURE, TBPL_WARNING, TBPL_RETRY, BuildbotMixin
+from mozharness.base.log import ERROR
 from mozharness.base.python import VirtualenvMixin
 from mozharness.base.script import BaseScript
 from mozharness.mozilla.testing.testbase import TestingMixin
@@ -45,9 +46,20 @@ class PandaTest(TestingMixin, BaseScript, VirtualenvMixin, MozpoolMixin, Buildbo
 
     error_list = []
 
+    mozbase_dir = os.path.join('tests', 'mozbase')
     virtualenv_modules = [
         'requests',
-        'mozdevice',
+        { 'manifestparser': os.path.join(mozbase_dir, 'manifestdestiny') },
+        { 'mozhttpd': os.path.join(mozbase_dir, 'mozhttpd') },
+        { 'mozinfo': os.path.join(mozbase_dir, 'mozinfo') },
+        { 'mozfile': os.path.join(mozbase_dir, 'mozfile') },
+        { 'mozinstall': os.path.join(mozbase_dir, 'mozinstall') },
+        { 'mozprofile': os.path.join(mozbase_dir, 'mozprofile') },
+        { 'mozprocess': os.path.join(mozbase_dir, 'mozprocess') },
+        { 'mozrunner': os.path.join(mozbase_dir, 'mozrunner') },
+        { 'mozdevice': os.path.join(mozbase_dir, 'mozdevice') },
+        { 'marionette': os.path.join('tests', 'marionette/client') },
+        { 'gaiatest': os.path.join('tests', 'gaiatest') },
     ]
 
     def __init__(self, require_config_file=False):
@@ -55,8 +67,8 @@ class PandaTest(TestingMixin, BaseScript, VirtualenvMixin, MozpoolMixin, Buildbo
             config_options=self.config_options,
             all_actions=['clobber',
                          'read-buildbot-config',
-                         'create-virtualenv',
                          'download-and-extract',
+                         'create-virtualenv',
                          'request-device',
                          'run-test',
                          'close-request'],
@@ -79,6 +91,16 @@ class PandaTest(TestingMixin, BaseScript, VirtualenvMixin, MozpoolMixin, Buildbo
         super(PandaTest, self).postflight_read_buildbot_config()
         self.mozpool_device = self.config.get('mozpool_device', \
                 self.buildbot_config.get('properties')["slavename"])
+
+    # XXX: remove this function when bug 826372 gets resolved
+    def postflight_download_and_extract(self):
+        dirs = self.query_abs_dirs()
+        unzip = self.query_exe("unzip")
+        test_install_dir = dirs.get('abs_test_install_dir', os.path.join(dirs['abs_work_dir'], 'tests'))
+        os.chdir(test_install_dir)
+        self.download_file("http://ftp-scl3.mozilla.com/pub/mozilla.org/b2g/tinderbox-builds/cedar-ics_armv7a_gecko/1357245427/b2g-20.0a1.en-US.android-arm.tests.zip")
+        unzip_cmd = [unzip, '-q', '-o', 'b2g-20.0a1.en-US.android-arm.tests.zip']
+        self.run_command(unzip_cmd, cwd=test_install_dir, halt_on_failure=True)
 
     def request_device(self):
         mph = self.query_mozpool_handler()
@@ -135,6 +157,38 @@ class PandaTest(TestingMixin, BaseScript, VirtualenvMixin, MozpoolMixin, Buildbo
         self.info("Read of file (%s) follows" % APP_INI_LOCATION)
         self.info("===========================")
         self.info(file_contents)
+
+        self.info("Running tests...")
+        dirs = self.query_abs_dirs()
+        cmd = [self.query_python_path('gaiatest'),
+               '--address', '%s:2828' % self.mozpool_device,
+               '--type', 'b2g', os.path.join(dirs['abs_gaiatest_dir'], 'tests', 'manifest.ini')]
+        code = self.run_command(cmd)
+        if code == 0:
+            status = "success"
+            tbpl_status = TBPL_SUCCESS
+        elif code == 10: # XXX assuming this code is the right one
+            status = "test failures"
+            tbpl_status = TBPL_WARNING
+        else:
+            status = "harness failures"
+            level = ERROR
+            tbpl_status = TBPL_FAILURE
+
+    def query_abs_dirs(self):
+        if self.abs_dirs:
+            return self.abs_dirs
+        abs_dirs = super(PandaTest, self).query_abs_dirs()
+        dirs = {}
+        dirs['abs_test_install_dir'] = os.path.join(
+            abs_dirs['abs_work_dir'], 'tests')
+        dirs['abs_gaiatest_dir'] = os.path.join(
+            dirs['abs_test_install_dir'], 'gaiatest', 'gaiatest')
+        for key in dirs.keys():
+            if key not in abs_dirs:
+                abs_dirs[key] = dirs[key]
+        self.abs_dirs = abs_dirs
+        return self.abs_dirs
 
     def close_request(self):
         mph = self.query_mozpool_handler()
