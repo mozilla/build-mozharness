@@ -13,7 +13,7 @@ from time import sleep
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
 from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_FAILURE, TBPL_WARNING, TBPL_RETRY, BuildbotMixin
-from mozharness.base.log import ERROR
+from mozharness.base.log import INFO, ERROR
 from mozharness.base.python import VirtualenvMixin
 from mozharness.base.script import BaseScript
 from mozharness.mozilla.testing.testbase import TestingMixin
