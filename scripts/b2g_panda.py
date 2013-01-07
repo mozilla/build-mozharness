@@ -92,16 +92,6 @@ class PandaTest(TestingMixin, BaseScript, VirtualenvMixin, MozpoolMixin, Buildbo
         self.mozpool_device = self.config.get('mozpool_device', \
                 self.buildbot_config.get('properties')["slavename"])
 
-    # XXX: remove this function when bug 826372 gets resolved
-    def postflight_download_and_extract(self):
-        dirs = self.query_abs_dirs()
-        unzip = self.query_exe("unzip")
-        test_install_dir = dirs.get('abs_test_install_dir', os.path.join(dirs['abs_work_dir'], 'tests'))
-        os.chdir(test_install_dir)
-        self.download_file("http://ftp-scl3.mozilla.com/pub/mozilla.org/b2g/tinderbox-builds/cedar-ics_armv7a_gecko/1357245427/b2g-20.0a1.en-US.android-arm.tests.zip")
-        unzip_cmd = [unzip, '-q', '-o', 'b2g-20.0a1.en-US.android-arm.tests.zip']
-        self.run_command(unzip_cmd, cwd=test_install_dir, halt_on_failure=True)
-
     def request_device(self):
         mph = self.query_mozpool_handler()
         for retry in self._retry_sleep(sleep_time=RETRY_INTERVAL, max_retries=MAX_RETRIES,
@@ -117,7 +107,7 @@ class PandaTest(TestingMixin, BaseScript, VirtualenvMixin, MozpoolMixin, Buildbo
                                b2gbase=b2gbase, pxe_config=None)
                 break
             except MozpoolConflictException:
-                self.warning("Device unavailable.  Retry#%i.." % retry)
+                self.warning("Device unavailable. Retry#%i.." % retry)
             except MozpoolException, e:
                 self.buildbot_status(TBPL_RETRY)
                 self.fatal("We could not request the device: %s" % str(e))
@@ -130,6 +120,7 @@ class PandaTest(TestingMixin, BaseScript, VirtualenvMixin, MozpoolMixin, Buildbo
         """
         Run the Panda tests
         """
+        level = INFO
         mph = self.query_mozpool_handler()
         sys.path.append(self.query_python_site_packages_path())
         from mozdevice.devicemanagerSUT import DeviceManagerSUT
@@ -165,15 +156,13 @@ class PandaTest(TestingMixin, BaseScript, VirtualenvMixin, MozpoolMixin, Buildbo
                '--type', 'b2g', os.path.join(dirs['abs_gaiatest_dir'], 'tests', 'manifest.ini')]
         code = self.run_command(cmd)
         if code == 0:
-            status = "success"
             tbpl_status = TBPL_SUCCESS
         elif code == 10: # XXX assuming this code is the right one
-            status = "test failures"
             tbpl_status = TBPL_WARNING
         else:
-            status = "harness failures"
             level = ERROR
             tbpl_status = TBPL_FAILURE
+        self.buildbot_status(tbpl_status, level=level)
 
     def query_abs_dirs(self):
         if self.abs_dirs:

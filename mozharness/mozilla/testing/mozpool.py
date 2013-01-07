@@ -185,7 +185,7 @@ class MozpoolHandler(ShellMixin, OSMixin, LogMixin):
                     else:
                         return (r.text, r.status_code)
                 else:
-                    self.log("Bad return status from %s: %d!" % (url, r.status_code), level=error_level)
+                    self.log("Bad return status from %s: %d!" % (url, r.status_code), level=WARNING)
                     return (None, r.status_code)
             except requests.exceptions.RequestException, e:
                 self.log("Try %d: Can't get %s: %s!" % (try_num, url, str(e)),
