@@ -103,7 +103,7 @@ class PandaTest(TestingMixin, BaseScript, VirtualenvMixin, MozpoolMixin, Buildbo
                 b2gbase = self.config.get('mozpool_b2g_base', \
                         self.installer_url)
 
-                response = mph.request_device(self.mozpool_device, self.mozpool_assignee, image, duration, \
+                response = mph.request_device("any", self.mozpool_assignee, image, duration, \
                                b2gbase=b2gbase, pxe_config=None)
                 break
             except MozpoolConflictException:
