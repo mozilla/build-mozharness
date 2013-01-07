@@ -121,6 +121,9 @@ class PandaTest(TestingMixin, BaseScript, VirtualenvMixin, MozpoolMixin, Buildbo
         Run the Panda tests
         """
         level = INFO
+        env = self.query_env()
+        env["DM_TRANS"] = "sut"
+        env["TEST_DEVICE"] = self.mozpool_device
         mph = self.query_mozpool_handler()
         sys.path.append(self.query_python_site_packages_path())
         from mozdevice.devicemanagerSUT import DeviceManagerSUT
@@ -154,7 +157,7 @@ class PandaTest(TestingMixin, BaseScript, VirtualenvMixin, MozpoolMixin, Buildbo
         cmd = [self.query_python_path('gaiatest'),
                '--address', '%s:2828' % self.mozpool_device,
                '--type', 'b2g', os.path.join(dirs['abs_gaiatest_dir'], 'tests', 'manifest.ini')]
-        code = self.run_command(cmd)
+        code = self.run_command(cmd, env=env)
         if code == 0:
             tbpl_status = TBPL_SUCCESS
         elif code == 10: # XXX assuming this code is the right one
