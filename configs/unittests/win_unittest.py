@@ -22,7 +22,7 @@ config = {
     "xpcshell_name": XPCSHELL_NAME,
     "virtualenv_path": 'c:/talos-slave/test/build/venv',
     "virtualenv_python_dll": 'c:/mozilla-build/python27/python27.dll',
-    "simplejson_url": "http://build.mozilla.org/talos/zips/simplejson-2.2.1.tar.gz",
+    "simplejson_url": "http://puppetagain.pub.build.mozilla.org/data/python/packages/simplejson-2.1.3.tar.gz",
     "run_file_names": {
         "mochitest": "runtests.py",
         "reftest": "runreftest.py",

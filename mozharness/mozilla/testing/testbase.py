@@ -42,9 +42,10 @@ testing_config_options = [
      "help": "URL to the zip file containing the actual tests",
     }],
     [["--download-symbols"],
-    {"action": "store_true",
+    {"action": "store",
      "dest": "download_symbols",
-     "default": False,
+     "type": "choice",
+     "choices": ['ondemand', 'true'],
      "help": "Download and extract crash reporter symbols.",
     }],
 ] + copy.deepcopy(virtualenv_config_options)
@@ -208,13 +209,13 @@ You can set this by:
         self.run_command(['unzip', '-q', source], cwd=self.symbols_path,
                          halt_on_failure=True)
 
-    def download_and_extract(self):
+    def download_and_extract(self, target_unzip_dirs=None):
         """
         download and extract test zip / download installer
         """
         if self.test_url:
             self._download_test_zip()
-            self._extract_test_zip()
+            self._extract_test_zip(target_unzip_dirs=target_unzip_dirs)
         self._download_installer()
         if self.config.get('download_symbols'):
             self._download_and_extract_symbols()

@@ -196,6 +196,10 @@ class DesktopUnittest(TestingMixin, MercurialScript):
                 'binary_path': self.binary_path,
                 'symbols_path': self._query_symbols_url()
             }
+            # TestingMixin._download_and_extract_symbols() will set
+            # self.symbols_path when downloading/extracting.
+            if self.symbols_path:
+                str_format_values['symbols_path'] = self.symbols_path
             if self.config['%s_options' % suite_category]:
                 for option in self.config['%s_options' % suite_category]:
                     options.append(option % str_format_values)
@@ -258,18 +262,15 @@ class DesktopUnittest(TestingMixin, MercurialScript):
         optimizes which subfolders to extract from tests zip
         """
         c = self.config
-        unzip_tests_dirs = None
 
+        target_unzip_dirs = None
         if c['specific_tests_zip_dirs']:
-            unzip_tests_dirs = c['minimum_tests_zip_dirs']
+            target_unzip_dirs = c['minimum_tests_zip_dirs']
             for category in c['specific_tests_zip_dirs'].keys():
                 if c['run_all_suites'] or self._query_specified_suites(category) \
                         or 'run-tests' not in self.actions:
-                    unzip_tests_dirs.extend(c['specific_tests_zip_dirs'][category])
-        if self.test_url:
-            self._download_test_zip()
-            self._extract_test_zip(target_unzip_dirs=unzip_tests_dirs)
-        self._download_installer()
+                    target_unzip_dirs.extend(c['specific_tests_zip_dirs'][category])
+        super(DesktopUnittest, self).download_and_extract(target_unzip_dirs=target_unzip_dirs)
 
     # pull defined in VCSScript.
     # preflight_run_tests defined in TestingMixin.
