@@ -214,21 +214,20 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
         python = self.query_python_path('python')
         cmd = [
             python, os.path.join(dirs['abs_mochitest_dir'], 'runtestsb2g.py'),
-            '--emulator', c['emulator'],
-            '--console-level', 'INFO',
+            '--adbpath', self.adb_path,
             '--b2gpath', dirs['abs_b2g-distro_dir'],
-            '--remote-webserver', c['remote_webserver'],
+            '--console-level', 'INFO',
+            '--emulator', c['emulator'],
             '--logcat-dir', dirs['abs_work_dir'],
+            '--remote-webserver', c['remote_webserver'],
+            '--run-only-tests', self.test_manifest,
+            '--xre-path', os.path.join(dirs['abs_xre_dir'], 'bin'),
         ]
         cmd.extend(self._build_arg('--total-chunks', c.get('total_chunks')))
         cmd.extend(self._build_arg('--this-chunk', c.get('this_chunk')))
         # self.binary_path gets set by super(B2GEmulatorTest, self).install()
         cmd.extend(self._build_arg('--gecko-path', os.path.dirname(self.binary_path)))
-        cmd.extend([
-            '--run-only-tests', self.test_manifest,
-            '--xre-path', os.path.join(dirs['abs_xre_dir'], 'bin'),
-            '--adbpath', self.adb_path,
-        ])
+        cmd.extend(self._build_arg('--busybox', self.busybox_path))
         return cmd
 
     def _build_reftest_args(self):
@@ -237,21 +236,20 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
         python = self.query_python_path('python')
         cmd = [
             python, 'runreftestb2g.py',
+            '--adbpath', self.adb_path,
+            '--b2gpath', dirs['abs_b2g-distro_dir'],
             '--emulator', c['emulator'],
             '--emulator-res', '800x1000',
             '--ignore-window-size',
-            '--b2gpath', dirs['abs_b2g-distro_dir'],
-            '--remote-webserver', c['remote_webserver'],
             '--logcat-dir', dirs['abs_work_dir'],
+            '--remote-webserver', c['remote_webserver'],
+            '--xre-path', os.path.join(dirs['abs_xre_dir'], 'bin'),
         ]
         cmd.extend(self._build_arg('--total-chunks', c.get('total_chunks')))
         cmd.extend(self._build_arg('--this-chunk', c.get('this_chunk')))
         # self.binary_path gets set by super(B2GEmulatorTest, self).install()
         cmd.extend(self._build_arg('--gecko-path', os.path.dirname(self.binary_path)))
-        cmd.extend([
-            '--xre-path', os.path.join(dirs['abs_xre_dir'], 'bin'),
-            '--adbpath', self.adb_path,
-        ])
+        cmd.extend(self._build_arg('--busybox', self.busybox_path))
         cmd.append(self.test_manifest)
         return cmd
 
