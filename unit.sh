@@ -65,8 +65,6 @@ rm -rf build logs
 if [ $OS_TYPE != 'windows' ] ; then
   echo "### Testing non-networked unit tests"
   coverage run -a --branch $COVERAGE_ARGS $NOSETESTS test/test_*.py
-  echo "### Testing networked unit tests"
-  coverage run -a --branch $COVERAGE_ARGS $NOSETESTS test/networked/test_*.py
   echo "### Running *.py [--list-actions]"
   for filename in $MOZHARNESS_PY_FILES; do
     coverage run -a --branch $COVERAGE_ARGS $filename
