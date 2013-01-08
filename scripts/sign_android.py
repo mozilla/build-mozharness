@@ -18,7 +18,7 @@ import sys
 # load modules from parent dir
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
-from mozharness.base.log import ERROR, FATAL
+from mozharness.base.log import INFO, ERROR, FATAL
 from mozharness.base.transfer import TransferMixin
 from mozharness.mozilla.release import ReleaseMixin
 from mozharness.mozilla.signing import MobileSigningMixin
@@ -210,8 +210,13 @@ class SignAndroid(LocalesMixin, ReleaseMixin, MobileSigningMixin,
                                      message="Unable to download %(platform)s:%(locale)s unsigned apk!")
                 else:
                     success_count += 1
+        level = INFO
+        # fatal() if we fail to download (bug 827226)
+        if success_count < total_count:
+            level = FATAL
         self.summarize_success_count(success_count, total_count,
-                                     message="Downloaded %d of %d unsigned apks successfully.")
+                                     message="Downloaded %d of %d unsigned apks successfully.",
+                                     level=level)
         if c['enable_partner_repacks']:
             self.info("Downloading partner-repacks")
             if replace_dict.get('platform'):

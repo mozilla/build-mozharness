@@ -833,10 +833,12 @@ class BaseScript(ShellMixin, OSMixin, LogMixin, object):
         return key in self.failures
 
     def summarize_success_count(self, success_count, total_count,
-                                message="%d of %d successful."):
-        level = INFO
-        if success_count < total_count:
-            level = ERROR
+                                message="%d of %d successful.",
+                                level=None):
+        if level is None:
+            level = INFO
+            if success_count < total_count:
+                level = ERROR
         self.add_summary(message % (success_count, total_count),
                          level=level)
 
