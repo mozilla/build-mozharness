@@ -50,15 +50,7 @@ class PandaTest(TestingMixin, BaseScript, VirtualenvMixin, MozpoolMixin, Buildbo
     mozbase_dir = os.path.join('tests', 'mozbase')
     virtualenv_modules = [
         'requests',
-        { 'manifestparser': os.path.join(mozbase_dir, 'manifestdestiny') },
-        { 'mozhttpd': os.path.join(mozbase_dir, 'mozhttpd') },
-        { 'mozinfo': os.path.join(mozbase_dir, 'mozinfo') },
-        { 'mozfile': os.path.join(mozbase_dir, 'mozfile') },
-        { 'mozinstall': os.path.join(mozbase_dir, 'mozinstall') },
-        { 'mozprofile': os.path.join(mozbase_dir, 'mozprofile') },
-        { 'mozprocess': os.path.join(mozbase_dir, 'mozprocess') },
-        { 'mozrunner': os.path.join(mozbase_dir, 'mozrunner') },
-        { 'mozdevice': os.path.join(mozbase_dir, 'mozdevice') },
+        'mozinstall',
         { 'marionette': os.path.join('tests', 'marionette/client') },
         { 'gaiatest': os.path.join('tests', 'gaiatest') },
     ]
