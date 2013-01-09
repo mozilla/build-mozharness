@@ -46,7 +46,7 @@ class TestSummaryOutputParserHelper(OutputParser):
 
     def print_summary(self, suite_name):
         self.evaluate_parser()
-        self.info("TinderboxPrint: %s: %s\n" % (suite_name, self.tsummary)
+        self.info("TinderboxPrint: %s: %s\n" % (suite_name, self.tsummary))
 
 class DesktopUnittestOutputParser(OutputParser):
     """
