@@ -161,7 +161,7 @@ class PandaTest(TestingMixin, BaseScript, VirtualenvMixin, MozpoolMixin, Buildbo
             level = ERROR
             tbpl_status = TBPL_FAILURE
 
-        test_summary_parser.print_summary()
+        test_summary_parser.print_summary('gaia-ui-tests')
 
         self.buildbot_status(tbpl_status, level=level)
 

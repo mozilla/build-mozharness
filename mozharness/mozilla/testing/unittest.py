@@ -44,9 +44,9 @@ class TestSummaryOutputParserHelper(OutputParser):
                 failed = emphasize_fail_text % str(self.failed)
             self.tsummary = "%d/%s/%d" % (self.passed, failed, self.todo)
 
-    def print_summary(self):
+    def print_summary(self, suite_name):
         self.evaluate_parser()
-        self.info("TinderboxPrint: results: %s\n" % self.tsummary)
+        self.info("TinderboxPrint: %s: %s\n" % (suite_name, self.tsummary)
 
 class DesktopUnittestOutputParser(OutputParser):
     """

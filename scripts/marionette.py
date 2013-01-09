@@ -225,7 +225,7 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
             else:
                 self.info('no logcat file found')
 
-        marionette_parser.print_summary()
+        marionette_parser.print_summary('marionette')
 
         self.log("Marionette exited with return code %s: %s" % (code, status),
                  level=level)
