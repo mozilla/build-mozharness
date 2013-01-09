@@ -14,28 +14,24 @@ import sys
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
 from mozharness.base.errors import PythonErrorList, TarErrorList
-from mozharness.base.log import INFO, ERROR, OutputParser
+from mozharness.base.log import INFO, ERROR
 from mozharness.base.script import BaseScript
 from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_WARNING, TBPL_FAILURE
 from mozharness.mozilla.testing.errors import LogcatErrorList
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
-from mozharness.mozilla.testing.unittest import EmulatorMixin
+from mozharness.mozilla.testing.unittest import EmulatorMixin, TestSummaryOutputParserHelper
 from mozharness.mozilla.tooltool import TooltoolMixin
 
 
-class MarionetteOutputParser(OutputParser):
+class MarionetteOutputParser(TestSummaryOutputParserHelper):
     """
-    A class that extends OutputParser such that it can parse the number of
-    passed/failed/todo tests from the output.
+    A class that extends TestSummaryOutputParserHelper such that it can parse
+    if gecko did not install properly
     """
 
     bad_gecko_install = re.compile(r'Error installing gecko!')
-    summary = re.compile(r'(passed|failed|todo): (\d+)')
 
     def __init__(self, **kwargs):
-        self.failed = 0
-        self.passed = 0
-        self.todo = 0
         self.install_gecko_failed = False
         super(MarionetteOutputParser, self).__init__(**kwargs)
 
@@ -43,14 +39,6 @@ class MarionetteOutputParser(OutputParser):
         if self.bad_gecko_install.search(line):
             self.install_gecko_failed = True
         super(MarionetteOutputParser, self).parse_single_line(line)
-        m = self.summary.match(line)
-        if m:
-            try:
-                setattr(self, m.group(1), int(m.group(2)))
-            except ValueError:
-                # ignore bad values
-                pass
-
 
 class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
     config_options = [
@@ -236,20 +224,8 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
             level = ERROR
             tbpl_status = TBPL_FAILURE
 
-        # generate the TinderboxPrint line for TBPL
-        emphasize_fail_text = '<em class="testfail">%s</em>'
-        failed = "0"
-        if marionette_parser.passed == 0 and marionette_parser.failed == 0:
-            tsummary = emphasize_fail_text % "T-FAIL"
-        else:
-            if marionette_parser.failed > 0:
-                failed = emphasize_fail_text % str(marionette_parser.failed)
-            tsummary = "%d/%s/%d" % (marionette_parser.passed,
-                                     failed,
-                                     marionette_parser.todo)
-
         # dump logcat output if there were failures
-        if self.config.get('emulator') and (failed != "0" or 'T-FAIL' in tsummary):
+        if self.config.get('emulator') and (marionette_parser.failed != "0" or 'T-FAIL' in marionette_parser.tsummary):
             logcat = os.path.join(dirs['abs_work_dir'], 'emulator-5554.log')
             if os.access(logcat, os.F_OK):
                 self.info('dumping logcat')
@@ -257,7 +233,7 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
             else:
                 self.info('no logcat file found')
 
-        self.info("TinderboxPrint: marionette<br/>%s\n" % tsummary)
+        marionette_parser.print_summary()
 
         self.log("Marionette exited with return code %s: %s" % (code, status),
                  level=level)

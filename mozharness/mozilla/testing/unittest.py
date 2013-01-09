@@ -6,6 +6,7 @@
 # ***** END LICENSE BLOCK *****
 
 import os
+import re
 
 from mozharness.mozilla.testing.errors import TinderBoxPrintRe
 from mozharness.base.log import OutputParser, WARNING, INFO
@@ -14,6 +15,38 @@ from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_STATUS_DICT
 
 SUITE_CATEGORIES = ['mochitest', 'reftest', 'xpcshell']
 
+class TestSummaryOutputParserHelper(OutputParser):
+    def __init__(self, regex=re.compile(r'(passed|failed|todo): (\d+)'), **kwargs):
+        self.regex = regex
+        self.failed = 0
+        self.passed = 0
+        self.todo = 0
+        super(TestSummaryOutputParserHelper, self).__init__(**kwargs)
+
+    def parse_single_line(self, line):
+        super(TestSummaryOutputParserHelper, self).parse_single_line(line)
+        m = self.regex.match(line)
+        if m:
+            try:
+                setattr(self, m.group(1), int(m.group(2)))
+            except ValueError:
+                # ignore bad values
+                pass
+
+    def evaluate_parser(self):
+        # generate the TinderboxPrint line for TBPL
+        emphasize_fail_text = '<em class="testfail">%s</em>'
+        failed = "0"
+        if self.passed == 0 and self.failed == 0:
+            self.tsummary = emphasize_fail_text % "T-FAIL"
+        else:
+            if self.failed > 0:
+                failed = emphasize_fail_text % str(self.failed)
+            self.tsummary = "%d/%s/%d" % (self.passed, failed, self.todo)
+
+    def print_summary(self):
+        self.evaluate_parser()
+        self.info("TinderboxPrint: results: %s\n" % self.tsummary)
 
 class DesktopUnittestOutputParser(OutputParser):
     """

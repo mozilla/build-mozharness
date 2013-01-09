@@ -17,6 +17,7 @@ from mozharness.base.log import INFO, ERROR
 from mozharness.base.python import VirtualenvMixin
 from mozharness.base.script import BaseScript
 from mozharness.mozilla.testing.testbase import TestingMixin
+from mozharness.mozilla.testing.unittest import TestSummaryOutputParserHelper
 from mozharness.mozilla.testing.mozpool import MozpoolMixin, MozpoolConflictException, MozpoolException
 
 #TODO - adjust these values
@@ -157,7 +158,9 @@ class PandaTest(TestingMixin, BaseScript, VirtualenvMixin, MozpoolMixin, Buildbo
         cmd = [self.query_python_path('gaiatest'),
                '--address', '%s:2828' % self.mozpool_device,
                '--type', 'b2g', os.path.join(dirs['abs_gaiatest_dir'], 'tests', 'manifest.ini')]
-        code = self.run_command(cmd, env=env)
+        test_summary_parser = TestSummaryOutputParserHelper(config=self.config, log_obj=self.log_obj)
+
+        code = self.run_command(cmd, env=env, output_parser=test_summary_parser)
         if code == 0:
             tbpl_status = TBPL_SUCCESS
         elif code == 10: # XXX assuming this code is the right one
@@ -165,6 +168,9 @@ class PandaTest(TestingMixin, BaseScript, VirtualenvMixin, MozpoolMixin, Buildbo
         else:
             level = ERROR
             tbpl_status = TBPL_FAILURE
+
+        test_summary_parser.print_summary()
+
         self.buildbot_status(tbpl_status, level=level)
 
     def query_abs_dirs(self):
