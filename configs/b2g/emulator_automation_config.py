@@ -1,8 +1,8 @@
 # This is a template config file for b2g emulator unittest production.
 
 EMULATOR_MANIFEST = """[{
-"size": 615398796,
-"digest": "db59094fb366ddb407083edb19ee695146d70a5c110e088f22349148e3d314a0d6261272e1781a5404db2e5bc6dc4be283c5eb76b4ebb32193f2f099ac343ca5",
+"size": 614786766,
+"digest": "c17f86729db5d5620cabde893df8c3130d8d23526bb4ef2f5147e7fb7ad5b046e3443019829ee0d58c65ccdb52fc278289c149d7f69c49b8b192ab219c2173d8",
 "algorithm": "sha512",
 "filename": "emulator.zip"
 }]
