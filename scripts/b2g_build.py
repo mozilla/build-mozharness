@@ -260,6 +260,19 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
             finally:
                 n += 1
 
+    def get_hg_commit_time(self, repo_dir, rev):
+        """Returns the commit time for given `rev` in unix epoch time"""
+        hg = self.query_exe('hg')
+        cmd = [
+            hg,
+            'log',
+            '-R', repo_dir,
+            '-r', rev,
+            '--template', '{date}'
+        ]
+        t = self.get_output_from_command(cmd)
+        return int(float(t))
+
     def query_do_upload(self):
         # always upload nightlies, but not dep builds for some platforms
         if self.query_is_nightly():
@@ -450,6 +463,13 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
                     gaia_git =  self.query_translated_revision(url, 'gaia', self.buildbot_properties['gaia_revision'])
                     new_sources.append('  <project name="releases/gecko.git" path="gecko" remote="mozillaorg" revision="%s"/>' % gecko_git)
                     new_sources.append('  <project name="releases/gaia.git" path="gaia" remote="mozillaorg" revision="%s"/>' % gaia_git)
+
+                    # Figure out when our gaia commit happened
+                    gaia_time = self.get_hg_commit_time(os.path.join(dirs['abs_work_dir'], 'gaia'), self.buildbot_properties['gaia_revision'])
+
+                    # Write the gaia commit information to 'gaia_commit_override.txt'
+                    gaia_override = os.path.join(dirs['abs_work_dir'], 'gaia', 'gaia_commit_override.txt')
+                    self.write_to_file(gaia_override, "%s\n%s\n" % (gaia_git, gaia_time))
 
         self.write_to_file(sourcesfile, "\n".join(new_sources), verbose=False)
         self.run_command(["diff", "-u", sourcesfile_orig, sourcesfile], success_codes = [1])
