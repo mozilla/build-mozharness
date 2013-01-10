@@ -936,6 +936,7 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
         dated_mar = "b2g_update_%s.mar" % suffix
         dated_update_xml = "update_%s.xml" % suffix
         dated_application_ini = "application_%s.ini" % suffix
+        dated_sources_xml = "b2g_update_source_%s.ini" % suffix
         mar_url = self.config['update']['base_url'] + dated_mar
 
         self.info("Generating update.xml for %s" % mar_url)
@@ -957,6 +958,10 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
         self.copy_to_upload_dir(
             os.path.join(upload_dir, "update.xml"),
             os.path.join(upload_dir, dated_update_xml)
+        )
+        self.copy_to_upload_dir(
+            os.path.join(dirs['work_dir'], 'sources.xml'),
+            os.path.join(upload_dir, dated_sources_xml)
         )
 
     def upload_updates(self):
