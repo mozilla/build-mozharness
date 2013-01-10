@@ -41,6 +41,7 @@ class MarionetteUnittestOutputParser(DesktopUnittestOutputParser):
 
 
 class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
+    test_suites = ('reftest', 'mochitest', 'xpcshell', 'crashtest')
     config_options = [
         [["--type"],
         {"action": "store",
@@ -82,7 +83,7 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
         {"action": "store",
          "dest": "test_suite",
          "type": "choice",
-         "choices": ('reftest', 'mochitest', 'xpcshell'),
+         "choices": test_suites,
          "help": "Which test suite to run",
         }],
         [["--adb-path"],
@@ -301,6 +302,9 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
                                                   'reftests', 'reftest.list')
             elif suite == 'xpcshell':
                 self.test_manifest = os.path.join('tests', 'xpcshell_b2g.ini')
+            elif suite == 'crashtest':
+                self.test_manifest = os.path.join('tests', 'testing',
+                                                  'crashtests', 'crashtest.list')
 
         if not os.path.isfile(self.adb_path):
             self.fatal("The adb binary '%s' is not a valid file!" % self.adb_path)
@@ -317,7 +321,7 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
         if self.config['test_suite'] == 'mochitest':
             cmd = self._build_mochitest_args()
             cwd = dirs['abs_mochitest_dir']
-        elif self.config['test_suite'] == 'reftest':
+        elif self.config['test_suite'] in ('reftest', 'crashtest'):
             cmd = self._build_reftest_args()
             cwd = dirs['abs_reftest_dir']
         elif self.config['test_suite'] == 'xpcshell':
@@ -331,8 +335,7 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
         # In the short term, I'm ok with some duplication of code if it
         # expedites things; please file bugs to merge if that happens.
 
-        suite_names = ['mochitest', 'reftest', 'xpcshell']
-        suite_name = [x for x in suite_names if x in self.config['test_suite']][0]
+        suite_name = [x for x in self.test_suites if x in self.config['test_suite']][0]
         if self.config.get('this_chunk'):
             suite = '%s-%s' % (suite_name, self.config['this_chunk'])
         else:
