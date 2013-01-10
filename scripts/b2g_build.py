@@ -435,12 +435,52 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
         abs_rev = self.vcs_checkout(repo=repo, dest=dest, revision=rev, vcs=vcs)
         self.set_buildbot_property('compare_locales_revision', abs_rev, write_to_file=True)
 
+    def query_translate_hg_to_git(self, gecko_config_key=None):
+        manifest_config = self.config.get('manifest', {})
+        branch = self.query_branch()
+        if self.query_is_nightly() and branch in manifest_config['branches'] and \
+          manifest_config.get('translate_hg_to_git'):
+            if gecko_config_key is None:
+                return True
+            if self.gecko_config.get(gecko_config_key):
+                return True
+        return False
+
+    def _generate_locale_manifest(self):
+        """ Add the locales to the source manifest.
+        """
+        locale_manifest = []
+        if self.gaia_locale_revisions:
+            gaia_l10n_git_root = None
+            if self.query_translate_hg_to_git(gecko_config_key='gaia_l10n_git_root'):
+                gaia_l10n_git_root = self.gecko_config('gaia_l10n_git_root')
+            for locale in self.gaia_locale_revisions.keys():
+                repo = self.gaia_locale_revisions['locale']['repo']
+                revision = self.gaia_locale_revisions['locale']['revision']
+                locale_manifest.append('  <!-- Mercurial-Information: <project name="%s" path="gaia-l10n/%s" remote="hgmozillaorg" revision="%s"/> -->' %
+                                       (repo.replace('http://hg.mozilla.org/', ''), locale, revision))
+                if gaia_l10n_git_root:
+                    # TODO once mapper's ready
+                    pass
+        if self.gecko_locale_revisions:
+            gecko_l10n_git_root = None
+            if self.query_translate_hg_to_git(gecko_config_key='gecko_l10n_git_root'):
+                gecko_l10n_git_root = self.gecko_config('gecko_l10n_git_root')
+            for locale in self.gecko_locale_revisions.keys():
+                repo = self.gecko_locale_revisions['locale']['repo']
+                revision = self.gecko_locale_revisions['locale']['revision']
+                locale_manifest.append('  <!-- Mercurial-Information: <project name="%s" path="gecko-l10n/%s" remote="hgmozillaorg" revision="%s"/> -->' %
+                                       (repo.replace('http://hg.mozilla.org/', ''), locale, revision))
+                if gecko_l10n_git_root:
+                    # TODO once mapper's ready
+                    pass
+        return locale_manifest
+
     def update_source_manifest(self):
         dirs = self.query_abs_dirs()
         gecko_config = self.load_gecko_config()
         gaia_config = gecko_config.get('gaia')
         manifest_config = self.config.get('manifest', {})
-        branch = self.query_branch()
 
         sourcesfile = os.path.join(dirs['work_dir'], 'sources.xml')
         sourcesfile_orig = sourcesfile + '.original'
@@ -456,8 +496,7 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
                 new_sources.append('  <!-- Mercurial-Information: <project name="%s" path="gaia" remote="hgmozillaorg" revision="%s"/> -->' %
                                    (gaia_config['repo'].replace('http://hg.mozilla.org/', ''), self.buildbot_properties['gaia_revision']))
 
-                if self.query_is_nightly() and branch in manifest_config['branches'] and \
-                   manifest_config.get('translate_hg_to_git'):
+                if self.query_translate_hg_to_git():
                     url = manifest_config['translate_base_url']
                     gecko_git = self.query_translated_revision(url, 'gecko', self.buildbot_properties['revision'])
                     gaia_git =  self.query_translated_revision(url, 'gaia', self.buildbot_properties['gaia_revision'])
@@ -470,6 +509,7 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
                     # Write the gaia commit information to 'gaia_commit_override.txt'
                     gaia_override = os.path.join(dirs['abs_work_dir'], 'gaia', 'gaia_commit_override.txt')
                     self.write_to_file(gaia_override, "%s\n%s\n" % (gaia_git, gaia_time))
+                new_sources.append(self._generate_locale_manifest())
 
         self.write_to_file(sourcesfile, "\n".join(new_sources), verbose=False)
         self.run_command(["diff", "-u", sourcesfile_orig, sourcesfile], success_codes = [1])

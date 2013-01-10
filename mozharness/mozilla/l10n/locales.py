@@ -27,6 +27,7 @@ class LocalesMixin(ChunkingMixin):
         """
         self.abs_dirs = None
         self.locales = None
+        self.gecko_locale_revisions = None
 
     def query_locales(self):
         if self.locales is not None:
@@ -168,8 +169,9 @@ class LocalesMixin(ChunkingMixin):
                     repos.append(repo_dict)
             else:
                 repos = c.get("l10n_repos")
-            self.vcs_checkout_repos(repos, tag_override=c.get('tag_override'),
-                                    num_retries=num_retries)
+            self.gecko_locale_revisions = self.vcs_checkout_repos(repos,
+                                              tag_override=c.get('tag_override'),
+                                              num_retries=num_retries)
         # Pull locales
         locales = self.query_locales()
         locale_repos = []
@@ -184,14 +186,16 @@ class LocalesMixin(ChunkingMixin):
                 'tag': tag,
                 'vcs': vcs
             })
-        self.vcs_checkout_repos(repo_list=locale_repos,
-                                parent_dir=parent_dir,
-                                tag_override=c.get('tag_override'),
-                                num_retries=num_retries)
+        revs = self.vcs_checkout_repos(repo_list=locale_repos,
+                                       parent_dir=parent_dir,
+                                       tag_override=c.get('tag_override'),
+                                       num_retries=num_retries)
+        self.gecko_locale_revisions.update(revs)
 
 # GaiaLocalesMixin {{{1
 
 class GaiaLocalesMixin(object):
+    gaia_locale_revisions = None
     def pull_gaia_locale_source(self, l10n_config, locales, base_dir):
         root = l10n_config['root']
         # urljoin will strip the last part of root if it doesn't end with "/"
@@ -205,7 +209,7 @@ class GaiaLocalesMixin(object):
                 'dest': locale,
                 'vcs': vcs,
             })
-        self.vcs_checkout_repos(repo_list=repos, parent_dir=base_dir)
+        self.gaia_locale_revisions = self.vcs_checkout_repos(repo_list=repos, parent_dir=base_dir)
 
 
 # __main__ {{{1
