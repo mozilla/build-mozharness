@@ -1006,7 +1006,7 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
         dated_mar = "b2g_update_%s.mar" % suffix
         dated_update_xml = "update_%s.xml" % suffix
         dated_application_ini = "application_%s.ini" % suffix
-        dated_sources_xml = "b2g_update_source_%s.ini" % suffix
+        dated_sources_xml = "b2g_update_source_%s.xml" % suffix
         mar_url = self.config['update']['base_url'] + dated_mar
 
         self.info("Generating update.xml for %s" % mar_url)
