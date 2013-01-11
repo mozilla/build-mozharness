@@ -33,6 +33,15 @@ class VCSMixin(object):
     """Basic VCS methods that are vcs-agnostic.
     The vcs_class handles all the vcs-specific tasks.
     """
+    def query_dest(self, kwargs):
+        if 'dest' in kwargs:
+            return kwargs['dest']
+        dest = os.path.basename(kwargs['repo'])
+        # Git fun
+        if dest.endswith('.git'):
+            dest = dest.replace('.git', '')
+        return dest
+
     def vcs_checkout(self, vcs=None, num_retries=None, error_level=FATAL,
                      **kwargs):
         """ Check out a single repo.
@@ -54,7 +63,7 @@ class VCSMixin(object):
             raise VCSException, "No VCS set!"
         # need a better way to do this.
         if 'dest' not in kwargs:
-            kwargs['dest'] = os.path.basename(kwargs['repo'])
+            kwargs['dest'] = self.query_dest(kwargs)
         if 'vcs_share_base' not in kwargs:
             kwargs['vcs_share_base'] = c.get('%s_share_base' % vcs, c.get('vcs_share_base'))
         vcs_obj = vcs_class(
@@ -89,16 +98,18 @@ class VCSMixin(object):
             parent_dir = os.path.join(c['base_work_dir'], c['work_dir'])
         self.mkdir_p(parent_dir)
         self.chdir(parent_dir)
-        revision_list = []
+        revision_dict = {}
         kwargs_orig = deepcopy(kwargs)
         for repo_dict in repo_list:
             kwargs = deepcopy(kwargs_orig)
             kwargs.update(repo_dict)
             if tag_override:
                 kwargs['revision'] = tag_override
-            revision_list.append(self.vcs_checkout(**kwargs))
+            dest = self.query_dest(kwargs)
+            revision_dict[dest] = {'repo': kwargs['repo']}
+            revision_dict[dest]['revision'] = self.vcs_checkout(**kwargs)
         self.chdir(orig_dir)
-        return revision_list
+        return revision_dict
 
 class VCSScript(VCSMixin, BaseScript):
     def __init__(self, **kwargs):
