@@ -420,6 +420,9 @@ class Talos(TestingMixin, BaseScript):
         # get talos options
         options = self.talos_options(args=args, **kw)
 
+        # XXX temporary python version check
+        python = self.query_python_path()
+        self.run_command([python, "--version"])
         # run talos tests
         talos = self.query_python_path('talos')
         command = [talos, '--noisy', '--debug'] + options
