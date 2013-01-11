@@ -304,7 +304,7 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
                 self.test_manifest = os.path.join('tests', 'xpcshell_b2g.ini')
             elif suite == 'crashtest':
                 self.test_manifest = os.path.join('tests', 'testing',
-                                                  'crashtests', 'crashtest.list')
+                                                  'crashtest', 'crashtests.list')
 
         if not os.path.isfile(self.adb_path):
             self.fatal("The adb binary '%s' is not a valid file!" % self.adb_path)
