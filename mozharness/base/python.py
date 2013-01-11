@@ -135,13 +135,19 @@ class VirtualenvMixin(object):
                      level=error_level)
             return True
 
-    def install_module(self, module, module_url=None, install_method=None):
+    def install_module(self, module=None, module_url=None, install_method=None,
+                       requirements=()):
         """
         Install module via pip.
 
         module_url can be a url to a python package tarball, a path to
         a directory containing a setup.py (absolute or relative to work_dir)
         or None, in which case it will default to the module name.
+
+        requirements is a list of pip requirements files.  If specified, these
+        will be combined with the module_url (if any), like so:
+
+        pip install -r requirements1.txt -r requirements2.txt module_url
         """
         c = self.config
         dirs = self.query_abs_dirs()
@@ -150,6 +156,8 @@ class VirtualenvMixin(object):
         if not module_url:
             module_url = module
         if install_method in (None, 'pip'):
+            if not module_url and not requirements:
+                self.fatal("Must specify module and/or requirements")
             pip = self.query_python_path("pip")
             command = [pip, "install"]
             pypi_url = c.get("pypi_url")
@@ -159,7 +167,16 @@ class VirtualenvMixin(object):
             if virtualenv_cache_dir:
                 self.mkdir_p(virtualenv_cache_dir)
                 command += ["--download-cache", virtualenv_cache_dir]
+            for requirement in requirements:
+                command += ["-r", requirement]
         elif install_method == 'easy_install':
+            if not module:
+                self.fatal("module parameter required with install_method='easy_install'")
+            if requirements:
+                # Install pip requirements files separately, since they're
+                # not understood by easy_install.
+                self.install_module(requirements=requirements,
+                                    install_method='pip')
             # Allow easy_install to be overridden by
             # self.config['exes']['easy_install']
             default = 'easy_install'
@@ -177,14 +194,18 @@ class VirtualenvMixin(object):
         for link in c.get('find_links', []):
             command.extend(["--find-links", link])
 
+        # module_url can be None if only specifying requirements files
+        if module_url:
+            command += [module_url]
+
         # Allow for errors while building modules, but require a
         # return status of 0.
-        if self.run_command(command + [module_url],
+        if self.run_command(command,
                             error_list=VirtualenvErrorList,
                             cwd=dirs['abs_work_dir']) != 0:
             self.fatal("Unable to install %s!" % module_url)
 
-    def create_virtualenv(self, modules=None):
+    def create_virtualenv(self, modules=(), requirements=()):
         """
         Create a python virtualenv.
 
@@ -206,6 +227,14 @@ class VirtualenvMixin(object):
                 'module1',
                 {'module2': 'http://url/to/package'},
                 {'module3': os.path.join('path', 'to', 'setup_py', 'dir')},
+            ]
+
+        virtualenv_requirements is an optional list of pip requirements files to
+        use when invoking pip, e.g.,
+
+            virtualenv_requirements = [
+                '/path/to/requirements1.txt',
+                '/path/to/requirements2.txt'
             ]
         """
         c = self.config
@@ -249,6 +278,11 @@ class VirtualenvMixin(object):
                          halt_on_failure=True)
         if not modules:
             modules = c.get('virtualenv_modules', [])
+        if not requirements:
+            requirements = c.get('virtualenv_requirements', [])
+        if not modules and requirements:
+            self.install_module(requirements=requirements,
+                                install_method='pip')
         for module in modules:
             module_url = module
             if isinstance(module, dict):
@@ -258,8 +292,10 @@ class VirtualenvMixin(object):
             install_method = 'pip'
             if module in ('pywin32',):
                 install_method = 'easy_install'
-            self.install_module(module, module_url,
-                                install_method=install_method)
+            self.install_module(module=module,
+                                module_url=module_url,
+                                install_method=install_method,
+                                requirements=requirements)
         self.info("Done creating virtualenv %s." % venv_path)
 
 
