@@ -78,8 +78,8 @@ config = {
     "mock_target": "mozilla-centos6-i386",
     "mock_packages": [
         "autoconf213", "mozilla-python27-mercurial", "ccache",
-        "android-sdk15", "android-sdk16", "android-ndk5", "zip",
-        "java-1.6.0-openjdk-devel", "zlib-devel", "glibc-static",
+        "android-sdk15", "android-sdk16", "android-ndk5", "android-ndk8",
+        "zip", "java-1.6.0-openjdk-devel", "zlib-devel", "glibc-static",
         "openssh-clients", "mpfr", "wget",
          ],
     "mock_files": [
