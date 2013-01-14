@@ -158,6 +158,15 @@ class DesktopUnittestOutputParser(OutputParser):
 
 class EmulatorMixin(object):
     """ Currently dependent on both TooltoolMixin and TestingMixin)"""
+
+    def install_emulator_from_tooltool(self, manifest_path):
+        dirs = self.query_abs_dirs()
+        if self.tooltool_fetch(manifest_path, output_dir=dirs['abs_work_dir']):
+            self.fatal("Unable to download emulator via tooltool!")
+        unzip = self.query_exe("unzip")
+        unzip_cmd = [unzip, '-q', os.path.join(dirs['abs_work_dir'], "emulator.zip")]
+        self.run_command(unzip_cmd, cwd=dirs['abs_emulator_dir'], halt_on_failure=True)
+
     def install_emulator(self):
         dirs = self.query_abs_dirs()
         self.mkdir_p(dirs['abs_emulator_dir'])
@@ -165,10 +174,16 @@ class EmulatorMixin(object):
             self._download_unzip(self.config['emulator_url'], dirs['abs_emulator_dir'])
         elif self.config.get('emulator_manifest'):
             manifest_path = self.create_tooltool_manifest(self.config['emulator_manifest'])
-            if self.tooltool_fetch(manifest_path, output_dir=dirs['abs_work_dir']):
-                self.fatal("Unable to download emulator via tooltool!")
-            unzip = self.query_exe("unzip")
-            unzip_cmd = [unzip, '-q', os.path.join(dirs['abs_work_dir'], "emulator.zip")]
-            self.run_command(unzip_cmd, cwd=dirs['abs_emulator_dir'], halt_on_failure=True)
+            self.install_emulator_from_tooltool(manifest_path)
+        elif self.buildbot_config:
+            props = self.buildbot_config.get('properties')
+            url = 'http://hg.mozilla.org/%s/raw-file/%s/b2g/test/emulator.manifest' % (
+                props['repo_path'], props['revision'])
+            manifest_path = self.download_file(url,
+                                               file_name='tooltool.tt',
+                                               parent_dir=dirs['abs_work_dir'])
+            if not manifest_path:
+                self.fatal("Can't download emulator manifest from %s" % url)
+            self.install_emulator_from_tooltool(manifest_path)
         else:
             self.fatal("Can't get emulator; set emulator_url or emulator_manifest in the config!")
