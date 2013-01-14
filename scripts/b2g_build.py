@@ -200,6 +200,8 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
                 self.config.get('b2g_config_dir', self.config['target']),
                 'config.json'
             )
+        self.info("gecko_config file: %s" % conf_file)
+        self.run_command(['cat', conf_file])
         self.gecko_config = json.load(open(conf_file))
         return self.gecko_config
 
@@ -467,13 +469,15 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
                 locale_manifest.append('  <!-- Mercurial-Information: <project name="%s" path="gaia-l10n/%s" remote="hgmozillaorg" revision="%s"/> -->' %
                                        (repo.replace('http://hg.mozilla.org/', ''), locale, revision))
                 if gaia_l10n_git_root:
-                    self._generate_git_locale_manifest(
-                        locale,
-                        manifest_config['translate_base_url'],
-                        gaia_l10n_git_root % {'locale': locale},
-                        revision,
-                        git_base_url,
-                        "gaia-l10n/%s" % locale,
+                    locale_manifest.append(
+                        self._generate_git_locale_manifest(
+                            locale,
+                            manifest_config['translate_base_url'],
+                            gaia_l10n_git_root % {'locale': locale},
+                            revision,
+                            git_base_url,
+                            "gaia-l10n/%s" % locale,
+                        )
                     )
         if self.gecko_locale_revisions:
             gecko_l10n_git_root = None
@@ -485,13 +489,15 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
                 locale_manifest.append('  <!-- Mercurial-Information: <project name="%s" path="gecko-l10n/%s" remote="hgmozillaorg" revision="%s"/> -->' %
                                        (repo.replace('http://hg.mozilla.org/', ''), locale, revision))
                 if gecko_l10n_git_root:
-                    self._generate_git_locale_manifest(
-                        locale,
-                        manifest_config['translate_base_url'],
-                        gecko_l10n_git_root % {'locale': locale},
-                        revision,
-                        git_base_url,
-                        "gecko-l10n/%s" % locale,
+                    locale_manifest.append(
+                        self._generate_git_locale_manifest(
+                            locale,
+                            manifest_config['translate_base_url'],
+                            gecko_l10n_git_root % {'locale': locale},
+                            revision,
+                            git_base_url,
+                            "gecko-l10n/%s" % locale,
+                        )
                     )
         return locale_manifest
 
