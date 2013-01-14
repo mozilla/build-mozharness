@@ -86,7 +86,7 @@ class PandaTest(TestingMixin, BaseScript, VirtualenvMixin, MozpoolMixin, Buildbo
                 self.buildbot_config.get('properties')["slavename"])
 
     def request_device(self):
-        mph = self.query_mozpool_handler()
+        mph = self.query_mozpool_handler(self.mozpool_device)
         for retry in self._retry_sleep(sleep_time=RETRY_INTERVAL, max_retries=MAX_RETRIES,
                 error_message="INFRA-ERROR: Could not request device '%s'" % self.mozpool_device,
                 tbpl_status=TBPL_RETRY):
@@ -117,7 +117,7 @@ class PandaTest(TestingMixin, BaseScript, VirtualenvMixin, MozpoolMixin, Buildbo
         env = self.query_env()
         env["DM_TRANS"] = "sut"
         env["TEST_DEVICE"] = self.mozpool_device
-        mph = self.query_mozpool_handler()
+        mph = self.query_mozpool_handler(self.mozpool_device)
         sys.path.append(self.query_python_site_packages_path())
         from mozdevice.devicemanagerSUT import DeviceManagerSUT
         APP_INI_LOCATION = '/system/b2g/application.ini'
@@ -181,7 +181,7 @@ class PandaTest(TestingMixin, BaseScript, VirtualenvMixin, MozpoolMixin, Buildbo
         return self.abs_dirs
 
     def close_request(self):
-        mph = self.query_mozpool_handler()
+        mph = self.query_mozpool_handler(self.mozpool_device)
         mph.close_request(self.request_url)
         self.info("Request '%s' deleted on cleanup" % self.request_url)
         self.request_url = None
@@ -197,7 +197,7 @@ class PandaTest(TestingMixin, BaseScript, VirtualenvMixin, MozpoolMixin, Buildbo
         self.fatal('Retries limit exceeded')
 
     def _wait_for_request_ready(self):
-        mph = self.query_mozpool_handler()
+        mph = self.query_mozpool_handler(self.mozpool_device)
         for retry in self._retry_sleep(sleep_time=RETRY_INTERVAL, max_retries=MAX_RETRIES,
                 error_message="INFRA-ERROR: Request did not become ready in time",
                 tbpl_status=TBPL_RETRY):

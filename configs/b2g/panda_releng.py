@@ -9,7 +9,7 @@ config = {
     "virtualenv_path": "venv",
     "find_links": ["http://puppetagain.pub.build.mozilla.org/data/python/packages"],
     "buildbot_json_path": "buildprops.json",
-    "mozpool_api_url": "http://mobile-imaging-001.p1.releng.scl1.mozilla.com",
+    "mobile_imaging_format": "http://mobile-imaging-%03i.p%i.releng.scl1.mozilla.com",
     "default_actions": [
         'clobber',
         'read-buildbot-config',

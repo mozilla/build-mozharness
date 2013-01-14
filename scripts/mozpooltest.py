@@ -43,7 +43,7 @@ class MozpoolTest(VirtualenvMixin, MozpoolMixin, BaseScript):
         )
 
     def run_tests(self):
-        mph = self.query_mozpool_handler()
+        mph = self.query_mozpool_handler(mozpool_api_url=self.config["mozpool_api_url"])
         self.info("query_all_device_list()")
         self.info(pprint.pformat(mph.query_all_device_list()))
         self.info("query_all_device_details()")

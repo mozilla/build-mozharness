@@ -38,5 +38,5 @@ class BaseMozpoolTest(unittest.TestCase, VirtualenvMixin, MozpoolMixin, BaseScri
             },
             require_config_file=False,
         )
-        self.mph = self.query_mozpool_handler()
+        self.mph = self.query_mozpool_handler(mozpool_api_url=self.config["mozpool_api_url"])
 

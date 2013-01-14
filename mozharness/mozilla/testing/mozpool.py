@@ -7,6 +7,8 @@
 '''Interact with mozpool/lifeguard/bmm.
 '''
 
+import re
+import socket
 import sys
 import time
 
@@ -471,16 +473,26 @@ class MozpoolHandler(ShellMixin, OSMixin, LogMixin):
 class MozpoolMixin(object):
     mozpool_handler = None
 
-    def query_mozpool_handler(self):
+    def determine_mozpool_host(self, device):
+        fqdn = socket.getfqdn(device)
+        vlan_match = re.search("%s\.p([0-9]+)\.releng.*" % device, fqdn)
+        if vlan_match:
+            vlan = int(vlan_match.group(1))
+        else:
+            raise MozpoolException("This panda board does not have an associated BMM.")
+        return self.config["mobile_imaging_format"] % (vlan, vlan)
+
+    def query_mozpool_handler(self, device=None, mozpool_api_url=None):
         if not self.mozpool_handler:
-            if 'mozpool_api_url' not in self.config:
-                self.fatal("Can't create mozpool handler without mozpool_api_url set!")
+            self.mozpool_api_url = self.determine_mozpool_host(device) if device else mozpool_api_url
+            assert self.mozpool_api_url != None, \
+                "query_mozpool_handler() requires either a device or mozpool_api_url!"
             mozpool_config = {}
             for var in ("mozpool_auth", "mozpool_timeout"):
                 if self.config.get(var):
                     mozpool_config[var] = self.config[var]
             self.mozpool_handler = MozpoolHandler(
-                self.config["mozpool_api_url"],
+                self.mozpool_api_url,
                 config=self.config,
                 log_obj=self.log_obj,
                 script_obj=self,
