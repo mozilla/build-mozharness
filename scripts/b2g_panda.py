@@ -43,6 +43,11 @@ class PandaTest(TestingMixin, BaseScript, VirtualenvMixin, MozpoolMixin, Buildbo
             "dest": "mozpool_b2gbase",
             "help": "Set b2gbase url",
         }],
+        [["--test-type"], {
+            "dest": "test_type",
+            "default": "b2g",
+            "help": "Specifies the --type parameter to pass to Marionette",
+        }],
     ]
 
     error_list = []
@@ -149,7 +154,8 @@ class PandaTest(TestingMixin, BaseScript, VirtualenvMixin, MozpoolMixin, Buildbo
         dirs = self.query_abs_dirs()
         cmd = [self.query_python_path('gaiatest'),
                '--address', '%s:2828' % self.mozpool_device,
-               '--type', 'b2g', os.path.join(dirs['abs_gaiatest_dir'], 'tests', 'manifest.ini')]
+               '--type', self.config['test_type'],
+               os.path.join(dirs['abs_gaiatest_dir'], 'tests', 'manifest.ini')]
         test_summary_parser = TestSummaryOutputParserHelper(config=self.config, log_obj=self.log_obj)
 
         code = self.run_command(cmd, env=env, output_parser=test_summary_parser)
