@@ -893,35 +893,7 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
                     self.return_code = 2
 
             if self.config["target"] == "panda" and self.config.get('sendchange_masters'):
-                buildbot = self.query_exe("buildbot", return_type="list")
-                sendchange = [
-                    'sendchange',
-                    '--master', self.config.get("sendchange_masters")[0],
-                    '--username', 'sendchange-unittest',
-                    '--branch', '%s-b2g_panda-opt-unittest' % self.buildbot_config["properties"]["branch"],
-                ]
-                if self.buildbot_config['sourcestamp'].get("revision"):
-                    sendchange += ['-r', self.buildbot_config['sourcestamp']["revision"]]
-                if len(self.buildbot_config['sourcestamp']['changes']) > 0:
-                    if self.buildbot_config['sourcestamp']['changes'][0].get('who'):
-                        sendchange += ['--who', self.buildbot_config['sourcestamp']['changes'][0]['who']]
-                    if self.buildbot_config['sourcestamp']['changes'][0].get('comments'):
-                        sendchange += ['--comments', self.buildbot_config['sourcestamp']['changes'][0]['comments']]
-                if self.buildbot_config["properties"].get("builduid"):
-                    sendchange += ['--property', "builduid:%s" % self.buildbot_config["properties"]["builduid"]]
-                sendchange += [
-                    '--property', "buildid:%s" % self.query_buildid(),
-                    '--property', 'pgo_build:False',
-                    download_url,
-                    "%s/%s" % (download_url, "gaia-tests.zip")
-                ]
-
-                retcode = self.run_command(
-                    buildbot + sendchange
-                )
-
-                if retcode != 0:
-                    self.info("The sendchange failed but we don't want to turn the build orange: %s" % retcode)
+                self.sendchange(downloadables=[download_url, "%s/%s" % (download_url, "gaia-tests.zip")])
 
     def upload_source_manifest(self):
         if not self.query_is_nightly():
