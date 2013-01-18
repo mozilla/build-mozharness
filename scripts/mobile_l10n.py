@@ -13,7 +13,6 @@ Android.  This also creates nightly updates.
 from copy import deepcopy
 import os
 import re
-import subprocess
 import sys
 
 try:
@@ -76,13 +75,11 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
       "help": "Specify the release config file to use"
      }
     ],[
-     ['--key-alias',],
+     ['--keystore',],
      {"action": "store",
-      "dest": "key_alias",
-      "type": "choice",
-      "default": "nightly",
-      "choices": ["nightly", "release"],
-      "help": "Specify the signing key alias"
+      "dest": "keystore",
+      "type": "string",
+      "help": "Specify the location of the signing keystore"
      }
     ],[
      ['--this-chunk',],
@@ -144,8 +141,6 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
         if c.get('base_en_us_binary_url') and c.get('release_config_file'):
             rc = self.query_release_config()
             repack_env['EN_US_BINARY_URL'] = c['base_en_us_binary_url'] % replace_dict
-        if 'MOZ_SIGNING_SERVERS' in os.environ:
-            repack_env['MOZ_SIGN_CMD'] = subprocess.list2cmdline(self.query_moz_sign_cmd(formats='jar'))
         self.repack_env = repack_env
         return self.repack_env
 
@@ -158,8 +153,6 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
         upload_env = self.query_env(partial_env=c.get("upload_env"),
                                     replace_dict={'buildid': buildid,
                                                   'version': version})
-        if 'MOZ_SIGNING_SERVERS' in os.environ:
-            upload_env['MOZ_SIGN_CMD'] = subprocess.list2cmdline(self.query_moz_sign_cmd(formats='jar'))
         self.upload_env = upload_env
         return self.upload_env
 
@@ -402,8 +395,7 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
             status = self.verify_android_signature(
                 signed_path,
                 script=c['signature_verification_script'],
-                env=repack_env,
-                key_alias=c['key_alias'],
+                env=repack_env
             )
             self.disable_mock()
             if status:

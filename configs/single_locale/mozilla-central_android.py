@@ -49,6 +49,7 @@ config = {
         "PATH": JAVA_HOME + "/bin:%(PATH)s",
         "MOZ_OBJDIR": OBJDIR,
         "EN_US_BINARY_URL": EN_US_BINARY_URL,
+        "JARSIGNER": "%(abs_work_dir)s/" + JARSIGNER,
         "LOCALE_MERGEDIR": "%(abs_merge_dir)s/",
         "MOZ_UPDATE_CHANNEL": MOZ_UPDATE_CHANNEL,
     },
@@ -65,6 +66,7 @@ config = {
     "make_dirs": ['config'],
     "mozilla_dir": MOZILLA_DIR,
     "mozconfig": "%s/mobile/android/config/mozconfigs/android/l10n-nightly" % MOZILLA_DIR,
+    "jarsigner": JARSIGNER,
     "signature_verification_script": "tools/release/signing/verify-android-signature.sh",
 
     # AUS
@@ -85,5 +87,7 @@ config = {
             ],
     "mock_files": [
             ("/home/cltbld/.ssh", "/home/mock_mozilla/.ssh"),
+            ("/home/cltbld/.android", "/builds/.android"),
+            ("/home/cltbld/.mozpass.cfg", "/builds/.mozpass.cfg"),
             ]
 }
