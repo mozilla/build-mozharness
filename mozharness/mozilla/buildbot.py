@@ -98,7 +98,7 @@ class BuildbotMixin(object):
             'sendchange',
             '--master', self.config.get("sendchange_masters")[0],
             '--username', 'sendchange-unittest',
-            '--branch', 'b2g_%s-%s-opt-unittest' % (self.buildbot_config["properties"]["branch"], self.buildbot_config["properties"]["platform"]),
+            '--branch', '%s-b2g_%s-opt-unittest' % (self.buildbot_config["properties"]["branch"], self.buildbot_config["properties"]["platform"]),
         ]
         if self.buildbot_config['sourcestamp'].get("revision"):
             sendchange += ['-r', self.buildbot_config['sourcestamp']["revision"]]
