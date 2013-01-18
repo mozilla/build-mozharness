@@ -110,6 +110,28 @@ class SigningMixin(BaseSigningMixin):
             snippet_template=snippet_template, error_level=error_level
         )
 
+    def query_moz_sign_cmd(self, formats='gpg'):
+        if 'MOZ_SIGNING_SERVERS' not in os.environ:
+            self.fatal("MOZ_SIGNING_SERVERS not in env; no MOZ_SIGN_CMD for you!")
+        dirs = self.query_abs_dirs()
+        signing_dir = os.path.join(dirs['abs_work_dir'], 'tools', 'release', 'signing')
+        cache_dir = os.path.join(dirs['abs_work_dir'], 'signing_cache')
+        token = os.path.join(dirs['base_work_dir'], 'token')
+        nonce = os.path.join(dirs['base_work_dir'], 'nonce')
+        host_cert = os.path.join(signing_dir, 'host.cert')
+        python = self.query_exe('python')
+        cmd = [
+            python,
+            os.path.join(signing_dir, 'signtool.py'),
+            '--cachedir', cache_dir,
+            '-t', token,
+            '-n', nonce,
+            '-c', host_cert,
+            '-f', formats,
+        ]
+        for h in os.environ['MOZ_SIGNING_SERVERS'].split(","):
+            cmd += ['-H', h]
+        return cmd
 
 # MobileSigningMixin {{{1
 class MobileSigningMixin(AndroidSigningMixin, SigningMixin):
