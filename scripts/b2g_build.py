@@ -680,25 +680,7 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
         rev = self.vcs_checkout(**repos[0])
         self.set_buildbot_property("tools_revision", rev, write_to_file=True)
 
-        signing_dir = os.path.join(dirs['abs_work_dir'], 'tools', 'release', 'signing')
-        cache_dir = os.path.join(dirs['abs_work_dir'], 'signing_cache')
-        token = os.path.join(dirs['base_work_dir'], 'token')
-        nonce = os.path.join(dirs['base_work_dir'], 'nonce')
-        host_cert = os.path.join(signing_dir, 'host.cert')
-        python = self.query_exe('python')
-        cmd = [
-            python,
-            os.path.join(signing_dir, 'signtool.py'),
-            '--cachedir', cache_dir,
-            '-t', token,
-            '-n', nonce,
-            '-c', host_cert,
-            '-f', 'b2gmar',
-        ]
-
-        for h in os.environ['MOZ_SIGNING_SERVERS'].split(","):
-            cmd += ['-H', h]
-
+        cmd = self.query_moz_sign_cmd(formats='b2gmar')
         cmd.append(self.marfile)
 
         retval = self.run_command(cmd)
