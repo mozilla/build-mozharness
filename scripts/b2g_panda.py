@@ -7,7 +7,7 @@
 
 import os
 import sys
-from time import sleep, time
+import time
 
 # load modules from parent dir
 sys.path.insert(1, os.path.dirname(sys.path[0]))
@@ -150,10 +150,10 @@ class PandaTest(TestingMixin, BaseScript, VirtualenvMixin, MozpoolMixin, Buildbo
         self.info("===========================")
         self.info(file_contents)
 
-        dm._runCmds([{ 'cmd': 'setutime %s' % int(time())}])
+        dm._runCmds([{ 'cmd': 'setutime %s' % int(time.time())}])
         device_time = dm._runCmds([{ 'cmd': 'clok'}])
         self.info("Current time on device: %s - %s" % \
-            (device_time, time.strftime("%x %H:%M:%S", time.gmtime(device_time))))
+            (device_time, time.strftime("%x %H:%M:%S", time.gmtime(float(device_time)))))
 
         self.info("Running tests...")
         dirs = self.query_abs_dirs()
@@ -200,7 +200,7 @@ class PandaTest(TestingMixin, BaseScript, VirtualenvMixin, MozpoolMixin, Buildbo
     def _retry_sleep(self, sleep_time=1, max_retries=5, error_message=None, tbpl_status=None):
         for x in range(1, max_retries + 1):
             yield x
-            sleep(sleep_time)
+            time.sleep(sleep_time)
         if error_message:
             self.error(error_message)
         if tbpl_status:
