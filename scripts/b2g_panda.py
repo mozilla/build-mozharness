@@ -151,7 +151,7 @@ class PandaTest(TestingMixin, BaseScript, VirtualenvMixin, MozpoolMixin, Buildbo
         self.info(file_contents)
 
         dm._runCmds([{ 'cmd': 'setutime %s' % int(time())}])
-        device_time = dm._runCmds([{ 'cmd': 'clok'}]))
+        device_time = dm._runCmds([{ 'cmd': 'clok'}])
         self.info("Current time on device: %s - %s" % \
             (device_time, time.strftime("%x %H:%M:%S", time.gmtime(device_time))))
 
