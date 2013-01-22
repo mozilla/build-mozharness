@@ -7,7 +7,7 @@
 
 import os
 import sys
-from time import sleep
+from time import sleep, time
 
 # load modules from parent dir
 sys.path.insert(1, os.path.dirname(sys.path[0]))
@@ -149,6 +149,11 @@ class PandaTest(TestingMixin, BaseScript, VirtualenvMixin, MozpoolMixin, Buildbo
         self.info("Read of file (%s) follows" % APP_INI_LOCATION)
         self.info("===========================")
         self.info(file_contents)
+
+        dm._runCmds([{ 'cmd': 'setutime %s' % int(time())}])
+        device_time = dm._runCmds([{ 'cmd': 'clok'}]))
+        self.info("Current time on device: %s - %s" % \
+            (device_time, time.strftime("%x %H:%M:%S", time.gmtime(device_time))))
 
         self.info("Running tests...")
         dirs = self.query_abs_dirs()
