@@ -271,10 +271,23 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
             'log',
             '-R', repo_dir,
             '-r', rev,
-            '--template', '{date}'
+            '--template', '{date|hgdate}'
         ]
-        t = self.get_output_from_command(cmd)
-        return int(float(t))
+        try:
+            # {date|hgdate} returns a space-separated tuple of unixtime,
+            # timezone offset
+            output = self.get_output_from_command(cmd)
+        except Exception:
+            # Failed to run hg for some reason
+            self.dump_exception("failed to run hg log; using timestamp of 0 instead", level=WARNING)
+            return 0
+
+        try:
+            t = output.split()[0]
+            return int(t)
+        except (ValueError, IndexError):
+            self.dump_exception("failed to parse hg log output; using timestamp of 0 instead", level=WARNING)
+            return 0
 
     def query_do_upload(self):
         # always upload nightlies, but not dep builds for some platforms
