@@ -414,6 +414,7 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
             vcs = gaia_config['vcs']
             rev = self.vcs_checkout(repo=repo, dest=dest, vcs=vcs, branch=branch)
             self.set_buildbot_property('gaia_revision', rev, write_to_file=True)
+            self.info("TinderboxPrint: gaia_revlink: %s/rev/%s" % (repo, rev))
 
     def checkout_gaia_l10n(self):
         if not self.config.get('gaia_languages_file'):
