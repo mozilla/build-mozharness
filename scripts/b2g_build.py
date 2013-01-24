@@ -11,6 +11,11 @@ import urllib2
 import time
 import xml.dom.minidom
 
+try:
+    import simplejson as json
+except ImportError:
+    import json
+
 # load modules from parent dir
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
@@ -94,6 +99,7 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
 
     def __init__(self, require_config_file=False):
         self.gecko_config = None
+        self.buildid = None
         LocalesMixin.__init__(self)
         BaseScript.__init__(self,
                             config_options=self.config_options,
@@ -115,6 +121,7 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
                                 'upload',
                                 'make-update-xml',
                                 'upload-updates',
+                                'make-socorro-json',
                                 'upload-source-manifest',
                             ],
                             default_actions=[
@@ -218,6 +225,8 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
             return os.path.basename(self.query_repo())
 
     def query_buildid(self):
+        if self.buildid:
+            return self.buildid
         dirs = self.query_abs_dirs()
         platform_ini = os.path.join(dirs['work_dir'], 'out', 'target',
                                     'product', self.config['target'], 'system',
@@ -225,7 +234,8 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
         data = self.read_from_file(platform_ini)
         buildid = re.search("^BuildID=(\d+)$", data, re.M)
         if buildid:
-            return buildid.group(1)
+            self.buildid = buildid.group(1)
+            return self.buildid
 
     def query_version(self):
         data = self.read_from_file(self.application_ini)
@@ -891,6 +901,22 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
             if self.config["target"] == "panda" and self.config.get('sendchange_masters'):
                 self.sendchange(downloadables=[download_url, "%s/%s" % (download_url, "gaia-tests.zip")])
 
+    def make_socorro_json(self):
+        self.info("Creating socorro.json...")
+        dirs = self.query_abs_dirs()
+        manifest_config = self.config.get('manifest', {})
+        socorro_dict = {
+            'buildid': self.query_buildid(),
+            'version': self.query_version(),
+            'update_channel': manifest_config.get('update_channel'),
+            #'beta_number': n/a until we build b2g beta releases
+        }
+        file_path = os.path.join(dirs['abs_work_dir'], 'socorro.json')
+        fh = open(file_path, 'w')
+        json.dump(socorro_dict, fh)
+        fh.close()
+        self.run_command(["cat", file_path])
+
     def upload_source_manifest(self):
         if not self.query_is_nightly():
             self.info("Not a nightly build. Skipping...")
@@ -924,18 +950,31 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
         target = self.config['target']
         if self.config['manifest'].get('target_suffix'):
             target += self.config['manifest']['target_suffix']
-        # TODO support twice daily builds by including hour
         # emulator builds will disappear out of latest/ because they're once-daily
-        xmlfilename = 'source_%(target)s_%(year)04i-%(month)02i-%(day)02i.xml' % dict(
-            target=target,
+        date_string = '%(year)04i-%(month)02i-%(day)02i-%(hour)02i' % dict(
             year=buildid.year,
             month=buildid.month,
             day=buildid.day,
+            hour=buildid.hour,
+        )
+        xmlfilename = 'source_%(target)s_%(date_string)s.xml' % dict(
+            target=target,
+            date_string=date_string,
         )
         self.copy_to_upload_dir(
             os.path.join(dirs['work_dir'], 'sources.xml'),
             os.path.join(upload_dir, xmlfilename)
         )
+        socorro_json = os.path.join(dirs['work_dir'], 'socorro.json')
+        socorro_filename = 'socorro_%(target)s_%(date_string)s.json' % dict(
+            target=target,
+            date_string=date_string,
+        )
+        if os.path.exists(socorro_json):
+            self.copy_to_upload_dir(
+                socorro_json,
+                os.path.join(upload_dir, socorro_filename)
+            )
         retval = self.rsync_upload_directory(
             upload_dir,
             self.config['manifest']['ssh_key'],

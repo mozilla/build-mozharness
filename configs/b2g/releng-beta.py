@@ -15,6 +15,7 @@ config = {
         'build-symbols',
         'make-updates',
         'make-update-xml',
+        'make-socorro-json',
         'upload-updates',
         'prep-upload',
         'upload',
@@ -51,6 +52,7 @@ config = {
         "branches": ['mozilla-b2g18'],
         "translate_hg_to_git": True,
         "translate_base_url": "http://cruncher.build.mozilla.org/mapper",
+        "update_channel": "nightly",
     },
     "env": {
         "CCACHE_DIR": "/builds/ccache",
