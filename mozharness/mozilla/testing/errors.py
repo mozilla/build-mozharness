@@ -31,6 +31,12 @@ TinderBoxPrintRe = {
         'fail_group': "Unexpected",
         'known_fail_group': "Known problems",
     },
+    "crashtest_summary": {
+        'regex': re.compile(r'''REFTEST INFO \| (Successful|Unexpected|Known problems): (\d+) \('''),
+        'pass_group': "Successful",
+        'fail_group': "Unexpected",
+        'known_fail_group': "Known problems",
+    },
     "xpcshell_summary": {
         'regex': re.compile(r'''INFO \| (Passed|Failed): (\d+)'''),
         'pass_group': "Passed",
