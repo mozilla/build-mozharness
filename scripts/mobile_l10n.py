@@ -159,7 +159,7 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
                                     replace_dict={'buildid': buildid,
                                                   'version': version})
         if 'MOZ_SIGNING_SERVERS' in os.environ:
-            upload_env['MOZ_SIGN_CMD'] = subprocess.list2cmdline(self.query_moz_sign_cmd(formats='jar'))
+            upload_env['MOZ_SIGN_CMD'] = subprocess.list2cmdline(self.query_moz_sign_cmd())
         self.upload_env = upload_env
         return self.upload_env
 
