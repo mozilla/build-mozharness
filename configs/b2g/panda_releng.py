@@ -9,7 +9,7 @@ config = {
     "virtualenv_path": "venv",
     "find_links": ["http://puppetagain.pub.build.mozilla.org/data/python/packages"],
     "buildbot_json_path": "buildprops.json",
-    "test_type": "b2g-wifi-qemu-carrier-sdcard-camera-antenna-xfail-panda",
+    "test_type": "b2g-wifi-qemu-carrier-sdcard-camera-antenna-xfail+panda",
     "mobile_imaging_format": "http://mobile-imaging-%03i.p%i.releng.scl1.mozilla.com",
     "default_actions": [
         'clobber',
