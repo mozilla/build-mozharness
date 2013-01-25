@@ -13,6 +13,7 @@ config = {
         'build',
         'build-symbols',
         'make-updates',
+        'make-socorro-json',
         'prep-upload',
         'upload',
     ],
