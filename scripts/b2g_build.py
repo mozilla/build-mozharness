@@ -252,7 +252,7 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
 
         return None
 
-    def query_translated_revision(self, url, project, rev, attempts=5, sleeptime=15):
+    def query_translated_revision(self, url, project, rev, attempts=30, sleeptime=30):
         url = '%s/%s/git/%s' % (url, project, rev)
         self.info('Mapping revision from hg to git using %s' % url)
         n = 1
@@ -260,12 +260,17 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
             try:
                 r = urllib2.urlopen(url, timeout=10)
                 j = json.loads(r.readline())
+                if j['git_rev'] is None:
+                    # allow for user repos in staging
+                    if self.config.get("require_git_rev", True):
+                        raise Exception("Mapper returned a git revision of None; maybe it needs more time.")
+                    else:
+                        self.warning("Mapper returned a git revision of None.  Accepting because require_git_rev is False.")
                 return j['git_rev']
             except Exception, err:
                 self.warning('Error: %s' % str(err))
                 if n == attempts:
-                    self.fatal('Giving up')
-                    return 'null'
+                    self.fatal('Giving up on %s git revision for %s.' % (project, rev))
                 if sleeptime > 0:
                     self.info('Sleeping %i seconds before retrying' % sleeptime)
                     time.sleep(sleeptime)
