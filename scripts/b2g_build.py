@@ -796,18 +796,18 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
 
         dirs = self.query_abs_dirs()
         c = self.config
-        platform = self.buildbot_config['properties']['platform']
+        target = self.config['target']
         if c.get("target_suffix"):
-            platform += c["target_suffix"]
+            target += c["target_suffix"]
         if c['enable_try_uploads']:
             try:
                 user = self.buildbot_config['sourcestamp']['changes'][0]['who']
             except KeyError:
                 user = "unknown"
-            upload_path = "%(basepath)s/%(user)s-%(rev)s/%(branch)s-%(platform)s" % dict(
+            upload_path = "%(basepath)s/%(user)s-%(rev)s/%(branch)s-%(target)s" % dict(
                 basepath=self.config['upload_remote_basepath'],
                 branch=self.query_branch(),
-                platform=platform,
+                target=target,
                 user=user,
                 rev=self.query_revision(),
             )
@@ -824,10 +824,10 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
                 # Default to now
                 buildid = datetime.now()
 
-            upload_path = "%(basepath)s/%(branch)s-%(platform)s/%(year)04i/%(month)02i/%(year)04i-%(month)02i-%(day)02i-%(hour)02i-%(minute)02i-%(second)02i" % dict(
+            upload_path = "%(basepath)s/%(branch)s-%(target)s/%(year)04i/%(month)02i/%(year)04i-%(month)02i-%(day)02i-%(hour)02i-%(minute)02i-%(second)02i" % dict(
                 basepath=self.config['upload_remote_nightly_basepath'],
                 branch=self.query_branch(),
-                platform=platform,
+                target=target,
                 year=buildid.year,
                 month=buildid.month,
                 day=buildid.day,
@@ -836,11 +836,11 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
                 second=buildid.second,
             )
         else:
-            upload_path = "%(basepath)s/%(branch)s-%(platform)s/%(buildid)s" % dict(
+            upload_path = "%(basepath)s/%(branch)s-%(target)s/%(buildid)s" % dict(
                 basepath=self.config['upload_remote_basepath'],
                 branch=self.query_branch(),
                 buildid=self.query_buildid(),
-                platform=platform,
+                target=target,
             )
 
         retval = self.rsync_upload_directory(
@@ -867,10 +867,10 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
 
             if self.query_is_nightly():
                 # Create a symlink to the latest nightly
-                symlink_path = "%(basepath)s/%(branch)s-%(platform)s/latest" % dict(
+                symlink_path = "%(basepath)s/%(branch)s-%(target)s/latest" % dict(
                     basepath=self.config['upload_remote_nightly_basepath'],
                     branch=self.query_branch(),
-                    platform=platform,
+                    target=target,
                 )
 
                 ssh = self.query_exe('ssh')
