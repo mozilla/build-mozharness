@@ -8,6 +8,7 @@ import re
 import tempfile
 from datetime import datetime
 import urllib2
+import urlparse
 import time
 import xml.dom.minidom
 
@@ -39,12 +40,6 @@ B2GMakefileErrorList = MakefileErrorList + [
     {'substr': r'''NS_ERROR_FILE_ALREADY_EXISTS: Component returned failure code''', 'level': ERROR},
 ]
 B2GMakefileErrorList.insert(0, {'substr': r'/bin/bash: java: command not found', 'level': WARNING})
-
-try:
-    import simplejson as json
-    assert json
-except ImportError:
-    import json
 
 
 class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, TransferMixin,
@@ -543,11 +538,13 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
         git_base_url = "https://git.mozilla.org/"
         for element in dom.getElementsByTagName('remote'):
             if element.getAttribute('name') == 'mozillaorg':
-                git_base_url = element.getAttribute('fetch')
-                if not git_base_url.endswith('/'):
-                    git_base_url += "/"
-                self.info("Found git_base_url of %s in manifest." % git_base_url)
-                break
+                pieces = urlparse.urlparse(element.getAttribute('fetch'))
+                if pieces:
+                    git_base_url = "https://git.mozilla.org%s" % pieces[2]
+                    if not git_base_url.endswith('/'):
+                        git_base_url += "/"
+                    self.info("Found git_base_url of %s in manifest." % git_base_url)
+                    break
         else:
             self.warning("Couldn't find git_base_url in manifest; using %s" % git_base_url)
         new_sources = []
@@ -564,7 +561,7 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
                 if self.query_do_translate_hg_to_git():
                     url = manifest_config['translate_base_url']
                     gecko_git = self.query_translated_revision(url, 'gecko', self.buildbot_properties['revision'])
-                    gaia_git =  self.query_translated_revision(url, 'gaia', self.buildbot_properties['gaia_revision'])
+                    gaia_git = self.query_translated_revision(url, 'gaia', self.buildbot_properties['gaia_revision'])
                     new_sources.append('  <project name="%s" path="gecko" remote="mozillaorg" revision="%s"/>' % ("https://git.mozilla.org/releases/gecko.git".replace(git_base_url, ''), gecko_git))
                     new_sources.append('  <project name="%s" path="gaia" remote="mozillaorg" revision="%s"/>' % ("https://git.mozilla.org/releases/gaia.git".replace(git_base_url, ''), gaia_git))
 
@@ -577,7 +574,7 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
                 new_sources.extend(self._generate_locale_manifest())
 
         self.write_to_file(sourcesfile, "\n".join(new_sources), verbose=False)
-        self.run_command(["diff", "-u", sourcesfile_orig, sourcesfile], success_codes = [1])
+        self.run_command(["diff", "-u", sourcesfile_orig, sourcesfile], success_codes=[1])
 
     def build(self):
         dirs = self.query_abs_dirs()
