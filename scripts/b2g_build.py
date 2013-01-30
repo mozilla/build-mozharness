@@ -798,7 +798,7 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
 
         dirs = self.query_abs_dirs()
         c = self.config
-        target = self.config['target']
+        target = self.load_gecko_config().get('upload_platform', self.config['target'])
         if c.get("target_suffix"):
             target += c["target_suffix"]
         if c['enable_try_uploads']:
