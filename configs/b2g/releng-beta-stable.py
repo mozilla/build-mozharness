@@ -47,11 +47,14 @@ config = {
     },
     "manifest": {
         "upload_remote_host": "stage.mozilla.org",
-        "upload_remote_basepath": "/pub/mozilla.org/b2g/manifests",
+        "upload_remote_basepath": "/pub/mozilla.org/b2g/manifests/%(version)s",
         "ssh_key": os.path.expanduser("~/.ssh/b2gbld_dsa"),
         "ssh_user": "b2gbld",
         "target_suffix": "-stable",
-        "branches": ['mozilla-b2g18'],
+        "branches": {
+            'mozilla-b2g18_v1_0_0': '1.0.0',
+            'mozilla-b2g18': '1.0.1',
+        },
         "translate_hg_to_git": True,
         "translate_base_url": "http://cruncher.build.mozilla.org/mapper",
         "update_channel": "beta",

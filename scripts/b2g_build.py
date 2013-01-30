@@ -931,6 +931,8 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
         if branch not in manifest_config['branches']:
             self.info("Manifest upload not enabled for this branch. Skipping...")
             return
+        version = manifest_config['branches'][branch]
+        upload_remote_basepath = self.config['manifest']['upload_remote_basepath'] % {'version': version}
 
         dirs = self.query_abs_dirs()
         upload_dir = dirs['abs_upload_dir'] + '-manifest'
@@ -982,7 +984,7 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
             self.config['manifest']['ssh_key'],
             self.config['manifest']['ssh_user'],
             self.config['manifest']['upload_remote_host'],
-            self.config['manifest']['upload_remote_basepath'],
+            upload_remote_basepath,
         )
         if retval is not None:
             self.error("Failed to upload")
@@ -995,7 +997,7 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
                '-l', self.config['manifest']['ssh_user'],
                '-i', self.config['manifest']['ssh_key'],
                self.config['manifest']['upload_remote_host'],
-               'python ~/organize.py --directory %s' % self.config['manifest']['upload_remote_basepath'],
+               'python ~/organize.py --directory %s' % upload_remote_basepath,
                ]
         retval = self.run_command(cmd)
         if retval != 0:
