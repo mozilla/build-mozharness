@@ -47,6 +47,7 @@ config = {
         },
         "translate_hg_to_git": True,
         "translate_base_url": "http://cruncher.build.mozilla.org/mapper",
+        "update_channel": "nightly",
     },
     "env": {
         "CCACHE_DIR": "/builds/ccache",
