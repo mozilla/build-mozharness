@@ -123,10 +123,10 @@ class AndroidSigningMixin(object):
                                  stdout=subprocess.PIPE,
                                  stderr=subprocess.STDOUT)
         except OSError:
-            self.dump_exception("Error while signing %s (missing %s?):" % (apk, jarsigner))
+            self.exception("Error while signing %s (missing %s?):" % (apk, jarsigner))
             return -2
         except ValueError:
-            self.dump_exception("Popen called with invalid arguments during signing?")
+            self.exception("Popen called with invalid arguments during signing?")
             return -3
         parser = OutputParser(config=self.config, log_obj=self.log_obj,
                               error_list=error_list)
