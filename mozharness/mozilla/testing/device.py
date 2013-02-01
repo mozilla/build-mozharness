@@ -621,6 +621,47 @@ class SUTDeviceHandler(BaseDeviceHandler):
             self.debug("%s file doesn't exist; skipping." % hosts_file)
 
 
+# SUTDeviceMozdeviceMixin {{{1
+class SUTDeviceMozdeviceMixin(SUTDeviceHandler):
+    '''
+    This SUT device manager class makes calls through mozdevice (from mozbase) [1]
+    directly rather than calling SUT tools.
+
+    [1] https://github.com/mozilla/mozbase/blob/master/mozdevice/mozdevice/devicemanagerSUT.py
+    '''
+    dm = None
+
+    def query_devicemanager(self):
+        if self.dm:
+            return self.dm
+        sys.path.append(self.query_python_site_packages_path())
+        from mozdevice.devicemanagerSUT import DeviceManagerSUT
+        self.info("Connecting to: %s" % self.mozpool_device)
+        self.dm = DeviceManagerSUT(self.mozpool_device)
+        # No need for 300 second SUT socket timeouts here
+        self.dm.default_timeout = 30
+        return self.dm
+
+    def query_file(self, filename):
+        dm = self.query_devicemanager()
+        if not dm.fileExists(filename):
+            raise Exception("Expected file (%s) not found" % filename)
+
+        file_contents = dm.catFile(filename)
+        if file_contents is None:
+            raise Exception("Unable to read file (%s)" % filename)
+
+        return file_contents
+
+    def set_device_epoch_time(self, timestamp=int(time.time())):
+        dm = self.query_devicemanager()
+        dm._runCmds([{ 'cmd': 'setutime %s' % timestamp}])
+        return dm._runCmds([{ 'cmd': 'clok'}])
+
+    def get_logcat(self):
+        dm = self.query_devicemanager()
+        return dm.getLogcat()
+
 
 # DeviceMixin {{{1
 DEVICE_PROTOCOL_DICT = {
