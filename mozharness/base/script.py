@@ -426,9 +426,16 @@ class ShellMixin(object):
         if default is None:
             default = exe_name
         exe = self.config.get(exe_dict, {}).get(exe_name, default)
+        repl_dict = {}
+        if hasattr(self, 'query_abs_dirs'):
+            # allow for 'make': '%(abs_work_dir)s/...' etc.
+            dirs = self.query_abs_dirs()
+            repl_dict['abs_work_dir'] = dirs['abs_work_dir']
         if isinstance(exe, list):
-            exe = exe[:]
-        elif not isinstance(exe, str):
+            exe = [x % repl_dict for x in exe]
+        elif isinstance(exe, str):
+            exe = exe % repl_dict
+        else:
             self.log("query_exe: %s is not a string or list: %s!" % (exe_name, str(exe)), level=error_level)
             return exe
         if return_type == "list":
