@@ -178,13 +178,13 @@ class B2gMultilocale(LocalesMixin, BaseScript, VCSMixin, GaiaLocalesMixin):
                                       cwd=dirs['abs_locales_dir'],
                                       error_list=MakefileErrorList,
                                       env=merge_env)
-            command = make +' chrome-%s L10NBASEDIR=%s LOCALE_MERGEDIR=%s' % (locale, dirs['abs_l10n_dir'], dirs['abs_merge_dir'])
+            command = make + ' chrome-%s L10NBASEDIR=%s LOCALE_MERGEDIR=%s' % (locale, dirs['abs_l10n_dir'], dirs['abs_merge_dir'])
             status = self.run_command(command,
                                       cwd=dirs['abs_locales_dir'],
                                       error_list=MakefileErrorList)
             if status:
                 self.add_summary("Failed to add locale %s!" % locale, level=ERROR)
-        command = make +' -C app'
+        command = make + ' -C app'
         self.run_command(command,
                          cwd=os.path.join(dirs['abs_objdir'], 'b2g'),
                          error_list=MakefileErrorList,
