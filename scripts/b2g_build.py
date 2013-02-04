@@ -289,14 +289,14 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
             output = self.get_output_from_command(cmd)
         except Exception:
             # Failed to run hg for some reason
-            self.dump_exception("failed to run hg log; using timestamp of 0 instead", level=WARNING)
+            self.exception("failed to run hg log; using timestamp of 0 instead", level=WARNING)
             return 0
 
         try:
             t = output.split()[0]
             return int(t)
         except (ValueError, IndexError):
-            self.dump_exception("failed to parse hg log output; using timestamp of 0 instead", level=WARNING)
+            self.exception("failed to parse hg log output; using timestamp of 0 instead", level=WARNING)
             return 0
 
     def query_do_upload(self):

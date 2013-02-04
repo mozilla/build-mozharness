@@ -276,7 +276,7 @@ class OSMixin(object):
             else:
                 self.fatal("%s is not a valid argument for param overwrite" % (overwrite))
         except (IOError, shutil.Error):
-            self.dump_exception("There was an error while copying %s to %s!" % (src, dest),
+            self.exception("There was an error while copying %s to %s!" % (src, dest),
                                 level=error_level)
             return -1
 
@@ -573,7 +573,7 @@ class ShellMixin(object):
             if halt_on_failure:
                 level = FATAL
             self.log("Can't open %s for writing!" % tmp_stdout_filename + \
-                     self.dump_exception(), level=level)
+                     self.exception(), level=level)
             return None
         try:
             tmp_stderr = open(tmp_stderr_filename, 'w')
@@ -582,7 +582,7 @@ class ShellMixin(object):
             if halt_on_failure:
                 level = FATAL
             self.log("Can't open %s for writing!" % tmp_stderr_filename + \
-                     self.dump_exception(), level=level)
+                     self.exception(), level=level)
             return None
         shell = True
         if isinstance(command, list):
