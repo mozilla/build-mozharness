@@ -17,7 +17,7 @@ config = {
         'make-socorro-json',
         'prep-upload',
         'upload',
-        'update-source-manifest',
+        'upload-source-manifest',
     ],
     "ssh_key": os.path.expanduser("~/.ssh/b2gbld_dsa"),
     "ssh_user": "b2gbld",
