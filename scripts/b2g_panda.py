@@ -168,7 +168,7 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
         dirs['abs_test_install_dir'] = os.path.join(
             abs_dirs['abs_work_dir'], 'tests')
         dirs['abs_gaiatest_dir'] = os.path.join(
-            dirs['abs_test_install_dir'], 'gaia-ui-tests', 'gaiatest')
+            dirs['abs_work_dir'], 'gaia-ui-tests', 'gaiatest')
         for key in dirs.keys():
             if key not in abs_dirs:
                 abs_dirs[key] = dirs[key]
