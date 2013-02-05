@@ -121,9 +121,9 @@ class VCSScript(VCSMixin, BaseScript):
             self.info("Pull has nothing to do!")
             return
         dirs = self.query_abs_dirs()
-        self.vcs_checkout_repos(self.config['repos'],
-                                parent_dir=dirs['abs_work_dir'],
-                                num_retries=num_retries)
+        return self.vcs_checkout_repos(self.config['repos'],
+                                       parent_dir=dirs['abs_work_dir'],
+                                       num_retries=num_retries)
 
 # Specific VCS stubs {{{1
 # For ease of use.

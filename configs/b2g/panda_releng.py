@@ -15,6 +15,7 @@ config = {
     "default_actions": [
         'clobber',
         'read-buildbot-config',
+        'pull',
         'create-virtualenv',
         'download-and-extract',
         'request-device',
