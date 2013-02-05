@@ -178,7 +178,6 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
             cmd.extend(self._build_arg('--emulator', self.config['emulator']))
             cmd.extend(self._build_arg('--gecko-path',
                                        os.path.join(dirs['abs_gecko_dir'], 'b2g')))
-            cmd.append('--load-early')
             cmd.extend(self._build_arg('--homedir',
                                        os.path.join(dirs['abs_emulator_dir'],
                                                     'b2g-distro')))

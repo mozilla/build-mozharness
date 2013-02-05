@@ -69,6 +69,12 @@ config = {
         "reftest": ["tests/reftest/tests/layout/reftests/reftest.list"],
         "crashtest": ["tests/reftest/tests/testing/crashtest/crashtests.list"],
         "jsreftest": ["--extra-profile-file=tests/jsreftest/tests/user.js", "tests/jsreftest/tests/jstests.list"],
+        "reftest-ipc": ['--setpref=browser.tabs.remote=true',
+                        'tests/reftest/tests/layout/reftests/reftest-sanity/reftest.list'],
+        "reftest-no-accel": ['--setpref=layers.acceleration.force-enabled=disabled',
+                             'tests/reftest/tests/layout/reftests/reftest.list'],
+        "crashtest-ipc": ['--setpref=browser.tabs.remote=true',
+                          'tests/reftest/tests/testing/crashtest/crashtests.list'],
     },
     "all_xpcshell_suites": {
         "xpcshell": ["--manifest=tests/xpcshell/tests/all-test-dirs.list",
@@ -98,7 +104,7 @@ config = {
             "enabled": ADJUST_MOUSE_AND_SCREEN
         },
     ],
-    "repos": [{"repo": "http://hg.mozilla.org/build/tools",}],
+    "repos": [{"repo": "http://hg.mozilla.org/build/tools"}],
     "minidump_stackwalk_path": MINIDUMP_STACKWALK_PATH,
     "minidump_save_path": "%(abs_work_dir)s/../minidumps",
 }
