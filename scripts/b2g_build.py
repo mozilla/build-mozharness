@@ -90,6 +90,12 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
             "dest": "variant",
             "help": "b2g build variant. overrides gecko config's value",
         }],
+        [["--additional-source-tarballs"], {
+            "action": "extend",
+            "type": "string",
+            "dest": "additional_source_tarballs",
+            "help": "Additional source tarballs to extract",
+        }],
     ]
 
     def __init__(self, require_config_file=False):
@@ -384,6 +390,7 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
         dirs = self.query_abs_dirs()
         mtime = int(os.path.getmtime(os.path.join(dirs['abs_work_dir'], 'gonk.tar.xz')))
         mtime_file = os.path.join(dirs['abs_work_dir'], '.gonk_mtime')
+        tar = self.query_exe('tar', return_type="list")
         if os.path.exists(mtime_file):
             try:
                 prev_mtime = int(self.read_from_file(mtime_file, error_level=INFO))
@@ -392,7 +399,7 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
                     sourcesfile = os.path.join(dirs['work_dir'], 'sources.xml')
                     sourcesfile_orig = sourcesfile + '.original'
                     if not os.path.exists(sourcesfile_orig):
-                        self.run_command(["tar", "xf", "gonk.tar.xz", "--strip-components", "1", "B2G_default_*/sources.xml"],
+                        self.run_command(tar + ["xf", "gonk.tar.xz", "--strip-components", "1", "B2G_default_*/sources.xml"],
                                          cwd=dirs['work_dir'])
                         self.run_command(["cp", "-p", sourcesfile, sourcesfile_orig], cwd=dirs['work_dir'])
                     # end transition code
@@ -400,8 +407,12 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
                     return
             except:
                 pass
+        if self.config.get('additional_source_tarballs'):
+            for tarball in self.config['additional_source_tarballs']:
+                self.run_command(tar + ["xf", tarball], cwd=dirs['work_dir'],
+                                 halt_on_failure=True)
 
-        retval = self.run_command(["tar", "xf", "gonk.tar.xz", "--strip-components", "1"], cwd=dirs['work_dir'])
+        retval = self.run_command(tar + ["xf", "gonk.tar.xz", "--strip-components", "1"], cwd=dirs['work_dir'])
 
         if retval != 0:
             self.fatal("failed to unpack gonk", exit_code=2)
@@ -466,7 +477,7 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
         manifest_config = self.config.get('manifest', {})
         branch = self.query_branch()
         if self.query_is_nightly() and branch in manifest_config['branches'] and \
-          manifest_config.get('translate_hg_to_git'):
+                manifest_config.get('translate_hg_to_git'):
             if gecko_config_key is None:
                 return True
             if self.gecko_config.get(gecko_config_key):
