@@ -5,6 +5,7 @@
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 # ***** END LICENSE BLOCK *****
 
+import copy
 import getpass
 import os
 import sys
@@ -15,14 +16,14 @@ sys.path.insert(1, os.path.dirname(sys.path[0]))
 
 from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_FAILURE, TBPL_WARNING, BuildbotMixin
 from mozharness.base.log import INFO, ERROR
-from mozharness.base.python import VirtualenvMixin, virtualenv_config_options
-from mozharness.base.script import BaseScript
+from mozharness.base.python import VirtualenvMixin
+from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.testing.mozpool import MozpoolMixin
 from mozharness.mozilla.testing.device import SUTDeviceMozdeviceMixin
-from mozharness.mozilla.testing.testbase import TestingMixin
+from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
 from mozharness.mozilla.testing.unittest import TestSummaryOutputParserHelper
 
-class PandaTest(TestingMixin, BaseScript, VirtualenvMixin, MozpoolMixin, BuildbotMixin, SUTDeviceMozdeviceMixin):
+class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, BuildbotMixin, SUTDeviceMozdeviceMixin):
     config_options = [
         [["--mozpool-api-url"], {
             "dest": "mozpool_api_url",
@@ -40,17 +41,12 @@ class PandaTest(TestingMixin, BaseScript, VirtualenvMixin, MozpoolMixin, Buildbo
             "dest": "installer_url",
             "help": "Set b2gbase url",
         }],
-        [["--test-url"], {
-            "action":"store",
-            "dest": "test_url",
-            "help": "URL to the zip file containing the actual tests",
-        }],
         [["--test-type"], {
             "dest": "test_type",
             "default": "b2g",
             "help": "Specifies the --type parameter to pass to Marionette",
         }],
-    ] + virtualenv_config_options
+    ] + copy.deepcopy(testing_config_options)
 
     error_list = []
     mozpool_handler = None
@@ -60,20 +56,28 @@ class PandaTest(TestingMixin, BaseScript, VirtualenvMixin, MozpoolMixin, Buildbo
         'mozpoolclient',
         'mozinstall',
         { 'marionette': os.path.join('tests', 'marionette/client') },
-        { 'gaiatest': os.path.join('tests', 'gaiatest') },
+        { 'gaiatest': 'gaia-ui-tests/' },
     ]
+
+    repos = [{
+            'repo': 'http://hg.mozilla.org/integration/gaia-ui-tests/',
+            'revision': 'default',
+            'dest': 'gaia-ui-tests'
+            }]
 
     def __init__(self, require_config_file=False):
         super(PandaTest, self).__init__(
             config_options=self.config_options,
             all_actions=['clobber',
                          'read-buildbot-config',
+                         'pull',
                          'download-and-extract',
                          'create-virtualenv',
                          'request-device',
                          'run-test',
                          'close-request'],
             default_actions=['clobber',
+                             'pull',
                              'create-virtualenv',
                              'download-and-extract',
                              'request-device',
@@ -81,13 +85,15 @@ class PandaTest(TestingMixin, BaseScript, VirtualenvMixin, MozpoolMixin, Buildbo
                              'close-request'],
             require_config_file=require_config_file,
             config={'virtualenv_modules': self.virtualenv_modules,
-                    'require_test_zip': True,})
+                    'require_test_zip': True,
+                    'repos': self.repos})
 
         self.mozpool_assignee = self.config.get('mozpool_assignee', getpass.getuser())
         self.request_url = None
         self.mozpool_device = self.config.get("mozpool_device")
         self.installer_url = self.config.get("installer_url")
         self.test_url = self.config.get("test_url")
+        self.gaia_ui_tests_commit = 'unknown'
 
     def postflight_read_buildbot_config(self):
         super(PandaTest, self).postflight_read_buildbot_config()
@@ -110,6 +116,10 @@ class PandaTest(TestingMixin, BaseScript, VirtualenvMixin, MozpoolMixin, Buildbo
         device_time = self.set_device_epoch_time()
         self.info("Current time on device: %s - %s" % \
             (device_time, time.strftime("%x %H:%M:%S", time.gmtime(float(device_time)))))
+
+    def pull(self, **kwargs):
+        repos = super(PandaTest, self).pull(**kwargs)
+        self.gaia_ui_tests_commit = repos['gaia-ui-tests']['revision']
 
     def run_test(self):
         self._sut_prep_steps()
@@ -145,6 +155,8 @@ class PandaTest(TestingMixin, BaseScript, VirtualenvMixin, MozpoolMixin, Buildbo
                 self.warning("We failed to run logcat: str(%s)" % str(e))
 
         test_summary_parser.print_summary('gaia-ui-tests')
+        self.info("TinderboxPrint: gaia-ui-tests_revlink: %s/rev/%s" %
+                  (self.config.get('repos')[0], self.gaia_ui_tests_commit))
 
         self.buildbot_status(tbpl_status, level=level)
 
@@ -156,7 +168,7 @@ class PandaTest(TestingMixin, BaseScript, VirtualenvMixin, MozpoolMixin, Buildbo
         dirs['abs_test_install_dir'] = os.path.join(
             abs_dirs['abs_work_dir'], 'tests')
         dirs['abs_gaiatest_dir'] = os.path.join(
-            dirs['abs_test_install_dir'], 'gaiatest', 'gaiatest')
+            abs_dirs['abs_work_dir'], 'gaia-ui-tests', 'gaiatest')
         for key in dirs.keys():
             if key not in abs_dirs:
                 abs_dirs[key] = dirs[key]
