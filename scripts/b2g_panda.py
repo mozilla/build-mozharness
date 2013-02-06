@@ -16,7 +16,7 @@ sys.path.insert(1, os.path.dirname(sys.path[0]))
 
 from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_FAILURE, TBPL_WARNING, BuildbotMixin
 from mozharness.base.log import INFO, ERROR
-from mozharness.base.python import VirtualenvMixin, virtualenv_config_options
+from mozharness.base.python import VirtualenvMixin
 from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.testing.mozpool import MozpoolMixin
 from mozharness.mozilla.testing.device import SUTDeviceMozdeviceMixin
