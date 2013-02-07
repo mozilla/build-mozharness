@@ -156,7 +156,7 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
 
         test_summary_parser.print_summary('gaia-ui-tests')
         self.info("TinderboxPrint: gaia-ui-tests_revlink: %s/rev/%s" %
-                  (self.config.get('repos')[0], self.gaia_ui_tests_commit))
+                  (self.config.get('repos')[0]['repo'], self.gaia_ui_tests_commit))
 
         self.buildbot_status(tbpl_status, level=level)
 

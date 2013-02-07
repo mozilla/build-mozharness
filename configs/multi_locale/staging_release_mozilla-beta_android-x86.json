@@ -32,6 +32,5 @@
     },
     "merge_locales": true,
     "mozilla_dir": "build",
-    "mozconfig": "build/mobile/android/config/mozconfigs/android-x86/release",
-    "jarsigner": "tools/release/signing/mozpass.py"
+    "mozconfig": "build/mobile/android/config/mozconfigs/android-x86/release"
 }
