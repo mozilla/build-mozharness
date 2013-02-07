@@ -2,7 +2,6 @@ BRANCH = "mozilla-beta"
 MOZ_UPDATE_CHANNEL = "beta"
 MOZILLA_DIR = BRANCH
 JAVA_HOME = "/tools/jdk6"
-JARSIGNER = "tools/release/signing/mozpass.py"
 OBJDIR = "obj-l10n"
 STAGE_SERVER = "dev-stage01.srv.releng.scl3.mozilla.com"
 EN_US_BINARY_URL = "http://" + STAGE_SERVER + "/pub/mozilla.org/mobile/candidates/%(version)s-candidates/build%(buildnum)d/android/en-US"

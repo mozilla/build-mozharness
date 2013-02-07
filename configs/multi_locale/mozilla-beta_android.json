@@ -30,6 +30,5 @@
     },
     "merge_locales": true,
     "mozilla_dir": "build",
-    "mozconfig": "build/configs/mozilla2/android/mozilla-beta/nightly/mozconfig",
-    "jarsigner": "tools/release/signing/mozpass.py"
+    "mozconfig": "build/configs/mozilla2/android/mozilla-beta/nightly/mozconfig"
 }

@@ -199,10 +199,6 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
             env['MOZ_CHROME_MULTILOCALE'] = "en-US " + \
                                             ' '.join(self.query_locales())
             self.info("MOZ_CHROME_MULTILOCALE is %s" % env['MOZ_CHROME_MULTILOCALE'])
-        # TODO remove once bug 611648 fixed
-        if 'jarsigner' in c:
-            env['JARSIGNER'] = os.path.join(dirs['abs_work_dir'],
-                                            c['jarsigner'])
         self._process_command(command=command, cwd=dirs['abs_objdir'],
                               env=env, error_list=MakefileErrorList,
                               halt_on_failure=True)

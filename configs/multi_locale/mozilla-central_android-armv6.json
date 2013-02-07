@@ -30,6 +30,5 @@
     },
     "merge_locales": true,
     "mozilla_dir": "build",
-    "mozconfig": "build/mobile/android/config/mozconfigs/android-armv6/nightly",
-    "jarsigner": "tools/release/signing/mozpass.py"
+    "mozconfig": "build/mobile/android/config/mozconfigs/android-armv6/nightly"
 }
