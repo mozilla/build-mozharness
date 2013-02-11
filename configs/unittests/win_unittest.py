@@ -67,6 +67,8 @@ config = {
         "reftest": ["tests/reftest/tests/layout/reftests/reftest.list"],
         "crashtest": ["tests/reftest/tests/testing/crashtest/crashtests.list"],
         "jsreftest": ["--extra-profile-file=tests/jsreftest/tests/user.js", "tests/jsreftest/tests/jstests.list"],
+        "reftest-no-accel": ["--setpref=gfx.direct2d.disabled=true", "--setpref=layers.acceleration.disabled=true",
+                             "tests/reftest/tests/layout/reftests/reftest.list"],
     },
     "all_xpcshell_suites": {
         "xpcshell": ["--manifest=tests/xpcshell/tests/all-test-dirs.list",
@@ -96,7 +98,7 @@ config = {
             "enabled": ADJUST_MOUSE_AND_SCREEN
         },
     ],
-    "repos": [{"repo": "http://hg.mozilla.org/build/tools",}],
+    "repos": [{"repo": "http://hg.mozilla.org/build/tools"}],
     "minidump_stackwalk_path": "%(abs_work_dir)s/tools/breakpad/win32/minidump_stackwalk.exe",
     "minidump_save_path": "%(abs_work_dir)s/../minidumps",
 }
