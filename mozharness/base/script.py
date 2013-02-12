@@ -29,7 +29,8 @@ except ImportError:
 
 from mozharness.base.config import BaseConfig
 from mozharness.base.log import SimpleFileLogger, MultiFileLogger, \
-     LogMixin, OutputParser, DEBUG, INFO, ERROR, WARNING, FATAL
+    LogMixin, OutputParser, DEBUG, INFO, ERROR, WARNING, FATAL
+
 
 # OSMixin {{{1
 class OSMixin(object):
@@ -99,6 +100,7 @@ class OSMixin(object):
         if not isinstance(path, basestring):
             return path
         path = path.replace("\\", "/")
+
         def repl(m):
             return '/%s/' % m.group(1)
         path = re.sub(r'''^([a-zA-Z]):/''', repl, path)
@@ -124,7 +126,7 @@ class OSMixin(object):
                     # -warner
                     os.chmod(full_name, 0600)
             if os.path.islink(full_name):
-                os.remove(full_name) # as suggested in bug #792
+                os.remove(full_name)
             elif os.path.isdir(full_name):
                 self._rmdir_recursive(full_name)
             else:
@@ -171,7 +173,7 @@ class OSMixin(object):
                 f = urllib2.urlopen(url)
                 local_file = open(file_name, 'wb')
                 while True:
-                    block = f.read(1024**2)
+                    block = f.read(1024 ** 2)
                     if not block:
                         break
                     local_file.write(block)
@@ -240,7 +242,7 @@ class OSMixin(object):
 
         self.info('copying tree: %s to %s' % (src, dest))
         try:
-            if overwrite == 'clobber':
+            if overwrite == 'clobber' or not os.path.exists(dest):
                 self.rmtree(dest)
                 shutil.copytree(src, dest)
             elif overwrite == 'no_overwrite' or overwrite == 'overwrite_if_exists':
@@ -277,7 +279,7 @@ class OSMixin(object):
                 self.fatal("%s is not a valid argument for param overwrite" % (overwrite))
         except (IOError, shutil.Error):
             self.exception("There was an error while copying %s to %s!" % (src, dest),
-                                level=error_level)
+                           level=error_level)
             return -1
 
     def write_to_file(self, file_path, contents, verbose=True,
@@ -359,7 +361,6 @@ class OSMixin(object):
                 if is_exe(exe_file):
                     return exe_file
         return None
-
 
 
 # ShellMixin {{{1
@@ -477,7 +478,7 @@ class ShellMixin(object):
                 level = ERROR
                 if halt_on_failure:
                     level = FATAL
-                self.log("Can't run command %s in non-existent directory '%s'!" % \
+                self.log("Can't run command %s in non-existent directory '%s'!" %
                          (command, cwd), level=level)
                 return -1
             self.info("Running command: %s in %s" % (command, cwd))
@@ -551,7 +552,7 @@ class ShellMixin(object):
                 level = ERROR
                 if halt_on_failure:
                     level = FATAL
-                self.log("Can't run command %s in non-existent directory %s!" % \
+                self.log("Can't run command %s in non-existent directory %s!" %
                          (command, cwd), level=level)
                 return None
             self.info("Getting output from command: %s in %s" % (command, cwd))
@@ -572,7 +573,7 @@ class ShellMixin(object):
             level = ERROR
             if halt_on_failure:
                 level = FATAL
-            self.log("Can't open %s for writing!" % tmp_stdout_filename + \
+            self.log("Can't open %s for writing!" % tmp_stdout_filename +
                      self.exception(), level=level)
             return None
         try:
@@ -581,7 +582,7 @@ class ShellMixin(object):
             level = ERROR
             if halt_on_failure:
                 level = FATAL
-            self.log("Can't open %s for writing!" % tmp_stderr_filename + \
+            self.log("Can't open %s for writing!" % tmp_stderr_filename +
                      self.exception(), level=level)
             return None
         shell = True
@@ -637,7 +638,6 @@ class ShellMixin(object):
             return (tmp_stdout_filename, tmp_stderr_filename)
         else:
             return output
-
 
 
 # BaseScript {{{1
@@ -783,14 +783,15 @@ class BaseScript(ShellMixin, OSMixin, LogMixin, object):
     # logging {{{2
     def new_log_obj(self, default_log_level="info"):
         dirs = self.query_abs_dirs()
-        log_config = {"logger_name": 'Simple',
-                      "log_name": 'log',
-                      "log_dir": dirs['abs_log_dir'],
-                      "log_level": default_log_level,
-                      "log_format": '%(asctime)s %(levelname)8s - %(message)s',
-                      "log_to_console": True,
-                      "append_to_log": False,
-                     }
+        log_config = {
+            "logger_name": 'Simple',
+            "log_name": 'log',
+            "log_dir": dirs['abs_log_dir'],
+            "log_level": default_log_level,
+            "log_format": '%(asctime)s %(levelname)8s - %(message)s',
+            "log_to_console": True,
+            "append_to_log": False,
+        }
         log_type = self.config.get("log_type", "multi")
         if log_type == "multi":
             log_config['logger_name'] = 'Multi'
@@ -897,7 +898,7 @@ class BaseScript(ShellMixin, OSMixin, LogMixin, object):
                                     log_level=log_level)
                     else:
                         self.move(os.path.join(dest_dir, dest_file, '.%d' % backup_num),
-                                  os.path.join(dest_dir, dest_file, '.%d' % backup_num +1),
+                                  os.path.join(dest_dir, dest_file, '.%d' % backup_num + 1),
                                   log_level=log_level)
                 if self.move(dest, "%s.1" % dest, log_level=log_level):
                     self.log("Unable to move %s!" % dest, level=error_level)

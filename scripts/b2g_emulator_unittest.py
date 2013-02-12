@@ -110,18 +110,13 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
         {'regex': re.compile(r'''(Timeout|NoSuchAttribute|Javascript|NoSuchElement|XPathLookup|NoSuchWindow|StaleElement|ScriptTimeout|ElementNotVisible|NoSuchFrame|InvalidElementState|NoAlertPresent|InvalidCookieDomain|UnableToSetCookie|InvalidSelector|MoveTargetOutOfBounds)Exception'''), 'level': ERROR},
     ]
 
-    mozbase_dir = os.path.join('tests', 'mozbase')
+    virtualenv_requirements = [
+        os.path.join('tests', 'b2g', 'b2g-unittest-requirements.txt')
+    ]
+
     virtualenv_modules = [
-        { 'manifestparser': os.path.join(mozbase_dir, 'manifestdestiny') },
-        { 'mozfile': os.path.join(mozbase_dir, 'mozfile') },
-        { 'mozhttpd': os.path.join(mozbase_dir, 'mozhttpd') },
-        { 'mozinfo': os.path.join(mozbase_dir, 'mozinfo') },
-        { 'mozinstall': os.path.join(mozbase_dir, 'mozinstall') },
-        { 'mozprofile': os.path.join(mozbase_dir, 'mozprofile') },
-        { 'mozprocess': os.path.join(mozbase_dir, 'mozprocess') },
-        { 'mozrunner': os.path.join(mozbase_dir, 'mozrunner') },
-        { 'mozdevice': os.path.join(mozbase_dir, 'mozdevice') },
-        { 'marionette': os.path.join('tests', 'marionette') }
+        'mozinstall',
+        {'marionette': os.path.join('tests', 'marionette')}
     ]
 
     def __init__(self, require_config_file=False):
@@ -141,6 +136,7 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
             require_config_file=require_config_file,
             config={
                 'virtualenv_modules': self.virtualenv_modules,
+                'virtualenv_requirements': self.virtualenv_requirements,
                 'require_test_zip': True,
                 'emulator': 'arm',
                 # This is a special IP that has meaning to the emulator

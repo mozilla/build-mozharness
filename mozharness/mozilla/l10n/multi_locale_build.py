@@ -185,7 +185,6 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
         # TODO deal with buildsymbols
 
     def package(self, package_type='en-US'):
-        c = self.config
         dirs = self.query_abs_dirs()
 
         command = "make package"
