@@ -9,8 +9,12 @@ Ideally this will go away if and when we retire buildbot.
 """
 
 import os
-import pprint
 import sys
+
+try:
+    import simplejson as json
+except ImportError:
+    import json
 
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
@@ -32,6 +36,7 @@ TBPL_STATUS_DICT = {
     TBPL_RETRY: WARNING,
 }
 
+
 class BuildbotMixin(object):
     buildbot_config = None
     buildbot_properties = {}
@@ -44,7 +49,7 @@ class BuildbotMixin(object):
         else:
             # TODO try/except?
             self.buildbot_config = parse_config_file(c['buildbot_json_path'])
-            self.info(pprint.pformat(self.buildbot_config))
+            self.info(json.dumps(self.buildbot_config, indent=4))
 
     def tryserver_email(self):
         pass
