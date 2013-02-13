@@ -61,7 +61,6 @@ config = {
         "CCACHE_DIR": "/builds/ccache",
         "CCACHE_COMPRESS": "1",
         "CCACHE_UMASK": "002",
-        "DOGFOOD": "1",
         "SYMBOL_SERVER_HOST": "symbols1.dmz.phx1.mozilla.com",
         "SYMBOL_SERVER_USER": "b2gbld",
         "SYMBOL_SERVER_SSH_KEY": "/home/mock_mozilla/.ssh/b2gbld_dsa",
