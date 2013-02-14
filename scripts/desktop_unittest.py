@@ -33,7 +33,7 @@ class DesktopUnittest(TestingMixin, MercurialScript):
 
     config_options = [
         [['--mochitest-suite', ], {
-            "action": "append",
+            "action": "extend",
             "dest": "specified_mochitest_suites",
             "type": "string",
             "help": "Specify which mochi suite to run. "
@@ -41,7 +41,7 @@ class DesktopUnittest(TestingMixin, MercurialScript):
                     "Examples: 'all', 'plain1', 'plain5', 'chrome', or 'a11y'"}
          ],
         [['--reftest-suite', ], {
-            "action": "append",
+            "action": "extend",
             "dest": "specified_reftest_suites",
             "type": "string",
             "help": "Specify which reftest suite to run. "
@@ -49,7 +49,7 @@ class DesktopUnittest(TestingMixin, MercurialScript):
                     "Examples: 'all', 'crashplan', or 'jsreftest'"}
          ],
         [['--xpcshell-suite', ], {
-            "action": "append",
+            "action": "extend",
             "dest": "specified_xpcshell_suites",
             "type": "string",
             "help": "Specify which xpcshell suite to run. "
