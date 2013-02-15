@@ -90,6 +90,10 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
             "dest": "variant",
             "help": "b2g build variant. overrides gecko config's value",
         }],
+        [["--checkout-revision"], {
+            "dest": "checkout_revision",
+            "help": "checkout a specific gecko revision.",
+        }],
         [["--additional-source-tarballs"], {
             "action": "extend",
             "type": "string",
@@ -350,6 +354,11 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
             super(B2GBuild, self).clobber()
 
     def checkout_gecko(self):
+        '''
+        If you want a different revision of gecko to be used you can use the
+        --checkout-revision flag. This is necessary for trees that are not
+        triggered by a gecko commit but by an external tree (like gaia).
+        '''
         dirs = self.query_abs_dirs()
 
         # Make sure the parent directory to gecko exists so that 'hg share ...
@@ -357,8 +366,16 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
         self.mkdir_p(os.path.dirname(dirs['src']))
 
         repo = self.query_repo()
-        rev = self.vcs_checkout(repo=repo, dest=dirs['src'], revision=self.query_revision())
-        self.set_buildbot_property('revision', rev, write_to_file=True)
+        if self.config.has_key("checkout_revision"):
+            rev = self.vcs_checkout(repo=repo, dest=dirs['src'], revision=self.config["checkout_revision"])
+            # in this case, self.query_revision() will be returning the "revision" that triggered the job
+            # we know that it is not a gecko revision that did so
+            self.set_buildbot_property('revision', self.query_revision(), write_to_file=True)
+        else:
+            # a gecko revision triggered this job; self.query_revision() will return it
+            rev = self.vcs_checkout(repo=repo, dest=dirs['src'], revision=self.query_revision())
+            self.set_buildbot_property('revision', rev, write_to_file=True)
+        self.set_buildbot_property('gecko_revision', rev, write_to_file=True)
 
     def download_gonk(self):
         c = self.config
@@ -565,13 +582,13 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
             if 'Gonk specific things' in line:
                 new_sources.append('  <!-- Mercurial-Information: <remote fetch="http://hg.mozilla.org/" name="hgmozillaorg"> -->')
                 new_sources.append('  <!-- Mercurial-Information: <project name="%s" path="gecko" remote="hgmozillaorg" revision="%s"/> -->' %
-                                   (self.buildbot_config['properties']['repo_path'], self.buildbot_properties['revision']))
+                                   (self.buildbot_config['properties']['repo_path'], self.buildbot_properties['gecko_revision']))
                 new_sources.append('  <!-- Mercurial-Information: <project name="%s" path="gaia" remote="hgmozillaorg" revision="%s"/> -->' %
                                    (gaia_config['repo'].replace('http://hg.mozilla.org/', ''), self.buildbot_properties['gaia_revision']))
 
                 if self.query_do_translate_hg_to_git():
                     url = manifest_config['translate_base_url']
-                    gecko_git = self.query_translated_revision(url, 'gecko', self.buildbot_properties['revision'])
+                    gecko_git = self.query_translated_revision(url, 'gecko', self.buildbot_properties['gecko_revision'])
                     gaia_git = self.query_translated_revision(url, 'gaia', self.buildbot_properties['gaia_revision'])
                     new_sources.append('  <project name="%s" path="gecko" remote="mozillaorg" revision="%s"/>' % ("https://git.mozilla.org/releases/gecko.git".replace(git_base_url, ''), gecko_git))
                     new_sources.append('  <project name="%s" path="gaia" remote="mozillaorg" revision="%s"/>' % ("https://git.mozilla.org/releases/gaia.git".replace(git_base_url, ''), gaia_git))
