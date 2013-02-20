@@ -506,7 +506,7 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
         l10n_git_sha = self.query_translated_revision(url, 'l10n', revision)
         return '  <project name="%s" path="%s" remote="mozillaorg" revision="%s"/>' % (git_repo.replace(git_base_url, ''), local_path, l10n_git_sha)
 
-    def _generate_locale_manifest(self, git_base_url="https://git.mozilla.org/"):
+    def _generate_locale_manifest(self, git_base_url="https://git.mozilla.org/release/"):
         """ Add the locales to the source manifest.
         """
         manifest_config = self.config.get('manifest', {})
@@ -599,7 +599,7 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
                     # Write the gaia commit information to 'gaia_commit_override.txt'
                     gaia_override = os.path.join(dirs['abs_work_dir'], 'gaia', 'gaia_commit_override.txt')
                     self.write_to_file(gaia_override, "%s\n%s\n" % (gaia_git, gaia_time))
-                new_sources.extend(self._generate_locale_manifest())
+                new_sources.extend(self._generate_locale_manifest(git_base_url=git_base_url))
 
         self.write_to_file(sourcesfile, "\n".join(new_sources), verbose=False)
         self.run_command(["diff", "-u", sourcesfile_orig, sourcesfile], success_codes=[1])
