@@ -314,7 +314,7 @@ class DesktopUnittest(TestingMixin, MercurialScript):
         if suites:
             self.info('#### Running %s suites' % suite_category)
             for suite in suites:
-                cmd = abs_base_cmd
+                cmd = abs_base_cmd[:]
                 replace_dict = {
                     'abs_app_dir': abs_app_dir,
                 }
