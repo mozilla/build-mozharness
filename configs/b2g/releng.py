@@ -13,7 +13,6 @@ config = {
         'update-source-manifest',
         'build',
         'build-symbols',
-        'build-update-testdata',
         'make-updates',
         'make-socorro-json',
         'prep-upload',
@@ -36,7 +35,6 @@ config = {
     "exes": {
         "tooltool.py": "/tools/tooltool.py",
         "buildbot": "/tools/buildbot/bin/buildbot",
-        "python": "/tools/python27/bin/python2.7",
     },
     "manifest": {
         "upload_remote_host": "stage.mozilla.org",
@@ -66,19 +64,4 @@ config = {
     "purge_minsize": 15,
     "clobberer_url": "http://clobberer.pvt.build.mozilla.org/index.php",
     "is_automation": True,
-    "smoketest_config": {
-        "devices": {
-            "unagi": {
-                "system_fs_type": "ext4",
-                "system_location": "/dev/block/mmcblk0p19",
-                "data_fs_type": "ext4",
-                "data_location": "/dev/block/mmcblk0p22",
-                "sdcard": "/mnt/sdcard",
-                "sdcard_recovery": "/sdcard",
-                "serials": ["full_unagi"],
-            },
-        },
-        "public_key": os.path.abspath("build/target/product/security/testkey.x509.pem"),
-        "private_key": os.path.abspath("build/target/product/security/testkey.pk8"),
-    },
 }
