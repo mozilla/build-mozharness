@@ -109,7 +109,7 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
         BaseScript.__init__(self,
                             config_options=self.config_options,
                             all_actions=[
-                                'clobber',
+                                'clobber',  # From BaseScript
                                 'checkout-gecko',
                                 # Download via tooltool repo in gecko checkout or via explicit url
                                 'download-gonk',
@@ -122,7 +122,6 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
                                 'build',
                                 'build-symbols',
                                 'make-updates',
-                                'build-update-testdata',
                                 'prep-upload',
                                 'upload',
                                 'make-update-xml',
@@ -192,10 +191,9 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
         c = self.config
         dirs = {
             'src': os.path.join(c['work_dir'], 'gecko'),
-            'work_dir': abs_dirs['abs_work_dir'],
-            'testdata_dir': os.path.join(abs_dirs['abs_work_dir'], 'testdata'),
-            'gaia_l10n_base_dir': os.path.join(abs_dirs['abs_work_dir'], 'gaia-l10n'),
-            'compare_locales_dir': os.path.join(abs_dirs['abs_work_dir'], 'compare-locales'),
+            'work_dir': os.path.abspath(c['work_dir']),
+            'gaia_l10n_base_dir': os.path.join(os.path.abspath(c['work_dir']), 'gaia-l10n'),
+            'compare_locales_dir': os.path.join(c['base_work_dir'], 'compare-locales'),
         }
 
         abs_dirs.update(dirs)
@@ -331,7 +329,7 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
         if self.config.get('ccache'):
             env['CCACHE_BASEDIR'] = dirs['work_dir']
         # If we get a buildid from buildbot, pass that in as MOZ_BUILD_DATE
-        if self.buildbot_config and 'buildid' in self.buildbot_config.get('properties', {}):
+        if 'buildid' in self.buildbot_config.get('properties', {}):
             env['MOZ_BUILD_DATE'] = self.buildbot_config['properties']['buildid']
 
         return env
@@ -350,11 +348,6 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
                 do_clobber = True
             if do_clobber:
                 super(B2GBuild, self).clobber()
-            else:
-                # Delete the upload dir so we don't upload previous stuff by accident
-                dirs = self.query_abs_dirs()
-                self.rmtree(dirs['abs_upload_dir'])
-                self.rmtree(dirs['testdata_dir'])
             # run purge_builds / check clobberer
             self.purge_builds()
         else:
@@ -373,7 +366,7 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
         self.mkdir_p(os.path.dirname(dirs['src']))
 
         repo = self.query_repo()
-        if "checkout_revision" in self.config:
+        if self.config.has_key("checkout_revision"):
             rev = self.vcs_checkout(repo=repo, dest=dirs['src'], revision=self.config["checkout_revision"])
             # in this case, self.query_revision() will be returning the "revision" that triggered the job
             # we know that it is not a gecko revision that did so
@@ -723,52 +716,6 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
         # Sign the updates
         self.sign_updates()
 
-    def build_update_testdata(self):
-        # only run for nightlies, if target is in the smoketest_config
-        if not self.query_is_nightly():
-            self.info("Not a nightly build. Skipping...")
-            return
-        smoketest_config = self.config.get('smoketest_config')
-        if not smoketest_config:
-            self.fatal("failed to find smoketest_config")
-        target = self.config['target']
-        if target not in smoketest_config['devices']:
-            self.info("%s not in smoketest_config. Skipping...")
-            return
-
-        # create testdata for update testing
-        dirs = self.query_abs_dirs()
-        gecko_config = self.load_gecko_config()
-        cmd = ['./build.sh', 'fs_config']
-        env = self.query_build_env()
-
-        retval = self.run_mock_command(gecko_config['mock_target'], cmd, cwd=dirs['work_dir'], env=env, error_list=B2GMakefileErrorList)
-        if retval != 0:
-            self.fatal("failed to build fs_config", exit_code=2)
-
-        self.mkdir_p(dirs['testdata_dir'])
-        self.write_to_file(os.path.join(dirs['testdata_dir'], 'smoketest-config.json'),
-                           json.dumps(smoketest_config))
-        gecko_smoketest_dir = os.path.join(dirs['work_dir'], 'gecko/testing/marionette/update-smoketests')
-
-        stage_update = os.path.join(gecko_smoketest_dir, 'stage-update.py')
-        python = self.query_exe("python", return_type="list")
-        cmd = python + [stage_update, target, dirs['testdata_dir']]
-        retval = self.run_mock_command(gecko_config['mock_target'], cmd, cwd=dirs['work_dir'], env=env)
-        if retval != 0:
-            self.fatal("failed to stage b2g update testdata", exit_code=2)
-
-        # copy to upload_dir
-        buildid = self.query_buildid()
-        upload_testdata_dir = os.path.join(dirs['abs_upload_dir'], 'update-testdata')
-        target_testdata_dir = os.path.join(dirs['testdata_dir'], target, buildid)
-        self.mkdir_p(upload_testdata_dir)
-
-        for f in ('flash.zip', 'flash.sh'):
-            self.copy_to_upload_dir(
-                os.path.join(target_testdata_dir, f),
-                os.path.join(upload_testdata_dir, f))
-
     def sign_updates(self):
         if 'MOZ_SIGNING_SERVERS' not in os.environ:
             self.info("Skipping signing since no MOZ_SIGNING_SERVERS set")
@@ -800,6 +747,8 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
             return
 
         dirs = self.query_abs_dirs()
+        # Delete the upload dir so we don't upload previous stuff by accident
+        self.rmtree(dirs['abs_upload_dir'])
 
         # Copy stuff into build/upload directory
         gecko_config = self.load_gecko_config()
