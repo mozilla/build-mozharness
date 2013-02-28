@@ -28,7 +28,7 @@ class PurgeMixin(object):
 
     default_skips = ['info', 'rel-*']
     default_maxage = 14
-    default_periodic_clobber = 7*24
+    default_periodic_clobber = 7 * 24
 
     def purge_builds(self, basedir=None, min_size=None, skip=None, max_age=None):
         # Try clobbering first
@@ -86,6 +86,7 @@ class PurgeMixin(object):
         cmd.extend(['-s', 'scripts'])
         cmd.extend(['-s', 'logs'])
         cmd.extend(['-s', 'buildprops.json'])
+        cmd.extend(['-s', 'token'])
 
         if periodic_clobber:
             cmd.extend(['-t', str(periodic_clobber)])
