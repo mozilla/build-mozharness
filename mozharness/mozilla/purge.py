@@ -26,7 +26,7 @@ class PurgeMixin(object):
     purge_tool = os.path.join(external_tools_path, 'purge_builds.py')
     clobber_tool = os.path.join(external_tools_path, 'clobberer.py')
 
-    default_skips = ['info', 'rel-*']
+    default_skips = ['info', 'rel-*', 'tb-rel-*']
     default_maxage = 14
     default_periodic_clobber = 7 * 24
 
