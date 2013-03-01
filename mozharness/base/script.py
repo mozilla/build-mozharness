@@ -707,7 +707,7 @@ class BaseScript(ShellMixin, OSMixin, LogMixin, object):
                                     dest=os.path.join('logs', log_file),
                                     short_desc='%s log' % log_name,
                                     long_desc='%s log' % log_name,
-                                    rotate=True)
+                                    max_backups=self.config.get("log_max_rotate", 0))
 
     def run(self):
         """Default run method.
@@ -852,8 +852,7 @@ class BaseScript(ShellMixin, OSMixin, LogMixin, object):
 
     def copy_to_upload_dir(self, target, dest=None, short_desc="unknown",
                            long_desc="unknown", log_level=DEBUG,
-                           error_level=ERROR, rotate=False,
-                           max_backups=None):
+                           error_level=ERROR, max_backups=None):
         """Copy target file to upload_dir/dest.
 
         Potentially update a manifest in the future if we go that route.
@@ -883,7 +882,7 @@ class BaseScript(ShellMixin, OSMixin, LogMixin, object):
             if os.path.isdir(dest):
                 self.log("%s exists and is a directory!" % dest, level=error_level)
                 return -1
-            if rotate:
+            if max_backups:
                 # Probably a better way to do this
                 oldest_backup = 0
                 backup_regex = re.compile("^%s\.(\d+)$" % dest_file)
@@ -894,11 +893,11 @@ class BaseScript(ShellMixin, OSMixin, LogMixin, object):
                 for backup_num in range(oldest_backup, 0, -1):
                     # TODO more error checking?
                     if backup_num >= max_backups:
-                        self.rmtree(os.path.join(dest_dir, dest_file, str(backup_num)),
+                        self.rmtree(os.path.join(dest_dir, "%s.%d" % (dest_file, backup_num)),
                                     log_level=log_level)
                     else:
-                        self.move(os.path.join(dest_dir, dest_file, '.%d' % backup_num),
-                                  os.path.join(dest_dir, dest_file, '.%d' % backup_num + 1),
+                        self.move(os.path.join(dest_dir, "%s.%d" % (dest_file, backup_num)),
+                                  os.path.join(dest_dir, "%s.%d" % (dest_file, backup_num + 1)),
                                   log_level=log_level)
                 if self.move(dest, "%s.1" % dest, log_level=log_level):
                     self.log("Unable to move %s!" % dest, level=error_level)

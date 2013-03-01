@@ -47,6 +47,7 @@ config = {
         "SYMBOL_SERVER_PATH": "/mnt/netapp/breakpad/symbols_b2g/",
         "POST_SYMBOL_UPLOAD_CMD": "/usr/local/bin/post-symbol-upload.py",
         "B2G_UPDATER": "1",
+        "B2G_SYSTEM_APPS": "1",
     },
     "manifest": {
         "upload_remote_host": "stage.mozilla.org",
