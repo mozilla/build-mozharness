@@ -742,7 +742,7 @@ class BaseScript(ShellMixin, OSMixin, LogMixin, object):
         Delete the working directory
         """
         dirs = self.query_abs_dirs()
-        self.rmtree(dirs['abs_work_dir'])
+        self.rmtree(dirs['abs_work_dir'], error_level=FATAL)
 
     def query_abs_dirs(self):
         """We want to be able to determine where all the important things

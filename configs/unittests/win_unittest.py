@@ -1,4 +1,5 @@
 import os
+import sys
 
 #### OS Specifics ####
 ABS_WORK_DIR = os.path.join(os.getcwd(), "build")
@@ -12,16 +13,18 @@ config = {
     ### BUILDBOT
     "buildbot_json_path": "buildprops.json",
     "exes": {
-        'python': 'c:/mozilla-build/python27/python',
-        'virtualenv': ['c:/mozilla-build/python27/python', 'c:/mozilla-build/buildbotve/virtualenv.py'],
+        'python': sys.executable,
+        'virtualenv': [sys.executable, 'c:/mozilla-build/buildbotve/virtualenv.py'],
         'hg': 'c:/mozilla-build/hg/hg',
+        'mozinstall': ['%s/build/venv/scripts/python' % os.getcwd(),
+                       '%s/build/venv/scripts/mozinstall-script.py' % os.getcwd()],
     },
     ###
     "installer_path": INSTALLER_PATH,
     "binary_path": BINARY_PATH,
     "xpcshell_name": XPCSHELL_NAME,
-    "virtualenv_path": 'c:/talos-slave/test/build/venv',
-    "virtualenv_python_dll": 'c:/mozilla-build/python27/python27.dll',
+    "virtualenv_path": 'venv',
+    "virtualenv_python_dll": os.path.join(os.path.dirname(sys.executable), "python27.dll"),
     "simplejson_url": "http://puppetagain.pub.build.mozilla.org/data/python/packages/simplejson-2.1.3.tar.gz",
     "run_file_names": {
         "mochitest": "runtests.py",
@@ -89,7 +92,8 @@ config = {
             "cmd": [
                 # when configs are consolidated this python path will only show
                 # for windows.
-                "C:\\mozilla-build\\python25\\python.exe", "../scripts/external_tools/mouse_and_screen_resolution.py",
+                os.path.join(os.getcwd(), "build", "venv", "Scripts", "python"),
+                "../scripts/external_tools/mouse_and_screen_resolution.py",
                 "--configuration-url",
                 "http://hg.mozilla.org/%(repo_path)s/raw-file/%(revision)s/" +
                     "testing/machine-configuration.json"],
