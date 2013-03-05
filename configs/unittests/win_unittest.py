@@ -70,8 +70,12 @@ config = {
         "reftest": ["tests/reftest/tests/layout/reftests/reftest.list"],
         "crashtest": ["tests/reftest/tests/testing/crashtest/crashtests.list"],
         "jsreftest": ["--extra-profile-file=tests/jsreftest/tests/user.js", "tests/jsreftest/tests/jstests.list"],
+        "reftest-ipc": ['--setpref=browser.tabs.remote=true',
+                        'tests/reftest/tests/layout/reftests/reftest-sanity/reftest.list'],
         "reftest-no-accel": ["--setpref=gfx.direct2d.disabled=true", "--setpref=layers.acceleration.disabled=true",
                              "tests/reftest/tests/layout/reftests/reftest.list"],
+        "crashtest-ipc": ['--setpref=browser.tabs.remote=true',
+                          'tests/reftest/tests/testing/crashtest/crashtests.list'],
     },
     "all_xpcshell_suites": {
         "xpcshell": ["--manifest=tests/xpcshell/tests/all-test-dirs.list",
@@ -92,7 +96,7 @@ config = {
             "cmd": [
                 # when configs are consolidated this python path will only show
                 # for windows.
-                os.path.join(os.getcwd(), "build", "venv", "Scripts", "python"),
+                sys.executable,
                 "../scripts/external_tools/mouse_and_screen_resolution.py",
                 "--configuration-url",
                 "http://hg.mozilla.org/%(repo_path)s/raw-file/%(revision)s/" +

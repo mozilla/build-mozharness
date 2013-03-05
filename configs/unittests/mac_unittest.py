@@ -60,6 +60,10 @@ config = {
         "reftest": ["tests/reftest/tests/layout/reftests/reftest.list"],
         "crashtest": ["tests/reftest/tests/testing/crashtest/crashtests.list"],
         "jsreftest": ["--extra-profile-file=tests/jsreftest/tests/user.js", "tests/jsreftest/tests/jstests.list"],
+        "reftest-ipc": ['--setpref=browser.tabs.remote=true',
+                        'tests/reftest/tests/layout/reftests/reftest-sanity/reftest.list'],
+        "crashtest-ipc": ['--setpref=browser.tabs.remote=true',
+                          'tests/reftest/tests/testing/crashtest/crashtests.list'],
     },
     "all_xpcshell_suites": {
         "xpcshell": ["--manifest=tests/xpcshell/tests/all-test-dirs.list",

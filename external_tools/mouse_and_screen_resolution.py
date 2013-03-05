@@ -111,7 +111,6 @@ class POINT(Structure):
     _fields_ = [("x", c_ulong), ("y", c_ulong)]
 
 def queryMousePosition():
-    global pt
     pt = POINT()
     windll.user32.GetCursorPos(byref(pt))
     return { "x": pt.x, "y": pt.y}
