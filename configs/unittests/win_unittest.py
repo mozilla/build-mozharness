@@ -92,7 +92,7 @@ config = {
             "cmd": [
                 # when configs are consolidated this python path will only show
                 # for windows.
-                os.path.join(os.getcwd(), "build", "venv", "Scripts", "python"),
+                sys.executable,
                 "../scripts/external_tools/mouse_and_screen_resolution.py",
                 "--configuration-url",
                 "http://hg.mozilla.org/%(repo_path)s/raw-file/%(revision)s/" +
