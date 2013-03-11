@@ -15,6 +15,7 @@ from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_STATUS_DICT
 
 SUITE_CATEGORIES = ['mochitest', 'reftest', 'xpcshell']
 
+
 class TestSummaryOutputParserHelper(OutputParser):
     def __init__(self, regex=re.compile(r'(passed|failed|todo): (\d+)'), **kwargs):
         self.regex = regex
@@ -47,6 +48,7 @@ class TestSummaryOutputParserHelper(OutputParser):
     def print_summary(self, suite_name):
         self.evaluate_parser()
         self.info("TinderboxPrint: %s: %s\n" % (suite_name, self.tsummary))
+
 
 class DesktopUnittestOutputParser(OutputParser):
     """
@@ -95,7 +97,7 @@ class DesktopUnittestOutputParser(OutputParser):
                 return  # skip harness check and base parse_single_line
         harness_match = self.harness_error_re.match(line)
         if harness_match:
-            self.warning(' %s\n This is a harness error.' % line)
+            self.warning(' %s' % line)
             self.worst_log_level = self.worst_level(WARNING, self.worst_log_level)
             self.tbpl_status = self.worst_level(TBPL_WARNING, self.tbpl_status,
                                                 levels=TBPL_STATUS_DICT.keys())
@@ -155,6 +157,7 @@ class DesktopUnittestOutputParser(OutputParser):
                 (self.leaked and "LEAK") or "L-FAIL")
         # Return the summary.
         self.info("TinderboxPrint: %s<br/>%s\n" % (suite_name, summary))
+
 
 class EmulatorMixin(object):
     """ Currently dependent on both TooltoolMixin and TestingMixin)"""
