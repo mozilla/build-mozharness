@@ -783,7 +783,6 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
             'vcs': "hgtool",
             'dest': os.path.join(dirs['abs_work_dir'], "tools")
         }]
-        #num_retries = self.config.get("global_retries", 10)
         rev = self.vcs_checkout(**repos[0])
         self.set_buildbot_property("tools_revision", rev, write_to_file=True)
 

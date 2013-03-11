@@ -2,7 +2,7 @@ import os
 import re
 import urlparse
 
-from mozharness.base.script import ShellMixin, OSMixin
+from mozharness.base.script import ScriptMixin
 from mozharness.base.log import LogMixin, OutputParser
 from mozharness.base.errors import GitErrorList, VCSException
 
@@ -23,7 +23,7 @@ class GittoolParser(OutputParser):
         super(GittoolParser, self).parse_single_line(line)
 
 
-class GittoolVCS(ShellMixin, OSMixin, LogMixin):
+class GittoolVCS(ScriptMixin, LogMixin):
     def __init__(self, log_obj=None, config=None, vcs_config=None):
         super(GittoolVCS, self).__init__()
 

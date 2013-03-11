@@ -19,7 +19,7 @@ import time
 
 from mozharness.base.errors import ADBErrorList
 from mozharness.base.log import LogMixin, DEBUG
-from mozharness.base.script import ShellMixin, OSMixin
+from mozharness.base.script import ScriptMixin
 
 
 
@@ -42,7 +42,7 @@ class DeviceException(Exception):
 
 
 # BaseDeviceHandler {{{1
-class BaseDeviceHandler(ShellMixin, OSMixin, LogMixin):
+class BaseDeviceHandler(ScriptMixin, LogMixin):
     device_id = None
     device_root = None
     default_port = None

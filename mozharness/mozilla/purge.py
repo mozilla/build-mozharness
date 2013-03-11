@@ -20,7 +20,7 @@ from mozharness.base.log import ERROR
 
 
 # PurgeMixin {{{1
-# Depends on ShellMixin for self.run_command,
+# Depends on ScriptMixin for self.run_command,
 # and BuildbotMixin for self.buildbot_config
 class PurgeMixin(object):
     purge_tool = os.path.join(external_tools_path, 'purge_builds.py')

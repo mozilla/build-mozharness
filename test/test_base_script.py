@@ -1,7 +1,9 @@
 import gc
+import mock
 import os
 import re
 import unittest
+
 
 import mozharness.base.errors as errors
 import mozharness.base.log as log
@@ -13,7 +15,7 @@ bar
 baz'''
 
 
-class CleanupObj(script.OSMixin, log.LogMixin):
+class CleanupObj(script.ScriptMixin, log.LogMixin):
     def __init__(self):
         super(CleanupObj, self).__init__()
         self.log_obj = None
@@ -36,6 +38,7 @@ def get_debug_script_obj():
     return s
 
 
+# TestScript {{{1
 class TestScript(unittest.TestCase):
     def setUp(self):
         cleanup()
@@ -135,6 +138,7 @@ class TestScript(unittest.TestCase):
                         msg="error list not working properly")
 
 
+# TestHelperFunctions {{{1
 class TestHelperFunctions(unittest.TestCase):
     temp_file = "test_dir/mozilla"
 
@@ -276,6 +280,7 @@ class TestHelperFunctions(unittest.TestCase):
         self.assertEqual(path, os.path.join('foo', 'bar', 'baz'))
 
 
+# TestScriptLogging {{{1
 class TestScriptLogging(unittest.TestCase):
     # I need a log watcher helper function, here and in test_log.
     def setUp(self):
@@ -372,5 +377,88 @@ class TestScriptLogging(unittest.TestCase):
     def test_fatal(self):
         self._test_log_level(FATAL, [INFO, WARNING, ERROR, CRITICAL, FATAL])
 
+
+# TestRetry {{{1
+class NewError(Exception):
+    pass
+
+
+class OtherError(Exception):
+    pass
+
+
+class TestRetry(unittest.TestCase):
+    def setUp(self):
+        self.ATTEMPT_N = 1
+        self.s = script.BaseScript(initial_config_file='test/test.json')
+
+    def _succeedOnSecondAttempt(self, foo=None, exception=Exception):
+        if self.ATTEMPT_N == 2:
+            self.ATTEMPT_N += 1
+            return
+        self.ATTEMPT_N += 1
+        raise exception("Fail")
+
+    def _raiseCustomException(self):
+        return self._succeedOnSecondAttempt(exception=NewError)
+
+    def _alwaysPass(self):
+        self.ATTEMPT_N += 1
+        return True
+
+    def _mirrorArgs(self, *args, **kwargs):
+        return args, kwargs
+
+    def _alwaysFail(self):
+        raise Exception("Fail")
+
+    def testRetrySucceed(self):
+        # Will raise if anything goes wrong
+        self.s.retry(self._succeedOnSecondAttempt, attempts=2, sleeptime=0)
+
+    def testRetryFailWithoutCatching(self):
+        self.assertRaises(Exception, self.s.retry, self._alwaysFail, sleeptime=0,
+                          exceptions=())
+
+    def testRetryFailEnsureRaisesLastException(self):
+        self.assertRaises(SystemExit, self.s.retry, self._alwaysFail, sleeptime=0,
+                          error_level=FATAL)
+
+    def testRetrySelectiveExceptionSucceed(self):
+        self.s.retry(self._raiseCustomException, attempts=2, sleeptime=0,
+                     retry_exceptions=(NewError,))
+
+    def testRetrySelectiveExceptionFail(self):
+        self.assertRaises(NewError, self.s.retry, self._raiseCustomException, attempts=2,
+                          sleeptime=0, retry_exceptions=(OtherError,))
+
+    # TODO: figure out a way to test that the sleep actually happened
+    def testRetryWithSleep(self):
+        self.s.retry(self._succeedOnSecondAttempt, attempts=2, sleeptime=1)
+
+    def testRetryOnlyRunOnce(self):
+        """Tests that retry() doesn't call the action again after success"""
+        self.s.retry(self._alwaysPass, attempts=3, sleeptime=0)
+        # self.ATTEMPT_N gets increased regardless of pass/fail
+        self.assertEquals(2, self.ATTEMPT_N)
+
+    def testRetryReturns(self):
+        ret = self.s.retry(self._alwaysPass, sleeptime=0)
+        self.assertEquals(ret, True)
+
+    def testRetryCleanupIsCalled(self):
+        cleanup = mock.Mock()
+        self.s.retry(self._succeedOnSecondAttempt, cleanup=cleanup, sleeptime=0)
+        self.assertEquals(cleanup.call_count, 1)
+
+    def testRetryArgsPassed(self):
+        args = (1, 'two', 3)
+        kwargs = dict(foo='a', bar=7)
+        ret = self.s.retry(self._mirrorArgs, args=args, kwargs=kwargs.copy(), sleeptime=0)
+        print ret
+        self.assertEqual(ret[0], args)
+        self.assertEqual(ret[1], kwargs)
+
+# main {{{1
 if __name__ == '__main__':
     unittest.main()
