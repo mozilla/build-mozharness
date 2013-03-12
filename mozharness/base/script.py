@@ -29,15 +29,23 @@ except ImportError:
 
 from mozharness.base.config import BaseConfig
 from mozharness.base.log import SimpleFileLogger, MultiFileLogger, \
-    LogMixin, OutputParser, DEBUG, INFO, ERROR, WARNING, FATAL
+    LogMixin, OutputParser, DEBUG, INFO, ERROR, FATAL
 
 
-# OSMixin {{{1
-class OSMixin(object):
-    """Filesystem commands and the like.
+# ScriptMixin {{{1
+class ScriptMixin(object):
+    """This mixin contains simple filesystem commands and the like.
 
-    Depends on LogMixin, ShellMixin, and a self.config of some sort.
+    It also contains some very special but very complex methods that,
+    together with logging and config, provide the base for all scripts
+    in this harness.
+
+    Depends on LogMixin and a self.config of some sort.
     """
+
+    env = None
+
+    # Simple filesystem commands {{{2
     def mkdir_p(self, path, error_level=ERROR):
         """
         Returns None for success, not None for failure
@@ -53,39 +61,40 @@ class OSMixin(object):
         else:
             self.debug("mkdir_p: %s Already exists." % path)
 
-    def rmtree(self, path, num_retries=None, log_level=INFO,
-               error_level=ERROR, exit_code=-1):
+    def rmtree(self, path, log_level=INFO, error_level=ERROR,
+               exit_code=-1):
         """
         Returns None for success, not None for failure
         """
         self.log("rmtree: %s" % path, level=log_level)
-        if num_retries is None:
-            num_retries = self.config.get('global_retries', 5)
-        try_num = 0
         if os.path.exists(path):
-            while try_num <= num_retries:
-                if os.path.isdir(path):
-                    if self._is_windows():
-                        # bug 789520: using rmdir /s /q instead of
-                        # self._rmdir_recursive
-                        self.run_command('rmdir /S /Q "%s"' % path)
-                    else:
-                        shutil.rmtree(path)
+            error_message = "Unable to remove %s!" % path
+            if os.path.isdir(path):
+                if self._is_windows():
+                    # bug 789520: using rmdir /s /q instead of
+                    # self._rmdir_recursive
+                    return self.retry(
+                        self.run_command,
+                        error_level=error_level,
+                        error_message=error_message,
+                        args=('rmdir /S /Q "%s"' % path, ),
+                    )
                 else:
-                    os.remove(path)
-                try_num += 1
-                if os.path.exists(path):
-                    self.warning("Failed to remove %s on try %d." % (path, try_num))
-                    if try_num <= num_retries:
-                        sleep_time = try_num * 2
-                        self.info("Sleeping %d seconds..." % sleep_time)
-                        time.sleep(sleep_time)
-                else:
-                    break
+                    return self.retry(
+                        shutil.rmtree,
+                        error_level=error_level,
+                        error_message=error_message,
+                        retry_exceptions=(OSError, ),
+                        args=(path, ),
+                    )
             else:
-                self.log('Unable to remove %s!' % path, level=error_level,
-                         exit_code=exit_code)
-                return -1
+                return self.retry(
+                    os.remove,
+                    error_level=error_level,
+                    error_message=error_message,
+                    retry_exceptions=(OSError, ),
+                    args=(path, ),
+                )
         else:
             self.debug("%s doesn't exist." % path)
 
@@ -142,11 +151,41 @@ class OSMixin(object):
         else:
             return parsed.netloc
 
+    def _download_file(self, url, file_name):
+        """ Helper script for download_file()
+            """
+        try:
+            f = urllib2.urlopen(url)
+            local_file = open(file_name, 'wb')
+            while True:
+                block = f.read(1024 ** 2)
+                if not block:
+                    break
+                local_file.write(block)
+            local_file.close()
+            return file_name
+        except urllib2.HTTPError, e:
+            self.warning("Server returned status %s %s for %s" % (str(e.code), str(e), url))
+            raise
+        except urllib2.URLError, e:
+            self.warning("URL Error: %s" % url)
+            remote_host = urlparse.urlsplit(url)[1]
+            if remote_host:
+                nslookup = self.query_exe('nslookup')
+                error_list = [{
+                    'substr': "server can't find %s" % remote_host,
+                    'level': ERROR,
+                    'explanation': "Either %s is an invalid hostname, or DNS is busted." % remote_host,
+                }]
+                self.run_command([nslookup, remote_host],
+                                 error_list=error_list)
+            raise
+
     # http://www.techniqal.com/blog/2008/07/31/python-file-read-write-with-urllib2/
     # TODO thinking about creating a transfer object.
     def download_file(self, url, file_name=None, parent_dir=None,
                       create_parent_dir=True, error_level=ERROR,
-                      num_retries=None, exit_code=-1):
+                      exit_code=-1):
         """Python wget.
         """
         if not file_name:
@@ -160,47 +199,16 @@ class OSMixin(object):
             file_name = os.path.join(parent_dir, file_name)
             if create_parent_dir:
                 self.mkdir_p(parent_dir, error_level=error_level)
-        if num_retries is None:
-            num_retries = self.config.get("global_retries", 5)
         self.info("Downloading %s to %s" % (url, file_name))
-        try_num = 0
-        while try_num <= num_retries:
-            try_num += 1
-            level = WARNING
-            if try_num > num_retries:
-                level = error_level
-            try:
-                f = urllib2.urlopen(url)
-                local_file = open(file_name, 'wb')
-                while True:
-                    block = f.read(1024 ** 2)
-                    if not block:
-                        break
-                    local_file.write(block)
-                local_file.close()
-                return file_name
-            except urllib2.HTTPError, e:
-                self.log("Try %d: Server returned status %s %s for %s" % (try_num, str(e.code), str(e), url),
-                         level=level, exit_code=exit_code)
-            except urllib2.URLError, e:
-                if try_num > num_retries:
-                    remote_host = urlparse.urlsplit(url)[1]
-                    if not remote_host:
-                        return
-                    nslookup = self.query_exe('nslookup')
-                    error_list = [{
-                        'substr': "server can't find %s" % remote_host,
-                        'level': ERROR,
-                        'explanation': "Either %s is an invalid hostname, or DNS is busted." % remote_host,
-                    }]
-                    self.run_command([nslookup, remote_host],
-                                     error_list=error_list)
-                self.log("Try %d: URL Error: %s" % (try_num, url), level=level,
-                         exit_code=exit_code)
-            if try_num <= num_retries:
-                sleep_time = try_num * 20
-                self.info("Sleeping %d seconds..." % sleep_time)
-                time.sleep(sleep_time)
+        status = self.retry(
+            self._download_file,
+            args=(url, file_name),
+            failure_status=None,
+            retry_exceptions=(urllib2.HTTPError, urllib2.URLError),
+            error_message="Can't download from %s to %s!" % (url, file_name),
+            error_level=error_level,
+        )
+        return status
 
     def move(self, src, dest, log_level=INFO, error_level=ERROR,
              exit_code=-1):
@@ -289,7 +297,7 @@ class OSMixin(object):
         Write contents to file_path.
 
         This doesn't currently create the parent_dir or translate into
-        abs_path; that needs to be done beforehand, since OSMixin doesn't
+        abs_path; that needs to be done beforehand, since ScriptMixin doesn't
         necessarily have access to query_abs_dirs().
 
         Returns file_path if successful, None if not.
@@ -362,17 +370,74 @@ class OSMixin(object):
                     return exe_file
         return None
 
+    # More complex commands {{{2
+    def retry(self, action, attempts=None, sleeptime=60, max_sleeptime=5 * 60,
+              retry_exceptions=(Exception, ), good_statuses=None, cleanup=None,
+              error_level=ERROR, error_message="%(action)s failed after %(attempts)d tries!",
+              failure_status=-1, args=(), kwargs={}):
+        """ Generic retry command.
+            Ported from tools util.retry.
 
-# ShellMixin {{{1
-class ShellMixin(object):
-    """These are very special but very complex methods that, together with
-    logging and config, provide the base for all scripts in this harness.
+            Call `action' a maximum of `attempts' times until it succeeds,
+            defaulting to self.config.get('global_retries', 5).
 
-    This is currently dependent on LogMixin and OSMixin, and assumes that
-    there is a self.config of some sort.
-    """
-    def __init__(self):
-        self.env = None
+            `sleeptime' is the number of seconds to wait between attempts,
+            defaulting to 60 and doubling each retry attempt, to a maximum of
+            `max_sleeptime'.
+
+            `retry_exceptions' is a tuple of Exceptions that should be caught.
+            If exceptions other than those listed in `retry_exceptions' are
+            raised from `action', they will be raised immediately.
+
+            `good_statuses' is a tuple of return values which, if specified,
+            will result in retrying if the return value isn't listed.
+
+            If `cleanup' is provided and callable it will be called immediately
+            after an Exception is caught.  No arguments will be passed to it.
+            If your cleanup function requires arguments it is recommended that
+            you wrap it in an argumentless function.
+
+            `args' and `kwargs' are a tuple and dict of arguments to pass onto
+            to `callable'.
+            """
+        if not callable(action):
+            self.fatal("retry() called with an uncallable method %s!" % action)
+        if cleanup and not callable(cleanup):
+            self.fatal("retry() called with an uncallable cleanup method %s!" % cleanup)
+        if not attempts:
+            attempts = self.config.get("global_retries", 5)
+        if max_sleeptime < sleeptime:
+            self.debug("max_sleeptime %d less than sleeptime %d" % (
+                       max_sleeptime, sleeptime))
+        n = 0
+        while n <= attempts:
+            retry = False
+            n += 1
+            try:
+                self.info("retry: Calling %s with args: %s, kwargs: %s, attempt #%d" %
+                          (action, str(args), str(kwargs), n))
+                status = action(*args, **kwargs)
+                if good_statuses and status not in good_statuses:
+                    retry = True
+            except retry_exceptions, e:
+                retry = True
+                error_message = "%s\nCaught exception: %s" % (error_message, str(e))
+
+            if not retry:
+                return status
+            else:
+                if cleanup:
+                    cleanup()
+                if n == attempts:
+                    self.log(error_message, level=error_level)
+                    return failure_status
+                if sleeptime > 0:
+                    self.info("retry: Failed, sleeping %d seconds before retrying" %
+                              sleeptime)
+                    time.sleep(sleeptime)
+                    sleeptime = sleeptime * 2
+                    if sleeptime > max_sleeptime:
+                        sleeptime = max_sleeptime
 
     def query_env(self, partial_env=None, replace_dict=None,
                   set_self_env=None, log_level=DEBUG):
@@ -641,7 +706,7 @@ class ShellMixin(object):
 
 
 # BaseScript {{{1
-class BaseScript(ShellMixin, OSMixin, LogMixin, object):
+class BaseScript(ScriptMixin, LogMixin, object):
     def __init__(self, config_options=None, default_log_level="info", **kwargs):
         super(BaseScript, self).__init__()
         self.return_code = 0

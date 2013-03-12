@@ -10,7 +10,6 @@
 from copy import deepcopy
 import os
 import sys
-import time
 
 sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.dirname(sys.path[0]))))
 
@@ -28,6 +27,7 @@ VCS_DICT = {
     'gittool': GittoolVCS,
 }
 
+
 # VCSMixin {{{1
 class VCSMixin(object):
     """Basic VCS methods that are vcs-agnostic.
@@ -42,13 +42,19 @@ class VCSMixin(object):
             dest = dest.replace('.git', '')
         return dest
 
-    def vcs_checkout(self, vcs=None, num_retries=None, error_level=FATAL,
-                     **kwargs):
+    def _get_revision(self, vcs_obj, dest):
+        try:
+            got_revision = vcs_obj.ensure_repo_and_revision()
+            if got_revision:
+                return got_revision
+        except VCSException:
+            self.rmtree(dest)
+            raise
+
+    def vcs_checkout(self, vcs=None, error_level=FATAL, **kwargs):
         """ Check out a single repo.
         """
         c = self.config
-        if num_retries is None:
-            num_retries = self.config.get("global_retries", 10)
         if not vcs:
             if c.get('default_vcs'):
                 vcs = c['default_vcs']
@@ -60,33 +66,23 @@ class VCSMixin(object):
         vcs_class = VCS_DICT.get(vcs)
         if not vcs_class:
             self.error("Running vcs_checkout with kwargs %s" % str(kwargs))
-            raise VCSException, "No VCS set!"
+            raise VCSException("No VCS set!")
         # need a better way to do this.
         if 'dest' not in kwargs:
             kwargs['dest'] = self.query_dest(kwargs)
         if 'vcs_share_base' not in kwargs:
             kwargs['vcs_share_base'] = c.get('%s_share_base' % vcs, c.get('vcs_share_base'))
         vcs_obj = vcs_class(
-         log_obj=self.log_obj,
-         config=self.config,
-         vcs_config=kwargs,
+            log_obj=self.log_obj,
+            config=self.config,
+            vcs_config=kwargs,
         )
-        try_num = 0
-        while try_num <= num_retries:
-            try:
-                got_revision = vcs_obj.ensure_repo_and_revision()
-                if got_revision:
-                    return got_revision
-            except VCSException, e:
-                try_num += 1
-                self.warning("Try %d: Can't checkout %s: %s!" % (try_num, kwargs['repo'], str(e)))
-                if try_num <= num_retries:
-                    self.rmtree(kwargs['dest'])
-                    sleep_time = try_num * 2
-                    self.info("Sleeping %d..." % sleep_time)
-                    time.sleep(sleep_time)
-        else:
-            self.log("Can't checkout %s after %d tries!" % (kwargs['repo'], try_num), level=error_level)
+        return self.retry(
+            self._get_revision,
+            error_level=error_level,
+            error_message="Can't checkout %s!" % kwargs['repo'],
+            args=(vcs_obj, kwargs['dest']),
+        )
 
     def vcs_checkout_repos(self, repo_list, parent_dir=None,
                            tag_override=None, **kwargs):
@@ -111,19 +107,20 @@ class VCSMixin(object):
         self.chdir(orig_dir)
         return revision_dict
 
+
 class VCSScript(VCSMixin, BaseScript):
     def __init__(self, **kwargs):
         super(VCSScript, self).__init__(**kwargs)
 
-    def pull(self, num_retries=None, repos=None):
+    def pull(self, repos=None):
         repos = repos or self.config.get('repos')
         if not repos:
             self.info("Pull has nothing to do!")
             return
         dirs = self.query_abs_dirs()
         return self.vcs_checkout_repos(self.config['repos'],
-                                       parent_dir=dirs['abs_work_dir'],
-                                       num_retries=num_retries)
+                                       parent_dir=dirs['abs_work_dir'])
+
 
 # Specific VCS stubs {{{1
 # For ease of use.
@@ -132,7 +129,6 @@ class VCSScript(VCSMixin, BaseScript):
 # vcsbase, was giving me issues.
 class MercurialScript(VCSScript):
     default_vcs = 'hg'
-
 
 
 # __main__ {{{1

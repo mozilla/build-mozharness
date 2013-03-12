@@ -14,7 +14,7 @@ class MockMixin(object):
     """Provides methods to setup and interact with mock environments.
     https://wiki.mozilla.org/ReleaseEngineering/Applications/Mock
 
-    This is dependent on ShellMixin
+    This is dependent on ScriptMixin
     """
     done_mock_setup = False
     mock_enabled = False
@@ -90,14 +90,14 @@ class MockMixin(object):
         return func(cmd, cwd=cwd, **kwargs)
 
     def run_mock_command(self, mock_target, command, cwd=None, env=None, **kwargs):
-        """Same as ShellMixin.run_command, except runs command inside mock
+        """Same as ScriptMixin.run_command, except runs command inside mock
         environment `mock_target`."""
         return self._do_mock_command(
                 super(MockMixin, self).run_command,
                 mock_target, command, cwd, env, **kwargs)
 
     def get_mock_output_from_command(self, mock_target, command, cwd=None, env=None, **kwargs):
-        """Same as ShellMixin.get_output_from_command, except runs command
+        """Same as ScriptMixin.get_output_from_command, except runs command
         inside mock environment `mock_target`."""
         return self._do_mock_command(
                 super(MockMixin, self).get_output_from_command,

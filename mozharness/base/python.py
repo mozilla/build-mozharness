@@ -48,7 +48,7 @@ class VirtualenvMixin(object):
      * virtualenv_modules lists the module names.
      * MODULE_url list points to the module URLs (optional)
     Requires virtualenv to be in PATH.
-    Depends on OSMixin
+    Depends on ScriptMixin
     '''
     python_paths = {}
     site_packages_path = None

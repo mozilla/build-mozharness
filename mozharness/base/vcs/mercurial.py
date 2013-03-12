@@ -21,7 +21,7 @@ sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.dirname(sys.path[0]))
 
 from mozharness.base.errors import HgErrorList, VCSException
 from mozharness.base.log import LogMixin
-from mozharness.base.script import ShellMixin, OSMixin
+from mozharness.base.script import ScriptMixin
 
 HG_OPTIONS = ['--config', 'ui.merge=internal:merge']
 
@@ -49,7 +49,7 @@ def make_hg_url(hg_host, repo_path, protocol='http', revision=None,
         assert revision
         return '/'.join([p.strip('/') for p in [repo, 'raw-file', revision, filename]])
 
-class MercurialVCS(ShellMixin, OSMixin, LogMixin, object):
+class MercurialVCS(ScriptMixin, LogMixin, object):
     # For the most part, scripts import mercurial, update,
     # hgtool uses mercurial, share, out
     # tag-release.py imports

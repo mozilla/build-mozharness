@@ -35,74 +35,74 @@ from mozharness.mozilla.l10n.locales import LocalesMixin
 from mozharness.mozilla.mock import MockMixin
 
 
-
 # MobileSingleLocale {{{1
 class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
                          MobileSigningMixin, TransferMixin,
                          BuildbotMixin, MercurialScript):
     config_options = [[
-     ['--locale',],
-     {"action": "extend",
-      "dest": "locales",
-      "type": "string",
-      "help": "Specify the locale(s) to sign and update"
-     }
-    ],[
-     ['--locales-file',],
-     {"action": "store",
-      "dest": "locales_file",
-      "type": "string",
-      "help": "Specify a file to determine which locales to sign and update"
-     }
-    ],[
-     ['--tag-override',],
-     {"action": "store",
-      "dest": "tag_override",
-      "type": "string",
-      "help": "Override the tags set for all repos"
-     }
-    ],[
-     ['--user-repo-override',],
-     {"action": "store",
-      "dest": "user_repo_override",
-      "type": "string",
-      "help": "Override the user repo path for all repos"
-     }
-    ],[
-     ['--release-config-file',],
-     {"action": "store",
-      "dest": "release_config_file",
-      "type": "string",
-      "help": "Specify the release config file to use"
-     }
-    ],[
-     ['--key-alias',],
-     {"action": "store",
-      "dest": "key_alias",
-      "type": "choice",
-      "default": "nightly",
-      "choices": ["nightly", "release"],
-      "help": "Specify the signing key alias"
-     }
-    ],[
-     ['--this-chunk',],
-     {"action": "store",
-      "dest": "this_locale_chunk",
-      "type": "int",
-      "help": "Specify which chunk of locales to run"
-     }
-    ],[
-     ['--total-chunks',],
-     {"action": "store",
-      "dest": "total_locale_chunks",
-      "type": "int",
-      "help": "Specify the total number of chunks of locales"
-     }
+        ['--locale', ],
+        {"action": "extend",
+         "dest": "locales",
+         "type": "string",
+         "help": "Specify the locale(s) to sign and update"
+         }
+    ], [
+        ['--locales-file', ],
+        {"action": "store",
+         "dest": "locales_file",
+         "type": "string",
+         "help": "Specify a file to determine which locales to sign and update"
+         }
+    ], [
+        ['--tag-override', ],
+        {"action": "store",
+         "dest": "tag_override",
+         "type": "string",
+         "help": "Override the tags set for all repos"
+         }
+    ], [
+        ['--user-repo-override', ],
+        {"action": "store",
+         "dest": "user_repo_override",
+         "type": "string",
+         "help": "Override the user repo path for all repos"
+         }
+    ], [
+        ['--release-config-file', ],
+        {"action": "store",
+         "dest": "release_config_file",
+         "type": "string",
+         "help": "Specify the release config file to use"
+         }
+    ], [
+        ['--key-alias', ],
+        {"action": "store",
+         "dest": "key_alias",
+         "type": "choice",
+         "default": "nightly",
+         "choices": ["nightly", "release"],
+         "help": "Specify the signing key alias"
+         }
+    ], [
+        ['--this-chunk', ],
+        {"action": "store",
+         "dest": "this_locale_chunk",
+         "type": "int",
+         "help": "Specify which chunk of locales to run"
+         }
+    ], [
+        ['--total-chunks', ],
+        {"action": "store",
+         "dest": "total_locale_chunks",
+         "type": "int",
+         "help": "Specify the total number of chunks of locales"
+         }
     ]]
 
     def __init__(self, require_config_file=True):
         LocalesMixin.__init__(self)
-        MercurialScript.__init__(self,
+        MercurialScript.__init__(
+            self,
             config_options=self.config_options,
             all_actions=[
                 "clobber",
@@ -172,10 +172,10 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
         env = self.query_repack_env()
         dirs = self.query_abs_dirs()
         output = self.get_output_from_command_m(["make", "ident"],
-                                              cwd=dirs['abs_locales_dir'],
-                                              env=env,
-                                              silent=True,
-                                              halt_on_failure=True)
+                                                cwd=dirs['abs_locales_dir'],
+                                                env=env,
+                                                silent=True,
+                                                halt_on_failure=True)
         parser = OutputParser(config=self.config, log_obj=self.log_obj,
                               error_list=MakefileErrorList)
         parser.add_lines(output)
@@ -294,10 +294,8 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
                 repos.append(repo_dict)
         else:
             repos = c['repos']
-        num_retries = c.get('global_retries', 10)
         self.vcs_checkout_repos(repos, parent_dir=dirs['abs_work_dir'],
-                                tag_override=c.get('tag_override'),
-                                num_retries=num_retries)
+                                tag_override=c.get('tag_override'))
         self.pull_locale_source()
 
     # list_locales() is defined in LocalesMixin.
@@ -316,16 +314,16 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
         env = self.query_repack_env()
         make = self.query_exe("make")
         if self.run_command_m([make, "-f", "client.mk", "configure"],
-                            cwd=dirs['abs_mozilla_dir'],
-                            env=env,
-                            error_list=MakefileErrorList):
+                              cwd=dirs['abs_mozilla_dir'],
+                              env=env,
+                              error_list=MakefileErrorList):
             self.fatal("Configure failed!")
         for make_dir in c.get('make_dirs', []):
             self.run_command_m([make],
-                             cwd=os.path.join(dirs['abs_objdir'], make_dir),
-                             env=env,
-                             error_list=MakefileErrorList,
-                             halt_on_failure=True)
+                               cwd=os.path.join(dirs['abs_objdir'], make_dir),
+                               env=env,
+                               error_list=MakefileErrorList,
+                               halt_on_failure=True)
             if buildid:
                 self.run_command_m([make, 'export',
                                     'MOZ_BUILD_DATE=%s' % str(buildid)],
@@ -347,24 +345,24 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
         env = self.query_repack_env()
         self._setup_configure()
         self.run_command_m([make, "wget-en-US"],
-                         cwd=dirs['abs_locales_dir'],
-                         env=env,
-                         error_list=MakefileErrorList,
-                         halt_on_failure=True)
+                           cwd=dirs['abs_locales_dir'],
+                           env=env,
+                           error_list=MakefileErrorList,
+                           halt_on_failure=True)
         self.run_command_m([make, "unpack"],
-                         cwd=dirs['abs_locales_dir'],
-                         env=env,
-                         error_list=MakefileErrorList,
-                         halt_on_failure=True)
+                           cwd=dirs['abs_locales_dir'],
+                           env=env,
+                           error_list=MakefileErrorList,
+                           halt_on_failure=True)
         revision = self.query_revision()
         if not revision:
             self.fatal("Can't determine revision!")
         # TODO do this through VCSMixin instead of hardcoding hg
         self.run_command_m([hg, "update", "-r", revision],
-                         cwd=dirs["abs_mozilla_dir"],
-                         env=env,
-                         error_list=BaseErrorList,
-                         halt_on_failure=True)
+                           cwd=dirs["abs_mozilla_dir"],
+                           env=env,
+                           error_list=BaseErrorList,
+                           halt_on_failure=True)
         # Configure again since the hg update may have invalidated it.
         buildid = self.query_buildid()
         self._setup_configure(buildid=buildid)
@@ -388,10 +386,10 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
                 self.add_failure(locale, message="%s failed in compare-locales!" % locale)
                 continue
             if self.run_command_m([make, "installers-%s" % locale],
-                                cwd=dirs['abs_locales_dir'],
-                                env=repack_env,
-                                error_list=MakefileErrorList,
-                                halt_on_failure=False):
+                                  cwd=dirs['abs_locales_dir'],
+                                  env=repack_env,
+                                  error_list=MakefileErrorList,
+                                  halt_on_failure=False):
                 self.add_failure(locale, message="%s failed in make installers-%s!" % (locale, locale))
                 continue
             signed_path = os.path.join(base_package_dir,
@@ -510,7 +508,6 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
                                        c['aus_user'], c['aus_server'],
                                        c['aus_upload_base_dir']):
             self.return_code += 1
-
 
 
 # main {{{1

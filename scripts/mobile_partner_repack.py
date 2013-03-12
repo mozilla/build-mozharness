@@ -26,82 +26,82 @@ from mozharness.mozilla.signing import MobileSigningMixin
 SUPPORTED_PLATFORMS = ["android"]
 
 
-
 # MobilePartnerRepack {{{1
 class MobilePartnerRepack(LocalesMixin, ReleaseMixin, MobileSigningMixin,
                           TransferMixin, MercurialScript):
     config_options = [[
-     ['--locale',],
-     {"action": "extend",
-      "dest": "locales",
-      "type": "string",
-      "help": "Specify the locale(s) to repack"
-     }
-    ],[
-     ['--partner',],
-     {"action": "extend",
-      "dest": "partners",
-      "type": "string",
-      "help": "Specify the partner(s) to repack"
-     }
-    ],[
-     ['--locales-file',],
-     {"action": "store",
-      "dest": "locales_file",
-      "type": "string",
-      "help": "Specify a json file to determine which locales to repack"
-     }
-    ],[
-     ['--tag-override',],
-     {"action": "store",
-      "dest": "tag_override",
-      "type": "string",
-      "help": "Override the tags set for all repos"
-     }
-    ],[
-     ['--platform',],
-     {"action": "extend",
-      "dest": "platforms",
-      "type": "choice",
-      "choices": SUPPORTED_PLATFORMS,
-      "help": "Specify the platform(s) to repack"
-     }
-    ],[
-     ['--user-repo-override',],
-     {"action": "store",
-      "dest": "user_repo_override",
-      "type": "string",
-      "help": "Override the user repo path for all repos"
-     }
-    ],[
-     ['--release-config-file',],
-     {"action": "store",
-      "dest": "release_config_file",
-      "type": "string",
-      "help": "Specify the release config file to use"
-     }
-    ],[
-     ['--version',],
-     {"action": "store",
-      "dest": "version",
-      "type": "string",
-      "help": "Specify the current version"
-     }
-    ],[
-     ['--buildnum',],
-     {"action": "store",
-      "dest": "buildnum",
-      "type": "int",
-      "default": 1,
-      "metavar": "INT",
-      "help": "Specify the current release build num (e.g. build1, build2)"
-     }
+        ['--locale', ],
+        {"action": "extend",
+         "dest": "locales",
+         "type": "string",
+         "help": "Specify the locale(s) to repack"
+         }
+    ], [
+        ['--partner', ],
+        {"action": "extend",
+         "dest": "partners",
+         "type": "string",
+         "help": "Specify the partner(s) to repack"
+         }
+    ], [
+        ['--locales-file', ],
+        {"action": "store",
+         "dest": "locales_file",
+         "type": "string",
+         "help": "Specify a json file to determine which locales to repack"
+         }
+    ], [
+        ['--tag-override', ],
+        {"action": "store",
+         "dest": "tag_override",
+         "type": "string",
+         "help": "Override the tags set for all repos"
+         }
+    ], [
+        ['--platform', ],
+        {"action": "extend",
+         "dest": "platforms",
+         "type": "choice",
+         "choices": SUPPORTED_PLATFORMS,
+         "help": "Specify the platform(s) to repack"
+         }
+    ], [
+        ['--user-repo-override', ],
+        {"action": "store",
+         "dest": "user_repo_override",
+         "type": "string",
+         "help": "Override the user repo path for all repos"
+         }
+    ], [
+        ['--release-config-file', ],
+        {"action": "store",
+         "dest": "release_config_file",
+         "type": "string",
+         "help": "Specify the release config file to use"
+         }
+    ], [
+        ['--version', ],
+        {"action": "store",
+         "dest": "version",
+         "type": "string",
+         "help": "Specify the current version"
+         }
+    ], [
+        ['--buildnum', ],
+        {"action": "store",
+         "dest": "buildnum",
+         "type": "int",
+         "default": 1,
+         "metavar": "INT",
+         "help": "Specify the current release build num (e.g. build1, build2)"
+         }
     ]]
 
     def __init__(self, require_config_file=True):
         self.release_config = {}
         LocalesMixin.__init__(self)
-        MercurialScript.__init__(self,
+        MercurialScript.__init__(
+            self,
             config_options=self.config_options,
             all_actions=[
                 "passphrase",
@@ -143,10 +143,8 @@ class MobilePartnerRepack(LocalesMixin, ReleaseMixin, MobileSigningMixin,
                 repos.append(repo_dict)
         else:
             repos = c['repos']
-        num_retries = c.get("global_retries", 10)
         self.vcs_checkout_repos(repos, parent_dir=dirs['abs_work_dir'],
-                                tag_override=c.get('tag_override'),
-                                num_retries=num_retries)
+                                tag_override=c.get('tag_override'))
 
     def download(self):
         c = self.config
@@ -161,15 +159,15 @@ class MobilePartnerRepack(LocalesMixin, ReleaseMixin, MobileSigningMixin,
         for platform in c['platforms']:
             base_installer_name = c['installer_base_names'][platform]
             base_url = c['download_base_url'] + '/' + \
-                       c['download_unsigned_base_subdir'] + '/' + \
-                       base_installer_name
+                c['download_unsigned_base_subdir'] + '/' + \
+                base_installer_name
             replace_dict['platform'] = platform
             for locale in locales:
                 replace_dict['locale'] = locale
                 url = base_url % replace_dict
                 installer_name = base_installer_name % replace_dict
                 parent_dir = '%s/original/%s/%s' % (dirs['abs_work_dir'],
-                                           platform, locale)
+                                                    platform, locale)
                 file_path = '%s/%s' % (parent_dir, installer_name)
                 self.mkdir_p(parent_dir)
                 total_count += 1
@@ -202,7 +200,7 @@ class MobilePartnerRepack(LocalesMixin, ReleaseMixin, MobileSigningMixin,
             return
         if self.write_to_file(os.path.join(tmp_prefs_dir, 'partner.js'),
                               'pref("app.partner.%s", "%s");' % (partner, partner)
-                             ) is None:
+                              ) is None:
             return
         if self.run_command([unzip_bin, '-q', file_name, 'omni.ja'],
                             error_list=ZipErrorList,
@@ -268,7 +266,7 @@ class MobilePartnerRepack(LocalesMixin, ReleaseMixin, MobileSigningMixin,
         if self.rsync_upload_directory(local_path, c['ftp_ssh_key'],
                                        c['ftp_user'], c['ftp_server'],
                                        remote_path):
-            self.return_code +=1
+            self.return_code += 1
 
     def upload_unsigned_bits(self):
         self._upload()
@@ -297,7 +295,7 @@ class MobilePartnerRepack(LocalesMixin, ReleaseMixin, MobileSigningMixin,
                     unsigned_path = '%s/unsigned/partner-repacks/%s/%s/%s/%s' % (dirs['abs_work_dir'], partner, platform, locale, installer_name)
                     signed_dir = '%s/partner-repacks/%s/%s/%s' % (dirs['abs_work_dir'], partner, platform, locale)
                     signed_path = "%s/%s" % (signed_dir, installer_name)
-                    total_count +=1
+                    total_count += 1
                     self.info("Signing %s %s." % (platform, locale))
                     if not os.path.exists(unsigned_path):
                         self.error("Missing apk %s!" % unsigned_path)
@@ -321,7 +319,6 @@ class MobilePartnerRepack(LocalesMixin, ReleaseMixin, MobileSigningMixin,
 
     def upload_signed_bits(self):
         self._upload(dir_name="partner-repacks")
-
 
 
 # main {{{1

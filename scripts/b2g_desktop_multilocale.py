@@ -19,6 +19,7 @@ from mozharness.base.script import BaseScript
 from mozharness.base.vcs.vcsbase import VCSMixin
 from mozharness.mozilla.l10n.locales import GaiaLocalesMixin, LocalesMixin
 
+
 class B2gMultilocale(LocalesMixin, BaseScript, VCSMixin, GaiaLocalesMixin):
     """ This is a helper script that requires MercurialBuildFactory
         logic to work.  We may eventually make this a standalone
@@ -122,8 +123,9 @@ class B2gMultilocale(LocalesMixin, BaseScript, VCSMixin, GaiaLocalesMixin):
         c = self.config
         dirs = {
             'src': os.path.join(c['work_dir'], 'gecko'),
-            'work_dir': os.path.abspath(c['work_dir']),
-            'gaia_l10n_base_dir': os.path.join(os.path.abspath(c['work_dir']), self.config['gaia_l10n_base_dir'])
+            'work_dir': abs_dirs['abs_work_dir'],
+            'gaia_l10n_base_dir': os.path.join(abs_dirs['abs_work_dir'], self.config['gaia_l10n_base_dir']),
+            'abs_compare_locales_dir': os.path.join(abs_dirs['base_work_dir'], 'compare-locales'),
         }
 
         abs_dirs.update(dirs)

@@ -17,8 +17,8 @@ from mozharness.base.config import parse_config_file
 from mozharness.base.errors import PythonErrorList
 from mozharness.base.parallel import ChunkingMixin
 
-# LocalesMixin {{{1
 
+# LocalesMixin {{{1
 class LocalesMixin(ChunkingMixin):
     def __init__(self, **kwargs):
         """ Mixins generally don't have an __init__.
@@ -158,7 +158,6 @@ class LocalesMixin(ChunkingMixin):
         self.mkdir_p(parent_dir)
         repos = []
         replace_dict = {}
-        num_retries = c.get('global_retries', 10)
         # This block is to allow for pulling buildbot-configs in Fennec
         # release builds, since we don't pull it in MBF anymore.
         if c.get("l10n_repos"):
@@ -169,8 +168,7 @@ class LocalesMixin(ChunkingMixin):
                     repos.append(repo_dict)
             else:
                 repos = c.get("l10n_repos")
-            self.vcs_checkout_repos(repos, tag_override=c.get('tag_override'),
-                                    num_retries=num_retries)
+            self.vcs_checkout_repos(repos, tag_override=c.get('tag_override'))
         # Pull locales
         locales = self.query_locales()
         locale_repos = []
@@ -187,14 +185,14 @@ class LocalesMixin(ChunkingMixin):
             })
         revs = self.vcs_checkout_repos(repo_list=locale_repos,
                                        parent_dir=parent_dir,
-                                       tag_override=c.get('tag_override'),
-                                       num_retries=num_retries)
+                                       tag_override=c.get('tag_override'))
         self.gecko_locale_revisions = revs
 
-# GaiaLocalesMixin {{{1
 
+# GaiaLocalesMixin {{{1
 class GaiaLocalesMixin(object):
     gaia_locale_revisions = None
+
     def pull_gaia_locale_source(self, l10n_config, locales, base_dir):
         root = l10n_config['root']
         # urljoin will strip the last part of root if it doesn't end with "/"

@@ -105,12 +105,11 @@ class MozmillUpdate(VirtualenvMixin, MercurialScript):
 
     def pull(self):
         c = self.config
-        num_retries = c.get("global_retries", 10)
         self.vcs_checkout_repos([{
          "repo": c['mozmill_automation_repo'],
          "tag": c['mozmill_automation_tag'],
          "dest": "mozmill-automation"
-        }], num_retries=num_retries)
+        }])
 
     def download(self):
         dirs = self.query_abs_dirs()

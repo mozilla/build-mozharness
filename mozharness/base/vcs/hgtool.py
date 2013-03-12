@@ -2,7 +2,7 @@ import os
 import re
 import urlparse
 
-from mozharness.base.script import ShellMixin, OSMixin
+from mozharness.base.script import ScriptMixin
 from mozharness.base.log import LogMixin, OutputParser, WARNING
 from mozharness.base.errors import HgErrorList, VCSException
 
@@ -10,6 +10,7 @@ HgtoolErrorList = [{
     'substr': 'abort: HTTP Error 404: Not Found',
     'level': WARNING,
 }] + HgErrorList
+
 
 class HgtoolParser(OutputParser):
     """
@@ -27,7 +28,7 @@ class HgtoolParser(OutputParser):
         super(HgtoolParser, self).parse_single_line(line)
 
 
-class HgtoolVCS(ShellMixin, OSMixin, LogMixin):
+class HgtoolVCS(ScriptMixin, LogMixin):
     def __init__(self, log_obj=None, config=None, vcs_config=None):
         super(HgtoolVCS, self).__init__()
 
