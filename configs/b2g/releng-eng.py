@@ -46,6 +46,7 @@ config = {
         "SYMBOL_SERVER_SSH_KEY": "/home/mock_mozilla/.ssh/b2gbld_dsa",
         "SYMBOL_SERVER_PATH": "/mnt/netapp/breakpad/symbols_b2g/",
         "POST_SYMBOL_UPLOAD_CMD": "/usr/local/bin/post-symbol-upload.py",
+        "GAIA_OPTIMIZE": "1",
         "B2G_UPDATER": "1",
         "B2G_SYSTEM_APPS": "1",
     },
