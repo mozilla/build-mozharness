@@ -13,8 +13,8 @@ import sys
 # load modules from parent dir
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
-from mozharness.base.errors import PythonErrorList, TarErrorList
-from mozharness.base.log import INFO, ERROR
+from mozharness.base.errors import TarErrorList
+from mozharness.base.log import INFO, ERROR, WARNING
 from mozharness.base.script import BaseScript
 from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_WARNING, TBPL_FAILURE
 from mozharness.mozilla.testing.errors import LogcatErrorList
@@ -71,7 +71,7 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
         }]] + copy.deepcopy(testing_config_options)
 
     error_list = [
-        {'substr': 'FAILED (errors=', 'level': ERROR},
+        {'substr': 'FAILED (errors=', 'level': WARNING},
         {'substr': r'''Could not successfully complete transport of message to Gecko, socket closed''', 'level': ERROR},
         {'substr': 'Timeout waiting for marionette on port', 'level': ERROR},
         {'regex': re.compile(r'''(Timeout|NoSuchAttribute|Javascript|NoSuchElement|XPathLookup|NoSuchWindow|StaleElement|ScriptTimeout|ElementNotVisible|NoSuchFrame|InvalidElementState|NoAlertPresent|InvalidCookieDomain|UnableToSetCookie|InvalidSelector|MoveTargetOutOfBounds)Exception'''), 'level': ERROR},
@@ -166,9 +166,6 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
         """
         dirs = self.query_abs_dirs()
 
-        error_list = self.error_list
-        error_list.extend(PythonErrorList)
-
         # build the marionette command arguments
         python = self.query_python_path('python')
         cmd = [python, '-u', os.path.join(dirs['abs_marionette_dir'],
@@ -195,7 +192,7 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
             # emulator can cause B2G not to restart properly - Bug 812935.
             marionette_parser = MarionetteOutputParser(config=self.config,
                                                        log_obj=self.log_obj,
-                                                       error_list=error_list)
+                                                       error_list=self.error_list)
             code = self.run_command(cmd,
                                     output_parser=marionette_parser)
             if not marionette_parser.install_gecko_failed:
