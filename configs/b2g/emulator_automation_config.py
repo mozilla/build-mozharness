@@ -25,4 +25,5 @@ config = {
         'install',
         'run-tests',
     ],
+    "download_symbols": "ondemand",
 }

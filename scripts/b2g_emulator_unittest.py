@@ -225,6 +225,7 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
         # self.binary_path gets set by super(B2GEmulatorTest, self).install()
         cmd.extend(self._build_arg('--gecko-path', os.path.dirname(self.binary_path)))
         cmd.extend(self._build_arg('--busybox', self.busybox_path))
+        cmd.extend(self._build_arg('--symbols-path', self.symbols_path))
         return cmd
 
     def _build_reftest_args(self):
@@ -247,6 +248,7 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
         # self.binary_path gets set by super(B2GEmulatorTest, self).install()
         cmd.extend(self._build_arg('--gecko-path', os.path.dirname(self.binary_path)))
         cmd.extend(self._build_arg('--busybox', self.busybox_path))
+        cmd.extend(self._build_arg('--symbols-path', self.symbols_path))
         cmd.append(self.test_manifest)
         return cmd
 
@@ -268,6 +270,7 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
         cmd.extend(self._build_arg('--total-chunks', c.get('total_chunks')))
         cmd.extend(self._build_arg('--this-chunk', c.get('this_chunk')))
         cmd.extend(self._build_arg('--busybox', self.busybox_path))
+        cmd.extend(self._build_arg('--symbols-path', self.symbols_path))
         return cmd
 
     def _query_adb(self):
