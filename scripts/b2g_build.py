@@ -259,9 +259,12 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
 
         return None
 
-    def query_translated_revision(self, url, project, rev, attempts=30, sleeptime=30):
+    def query_translated_revision(self, url, project, rev, attempts=30, sleeptime=30,
+                                  project_name=None):
+        if project_name is None:
+            project_name = project
         url = '%s/%s/git/%s' % (url, project, rev)
-        self.info('Mapping revision from hg to git using %s' % url)
+        self.info('Mapping %s revision from hg to git using %s' % (project_name, url))
         n = 1
         while n <= attempts:
             try:
@@ -277,7 +280,7 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
             except Exception, err:
                 self.warning('Error: %s' % str(err))
                 if n == attempts:
-                    self.fatal('Giving up on %s git revision for %s.' % (project, rev))
+                    self.fatal('Giving up on %s git revision for %s.' % (project_name, rev))
                 if sleeptime > 0:
                     self.info('Sleeping %i seconds before retrying' % sleeptime)
                     time.sleep(sleeptime)
@@ -510,7 +513,7 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
 
     def _generate_git_locale_manifest(self, locale, url, git_repo,
                                       revision, git_base_url, local_path):
-        l10n_git_sha = self.query_translated_revision(url, 'l10n', revision)
+        l10n_git_sha = self.query_translated_revision(url, 'l10n', revision, project_name="l10n %s" % locale)
         return '  <project name="%s" path="%s" remote="mozillaorg" revision="%s"/>' % (git_repo.replace(git_base_url, ''), local_path, l10n_git_sha)
 
     def _generate_locale_manifest(self, git_base_url="https://git.mozilla.org/release/"):

@@ -647,7 +647,7 @@ class SUTDeviceMozdeviceMixin(SUTDeviceHandler):
         if not dm.fileExists(filename):
             raise Exception("Expected file (%s) not found" % filename)
 
-        file_contents = dm.catFile(filename)
+        file_contents = dm.pullFile(filename)
         if file_contents is None:
             raise Exception("Unable to read file (%s)" % filename)
 
