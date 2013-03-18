@@ -89,7 +89,7 @@ class VirtualenvMixin(object):
              'print(get_python_lib())'])
         return self.site_packages_path
 
-    def package_versions(self, pip_freeze_output=None, error_level=WARNING):
+    def package_versions(self, pip_freeze_output=None, error_level=WARNING, log_output=False):
         """
         reads packages from `pip freeze` output and returns a dict of
         {package_name: 'version'}
@@ -119,6 +119,11 @@ class VirtualenvMixin(object):
                 self.fatal("pip_freeze_packages: Unrecognized output line: %s" % line)
             package, version = line.split('==', 1)
             packages[package] = version
+
+        if log_output:
+            self.info("Current package versions:")
+            for package in packages:
+                self.info("  %s == %s" % (package, packages[package]))
 
         return packages
 
@@ -298,6 +303,7 @@ class VirtualenvMixin(object):
                                 requirements=requirements)
         self.info("Done creating virtualenv %s." % venv_path)
 
+        self.package_versions(log_output=True)
 
 
 # __main__ {{{1
