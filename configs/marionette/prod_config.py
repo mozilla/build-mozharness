@@ -12,6 +12,7 @@ config = {
     },
 
     "find_links": ["http://puppetagain.pub.build.mozilla.org/data/python/packages"],
+    "pip_index": False,
 
     "buildbot_json_path": "buildprops.json",
 

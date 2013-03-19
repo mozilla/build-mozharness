@@ -10,6 +10,7 @@ config = {
     },
 
     "find_links": ["http://puppetagain.pub.build.mozilla.org/data/python/packages"],
+    "pip_index": False,
 
     "default_actions": [
         'clobber',

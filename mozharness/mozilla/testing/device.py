@@ -496,8 +496,9 @@ class SUTDeviceHandler(BaseDeviceHandler):
         dm = self.query_devicemanager()
         if dm.dirExists(dev_root):
             self.info("Removing dev_root %s..." % dev_root)
-            status = dm.removeDir(dev_root)
-            if not status:
+            try:
+                dm.removeDir(dev_root)
+            except self.DMError:
                 self.add_device_flag(DEVICE_CANT_REMOVE_DEVROOT)
                 self.fatal("Can't remove dev_root!")
         if c.get("enable_automation"):
@@ -569,8 +570,8 @@ class SUTDeviceHandler(BaseDeviceHandler):
         dm.pushFile(file_path, target)
         # TODO screen resolution
         # TODO do something with status?
-        status = dm.installApp(target)
-        if status is None:
+        try:
+            dm.installApp(target)
             self.info('-'*42)
             self.info("Sleeping for 90 seconds...")
             time.sleep(90)
@@ -583,16 +584,17 @@ class SUTDeviceHandler(BaseDeviceHandler):
             except Exception, e:
                 self.info("Exception hit while trying to run logcat: %s" % str(e))
                 self.fatal("Remote Device Error: can't run logcat")
-        else:
-            self.fatal("Remote Device Error: updateApp() call failed - exiting")
+        except self.DMError:
+            self.fatal("Remote Device Error: installApp() call failed - exiting")
 
 
     def reboot_device(self):
         dm = self.query_devicemanager()
         # logcat?
         self.info("Rebooting device...")
-        status = dm.reboot()
-        if status is None:
+        try:
+            dm.reboot()
+        except self.DMError:
             self.add_device_flag(DEVICE_NOT_REBOOTED)
             self.fatal("Can't reboot device!")
         self.wait_for_device()
