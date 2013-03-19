@@ -13,32 +13,41 @@ from mozharness.base.errors import VirtualenvErrorList
 from mozharness.base.log import WARNING, FATAL
 
 # Virtualenv {{{1
-virtualenv_config_options = [[
- ["--venv-path", "--virtualenv-path"],
- {"action": "store",
-  "dest": "virtualenv_path",
-  "default": "venv",
-  "help": "Specify the path to the virtualenv top level directory"
- }
-],
-[["--virtualenv"],
- {"action": "store",
-  "dest": "virtualenv",
-  "help": "Specify the virtualenv executable to use"
-  }
-],
-[["--pypi-url"],
- {"action": "store",
-  "dest": "pypi_url",
-  "help": "Base URL of Python Package Index (default http://pypi.python.org/simple/)"
-  }
-],
-[["--find-links"],
-{"action": "extend",
- "dest": "find_links",
- "help": "URL to look for packages at"
-}
-]]
+virtualenv_config_options = [
+    [["--venv-path", "--virtualenv-path"], {
+        "action": "store",
+        "dest": "virtualenv_path",
+        "default": "venv",
+        "help": "Specify the path to the virtualenv top level directory"
+    }],
+    [["--virtualenv"], {
+        "action": "store",
+        "dest": "virtualenv",
+        "help": "Specify the virtualenv executable to use"
+    }],
+    [["--pypi-url"], {
+        "action": "store",
+        "dest": "pypi_url",
+        "help": "Base URL of Python Package Index (default http://pypi.python.org/simple/)"
+    }],
+    [["--find-links"], {
+        "action": "extend",
+        "dest": "find_links",
+        "help": "URL to look for packages at"
+    }],
+    [["--pip-index"], {
+        "action": "store_true",
+        "default": True,
+        "dest": "pip_index",
+        "help": "Use pip indexes (default)"
+    }],
+    [["--no-pip-index"], {
+        "action": "store_false",
+        "dest": "pip_index",
+        "help": "Don't use pip indexes"
+    }],
+]
+
 
 class VirtualenvMixin(object):
     '''BaseScript mixin, designed to create and use virtualenvs.
@@ -85,7 +94,7 @@ class VirtualenvMixin(object):
         python = self.query_python_path()
         self.site_packages_path = self.get_output_from_command(
             [python, '-c',
-             'from distutils.sysconfig import get_python_lib; ' + \
+             'from distutils.sysconfig import get_python_lib; ' +
              'print(get_python_lib())'])
         return self.site_packages_path
 
@@ -198,6 +207,9 @@ class VirtualenvMixin(object):
         # Add --find-links pages to look at
         for link in c.get('find_links', []):
             command.extend(["--find-links", link])
+
+        if not c["pip_index"]:
+            command += ['--no-index']
 
         # module_url can be None if only specifying requirements files
         if module_url:

@@ -13,6 +13,7 @@ config = {
     "virtualenv_python_dll": PYTHON_DLL,
     "pypi_url": "http://puppetagain.pub.build.mozilla.org/data/python/packages/",
     "find_links": ["http://puppetagain.pub.build.mozilla.org/data/python/packages/"],
+    "pip_index": False,
     "distribute_url": "http://puppetagain.pub.build.mozilla.org/data/python/packages/distribute-0.6.26.tar.gz",
     "pip_url": "http://puppetagain.pub.build.mozilla.org/data/python/packages/pip-0.8.2.tar.gz",
     "use_talos_json": True,
