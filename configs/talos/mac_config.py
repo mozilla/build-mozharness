@@ -19,8 +19,8 @@ config = {
     "buildbot_json_path": "buildprops.json",
     "installer_path": "installer.exe",
     "virtualenv_path": VENV_PATH,
-    "pypi_url": "http://puppetagain.pub.build.mozilla.org/data/python/packages/",
-    "find_links": ["http://puppetagain.pub.build.mozilla.org/data/python/packages/"],
+    "pypi_url": "http://repos/python/packages/",
+    "find_links": ["http://repos/python/packages/"],
     "pip_index": False,
     "use_talos_json": True,
     "exes": {

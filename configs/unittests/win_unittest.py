@@ -25,7 +25,7 @@ config = {
     "xpcshell_name": XPCSHELL_NAME,
     "virtualenv_path": 'venv',
     "virtualenv_python_dll": os.path.join(os.path.dirname(sys.executable), "python27.dll"),
-    "simplejson_url": "http://puppetagain.pub.build.mozilla.org/data/python/packages/simplejson-2.1.3.tar.gz",
+    "simplejson_url": "http://repos/python/packages/simplejson-2.1.3.tar.gz",
     "run_file_names": {
         "mochitest": "runtests.py",
         "reftest": "runreftest.py",

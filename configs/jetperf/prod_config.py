@@ -9,7 +9,7 @@ config = {
         'virtualenv': ['/tools/buildbot/bin/python', '/tools/misc-python/virtualenv.py'],
     },
 
-    "find_links": ["http://puppetagain.pub.build.mozilla.org/data/python/packages"],
+    "find_links": ["http://repos/python/packages"],
     "pip_index": False,
 
     "default_actions": [
