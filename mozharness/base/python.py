@@ -183,6 +183,8 @@ class VirtualenvMixin(object):
                 command += ["--download-cache", virtualenv_cache_dir]
             for requirement in requirements:
                 command += ["-r", requirement]
+            if c.get('find_links') and not c["pip_index"]:
+                command += ['--no-index']
         elif install_method == 'easy_install':
             if not module:
                 self.fatal("module parameter required with install_method='easy_install'")
@@ -207,9 +209,6 @@ class VirtualenvMixin(object):
         # Add --find-links pages to look at
         for link in c.get('find_links', []):
             command.extend(["--find-links", link])
-
-        if not c["pip_index"]:
-            command += ['--no-index']
 
         # module_url can be None if only specifying requirements files
         if module_url:
