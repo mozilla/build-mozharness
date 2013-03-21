@@ -11,9 +11,6 @@
 # extensions to fully test.
 ###########################################################################
 
-# this breaks mercurial unit tests
-unset HG_SHARE_BASE_DIR
-
 COVERAGE_ARGS="--omit='/usr/*,/opt/*'"
 OS_TYPE='linux'
 uname -v | grep -q Darwin

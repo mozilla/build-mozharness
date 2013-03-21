@@ -1,3 +1,4 @@
+import os
 import unittest
 
 JSON_TYPE = None
@@ -11,9 +12,11 @@ else:
 
 import mozharness.base.config as config
 
+MH_DIR = os.path.dirname(os.path.dirname(__file__))
+
 
 class TestParseConfigFile(unittest.TestCase):
-    def _get_json_config(self, filename="configs/test/test.json",
+    def _get_json_config(self, filename=os.path.join(MH_DIR, "configs", "test", "test.json"),
                          output='dict'):
         fh = open(filename)
         contents = json.load(fh)
@@ -23,7 +26,7 @@ class TestParseConfigFile(unittest.TestCase):
         else:
             return contents
 
-    def _get_python_config(self, filename="configs/test/test.py",
+    def _get_python_config(self, filename=os.path.join(MH_DIR, "configs", "test", "test.py"),
                            output='dict'):
         global_dict = {}
         local_dict = {}
