@@ -1,15 +1,8 @@
 import os
 import platform
 import shutil
-import subprocess
-import sys
 import tempfile
 import unittest
-
-try:
-    import simplejson as json
-except ImportError:
-    import json
 
 import mozharness.base.errors as errors
 import mozharness.base.vcs.mercurial as mercurial
@@ -19,6 +12,10 @@ bar
 baz'''
 
 HG = ['hg'] + mercurial.HG_OPTIONS
+
+# Known default .hgrc
+os.environ['HGRCPATH'] = os.path.join(os.path.dirname(__file__), 'helper_files', '.hgrc')
+
 
 def cleanup():
     if os.path.exists('test_logs'):
@@ -32,10 +29,12 @@ def cleanup():
         if os.path.exists(filename):
             os.remove(filename)
 
+
 def get_mercurial_vcs_obj():
     m = mercurial.MercurialVCS()
     m.config = {}
     return m
+
 
 def get_revisions(dest):
     m = get_mercurial_vcs_obj()
@@ -46,6 +45,7 @@ def get_revisions(dest):
             continue
         retval.append(rev)
     return retval
+
 
 class TestMakeAbsolute(unittest.TestCase):
     # _make_absolute() doesn't play nicely with windows/msys paths.
@@ -71,7 +71,6 @@ class TestMakeAbsolute(unittest.TestCase):
         def test_relative_file_path(self):
             m = get_mercurial_vcs_obj()
             self.assertEquals(m._make_absolute("file://foo/bar"), "file://%s/foo/bar" % os.getcwd())
-
 
 
 class TestHg(unittest.TestCase):
@@ -130,7 +129,7 @@ class TestHg(unittest.TestCase):
         m.clone(self.repodir, self.wc, branch='branch2',
                 update_dest=False)
         # On hg 1.6, we should only have a subset of the revisions
-        if m.hg_ver() >= (1,6,0):
+        if m.hg_ver() >= (1, 6, 0):
             self.assertEquals(self.revisions[1:],
                               get_revisions(self.wc))
         else:
@@ -194,7 +193,7 @@ class TestHg(unittest.TestCase):
         self.assertEquals(rev, None)
 
         # On hg 1.6, we'll be missing the last revision (on another branch)
-        if m.hg_ver() >= (1,6,0):
+        if m.hg_ver() >= (1, 6, 0):
             self.assertEquals(get_revisions(self.wc), self.revisions[1:])
         else:
             self.assertEquals(get_revisions(self.wc), self.revisions)
@@ -212,7 +211,7 @@ class TestHg(unittest.TestCase):
         # Hide the wanted error
         m.config = {'log_to_console': False}
         # Try and pull in changes from the new repo
-        self.assertRaises(subprocess.CalledProcessError, m.pull, repo2, self.wc, update_dest=False)
+        self.assertRaises(mercurial.VCSException, m.pull, repo2, self.wc, update_dest=False)
 
     def test_share_unrelated(self):
         m = get_mercurial_vcs_obj()
@@ -267,7 +266,7 @@ class TestHg(unittest.TestCase):
 
     def test_push_with_branch(self):
         m = get_mercurial_vcs_obj()
-        if m.hg_ver() >= (1,6,0):
+        if m.hg_ver() >= (1, 6, 0):
             m.clone(self.repodir, self.wc, revision=self.revisions[-1])
             m.push(src=self.repodir, remote=self.wc, branch='branch2')
             m.push(src=self.repodir, remote=self.wc, branch='default')
@@ -417,36 +416,36 @@ class TestHg(unittest.TestCase):
     def test_make_hg_url(self):
         #construct an hg url specific to revision, branch and filename and try to pull it down
         file_url = mercurial.make_hg_url(
-                "hg.mozilla.org",
-                '//build/tools/',
-                revision='FIREFOX_3_6_12_RELEASE',
-                filename="/lib/python/util/hg.py"
-                )
+            "hg.mozilla.org",
+            '//build/tools/',
+            revision='FIREFOX_3_6_12_RELEASE',
+            filename="/lib/python/util/hg.py",
+        )
         expected_url = "http://hg.mozilla.org/build/tools/raw-file/FIREFOX_3_6_12_RELEASE/lib/python/util/hg.py"
         self.assertEquals(file_url, expected_url)
 
     def test_make_hg_url_no_filename(self):
         file_url = mercurial.make_hg_url(
-                "hg.mozilla.org",
-                "/build/tools",
-                revision="default"
+            "hg.mozilla.org",
+            "/build/tools",
+            revision="default"
         )
         expected_url = "http://hg.mozilla.org/build/tools/rev/default"
         self.assertEquals(file_url, expected_url)
 
     def test_make_hg_url_no_revision_no_filename(self):
         repo_url = mercurial.make_hg_url(
-                "hg.mozilla.org",
-                "/build/tools"
+            "hg.mozilla.org",
+            "/build/tools"
         )
         expected_url = "http://hg.mozilla.org/build/tools"
         self.assertEquals(repo_url, expected_url)
 
     def test_make_hg_url_different_protocol(self):
         repo_url = mercurial.make_hg_url(
-                "hg.mozilla.org",
-                "/build/tools",
-                protocol='ssh'
+            "hg.mozilla.org",
+            "/build/tools",
+            protocol='ssh'
         )
         expected_url = "ssh://hg.mozilla.org/build/tools"
         self.assertEquals(repo_url, expected_url)
@@ -477,6 +476,7 @@ class TestHg(unittest.TestCase):
     def test_apply_and_push(self):
         m = get_mercurial_vcs_obj()
         m.clone(self.repodir, self.wc)
+
         def c(repo, attempt):
             m.run_command(HG + ['tag', '-f', 'TEST'], cwd=repo)
         m.apply_and_push(self.wc, self.repodir, c)
@@ -485,6 +485,7 @@ class TestHg(unittest.TestCase):
     def test_apply_and_push_fail(self):
         m = get_mercurial_vcs_obj()
         m.clone(self.repodir, self.wc)
+
         def c(repo, attempt, remote):
             m.run_command(HG + ['tag', '-f', 'TEST'], cwd=repo)
             m.run_command(HG + ['tag', '-f', 'CONFLICTING_TAG'], cwd=remote)
@@ -497,31 +498,34 @@ class TestHg(unittest.TestCase):
         m = get_mercurial_vcs_obj()
         m.clone(self.repodir, self.wc)
         m.config = {'log_to_console': False}
+
         def c(repo, attempt, remote):
             m.run_command(HG + ['tag', '-f', 'TEST'], cwd=repo)
             if attempt == 1:
                 m.run_command(HG + ['rm', 'hello.txt'], cwd=remote)
                 m.run_command(HG + ['commit', '-m', 'test'], cwd=remote)
         m.apply_and_push(self.wc, self.repodir,
-                       lambda r, a: c(r, a, self.repodir), max_attempts=2)
+                         lambda r, a: c(r, a, self.repodir), max_attempts=2)
         self.assertEquals(get_revisions(self.wc), get_revisions(self.repodir))
 
     def test_apply_and_push_rebase_fails(self):
         m = get_mercurial_vcs_obj()
         m.clone(self.repodir, self.wc)
         m.config = {'log_to_console': False}
+
         def c(repo, attempt, remote):
             m.run_command(HG + ['tag', '-f', 'TEST'], cwd=repo)
-            if attempt in (1,2):
+            if attempt in (1, 2):
                 m.run_command(HG + ['tag', '-f', 'CONFLICTING_TAG'], cwd=remote)
         m.apply_and_push(self.wc, self.repodir,
-                       lambda r, a: c(r, a, self.repodir), max_attempts=4)
+                         lambda r, a: c(r, a, self.repodir), max_attempts=4)
         self.assertEquals(get_revisions(self.wc), get_revisions(self.repodir))
 
     def test_apply_and_push_on_branch(self):
         m = get_mercurial_vcs_obj()
-        if m.hg_ver() >= (1,6,0):
+        if m.hg_ver() >= (1, 6, 0):
             m.clone(self.repodir, self.wc)
+
             def c(repo, attempt):
                 m.run_command(HG + ['branch', 'branch3'], cwd=repo)
                 m.run_command(HG + ['tag', '-f', 'TEST'], cwd=repo)
@@ -531,7 +535,8 @@ class TestHg(unittest.TestCase):
     def test_apply_and_push_with_no_change(self):
         m = get_mercurial_vcs_obj()
         m.clone(self.repodir, self.wc)
-        def c(r,a):
+
+        def c(r, a):
             pass
         self.assertRaises(errors.VCSException, m.apply_and_push, self.wc, self.repodir, c)
 

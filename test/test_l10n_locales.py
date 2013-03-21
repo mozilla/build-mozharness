@@ -10,6 +10,8 @@ import mozharness.mozilla.l10n.locales as locales
 
 ALL_LOCALES = ['ar', 'be', 'de', 'es-ES']
 
+MH_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 def cleanup():
     if os.path.exists('test_logs'):
         shutil.rmtree('test_logs')
@@ -52,7 +54,7 @@ class TestLocalesMixin(unittest.TestCase):
 
     def test_query_locales_json(self):
         l = LocalesTest()
-        l.config['locales_file'] = "test/helper_files/locales.json"
+        l.config['locales_file'] = os.path.join(MH_DIR, "test/helper_files/locales.json")
         l.config['base_work_dir'] = '.'
         l.config['work_dir'] = '.'
         locales = l.query_locales()
@@ -73,7 +75,7 @@ class TestLocalesMixin(unittest.TestCase):
 
     def test_parse_locales_file(self):
         l = LocalesTest()
-        self.assertEqual(ALL_LOCALES, l.parse_locales_file('test/helper_files/locales.txt'))
+        self.assertEqual(ALL_LOCALES, l.parse_locales_file(os.path.join(MH_DIR, 'test/helper_files/locales.txt')))
 
     def _get_query_abs_dirs_obj(self):
         l = LocalesTest()

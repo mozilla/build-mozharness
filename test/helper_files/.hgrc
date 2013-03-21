@@ -1,0 +1,18 @@
+[extensions]
+hgext.graphlog =
+mq =
+rebase =
+share =
+convert =
+transplant =
+bookmarks =
+hggit =
+pager =
+purge =
+
+[ui]
+username = Client Builder <cltbld@mozilla.com>
+merge = internal:merge
+
+[phases]
+publish = False
