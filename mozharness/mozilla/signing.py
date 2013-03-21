@@ -35,7 +35,7 @@ AndroidSignatureVerificationErrorList = BaseErrorList + [{
 SNIPPET_TEMPLATE = """version=1
 type=complete
 url=%(url)s
-hashFunction=sha512
+hashFunction=SHA512
 hashValue=%(sha512_hash)s
 size=%(size)d
 build=%(buildid)s
