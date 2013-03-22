@@ -168,7 +168,7 @@ class B2gMultilocale(LocalesMixin, BaseScript, VCSMixin, GaiaLocalesMixin):
         )
         merge_env = self.query_env(
             partial_env={
-                'PATH': '%(PATH)s:' + os.path.join(dirs['abs_compare_locales_dir'], 'scripts'),
+                'PATH': '%(PATH)s' + os.pathsep + os.path.join(dirs['abs_compare_locales_dir'], 'scripts'),
                 'PYTHONPATH': os.path.join(dirs['abs_compare_locales_dir'],
                                            'lib'),
 
