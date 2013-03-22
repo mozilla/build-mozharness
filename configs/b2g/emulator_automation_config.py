@@ -27,4 +27,5 @@ config = {
         'run-tests',
     ],
     "download_symbols": "ondemand",
+    "download_minidump_stackwalk": True,
 }
