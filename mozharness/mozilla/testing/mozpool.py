@@ -61,7 +61,7 @@ class MozpoolMixin(object):
         mph = self.query_mozpool_handler(self.mozpool_device)
         for retry in self._retry_sleep(
                 error_message="INFRA-ERROR: Could not request device '%s'" % self.mozpool_device,
-                tbpl_status=TBPL_RETRY):
+                tbpl_status=TBPL_EXCEPTION):
             try:
                 image = 'b2g'
                 response = mph.request_device(self.mozpool_device, image, assignee=self.mozpool_assignee, \
