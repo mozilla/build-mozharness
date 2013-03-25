@@ -66,6 +66,7 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin):
     test_zip_path = None
     symbols_url = None
     symbols_path = None
+    default_tools_repo = 'http://hg.mozilla.org/build/tools'
 
     def query_symbols_url(self):
         if self.symbols_url:
@@ -260,6 +261,35 @@ Did you run with --create-virtualenv? Is mozinstall in virtualenv_modules?""")
                     '--destination', target_dir])
         # TODO we'll need some error checking here
         self.binary_path = self.get_output_from_command(cmd, halt_on_failure=True)
+
+    def install_minidump_stackwalk(self):
+        dirs = self.query_abs_dirs()
+
+        if not os.path.isdir(os.path.join(dirs['abs_work_dir'], 'tools', 'breakpad')):
+            # clone hg.m.o/build/tools
+            repos = [{
+                'repo': self.config.get('tools_repo') or self.default_tools_repo,
+                'vcs': 'hg',
+                'dest': os.path.join(dirs['abs_work_dir'], "tools")
+            }]
+            self.vcs_checkout(**repos[0])
+
+        # find binary for platform/architecture
+        path = os.path.join(dirs['abs_work_dir'], 'tools', 'breakpad', '%s', 'minidump_stackwalk')
+        pltfrm = platform.platform().lower()
+        arch = platform.architecture()
+        if 'linux' in pltfrm:
+            if '64' in arch:
+                return path % 'linux64'
+            return path % 'linux'
+        if any(s in pltfrm for s in ('mac', 'osx', 'darwin')):
+            if '64' in arch:
+                return path % 'osx64'
+            return path % 'osx'
+        if 'win' in pltfrm:
+            return path % 'win32' + '.exe'
+
+        self.fatal("Could not find a minidump_stackwalk binary for this platform!")
 
     def _run_cmd_checks(self, suites):
         if not suites:

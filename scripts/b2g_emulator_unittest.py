@@ -16,6 +16,7 @@ sys.path.insert(1, os.path.dirname(sys.path[0]))
 from mozharness.base.errors import BaseErrorList
 from mozharness.base.log import ERROR
 from mozharness.base.script import BaseScript
+from mozharness.base.vcs.vcsbase import VCSMixin
 from mozharness.mozilla.testing.errors import LogcatErrorList
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
 from mozharness.mozilla.testing.unittest import DesktopUnittestOutputParser, EmulatorMixin
@@ -40,7 +41,7 @@ class MarionetteUnittestOutputParser(DesktopUnittestOutputParser):
         super(MarionetteUnittestOutputParser, self).parse_single_line(line)
 
 
-class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
+class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, BaseScript):
     test_suites = ('reftest', 'mochitest', 'xpcshell', 'crashtest')
     config_options = [
         [["--type"],
@@ -152,6 +153,7 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
         self.test_url = c.get('test_url')
         self.test_manifest = c.get('test_manifest')
         self.busybox_path = None
+        self.minidump_stackwalk_path = None
 
     # TODO detect required config items and fail if not set
 
@@ -194,6 +196,8 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
         super(B2GEmulatorTest, self).download_and_extract()
         dirs = self.query_abs_dirs()
         self.install_emulator()
+        if self.config.get('download_minidump_stackwalk'):
+            self.minidump_stackwalk_path = self.install_minidump_stackwalk()
 
         self.mkdir_p(dirs['abs_xre_dir'])
         self._download_unzip(self.config['xre_url'],
@@ -345,6 +349,11 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
         if suite_name == 'xpcshell':
             success_codes = [0, 1]
 
+        env = {}
+        if self.minidump_stackwalk_path:
+            env['MINIDUMP_STACKWALK'] = self.minidump_stackwalk_path
+        env = self.query_env(partial_env=env)
+
         for i in range(0, 5):
             # We retry the run because sometimes installing gecko on the
             # emulator can cause B2G not to restart properly - Bug 812935.
@@ -352,7 +361,7 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
                                                     config=self.config,
                                                     log_obj=self.log_obj,
                                                     error_list=error_list)
-            return_code = self.run_command(cmd, cwd=cwd,
+            return_code = self.run_command(cmd, cwd=cwd, env=env,
                                            output_parser=parser,
                                            success_codes=success_codes)
             if not parser.install_gecko_failed:
