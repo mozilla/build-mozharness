@@ -44,7 +44,7 @@ TinderBoxPrintRe = {
         'known_fail_group': None,
     },
     "harness_error": {
-        'full_regex': re.compile(r"TEST-UNEXPECTED-FAIL \| .* \| (Browser crashed \(minidump found\)|missing output line for total leaks!|negative leaks caught!|leaked \d+ bytes during test execution)"),
+        'full_regex': re.compile(r"TEST-UNEXPECTED-FAIL \| .* \| (Browser crashed \(minidump found\)|missing output line for total leaks!|negative leaks caught!|\d+ bytes leaked)"),
         'minimum_regex': re.compile(r'''TEST-UNEXPECTED''')
     },
 }
