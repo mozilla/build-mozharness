@@ -55,7 +55,7 @@ config = {
         "CCACHE_DIR": "/builds/ccache",
         "CCACHE_COMPRESS": "1",
         "CCACHE_UMASK": "002",
-        "DOGFOOD": "1",
+        "PRODUCTION": "1",
         "GAIA_OPTIMIZE": "1",
         "SYMBOL_SERVER_HOST": "symbolpush.mozilla.org",
         "SYMBOL_SERVER_USER": "b2gbld",

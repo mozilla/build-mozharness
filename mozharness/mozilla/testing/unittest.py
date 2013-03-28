@@ -104,7 +104,7 @@ class DesktopUnittestOutputParser(OutputParser):
             full_harness_match = self.full_harness_error_re.match(line)
             if full_harness_match:
                 r = full_harness_match.group(1)
-                if r == "Browser crashed (minidump found)":
+                if r == "application crashed":
                     self.crashed = True
                 elif r == "missing output line for total leaks!":
                     self.leaked = None

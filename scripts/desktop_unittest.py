@@ -323,7 +323,7 @@ class DesktopUnittest(TestingMixin, MercurialScript):
                 suite_name = suite_category + '-' + suite
                 tbpl_status, log_level = None, None
                 error_list = BaseErrorList + [{
-                    'regex': re.compile(r'''PROCESS-CRASH.*minidump found'''),
+                    'regex': re.compile(r'''PROCESS-CRASH.*application crashed'''),
                     'level': ERROR,
                 }]
                 parser = DesktopUnittestOutputParser(suite_category,

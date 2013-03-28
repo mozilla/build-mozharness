@@ -36,7 +36,6 @@ config = {
         "CCACHE_DIR": "/builds/ccache",
         "CCACHE_COMPRESS": "1",
         "CCACHE_UMASK": "002",
-        "DOGFOOD": "1",
         "GAIA_OPTIMIZE": "1",
     },
     "purge_minsize": 15,
