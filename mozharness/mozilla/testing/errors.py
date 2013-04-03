@@ -44,7 +44,7 @@ TinderBoxPrintRe = {
         'known_fail_group': None,
     },
     "harness_error": {
-        'full_regex': re.compile(r"(TEST-UNEXPECTED-FAIL|PROCESS-CRASH) \| .* \| (application crashed|missing output line for total leaks!|negative leaks caught!|\d+ bytes leaked)"),
+        'full_regex': re.compile(r"(?:TEST-UNEXPECTED-FAIL|PROCESS-CRASH) \| .* \| (application crashed|missing output line for total leaks!|negative leaks caught!|\d+ bytes leaked)"),
         'minimum_regex': re.compile(r'''(TEST-UNEXPECTED|PROCESS-CRASH)''')
     },
 }
