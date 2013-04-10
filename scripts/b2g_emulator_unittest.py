@@ -153,7 +153,6 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
         self.test_url = c.get('test_url')
         self.test_manifest = c.get('test_manifest')
         self.busybox_path = None
-        self.minidump_stackwalk_path = None
 
     # TODO detect required config items and fail if not set
 
@@ -197,7 +196,7 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
         dirs = self.query_abs_dirs()
         self.install_emulator()
         if self.config.get('download_minidump_stackwalk'):
-            self.minidump_stackwalk_path = self.install_minidump_stackwalk()
+            self.install_minidump_stackwalk()
 
         self.mkdir_p(dirs['abs_xre_dir'])
         self._download_unzip(self.config['xre_url'],
@@ -350,7 +349,7 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
             success_codes = [0, 1]
 
         env = {}
-        if self.minidump_stackwalk_path:
+        if self.query_minidump_stackwalk():
             env['MINIDUMP_STACKWALK'] = self.minidump_stackwalk_path
         env = self.query_env(partial_env=env)
 

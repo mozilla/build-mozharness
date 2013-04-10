@@ -66,6 +66,7 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin):
     test_zip_path = None
     symbols_url = None
     symbols_path = None
+    minidump_stackwalk_path = None
     default_tools_repo = 'http://hg.mozilla.org/build/tools'
 
     def query_symbols_url(self):
@@ -274,22 +275,35 @@ Did you run with --create-virtualenv? Is mozinstall in virtualenv_modules?""")
             }]
             self.vcs_checkout(**repos[0])
 
-        # find binary for platform/architecture
-        path = os.path.join(dirs['abs_work_dir'], 'tools', 'breakpad', '%s', 'minidump_stackwalk')
-        pltfrm = platform.platform().lower()
-        arch = platform.architecture()
-        if 'linux' in pltfrm:
-            if '64' in arch:
-                return path % 'linux64'
-            return path % 'linux'
-        if any(s in pltfrm for s in ('mac', 'osx', 'darwin')):
-            if '64' in arch:
-                return path % 'osx64'
-            return path % 'osx'
-        if 'win' in pltfrm:
-            return path % 'win32' + '.exe'
+    def query_minidump_stackwalk(self):
+        if self.minidump_stackwalk_path:
+            return self.minidump_stackwalk_path
 
-        self.fatal("Could not find a minidump_stackwalk binary for this platform!")
+        dirs = self.query_abs_dirs()
+        env = self.query_env()
+        if os.path.isdir(os.path.join(dirs['abs_work_dir'], 'tools', 'breakpad')):
+            # find binary for platform/architecture
+            path = os.path.join(dirs['abs_work_dir'], 'tools', 'breakpad', '%s', 'minidump_stackwalk')
+            pltfrm = platform.platform().lower()
+            arch = platform.architecture()
+            if 'linux' in pltfrm:
+                if '64' in arch:
+                    self.minidump_stackwalk_path = path % 'linux64'
+                else:
+                    self.minidump_stackwalk_path = path % 'linux'
+            elif any(s in pltfrm for s in ('mac', 'osx', 'darwin')):
+                if '64' in arch:
+                    self.minidump_stackwalk_path = path % 'osx64'
+                else:
+                    self.minidump_stackwalk_path = path % 'osx'
+            elif 'win' in pltfrm:
+                self.minidump_stackwalk_path = path % 'win32' + '.exe'
+        elif os.path.isfile(env.get('MINIDUMP_STACKWALK', '')):
+            self.minidump_stackwalk_path = env['MINIDUMP_STACKWALK']
+        elif os.path.isfile(os.path.join(dirs['abs_work_dir'], 'minidump_stackwalk')):
+            self.minidump_stackwalk_path = os.path.join(dirs['abs_work_dir'], 'minidump_stackwalk')
+
+        return self.minidump_stackwalk_path
 
     def _run_cmd_checks(self, suites):
         if not suites:

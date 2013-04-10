@@ -26,5 +26,7 @@ config = {
         'install',
         'run-marionette',
     ],
+    "download_symbols": "ondemand",
+    "download_minidump_stackwalk": True,
 }
 
