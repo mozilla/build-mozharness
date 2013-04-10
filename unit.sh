@@ -83,6 +83,6 @@ if [ $OS_TYPE != 'windows' ] ; then
   fi
 else
   echo "### Running nosetests..."
-  nosetests
+  nosetests test/
 fi
 rm -rf build logs
