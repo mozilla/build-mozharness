@@ -6,9 +6,11 @@ share =
 convert =
 transplant =
 bookmarks =
-hggit =
 pager =
 purge =
+
+[format]
+dotencode = 0
 
 [ui]
 username = Client Builder <cltbld@mozilla.com>

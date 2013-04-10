@@ -45,6 +45,7 @@ class TestScript(unittest.TestCase):
         self.s = None
 
     def tearDown(self):
+        # Close the logfile handles, or windows can't remove the logs
         if hasattr(self, 's') and isinstance(self.s, object):
             del(self.s)
         cleanup()
@@ -147,6 +148,7 @@ class TestHelperFunctions(unittest.TestCase):
         self.s = None
 
     def tearDown(self):
+        # Close the logfile handles, or windows can't remove the logs
         if hasattr(self, 's') and isinstance(self.s, object):
             del(self.s)
         cleanup()
@@ -288,6 +290,7 @@ class TestScriptLogging(unittest.TestCase):
         self.s = None
 
     def tearDown(self):
+        # Close the logfile handles, or windows can't remove the logs
         if hasattr(self, 's') and isinstance(self.s, object):
             del(self.s)
         cleanup()
@@ -391,6 +394,12 @@ class TestRetry(unittest.TestCase):
     def setUp(self):
         self.ATTEMPT_N = 1
         self.s = script.BaseScript(initial_config_file='test/test.json')
+
+    def tearDown(self):
+        # Close the logfile handles, or windows can't remove the logs
+        if hasattr(self, 's') and isinstance(self.s, object):
+            del(self.s)
+        cleanup()
 
     def _succeedOnSecondAttempt(self, foo=None, exception=Exception):
         if self.ATTEMPT_N == 2:
