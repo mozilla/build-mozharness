@@ -318,7 +318,7 @@ class DesktopUnittest(TestingMixin, MercurialScript):
                 replace_dict = {
                     'abs_app_dir': abs_app_dir,
                 }
-                option_list = []
+                options_list = []
                 env = {}
                 if isinstance(suites[suite], dict):
                     options_list = suites[suite]['options']
@@ -326,7 +326,7 @@ class DesktopUnittest(TestingMixin, MercurialScript):
                 else:
                     options_list = suites[suite]
 
-                for arg in option_list:
+                for arg in options_list:
                     cmd.append(arg % replace_dict)
 
                 suite_name = suite_category + '-' + suite
