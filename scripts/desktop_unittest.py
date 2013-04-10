@@ -318,8 +318,17 @@ class DesktopUnittest(TestingMixin, MercurialScript):
                 replace_dict = {
                     'abs_app_dir': abs_app_dir,
                 }
-                for arg in suites[suite]:
+                options_list = []
+                env = {}
+                if isinstance(suites[suite], dict):
+                    options_list = suites[suite]['options']
+                    env = suites[suite]['env']
+                else:
+                    options_list = suites[suite]
+
+                for arg in options_list:
                     cmd.append(arg % replace_dict)
+
                 suite_name = suite_category + '-' + suite
                 tbpl_status, log_level = None, None
                 error_list = BaseErrorList + [{
@@ -330,7 +339,6 @@ class DesktopUnittest(TestingMixin, MercurialScript):
                                                      config=self.config,
                                                      error_list=error_list,
                                                      log_obj=self.log_obj)
-                env = {}
                 if c.get('minidump_stackwalk_path'):
                     env['MINIDUMP_STACKWALK'] = c['minidump_stackwalk_path']
                 if c.get('minidump_save_path'):
