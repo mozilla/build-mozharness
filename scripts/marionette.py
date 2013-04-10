@@ -16,6 +16,7 @@ sys.path.insert(1, os.path.dirname(sys.path[0]))
 from mozharness.base.errors import TarErrorList
 from mozharness.base.log import INFO, ERROR, WARNING
 from mozharness.base.script import BaseScript
+from mozharness.base.vcs.vcsbase import VCSMixin
 from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_WARNING, TBPL_FAILURE
 from mozharness.mozilla.testing.errors import LogcatErrorList
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
@@ -40,7 +41,7 @@ class MarionetteOutputParser(TestSummaryOutputParserHelper):
             self.install_gecko_failed = True
         super(MarionetteOutputParser, self).parse_single_line(line)
 
-class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
+class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, BaseScript):
     config_options = [
         [["--test-type"],
         {"action": "store",
@@ -153,6 +154,8 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
                              cwd=dirs['abs_gecko_dir'],
                              error_list=TarErrorList,
                              halt_on_failure=True)
+            if self.config.get('download_minidump_stackwalk'):
+                self.install_minidump_stackwalk()
 
     def install(self):
         if self.config.get('emulator'):
@@ -178,6 +181,7 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
             cmd.extend(self._build_arg('--homedir',
                                        os.path.join(dirs['abs_emulator_dir'],
                                                     'b2g-distro')))
+            cmd.extend(self._build_arg('--symbols-path', self.symbols_path))
 
         else:
             cmd.extend(self._build_arg('--binary', self.binary_path))
@@ -187,13 +191,18 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, BaseScript):
                                 self.config['test_manifest'])
         cmd.append(manifest)
 
+        env = {}
+        if self.query_minidump_stackwalk():
+            env['MINIDUMP_STACKWALK'] = self.minidump_stackwalk_path
+        env = self.query_env(partial_env=env)
+
         for i in range(0, 5):
             # We retry the run because sometimes installing gecko on the
             # emulator can cause B2G not to restart properly - Bug 812935.
             marionette_parser = MarionetteOutputParser(config=self.config,
                                                        log_obj=self.log_obj,
                                                        error_list=self.error_list)
-            code = self.run_command(cmd,
+            code = self.run_command(cmd, env=env,
                                     output_parser=marionette_parser)
             if not marionette_parser.install_gecko_failed:
                 break
