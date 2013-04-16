@@ -100,6 +100,10 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
             "dest": "additional_source_tarballs",
             "help": "Additional source tarballs to extract",
         }],
+        [["--update-channel"], {
+            "dest": "update_channel",
+            "help": "b2g update channel",
+        }],
     ]
 
     def __init__(self, require_config_file=False):
@@ -161,6 +165,7 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
                                 'compare_locales_repo': 'http://hg.mozilla.org/build/compare-locales',
                                 'compare_locales_rev': 'RELEASE_AUTOMATION',
                                 'compare_locales_vcs': 'hgtool',
+                                'update_channel': 'nightly',
                             },
                             )
 
@@ -336,6 +341,9 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
         # If we get a buildid from buildbot, pass that in as MOZ_BUILD_DATE
         if self.buildbot_config and 'buildid' in self.buildbot_config.get('properties', {}):
             env['MOZ_BUILD_DATE'] = self.buildbot_config['properties']['buildid']
+
+        if 'B2G_UPDATE_CHANNEL' not in env:
+            env['B2G_UPDATE_CHANNEL'] = self.config['update_channel']
 
         return env
 
@@ -987,11 +995,10 @@ class B2GBuild(LocalesMixin, MockMixin, BaseScript, VCSMixin, TooltoolMixin, Tra
     def make_socorro_json(self):
         self.info("Creating socorro.json...")
         dirs = self.query_abs_dirs()
-        manifest_config = self.config.get('manifest', {})
         socorro_dict = {
             'buildid': self.query_buildid(),
             'version': self.query_version(),
-            'update_channel': manifest_config.get('update_channel'),
+            'update_channel': self.config.get('update_channel'),
             #'beta_number': n/a until we build b2g beta releases
         }
         file_path = os.path.join(dirs['abs_work_dir'], 'socorro.json')
