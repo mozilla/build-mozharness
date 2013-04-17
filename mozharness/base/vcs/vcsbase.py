@@ -112,14 +112,15 @@ class VCSScript(VCSMixin, BaseScript):
     def __init__(self, **kwargs):
         super(VCSScript, self).__init__(**kwargs)
 
-    def pull(self, repos=None):
+    def pull(self, repos=None, parent_dir=None):
         repos = repos or self.config.get('repos')
         if not repos:
             self.info("Pull has nothing to do!")
             return
         dirs = self.query_abs_dirs()
-        return self.vcs_checkout_repos(self.config['repos'],
-                                       parent_dir=dirs['abs_work_dir'])
+        parent_dir = parent_dir or dirs['abs_work_dir']
+        return self.vcs_checkout_repos(repos,
+                                       parent_dir=parent_dir)
 
 
 # Specific VCS stubs {{{1
