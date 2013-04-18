@@ -3,13 +3,8 @@ import os
 config = {
     "default_actions": [
         'clobber',
-        'checkout-gecko',
-        'download-gonk',
-        'unpack-gonk',
-        'checkout-gaia',
-        'checkout-gaia-l10n',
-        'checkout-gecko-l10n',
-        'checkout-compare-locales',
+        'checkout-sources',
+        'get-blobs',
         'update-source-manifest',
         'build',
         'build-symbols',
@@ -65,4 +60,14 @@ config = {
     "purge_minsize": 15,
     "clobberer_url": "http://clobberer.pvt.build.mozilla.org/index.php",
     "is_automation": True,
+    "repo_mirror_dir": "/builds/git-shared/repo",
+    "repo_remote_mappings": {
+        'https://android.googlesource.com/': 'https://git.mozilla.org/external/aosp',
+        'git://codeaurora.org/': 'https://git.mozilla.org/external/caf',
+        'https://git.mozilla.org/b2g': 'https://git.mozilla.org/b2g',
+        'git://github.com/mozilla-b2g/': 'https://git.mozilla.org/b2g',
+        'git://github.com/mozilla/': 'https://git.mozilla.org/b2g',
+        'https://git.mozilla.org/releases': 'https://git.mozilla.org/releases',
+        'http://android.git.linaro.org/git-ro/': 'https://git.mozilla.org/external/linaro',
+    },
 }
