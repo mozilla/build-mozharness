@@ -15,7 +15,6 @@ from datetime import datetime
 import logging
 import os
 import sys
-import time
 import traceback
 
 # Define our own FATAL_LEVEL
@@ -97,7 +96,6 @@ class LogMixin(object):
     def fatal(self, message, exit_code=-1):
         self.log(message, level=FATAL, exit_code=exit_code)
 
-
 # OutputParser {{{1
 class OutputParser(LogMixin):
     """ Helper object to parse command output.
@@ -131,10 +129,8 @@ pre-context-line setting in error_list.)
         self.num_pre_context_lines = 0
         self.num_post_context_lines = 0
         self.worst_log_level = INFO
-        self.last_log_time = None
 
     def parse_single_line(self, line):
-        self.last_log_time = time.time()
         for error_check in self.error_list:
             # TODO buffer for context_lines.
             match = False
@@ -198,14 +194,13 @@ class BaseLogger(object):
     error,critical,fatal messages for us to count up at the end (aiming
     for 0).
     """
-    LEVELS = {
-        DEBUG: logging.DEBUG,
-        INFO: logging.INFO,
-        WARNING: logging.WARNING,
-        ERROR: logging.ERROR,
-        CRITICAL: logging.CRITICAL,
-        FATAL: FATAL_LEVEL
-    }
+    LEVELS = {DEBUG: logging.DEBUG,
+              INFO: logging.INFO,
+              WARNING: logging.WARNING,
+              ERROR: logging.ERROR,
+              CRITICAL: logging.CRITICAL,
+              FATAL: FATAL_LEVEL
+             }
 
     def __init__(self, log_level=INFO,
                  log_format='%(message)s',
@@ -217,7 +212,7 @@ class BaseLogger(object):
                  logger_name='',
                  halt_on_failure=True,
                  append_to_log=False,
-                 ):
+                ):
         self.halt_on_failure = halt_on_failure,
         self.log_format = log_format
         self.log_date_format = log_date_format
@@ -248,7 +243,7 @@ class BaseLogger(object):
     def init_message(self, name=None):
         if not name:
             name = self.__class__.__name__
-        self.log_message("%s online at %s in %s" %
+        self.log_message("%s online at %s in %s" % \
                          (name, datetime.now().strftime("%Y%m%d %H:%M:%S"),
                          os.getcwd()))
 
@@ -277,7 +272,7 @@ class BaseLogger(object):
             self.log_files['raw'] = '%s_raw.log' % self.log_name
             self.add_file_handler(os.path.join(self.abs_log_dir,
                                                self.log_files['raw']),
-                                  log_format='%(message)s')
+                                 log_format='%(message)s')
 
     def _clear_handlers(self):
         """To prevent dups -- logging will preserve Handlers across
@@ -294,7 +289,7 @@ class BaseLogger(object):
         self._clear_handlers()
 
     def add_console_handler(self, log_level=None, log_format=None,
-                            date_format=None):
+                          date_format=None):
         console_handler = logging.StreamHandler()
         console_handler.setLevel(self.get_logger_level(log_level))
         console_handler.setFormatter(self.get_log_formatter(log_format=log_format,
@@ -303,7 +298,7 @@ class BaseLogger(object):
         self.all_handlers.append(console_handler)
 
     def add_file_handler(self, log_path, log_level=None, log_format=None,
-                         date_format=None):
+                       date_format=None):
         if not self.append_to_log and os.path.exists(log_path):
             os.remove(log_path)
         file_handler = logging.FileHandler(log_path)
@@ -330,6 +325,7 @@ class BaseLogger(object):
             raise SystemExit(exit_code)
 
 
+
 # SimpleFileLogger {{{1
 class SimpleFileLogger(BaseLogger):
     """Create one logFile.  Possibly also output to
@@ -348,6 +344,8 @@ class SimpleFileLogger(BaseLogger):
         self.log_path = os.path.join(self.abs_log_dir, '%s.log' % self.log_name)
         self.log_files['default'] = self.log_path
         self.add_file_handler(self.log_path)
+
+
 
 
 # MultiFileLogger {{{1
@@ -376,6 +374,7 @@ class MultiFileLogger(BaseLogger):
                 self.add_file_handler(os.path.join(self.abs_log_dir,
                                                    self.log_files[level]),
                                       log_level=level)
+
 
 
 # __main__ {{{1

@@ -61,7 +61,6 @@ class MercurialVCS(ScriptMixin, LogMixin, object):
     def __init__(self, log_obj=None, config=None, vcs_config=None):
         super(MercurialVCS, self).__init__()
         self.can_share = None
-        self.idle_timeout = 15 * 60
         self.log_obj = log_obj
         if config:
             self.config = config
@@ -74,7 +73,6 @@ class MercurialVCS(ScriptMixin, LogMixin, object):
         #  revision: revision,
         #  ssh_username: ssh_username,
         #  ssh_key: ssh_key,
-        #  idle_timeout: idle timeout in seconds,
         # }
         self.vcs_config = vcs_config
         self.hg = [self.query_exe('hg')] + HG_OPTIONS
@@ -197,7 +195,7 @@ class MercurialVCS(ScriptMixin, LogMixin, object):
                 cmd.extend(['-b', branch])
 
         cmd.extend([repo, dest])
-        self.run_command(cmd, idle_timeout=self.idle_timeout, error_list=HgErrorList)
+        self.run_command(cmd, error_list=HgErrorList)
 
         if update_dest:
             return self.update(dest, branch, revision)
