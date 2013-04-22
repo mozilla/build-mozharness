@@ -2,8 +2,9 @@ import gc
 import mock
 import os
 import re
+import sys
+import time
 import unittest
-
 
 import mozharness.base.errors as errors
 import mozharness.base.log as log
@@ -467,6 +468,37 @@ class TestRetry(unittest.TestCase):
         print ret
         self.assertEqual(ret[0], args)
         self.assertEqual(ret[1], kwargs)
+
+
+# TestTimeout {{{1
+class TestTimeout(unittest.TestCase):
+    def setUp(self):
+        cleanup()
+        self.s = script.BaseScript(initial_config_file='test/test.json')
+
+    def tearDown(self):
+        # Close the logfile handles, or windows can't remove the logs
+        if hasattr(self, 's') and isinstance(self.s, object):
+            del(self.s)
+        cleanup()
+
+    def testNoTimeout(self):
+        status = self.s.run_command([sys.executable, '-c', 'import time; time.sleep(2)'], idle_timeout=5)
+        self.assertEqual(status, 0)
+
+    def testTimeout(self):
+        t = time.time()
+        status = self.s.run_command([sys.executable, '-c', 'import time; time.sleep(20)'], idle_timeout=2)
+        self.assertNotEqual(status, 0, "Timed-out (and killed) status is 0!")
+        self.assertTrue(time.time() - t < 5, "Idle timeout of 2 seconds took longer than 5 seconds to return!")
+
+    def testCommandLag(self):
+        t = time.time()
+        self.s.run_command(['echo'])
+        self.s.run_command(['echo'])
+        self.s.run_command(['echo'])
+        self.assertTrue(time.time() - t < 1, "Running three echos takes over a full second!")
+
 
 # main {{{1
 if __name__ == '__main__':

@@ -91,6 +91,7 @@ MakefileErrorList = BaseErrorList + PythonErrorList + [
  {'regex': re.compile(r''':\d+: error:'''), 'level': ERROR},
  {'regex': re.compile(r'''make\[\d+\]: \*\*\* \[.*\] Error \d+'''), 'level': ERROR},
  {'regex': re.compile(r''':\d+: warning:'''), 'level': WARNING},
+ {'regex': re.compile(r'''make(?:\[\d+\])?: \*\*\*/'''), 'level': ERROR},
  {'substr': r'''Warning: ''', 'level': WARNING},
 ]
 

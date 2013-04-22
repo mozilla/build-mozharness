@@ -8,9 +8,16 @@
 """
 
 import os
+import urllib2
+try:
+    import simplejson as json
+    assert json
+except ImportError:
+    import json
 
 from mozharness.base.errors import SSHErrorList
 from mozharness.base.log import ERROR
+
 
 # TransferMixin {{{1
 class TransferMixin(object):
@@ -94,3 +101,9 @@ class TransferMixin(object):
                             error_list=SSHErrorList):
             self.log("Unable to rsync %s:%s to %s!" % (remote_host, remote_path, local_path), level=error_level)
             return -3
+
+    def load_json_from_url(self, url, timeout=30):
+        self.debug("Attempting to download %s; timeout=%i" % (url, timeout))
+        r = urllib2.urlopen(url, timeout=timeout)
+        j = json.load(r)
+        return j

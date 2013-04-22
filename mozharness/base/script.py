@@ -16,8 +16,10 @@ import platform
 import pprint
 import re
 import shutil
+import signal
 import subprocess
 import sys
+import threading
 import time
 import urllib2
 import urlparse
@@ -27,9 +29,50 @@ try:
 except ImportError:
     import json
 
+
 from mozharness.base.config import BaseConfig
 from mozharness.base.log import SimpleFileLogger, MultiFileLogger, \
-    LogMixin, OutputParser, DEBUG, INFO, ERROR, FATAL
+    LogMixin, OutputParser, DEBUG, INFO, ERROR, WARNING, FATAL
+
+
+def _process_streaming_output(proc, parser):
+    """
+        Helper method: take streaming output from a subprocess
+        in a non-blocking fashion, so we can detect idle timeouts.
+
+        Based on http://stackoverflow.com/questions/375427/non-blocking-read-on-a-subprocess-pipe-in-python
+        """
+    next_line = None
+    buf = ''
+    delay = 0
+    while True:
+        """ Read one character at a time in non-blocking fashion.
+            Detect newlines and add to parser.
+            """
+        out = proc.stdout.read(1)
+        if out == '' and proc.poll() is not None:
+            # End of process.
+            if buf:
+                parser.add_lines(buf)
+            break
+        if out != '':
+            # Output!
+            delay = 0
+            buf += out
+            if out == '\n':
+                next_line = buf
+                buf = ''
+        else:
+            # No output; slow down the loop
+            delay += 0.1
+            if delay > 1:
+                delay = 1
+            time.sleep(delay)
+        if not next_line:
+            continue
+        parser.add_lines(next_line)
+        next_line = None
+    proc.stdout.close()
 
 
 # ScriptMixin {{{1
@@ -514,16 +557,32 @@ class ScriptMixin(object):
             self.log("Unknown return_type type %s requested in query_exe!" % return_type, level=error_level)
         return exe
 
-    def run_command(self, command, cwd=None, error_list=None, parse_at_end=False,
+    def terminate_pid(self, pid, sig=None):
+        """
+            Kill a subprocess, compatible with Python 2.5
+            From http://stackoverflow.com/questions/1064335/in-python-2-5-how-do-i-kill-a-subprocess
+
+            """
+        self.info("Killing pid %s..." % str(pid))
+        if self._is_windows():
+            import ctypes
+            PROCESS_TERMINATE = 1
+            handle = ctypes.windll.kernel32.OpenProcess(PROCESS_TERMINATE, False, pid)
+            ctypes.windll.kernel32.TerminateProcess(handle, -1)
+            ctypes.windll.kernel32.CloseHandle(handle)
+        else:
+            if sig is None:
+                sig = signal.SIGTERM
+            os.kill(pid, sig)
+
+    def run_command(self, command, cwd=None, error_list=None,
+                    idle_timeout=None, idle_error_level=WARNING,
                     halt_on_failure=False, success_codes=None,
                     env=None, return_type='status', throw_exception=False,
                     output_parser=None):
         """Run a command, with logging and error parsing.
 
-        TODO: parse_at_end, context_lines
-        TODO: retry_interval?
-        TODO: error_level_override?
-        TODO: Add a copy-pastable version of |command| if it's a list.
+        TODO: context_lines
         TODO: print env if set
 
         output_parser lets you provide an instance of your own OutputParser
@@ -534,7 +593,6 @@ class ScriptMixin(object):
          {'regex': re.compile('^Error:'), level=ERROR, contextLines='5:5'},
          {'substr': 'THE WORLD IS ENDING', level=FATAL, contextLines='20:'}
         ]
-        (context_lines isn't written yet)
         """
         if success_codes is None:
             success_codes = [0]
@@ -564,21 +622,44 @@ class ScriptMixin(object):
             self.log('caught OS error %s: %s while running %s' % (e.errno,
                      e.strerror, command), level=level)
             return -1
+
         if output_parser is None:
             parser = OutputParser(config=self.config, log_obj=self.log_obj,
                                   error_list=error_list)
         else:
             parser = output_parser
-        loop = True
-        while loop:
+        parser.last_log_time = time.time()
+
+        thread = threading.Thread(target=_process_streaming_output, args=(p, parser))
+        thread.daemon = True
+        thread.start()
+        while True:
             if p.poll() is not None:
-                """Avoid losing the final lines of the log?"""
-                loop = False
-            while True:
-                line = p.stdout.readline()
-                if not line:
-                    break
-                parser.add_lines(line)
+                if thread and thread.is_alive():
+                    thread.join()
+                break
+            t = time.time()
+            if idle_timeout and t - parser.last_log_time > idle_timeout:
+                if p.poll() is None:
+                    self.log("Process has passed max idle timeout of %d seconds." % idle_timeout,
+                             level=idle_error_level)
+                    self.terminate_pid(p.pid)
+                    time.sleep(1)
+                    if p.poll() is None:
+                        self.warning("It looks like the process may still be around; trying p.kill()")
+                        self.terminate_pid(p.pid, sig=signal.SIGKILL)
+                        time.sleep(1)
+                        try:
+                            p.kill()
+                            time.sleep(1)
+                        except:
+                            pass
+                        if p.poll() is None:
+                            self.log("Still not dead.  Giving up.", level=idle_error_level)
+                            # We could |p.wait(); if t and t.is_alive(): t.join()| here
+                            # However, blocking on something finishing when we're trying
+                            # to time out seems counter-intuitive
+                break
         return_level = INFO
         if p.returncode not in success_codes:
             return_level = ERROR
