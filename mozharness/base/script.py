@@ -21,9 +21,13 @@ import sys
 import time
 import urllib2
 import urlparse
+if os.name == 'nt':
+    import win32file
+    import win32api
 
 try:
     import simplejson as json
+    assert json
 except ImportError:
     import json
 
@@ -67,26 +71,25 @@ class ScriptMixin(object):
         Returns None for success, not None for failure
         """
         self.log("rmtree: %s" % path, level=log_level)
+        error_message = "Unable to remove %s!" % path
+        if self._is_windows():
+            # Call _rmtree_windows() directly, since even checking
+            # os.path.exists(path) will hang if path is longer than MAX_PATH.
+            return self.retry(
+                self._rmtree_windows,
+                error_level=error_level,
+                error_message=error_message,
+                args=(path, ),
+            )
         if os.path.exists(path):
-            error_message = "Unable to remove %s!" % path
             if os.path.isdir(path):
-                if self._is_windows():
-                    # bug 789520: using rmdir /s /q instead of
-                    # self._rmdir_recursive
-                    return self.retry(
-                        self.run_command,
-                        error_level=error_level,
-                        error_message=error_message,
-                        args=('rmdir /S /Q "%s"' % path, ),
-                    )
-                else:
-                    return self.retry(
-                        shutil.rmtree,
-                        error_level=error_level,
-                        error_message=error_message,
-                        retry_exceptions=(OSError, ),
-                        args=(path, ),
-                    )
+                return self.retry(
+                    shutil.rmtree,
+                    error_level=error_level,
+                    error_message=error_message,
+                    retry_exceptions=(OSError, ),
+                    args=(path, ),
+                )
             else:
                 return self.retry(
                     os.remove,
@@ -104,6 +107,8 @@ class ScriptMixin(object):
             return True
         if system.startswith("CYGWIN"):
             return True
+        if os.name == 'nt':
+            return True
 
     def query_msys_path(self, path):
         if not isinstance(path, basestring):
@@ -115,34 +120,34 @@ class ScriptMixin(object):
         path = re.sub(r'''^([a-zA-Z]):/''', repl, path)
         return path
 
-    def _rmdir_recursive(self, path):
-        """This is a replacement for shutil.rmtree that works better under
-        windows. Thanks to Bear at the OSAF for the code."""
-        if not os.path.exists(path):
+    def _rmtree_windows(self, path):
+        """ Windows-specific rmtree that handles path lengths longer than MAX_PATH.
+            Ported from clobberer.py.
+        """
+        self.info("Using _rmtree_windows ...")
+        assert self._is_windows()
+        path = os.path.realpath(path)
+        if not os.path.exists('\\\\?\\' + path):
             return
+        # Make sure directory is writable
+        win32file.SetFileAttributesW('\\\\?\\' + path, win32file.FILE_ATTRIBUTE_NORMAL)
+        # Since we call rmtree() with a file, sometimes
+        if not os.path.isdir('\\\\?\\' + path):
+            return win32file.DeleteFile('\\\\?\\' + path)
 
-        # Verify the directory is read/write/execute for the current user
-        os.chmod(path, 0700)
-
-        for name in os.listdir(path):
+        for ffrec in win32api.FindFiles('\\\\?\\' + path + '\\*.*'):
+            file_attr = ffrec[0]
+            name = ffrec[8]
+            if name == '.' or name == '..':
+                continue
             full_name = os.path.join(path, name)
-            # on Windows, if we don't have write permission we can't remove
-            # the file/directory either, so turn that on
-            if self._is_windows():
-                if not os.access(full_name, os.W_OK):
-                    # I think this is now redundant, but I don't have an NT
-                    # machine to test on, so I'm going to leave it in place
-                    # -warner
-                    os.chmod(full_name, 0600)
-            if os.path.islink(full_name):
-                os.remove(full_name)
-            elif os.path.isdir(full_name):
-                self._rmdir_recursive(full_name)
+
+            if file_attr & win32file.FILE_ATTRIBUTE_DIRECTORY:
+                self._rmtree_windows(full_name)
             else:
-                if os.path.isfile(full_name):
-                    os.chmod(full_name, 0700)
-                os.remove(full_name)
-        os.rmdir(path)
+                win32file.SetFileAttributesW('\\\\?\\' + full_name, win32file.FILE_ATTRIBUTE_NORMAL)
+                win32file.DeleteFile('\\\\?\\' + full_name)
+        win32file.RemoveDirectory('\\\\?\\' + path)
 
     def get_filename_from_url(self, url):
         parsed = urlparse.urlsplit(url.rstrip('/'))
