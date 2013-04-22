@@ -3,8 +3,7 @@ import mock
 import os
 import re
 import unittest
-if os.name == 'nt':
-    import win32file
+
 
 import mozharness.base.errors as errors
 import mozharness.base.log as log
@@ -169,7 +168,8 @@ class TestHelperFunctions(unittest.TestCase):
     def test_get_output_from_command(self):
         self._create_temp_file()
         self.s = script.BaseScript(initial_config_file='test/test.json')
-        contents = self.s.get_output_from_command(["bash", "-c", "cat %s" % self.temp_file])
+        contents = self.s.get_output_from_command("cat %s" % self.temp_file)
+        del(self.s)
         self.assertEqual(test_string, contents,
                          msg="get_output_from_command('cat file') differs from fh.write")
 
@@ -220,38 +220,21 @@ class TestHelperFunctions(unittest.TestCase):
         status = self.s.rmtree('test_dir')
         self.assertFalse(status, msg="nonexistent rmtree error")
 
-    @unittest.skipUnless(os.name == "nt", "Windows specific")
-    def test_long_dir_rmtree(self):
-        self.s = script.BaseScript(initial_config_file='test/test.json')
-        # create a very long path that the command-prompt cannot delete
-        # by using unicode format (max path length 32000)
-        path = u'\\\\?\\%s\\test_dir' % os.getcwd()
-        win32file.CreateDirectoryExW(u'.', path)
-
-        for x in range(0, 20):
-            print("path=%s" % path)
-            path = path + u'\\%sxxxxxxxxxxxxxxxxxxxx' % x
-            win32file.CreateDirectoryExW(u'.', path)
-        self.s.rmtree('test_dir')
-        self.assertFalse(os.path.exists('test_dir'),
-                         msg="rmtree unsuccessful")
-
-    @unittest.skipUnless(os.name == "nt", "Windows specific")
-    def test_chmod_rmtree(self):
+    def test_existing_rmdir_recursive(self):
         self._create_temp_file()
-        win32file.SetFileAttributesW(self.temp_file, win32file.FILE_ATTRIBUTE_READONLY)
         self.s = script.BaseScript(initial_config_file='test/test.json')
-        self.s.rmtree('test_dir')
+        self.s.mkdir_p('test_dir/foo/bar/baz')
+        self.s._rmdir_recursive('test_dir')
         self.assertFalse(os.path.exists('test_dir'),
-                         msg="rmtree unsuccessful")
+                         msg="_rmdir_recursive unsuccessful")
 
-    @unittest.skipIf(os.name == "nt", "Not for Windows")
     def test_chmod(self):
         self._create_temp_file()
         self.s = script.BaseScript(initial_config_file='test/test.json')
-        self.s.chmod(self.temp_file, 0100700)
-        self.assertEqual(os.stat(self.temp_file)[0], 33216,
-                         msg="chmod unsuccessful")
+        if not self.s._is_windows():
+            self.s.chmod(self.temp_file, 0100700)
+            self.assertEqual(os.stat(self.temp_file)[0], 33216,
+                             msg="chmod unsuccessful")
 
     def test_env_normal(self):
         self.s = script.BaseScript(initial_config_file='test/test.json')
