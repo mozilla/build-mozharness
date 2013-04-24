@@ -812,7 +812,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin, Toolto
                 new_sources.append('  <!-- Mercurial-Information: <remote fetch="http://hg.mozilla.org/" name="hgmozillaorg"> -->')
                 new_sources.append('  <!-- Mercurial-Information: <project name="%s" path="gecko" remote="hgmozillaorg" revision="%s"/> -->' %
                                    (self.buildbot_config['properties']['repo_path'], self.buildbot_properties['gecko_revision']))
-                if 'gaia_revision' in self.buildbot_properties:
+                if gecko_config.get('config_version', 0) < 2 and 'gaia_revision' in self.buildbot_properties:
                     new_sources.append('  <!-- Mercurial-Information: <project name="%s" path="gaia" remote="hgmozillaorg" revision="%s"/> -->' %
                                        (gaia_config['repo'].replace('http://hg.mozilla.org/', ''), self.buildbot_properties['gaia_revision']))
 
@@ -820,16 +820,21 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin, Toolto
                     url = manifest_config['translate_base_url']
                     gecko_git = self.query_translated_revision(url, 'gecko', self.buildbot_properties['gecko_revision'])
                     new_sources.append('  <project name="%s" path="gecko" remote="mozillaorg" revision="%s"/>' % ("https://git.mozilla.org/releases/gecko.git".replace(git_base_url, ''), gecko_git))
-                    if 'gaia_revision' in self.buildbot_properties:
-                        gaia_git = self.query_translated_revision(url, 'gaia', self.buildbot_properties['gaia_revision'])
-                        new_sources.append('  <project name="%s" path="gaia" remote="mozillaorg" revision="%s"/>' % ("https://git.mozilla.org/releases/gaia.git".replace(git_base_url, ''), gaia_git))
+                    # We don't need to use mapper for gaia after config version
+                    # 2, since that's when we switched to pulling gaia directly
+                    # from git
+                    if gecko_config.get('config_version', 0) < 2:
+                        if 'gaia_revision' in self.buildbot_properties:
+                            gaia_git = self.query_translated_revision(url, 'gaia', self.buildbot_properties['gaia_revision'])
+                            new_sources.append('  <project name="%s" path="gaia" remote="mozillaorg" revision="%s"/>' %
+                                               ("https://git.mozilla.org/releases/gaia.git".replace(git_base_url, ''), gaia_git))
 
-                    # Figure out when our gaia commit happened
-                    gaia_time = self.get_hg_commit_time(os.path.join(dirs['abs_work_dir'], 'gaia'), self.buildbot_properties['gaia_revision'])
+                        # Figure out when our gaia commit happened
+                        gaia_time = self.get_hg_commit_time(os.path.join(dirs['abs_work_dir'], 'gaia'), self.buildbot_properties['gaia_revision'])
 
-                    # Write the gaia commit information to 'gaia_commit_override.txt'
-                    gaia_override = os.path.join(dirs['abs_work_dir'], 'gaia', 'gaia_commit_override.txt')
-                    self.write_to_file(gaia_override, "%s\n%s\n" % (gaia_git, gaia_time))
+                        # Write the gaia commit information to 'gaia_commit_override.txt'
+                        gaia_override = os.path.join(dirs['abs_work_dir'], 'gaia', 'gaia_commit_override.txt')
+                        self.write_to_file(gaia_override, "%s\n%s\n" % (gaia_git, gaia_time))
                 new_sources.extend(self._generate_locale_manifest(git_base_url=git_base_url))
 
         self.write_to_file(sourcesfile, "\n".join(new_sources), verbose=False)
