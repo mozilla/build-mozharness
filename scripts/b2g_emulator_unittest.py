@@ -311,21 +311,10 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
         if not os.path.isfile(self.adb_path):
             self.fatal("The adb binary '%s' is not a valid file!" % self.adb_path)
 
-    def dump_ps(self):
-        # Bug 865837 - Dump the top ten processes that are using the most CPU
-        cmd = ['ps', '-eo', 'pcpu,pid,user,args']
-        lines = self.get_output_from_command(cmd, silent=True).split('\n')
-        lines.sort(reverse=True)
-        self.info('\n'.join(lines[0:10]))
-
     def run_tests(self):
         """
         Run the tests
         """
-
-        # Bug 865837: temporarily dump ps output to help debug an issue on ix slaves
-        self.dump_ps()
-
         dirs = self.query_abs_dirs()
 
         error_list = self.error_list
@@ -380,10 +369,6 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
         else:
             self._dump_logcat(parser)
             self.fatal("Failed to install gecko 5 times in a row, aborting")
-
-        # Bug 865837: temporarily dump ps output on failure
-        if return_code:
-            self.dump_ps()
 
         tbpl_status, log_level = parser.evaluate_parser(return_code)
         parser.append_tinderboxprint_line(suite_name)
