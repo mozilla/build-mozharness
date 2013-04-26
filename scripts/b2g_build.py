@@ -502,14 +502,21 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin, Toolto
                 self.rmtree(os.path.join(repo_mirror_dir, '.repo'))
                 repo = os.path.join(dirs['work_dir'], 'repo')
                 self.run_command([repo, "init", "--repo-url", repo_repo, "-q", "--mirror", "-u", manifest_dir, "-m", self.config['target'] + '.xml', '-b', b2g_manifest_branch], cwd=repo_mirror_dir, halt_on_failure=True)
-                self.run_command([repo, "sync", "--quiet"], cwd=repo_mirror_dir, halt_on_failure=True)
+                # self.run_command([repo, "sync", "--quiet"], cwd=repo_mirror_dir, halt_on_failure=True)
+                # XXX Work around git failing to clone some repositories when
+                # running in quiet mode. It also fails when we run without a
+                # pty
+                # https://bugzilla.mozilla.org/show_bug.cgi?id=857158
+                self.run_command(['script', '-q', '-c', '%s sync' % repo], cwd=repo_mirror_dir, halt_on_failure=True)
 
                 # Now check it out into our local working directory
                 self.run_command([repo, "init", "--repo-url", repo_repo, "-q", "--reference", repo_mirror_dir, "-u", manifest_dir, "-m", self.config['target'] + '.xml', '-b', b2g_manifest_branch], cwd=dirs['work_dir'], halt_on_failure=True)
             else:
                 # Non-mirror mode
                 self.run_command([repo, "init", "--repo-url", repo_repo, "-q", "-u", manifest_dir, "-m", self.config['target'] + '.xml', '-b', b2g_manifest_branch], cwd=dirs['work_dir'], halt_on_failure=True)
-            self.run_command([repo, "sync", "--quiet"], cwd=dirs['work_dir'], halt_on_failure=True)
+            # self.run_command([repo, "sync", "--quiet"], cwd=dirs['work_dir'], halt_on_failure=True)
+            # XXX Same workaround for git
+            self.run_command(['script', '-q', '-c', '%s sync' % repo], cwd=dirs['work_dir'], halt_on_failure=True)
 
             # output our sources.xml, make a copy for update_sources_xml()
             self.run_command(["./gonk-misc/add-revision.py", "-o", "sources.xml", "--force", ".repo/manifest.xml"], cwd=dirs["work_dir"], halt_on_failure=True)
