@@ -1066,6 +1066,15 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin, Toolto
                 self.debug("removing %s" % tmpdir)
                 self.rmtree(tmpdir)
 
+        # Copy gaia profile
+        if gecko_config.get('package_gaia', True):
+            zip_name = os.path.join(dirs['work_dir'], "gaia.zip")
+            self.info("creating %s" % zip_name)
+            cmd = ['zip', '-r', '-9', '-u', zip_name, 'gaia/profile']
+            if self.run_command(cmd, cwd=dirs['work_dir']) != 0:
+                self.fatal("problem zipping up gaia")
+            self.copy_to_upload_dir(zip_name)
+
         self.info("copying files to upload directory")
         files = []
 
