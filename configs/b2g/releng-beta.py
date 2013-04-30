@@ -76,6 +76,7 @@ config = {
         'git://github.com/mozilla/': 'https://git.mozilla.org/b2g',
         'https://git.mozilla.org/releases': 'https://git.mozilla.org/releases',
         'http://android.git.linaro.org/git-ro/': 'https://git.mozilla.org/external/linaro',
+        'git://github.com/apitrace/': 'https://git.mozilla.org/external/apitrace',
     },
     "update_channel": "beta",
 }
