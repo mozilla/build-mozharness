@@ -18,6 +18,7 @@ import sys
 
 try:
     import simplejson as json
+    assert json
 except ImportError:
     import json
 
@@ -28,6 +29,7 @@ from mozharness.base.errors import BaseErrorList, MakefileErrorList
 from mozharness.base.log import OutputParser
 from mozharness.base.transfer import TransferMixin
 from mozharness.mozilla.buildbot import BuildbotMixin
+from mozharness.mozilla.purge import PurgeMixin
 from mozharness.mozilla.release import ReleaseMixin
 from mozharness.mozilla.signing import MobileSigningMixin
 from mozharness.base.vcs.vcsbase import MercurialScript
@@ -38,7 +40,7 @@ from mozharness.mozilla.mock import MockMixin
 # MobileSingleLocale {{{1
 class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
                          MobileSigningMixin, TransferMixin,
-                         BuildbotMixin, MercurialScript):
+                         BuildbotMixin, PurgeMixin, MercurialScript):
     config_options = [[
         ['--locale', ],
         {"action": "extend",
@@ -281,6 +283,14 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
         self.set_buildbot_property("locales", json.dumps(self.locales_property), write_to_file=True)
 
     # Actions {{{2
+    def clobber(self):
+        self.read_buildbot_config()
+        dirs = self.query_abs_dirs()
+        c = self.config
+        objdir = os.path.join(dirs['abs_work_dir'], c['mozilla_dir'],
+                              c['objdir'])
+        super(MobileSingleLocale, self).clobber(always_clobber_dirs=[objdir])
+
     def pull(self):
         c = self.config
         dirs = self.query_abs_dirs()
@@ -299,14 +309,6 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
         self.pull_locale_source()
 
     # list_locales() is defined in LocalesMixin.
-
-    def preflight_setup(self):
-        if 'clobber' not in self.actions:
-            c = self.config
-            dirs = self.query_abs_dirs()
-            objdir = os.path.join(dirs['abs_work_dir'], c['mozilla_dir'],
-                                  c['objdir'])
-            self.rmtree(objdir)
 
     def _setup_configure(self, buildid=None):
         c = self.config
