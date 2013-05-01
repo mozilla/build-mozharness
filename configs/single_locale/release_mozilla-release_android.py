@@ -13,6 +13,11 @@ HG_SHARE_BASE_DIR = "/builds/hg-shared"
 config = {
     "log_name": "single_locale",
     "objdir": OBJDIR,
+    "is_automation": True,
+    "buildbot_json_path": "buildprops.json",
+    "purge_minsize": 10,
+    "force_clobber": True,
+    "clobberer_url": "http://clobberer.pvt.build.mozilla.org/index.php",
     "locales_file": "buildbot-configs/mozilla/l10n-changesets_mobile-release.json",
     "locales_dir": "mobile/android/locales",
     "locales_platform": "android",
@@ -21,15 +26,15 @@ config = {
         "repo": "http://hg.mozilla.org/releases/mozilla-release",
         "revision": "default",
         "dest": MOZILLA_DIR,
-    },{
+    }, {
         "repo": "http://hg.mozilla.org/build/buildbot-configs",
         "revision": "default",
         "dest": "buildbot-configs"
-    },{
+    }, {
         "repo": "http://hg.mozilla.org/build/tools",
         "revision": "default",
         "dest": "tools"
-    },{
+    }, {
         "repo": "http://hg.mozilla.org/build/compare-locales",
         "revision": "RELEASE_AUTOMATION"
     }],
@@ -80,7 +85,7 @@ config = {
         "android-sdk15", "android-sdk16", "android-ndk5", "android-ndk8",
         "zip", "java-1.6.0-openjdk-devel", "zlib-devel", "glibc-static",
         "openssh-clients", "mpfr", "wget",
-         ],
+    ],
     "mock_files": [
         ("/home/cltbld/.ssh", "/home/mock_mozilla/.ssh"),
     ],
