@@ -93,11 +93,14 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin):
             message = "Unable to set %s from the buildbot config"
             try:
                 files = self.buildbot_config['sourcestamp']['changes'][-1]['files']
-                expected_length = 1
+                # Bug 868490 - Only require exactly two files if require_test_zip;
+                # otherwise accept either 1 or 2, since we'll be getting a
+                # test_zip url that we don't need.
+                expected_length = [1, 2]
                 if c.get("require_test_zip"):
-                    expected_length = 2
+                    expected_length = [2]
                 actual_length = len(files)
-                if actual_length != expected_length:
+                if actual_length not in expected_length:
                     self.fatal("Unexpected number of files in buildbot config %s: %d != %d!" % (c['buildbot_json_path'], actual_length, expected_length))
                 for f in files:
                     if f['name'].endswith('tests.zip'): # yuk
