@@ -223,6 +223,8 @@ class ScriptMixin(object):
             error_message="Can't download from %s to %s!" % (url, file_name),
             error_level=error_level,
         )
+        if status == file_name:
+            self.info("Downloaded %d bytes." % os.path.getsize(file_name))
         return status
 
     def move(self, src, dest, log_level=INFO, error_level=ERROR,
