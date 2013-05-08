@@ -587,7 +587,6 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin, Toolto
         # and specifies which target to use
         device_name = self.config['target']
         device = {
-            'emulator': 'generic',
             'pandaboard': 'panda',
         }.get(device_name, device_name)
 
@@ -599,7 +598,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin, Toolto
             "DEVICE=%s" % device,
         ]
         # TODO: eh? what's this for? config.sh does it, but why?
-        if device_name == 'emulator':
+        if device_name == 'generic':
             lines.append("LUNCH=full-eng")
 
         # Make sure we get a blank line at the end
