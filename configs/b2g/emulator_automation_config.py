@@ -13,6 +13,10 @@ config = {
         'tooltool.py': "/tools/tooltool.py",
     },
 
+    "env": {
+        "__GL_YIELD": "NOTHING",
+    },
+
     "find_links": ["http://repos/python/packages"],
     "pip_index": False,
 
