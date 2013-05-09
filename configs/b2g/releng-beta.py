@@ -78,5 +78,6 @@ config = {
         'http://android.git.linaro.org/git-ro/': 'https://git.mozilla.org/external/linaro',
         'git://github.com/apitrace/': 'https://git.mozilla.org/external/apitrace',
     },
-    "update_channel": "beta",
+    "nightly_update_channel": "beta",
+    "publish_channel": "nightly",
 }
