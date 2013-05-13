@@ -15,8 +15,7 @@ sys.path.insert(1, os.path.dirname(sys.path[0]))
 
 from mozharness.base.errors import TarErrorList
 from mozharness.base.log import INFO, ERROR, WARNING
-from mozharness.base.script import BaseScript
-from mozharness.base.vcs.vcsbase import VCSMixin
+from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_WARNING, TBPL_FAILURE
 from mozharness.mozilla.testing.errors import LogcatErrorList
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
@@ -41,7 +40,7 @@ class MarionetteOutputParser(TestSummaryOutputParserHelper):
             self.install_gecko_failed = True
         super(MarionetteOutputParser, self).parse_single_line(line)
 
-class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, BaseScript):
+class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, MercurialScript):
     config_options = [
         [["--test-type"],
         {"action": "store",
@@ -63,6 +62,13 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, BaseS
          "default": None,
          "help": "Use an emulator for testing",
         }],
+        [["--gaiatest"],
+        {"action": "store_true",
+         "dest": "gaiatest",
+         "default": False,
+         "help": "Runs gaia-ui-tests by pulling down the test repo and invoking "
+                 "gaiatest's runtests.py rather than Marionette's."
+        }],
         [["--test-manifest"],
         {"action": "store",
          "dest": "test_manifest",
@@ -83,16 +89,25 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, BaseS
         {'marionette': os.path.join('tests', 'marionette')}
     ]
 
+    repos = []
+
+    gaia_ui_tests_repo = {'repo': 'http://hg.mozilla.org/integration/gaia-ui-tests/',
+                          'revision': 'default',
+                          'dest': 'gaia-ui-tests',
+                          'branch': 'default'}
+
     def __init__(self, require_config_file=False):
         super(MarionetteTest, self).__init__(
             config_options=self.config_options,
             all_actions=['clobber',
                          'read-buildbot-config',
+                         'pull',
                          'download-and-extract',
                          'create-virtualenv',
                          'install',
                          'run-marionette'],
             default_actions=['clobber',
+                             'pull',
                              'download-and-extract',
                              'create-virtualenv',
                              'install',
@@ -128,11 +143,29 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, BaseS
             abs_dirs['abs_work_dir'], 'gecko')
         dirs['abs_emulator_dir'] = os.path.join(
             abs_dirs['abs_work_dir'], 'emulator')
+        dirs['abs_gaiatest_dir'] = os.path.join(
+            abs_dirs['abs_work_dir'], 'gaia-ui-tests')
         for key in dirs.keys():
             if key not in abs_dirs:
                 abs_dirs[key] = dirs[key]
         self.abs_dirs = abs_dirs
         return self.abs_dirs
+
+    def create_virtualenv(self, **kwargs):
+        super(MarionetteTest, self).create_virtualenv(**kwargs)
+
+        if self.config.get('gaiatest'):
+            dirs = self.query_abs_dirs()
+            self.install_module(module='gaia-ui-tests',
+                                module_url=dirs['abs_gaiatest_dir'],
+                                install_method='pip')
+
+    def pull(self, **kwargs):
+        repos = copy.deepcopy(self.config.get('repos', []))
+        if self.config.get('gaiatest'):
+            repos.append(self.config.get("gaia_ui_tests_repo", self.gaia_ui_tests_repo))
+        kwargs['repos'] = repos
+        super(MarionetteTest, self).pull(**kwargs)
 
     def _build_arg(self, option, value):
         """
@@ -160,6 +193,14 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, BaseS
     def install(self):
         if self.config.get('emulator'):
             self.info("Emulator tests; skipping.")
+        elif self.config.get('gaiatest'):
+            # mozinstall doesn't work with B2G desktop builds, but we don't need it
+            tar = self.query_exe('tar', return_type='list')
+            dirs = self.query_abs_dirs()
+            self.run_command(tar + ['jxf', self.installer_path],
+                             cwd=dirs['abs_work_dir'],
+                             error_list=TarErrorList,
+                             halt_on_failure=True)
         else:
             super(MarionetteTest, self).install()
 
@@ -171,25 +212,49 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, BaseS
 
         # build the marionette command arguments
         python = self.query_python_path('python')
-        cmd = [python, '-u', os.path.join(dirs['abs_marionette_dir'],
-                                          'runtests.py')]
-        if self.config.get('emulator'):
-            cmd.extend(self._build_arg('--logcat-dir', dirs['abs_work_dir']))
-            cmd.extend(self._build_arg('--emulator', self.config['emulator']))
-            cmd.extend(self._build_arg('--gecko-path',
-                                       os.path.join(dirs['abs_gecko_dir'], 'b2g')))
-            cmd.extend(self._build_arg('--homedir',
-                                       os.path.join(dirs['abs_emulator_dir'],
-                                                    'b2g-distro')))
-            cmd.extend(self._build_arg('--symbols-path', self.symbols_path))
+        if self.config.get('gaiatest'):
+            # write a testvars.json file
+            testvars = os.path.join(dirs['abs_gaiatest_dir'],
+                                    'gaiatest', 'testvars.json')
+            with open(testvars, 'w') as f:
+                f.write('{"acknowledged_risks": true, "skip_warning": true}')
 
-        else:
-            cmd.extend(self._build_arg('--binary', self.binary_path))
+            # gaia-ui-tests on B2G desktop builds
+            cmd = [python, '-u', os.path.join(dirs['abs_gaiatest_dir'],
+                                              'gaiatest',
+                                              'runtests.py')]
+            cmd.extend(self._build_arg('--binary', os.path.join(dirs['abs_work_dir'],
+                                                                'b2g', 'b2g')))
             cmd.extend(self._build_arg('--address', self.config['marionette_address']))
-        cmd.extend(self._build_arg('--type', self.config['test_type']))
-        manifest = os.path.join(dirs['abs_marionette_tests_dir'],
-                                self.config['test_manifest'])
-        cmd.append(manifest)
+            cmd.extend(self._build_arg('--type', self.config['test_type']))
+            cmd.extend(self._build_arg('--testvars', testvars))
+            manifest = os.path.join(dirs['abs_gaiatest_dir'], 'gaiatest', 'tests',
+                                    'manifest.ini')
+            cmd.append(manifest)
+        else:
+            # Marionette or Marionette-webapi tests
+            cmd = [python, '-u', os.path.join(dirs['abs_marionette_dir'],
+                                              'runtests.py')]
+
+            if self.config.get('emulator'):
+                # emulator Marionette-webapi tests
+                cmd.extend(self._build_arg('--logcat-dir', dirs['abs_work_dir']))
+                cmd.extend(self._build_arg('--emulator', self.config['emulator']))
+                cmd.extend(self._build_arg('--gecko-path',
+                                           os.path.join(dirs['abs_gecko_dir'], 'b2g')))
+                cmd.extend(self._build_arg('--homedir',
+                                           os.path.join(dirs['abs_emulator_dir'],
+                                                        'b2g-distro')))
+                cmd.extend(self._build_arg('--symbols-path', self.symbols_path))
+            else:
+                # desktop Marionette tests
+                cmd.extend(self._build_arg('--binary', self.binary_path))
+                cmd.extend(self._build_arg('--address', self.config['marionette_address']))
+
+            cmd.extend(self._build_arg('--type', self.config['test_type']))
+            manifest = os.path.join(dirs['abs_marionette_tests_dir'],
+                                    self.config['test_manifest'])
+            cmd.append(manifest)
 
         env = {}
         if self.query_minidump_stackwalk():
@@ -240,4 +305,3 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, BaseS
 if __name__ == '__main__':
     marionetteTest = MarionetteTest()
     marionetteTest.run()
-

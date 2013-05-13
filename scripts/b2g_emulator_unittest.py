@@ -348,7 +348,7 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
         if suite_name == 'xpcshell':
             success_codes = [0, 1]
 
-        env = self.config.get('env', {})
+        env = {}
         if self.query_minidump_stackwalk():
             env['MINIDUMP_STACKWALK'] = self.minidump_stackwalk_path
         env = self.query_env(partial_env=env)
