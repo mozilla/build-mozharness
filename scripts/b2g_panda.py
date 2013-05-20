@@ -137,9 +137,9 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
         test_summary_parser = TestSummaryOutputParserHelper(config=self.config, log_obj=self.log_obj)
 
         code = self.run_command(cmd, env=env, output_parser=test_summary_parser)
-        if code == 0:
+        if code == 0 and test_summary_parser.passed > 0 and test_summary_parser.failed == 0:
             tbpl_status = TBPL_SUCCESS
-        elif code == 10: # XXX assuming this code is the right one
+        elif code == 10 and test_summary_parser.failed > 0:
             tbpl_status = TBPL_WARNING
         else:
             level = ERROR
