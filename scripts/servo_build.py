@@ -115,7 +115,7 @@ class ServoBuild(MockMixin, BaseScript, VCSMixin, BuildbotMixin):
         if self.config.get('backup_rust'):
             self.run_command(['make', 'restore-rust'], cwd=dirs['objdir'])
 
-        rc = self.run_command(['make', '-j', self.config['concurrency']], cwd=dirs['objdir'])
+        rc = self.run_command(['make', '-j', str(self.config['concurrency'])], cwd=dirs['objdir'])
         if rc != 0:
             self.fatal("Build failed, can't continue.", exit_code=FAILURE)
 
