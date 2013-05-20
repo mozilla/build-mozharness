@@ -34,6 +34,10 @@ class ServoBuild(MockMixin, BaseScript, VCSMixin, BuildbotMixin):
             "dest": "vcs_share_base",
             "help": "base directory for shared repositories",
         }],
+        [["-j"], {
+            "dest": "concurrency",
+            "type": int,
+        }],
     ]
     def __init__(self):
         BaseScript.__init__(self,
@@ -50,6 +54,7 @@ class ServoBuild(MockMixin, BaseScript, VCSMixin, BuildbotMixin):
                             config={
                                 'default_vcs': 'gittool',
                                 'backup_rust': True,
+                                'concurrency': 1,
                             },
                             )
 
@@ -110,7 +115,7 @@ class ServoBuild(MockMixin, BaseScript, VCSMixin, BuildbotMixin):
         if self.config.get('backup_rust'):
             self.run_command(['make', 'restore-rust'], cwd=dirs['objdir'])
 
-        rc = self.run_command(['make'], cwd=dirs['objdir'])
+        rc = self.run_command(['make', '-j', self.config['concurrency']], cwd=dirs['objdir'])
         if rc != 0:
             self.fatal("Build failed, can't continue.", exit_code=FAILURE)
 
