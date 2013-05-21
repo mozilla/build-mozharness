@@ -28,6 +28,7 @@ config = {
     "hgtool_base_bundle_urls": ["http://ftp.mozilla.org/pub/mozilla.org/firefox/bundles"],
     "exes": {
         "tooltool.py": "/tools/tooltool.py",
+        "python": "/tools/python27/bin/python2.7",
     },
     "manifest": {
         "upload_remote_host": "stage.mozilla.org",
@@ -72,6 +73,15 @@ config = {
                 "sdcard": "/mnt/sdcard",
                 "sdcard_recovery": "/sdcard",
                 "serials": ["full_otoro"],
+            },
+            "inari": {
+                "system_fs_type": "ext4",
+                "system_location": "/dev/block/mmcblk0p19",
+                "data_fs_type": "ext4",
+                "data_location": "/dev/block/mmcblk0p22",
+                "sdcard": "/mnt/sdcard",
+                "sdcard_recovery": "/sdcard",
+                "serials": ["full_inari"],
             },
         },
         "public_key": os.path.abspath("build/target/product/security/testkey.x509.pem"),

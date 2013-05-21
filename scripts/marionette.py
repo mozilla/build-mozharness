@@ -275,10 +275,10 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, MercurialScript
             self.fatal("Failed to install gecko 5 times in a row, aborting")
 
         level = INFO
-        if code == 0:
+        if code == 0 and marionette_parser.passed > 0 and marionette_parser.failed == 0:
             status = "success"
             tbpl_status = TBPL_SUCCESS
-        elif code == 10:
+        elif code == 10 and marionette_parser.failed > 0:
             status = "test failures"
             tbpl_status = TBPL_WARNING
         else:
