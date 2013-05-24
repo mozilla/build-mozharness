@@ -848,19 +848,20 @@ class BaseScript(ScriptMixin, LogMixin, object):
         self.abs_dirs = dirs
         return self.abs_dirs
 
-    def dump_config(self, file_path=None):
+    def dump_config(self, file_path=None, config=None):
         """Dump self.config to localconfig.json
         """
+        config = config or self.config
         dirs = self.query_abs_dirs()
         if not file_path:
             file_path = os.path.join(dirs['abs_log_dir'], "localconfig.json")
         self.info("Dumping config to %s." % file_path)
         self.mkdir_p(os.path.dirname(file_path))
-        json_config = json.dumps(self.config, sort_keys=True, indent=4)
+        json_config = json.dumps(config, sort_keys=True, indent=4)
         fh = codecs.open(file_path, encoding='utf-8', mode='w+')
         fh.write(json_config)
         fh.close()
-        self.info(pprint.pformat(self.config))
+        self.info(pprint.pformat(config))
 
     # logging {{{2
     def new_log_obj(self, default_log_level="info"):

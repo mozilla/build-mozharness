@@ -175,6 +175,8 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
             dirs['abs_test_install_dir'], 'modules')
         dirs['abs_reftest_dir'] = os.path.join(
             dirs['abs_test_install_dir'], 'reftest')
+        dirs['abs_crashtest_dir'] = os.path.join(
+            dirs['abs_test_install_dir'], 'reftest')
         dirs['abs_xpcshell_dir'] = os.path.join(
             dirs['abs_test_install_dir'], 'xpcshell')
         for key in dirs.keys():
@@ -182,14 +184,6 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
                 abs_dirs[key] = dirs[key]
         self.abs_dirs = abs_dirs
         return self.abs_dirs
-
-    def _build_arg(self, option, value):
-        """
-        Build a command line argument
-        """
-        if not value:
-            return []
-        return [str(option), str(value)]
 
     def download_and_extract(self):
         super(B2GEmulatorTest, self).download_and_extract()
@@ -208,72 +202,34 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
                                parent_dir=dirs['abs_work_dir'])
             self.busybox_path = os.path.join(dirs['abs_work_dir'], 'busybox')
 
-    def _build_mochitest_args(self):
-        c = self.config
+    def _query_abs_base_cmd(self, suite):
         dirs = self.query_abs_dirs()
-        python = self.query_python_path('python')
-        cmd = [
-            python, os.path.join(dirs['abs_mochitest_dir'], 'runtestsb2g.py'),
-            '--adbpath', self.adb_path,
-            '--b2gpath', dirs['abs_b2g-distro_dir'],
-            '--console-level', 'INFO',
-            '--emulator', c['emulator'],
-            '--logcat-dir', dirs['abs_work_dir'],
-            '--remote-webserver', c['remote_webserver'],
-            '--run-only-tests', self.test_manifest,
-            '--xre-path', os.path.join(dirs['abs_xre_dir'], 'bin'),
-        ]
-        cmd.extend(self._build_arg('--total-chunks', c.get('total_chunks')))
-        cmd.extend(self._build_arg('--this-chunk', c.get('this_chunk')))
-        # self.binary_path gets set by super(B2GEmulatorTest, self).install()
-        cmd.extend(self._build_arg('--gecko-path', os.path.dirname(self.binary_path)))
-        cmd.extend(self._build_arg('--busybox', self.busybox_path))
-        cmd.extend(self._build_arg('--symbols-path', self.symbols_path))
-        return cmd
+        cmd = [self.query_python_path('python')]
+        cmd.append(self.config['run_file_names'][suite])
 
-    def _build_reftest_args(self):
-        c = self.config
-        dirs = self.query_abs_dirs()
-        python = self.query_python_path('python')
-        cmd = [
-            python, 'runreftestb2g.py',
-            '--adbpath', self.adb_path,
-            '--b2gpath', dirs['abs_b2g-distro_dir'],
-            '--emulator', c['emulator'],
-            '--emulator-res', '800x1000',
-            '--ignore-window-size',
-            '--logcat-dir', dirs['abs_work_dir'],
-            '--remote-webserver', c['remote_webserver'],
-            '--xre-path', os.path.join(dirs['abs_xre_dir'], 'bin'),
-        ]
-        cmd.extend(self._build_arg('--total-chunks', c.get('total_chunks')))
-        cmd.extend(self._build_arg('--this-chunk', c.get('this_chunk')))
-        # self.binary_path gets set by super(B2GEmulatorTest, self).install()
-        cmd.extend(self._build_arg('--gecko-path', os.path.dirname(self.binary_path)))
-        cmd.extend(self._build_arg('--busybox', self.busybox_path))
-        cmd.extend(self._build_arg('--symbols-path', self.symbols_path))
-        cmd.append(self.test_manifest)
-        return cmd
+        str_format_values = {
+            'adbpath': self.adb_path,
+            'b2gpath': dirs['abs_b2g-distro_dir'],
+            'emulator': self.config['emulator'],
+            'logcat_dir': dirs['abs_work_dir'],
+            'modules_dir': dirs['abs_modules_dir'],
+            'remote_webserver': self.config['remote_webserver'],
+            'xre_path': os.path.join(dirs['abs_xre_dir'], 'bin'),
+            'test_manifest': self.test_manifest,
+            'gecko_path': os.path.dirname(self.binary_path),
+            'symbols_path': self.symbols_path,
+            'busybox': self.busybox_path,
+            'total_chunks': self.config.get('total_chunks'),
+            'this_chunk': self.config.get('this_chunk'),
+        }
 
-    def _build_xpcshell_args(self):
-        c = self.config
-        dirs = self.query_abs_dirs()
-        python = self.query_python_path('python')
-        cmd = [
-            python, 'runtestsb2g.py',
-            '--adbpath', self.adb_path,
-            '--b2gpath', dirs['abs_b2g-distro_dir'],
-            '--emulator', c['emulator'],
-            '--gecko-path', os.path.dirname(self.binary_path),
-            '--logcat-dir', dirs['abs_work_dir'],
-            '--manifest', self.test_manifest,
-            '--testing-modules-dir', dirs['abs_modules_dir'],
-            '--use-device-libs',
-        ]
-        cmd.extend(self._build_arg('--total-chunks', c.get('total_chunks')))
-        cmd.extend(self._build_arg('--this-chunk', c.get('this_chunk')))
-        cmd.extend(self._build_arg('--busybox', self.busybox_path))
-        cmd.extend(self._build_arg('--symbols-path', self.symbols_path))
+        name = '%s_options' % suite
+        options = self.tree_config.get(name, self.config.get(name))
+        if options:
+            for option in options:
+                option = option % str_format_values
+                if not option.endswith('None'):
+                    cmd.append(option)
         return cmd
 
     def _query_adb(self):
@@ -320,17 +276,13 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
         error_list = self.error_list
         error_list.extend(BaseErrorList)
 
-        if self.config['test_suite'] == 'mochitest':
-            cmd = self._build_mochitest_args()
-            cwd = dirs['abs_mochitest_dir']
-        elif self.config['test_suite'] in ('reftest', 'crashtest'):
-            cmd = self._build_reftest_args()
-            cwd = dirs['abs_reftest_dir']
-        elif self.config['test_suite'] == 'xpcshell':
-            cmd = self._build_xpcshell_args()
-            cwd = dirs['abs_xpcshell_dir']
-        else:
-            self.fatal("Don't know how to run --test-suite '%s'!" % self.config['test_suite'])
+        suite = self.config['test_suite']
+        if suite not in self.test_suites:
+            self.fatal("Don't know how to run --test-suite '%s'!" % suite)
+
+        cmd = self._query_abs_base_cmd(suite)
+        cwd = dirs['abs_%s_dir' % suite]
+
         # TODO we probably have to move some of the code in
         # scripts/desktop_unittest.py and scripts/marionette.py to
         # mozharness.mozilla.testing.unittest so we can share it.
