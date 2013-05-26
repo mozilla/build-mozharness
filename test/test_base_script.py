@@ -31,8 +31,6 @@ class CleanupObj(script.ScriptMixin, log.LogMixin):
 
 def cleanup():
     gc.collect()
-    # I'm using MercurialVCS here because that gives me access to
-    #
     c = CleanupObj()
     for f in ('test_logs', 'test_dir', 'tmpfile_stdout', 'tmpfile_stderr'):
         c.rmtree(f)
