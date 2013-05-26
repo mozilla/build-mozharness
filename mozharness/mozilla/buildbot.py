@@ -13,6 +13,7 @@ import sys
 
 try:
     import simplejson as json
+    assert json
 except ImportError:
     import json
 
@@ -35,6 +36,13 @@ TBPL_STATUS_DICT = {
     TBPL_EXCEPTION: ERROR,
     TBPL_RETRY: WARNING,
 }
+EXIT_STATUS_DICT = {
+    TBPL_SUCCESS: 0,
+    TBPL_WARNING: 1,
+    TBPL_FAILURE: 2,
+    TBPL_EXCEPTION: 3,
+    TBPL_RETRY: 4,
+}
 
 
 class BuildbotMixin(object):
@@ -54,13 +62,15 @@ class BuildbotMixin(object):
     def tryserver_email(self):
         pass
 
-    def buildbot_status(self, tbpl_status, level=None):
+    def buildbot_status(self, tbpl_status, level=None, set_return_code=True):
         if tbpl_status not in TBPL_STATUS_DICT:
             self.error("buildbot_status() doesn't grok the status %s!" % tbpl_status)
         else:
             if not level:
                 level = TBPL_STATUS_DICT[tbpl_status]
             self.add_summary("# TBPL %s #" % tbpl_status, level=level)
+            if set_return_code:
+                self.return_code = EXIT_STATUS_DICT[tbpl_status]
 
     def set_buildbot_property(self, prop_name, prop_value, write_to_file=False):
         self.info("Setting buildbot property %s to %s" % (prop_name, prop_value))
