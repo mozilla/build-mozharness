@@ -66,6 +66,19 @@ class BuildbotMixin(object):
         if tbpl_status not in TBPL_STATUS_DICT:
             self.error("buildbot_status() doesn't grok the status %s!" % tbpl_status)
         else:
+            # Set failure if our log > buildbot_max_log_size (bug 876159)
+            if self.config.get("buildbot_max_log_size") and self.log_obj:
+                # Find the path to the default log
+                dirs = self.query_abs_dirs()
+                log_file = os.path.join(
+                    dirs['abs_log_dir'],
+                    self.log_obj.log_files[self.log_obj.log_level]
+                )
+                if os.path.exists(log_file):
+                    file_size = os.path.getsize(log_file)
+                    if file_size > self.config['buildbot_max_log_size']:
+                        self.error("Log file size %d is greater than max allowed %d! Setting TBPL_FAILURE (was %s)..." % (file_size, self.config['buildbot_max_log_size'], tbpl_status))
+                        tbpl_status = TBPL_FAILURE
             if not level:
                 level = TBPL_STATUS_DICT[tbpl_status]
             self.add_summary("# TBPL %s #" % tbpl_status, level=level)
