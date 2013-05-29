@@ -56,6 +56,7 @@ class GittoolVCS(ScriptMixin, LogMixin):
         repo = c['repo']
         revision = c.get('revision')
         branch = c.get('branch')
+        clean = c.get('clean')
         share_base = c.get('vcs_share_base', os.environ.get("GIT_SHARE_BASE_DIR", None))
         env = {'PATH': os.environ.get('PATH')}
         if share_base is not None:
@@ -66,6 +67,8 @@ class GittoolVCS(ScriptMixin, LogMixin):
             cmd.extend(['-b', branch])
         if revision:
             cmd.extend(['-r', revision])
+        if clean:
+            cmd.append('--clean')
 
         for base_mirror_url in self.config.get('gittool_base_mirror_urls', self.config.get('vcs_base_mirror_urls', [])):
             bits = urlparse.urlparse(repo)
