@@ -87,6 +87,7 @@ class ServoBuild(MockMixin, BaseScript, VCSMixin, BuildbotMixin):
             dest=dirs['abs_work_dir'],
             revision=self.config.get('revision'),
             branch=self.config.get('branch'),
+            clean=True,
         )
         self.set_buildbot_property('got_revision', rev, write_to_file=True)
 
