@@ -28,4 +28,49 @@ config = {
     ],
     "download_symbols": "ondemand",
     "download_minidump_stackwalk": True,
+
+    # test harness options
+    "run_file_names": {
+        "mochitest": "runtestsb2g.py",
+        "reftest": "runreftestb2g.py",
+        "crashtest": "runreftestb2g.py",
+        "xpcshell": "runtestsb2g.py"
+    },
+
+    "mochitest_options": [
+        "--adbpath=%(adbpath)s", "--b2gpath=%(b2gpath)s", "--console-level=INFO",
+        "--emulator=%(emulator)s", "--logcat-dir=%(logcat_dir)s",
+        "--remote-webserver=%(remote_webserver)s", "--test-manifest=%(test_manifest)s",
+        "--xre-path=%(xre_path)s", "--gecko-path=%(gecko_path)s",
+        "--symbols-path=%(symbols_path)s", "--busybox=%(busybox)s",
+        "--total-chunks=%(total_chunks)s", "--this-chunk=%(this_chunk)s",
+    ],
+
+    "reftest_options": [
+        "--adbpath=%(adbpath)s", "--b2gpath=%(b2gpath)s", "--emulator=%(emulator)s",
+        "--emulator-res=800x1000", "--logcat-dir=%(logcat_dir)s",
+        "--remote-webserver=%(remote_webserver)s", "--ignore-window-size",
+        "--xre-path=%(xre_path)s", "--gecko-path=%(gecko_path)s",
+        "--symbols-path=%(symbols_path)s", "--busybox=%(busybox)s",
+        "--total-chunks=%(total_chunks)s", "--this-chunk=%(this_chunk)s",
+        "%(test_manifest)s",
+    ],
+
+    "crashtest_options": [
+        "--adbpath=%(adbpath)s", "--b2gpath=%(b2gpath)s", "--emulator=%(emulator)s",
+        "--emulator-res=800x1000", "--logcat-dir=%(logcat_dir)s",
+        "--remote-webserver=%(remote_webserver)s", "--ignore-window-size",
+        "--xre-path=%(xre_path)s", "--gecko-path=%(gecko_path)s",
+        "--symbols-path=%(symbols_path)s", "--busybox=%(busybox)s",
+        "--total-chunks=%(total_chunks)s", "--this-chunk=%(this_chunk)s",
+        "%(test_manifest)s",
+    ],
+
+    "xpcshell_options": [
+        "--adbpath=%(adbpath)s", "--b2gpath=%(b2gpath)s", "--emulator=%(emulator)s",
+        "--logcat-dir=%(logcat_dir)s", "--manifest=%(test_manifest)s",
+        "--testing-modules-dir=%(modules_dir)s", "--gecko-path=%(gecko_path)s",
+        "--symbols-path=%(symbols_path)s", "--busybox=%(busybox)s",
+        "--total-chunks=%(total_chunks)s", "--this-chunk=%(this_chunk)s",
+    ],
 }

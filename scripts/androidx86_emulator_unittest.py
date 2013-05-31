@@ -14,7 +14,7 @@ import sys
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
 from mozharness.base.errors import BaseErrorList
-from mozharness.base.log import ERROR
+from mozharness.base.log import ERROR, FATAL
 from mozharness.base.script import BaseScript
 from mozharness.base.vcs.vcsbase import VCSMixin
 from mozharness.mozilla.testing.errors import LogcatErrorList
@@ -22,45 +22,16 @@ from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_opt
 from mozharness.mozilla.testing.unittest import DesktopUnittestOutputParser, EmulatorMixin
 from mozharness.mozilla.tooltool import TooltoolMixin
 
+from mozharness.mozilla.testing.device import ADBDeviceHandler
 
-class MarionetteUnittestOutputParser(DesktopUnittestOutputParser):
-    """
-    A class that extends DesktopUnittestOutputParser such that it can
-    catch failed gecko installation errors.
-    """
-
-    bad_gecko_install = re.compile(r'Error installing gecko!')
-
-    def __init__(self, **kwargs):
-        self.install_gecko_failed = False
-        super(MarionetteUnittestOutputParser, self).__init__(**kwargs)
-
-    def parse_single_line(self, line):
-        if self.bad_gecko_install.search(line):
-            self.install_gecko_failed = True
-        super(MarionetteUnittestOutputParser, self).parse_single_line(line)
-
-
-class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, BaseScript):
-    test_suites = ('reftest', 'mochitest', 'xpcshell', 'crashtest')
+class Androidx86EmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, BaseScript):
+    test_suites = ('mochitest', 'robocop', 'reftest', 'jsreftest', 'crashtest')
     config_options = [
         [["--type"],
         {"action": "store",
          "dest": "test_type",
          "default": "browser",
          "help": "The type of tests to run",
-        }],
-        [["--busybox-url"],
-        {"action": "store",
-         "dest": "busybox_url",
-         "default": None,
-         "help": "URL to the busybox binary",
-        }],
-        [["--emulator-url"],
-        {"action": "store",
-         "dest": "emulator_url",
-         "default": None,
-         "help": "URL to the emulator zip",
         }],
         [["--xre-url"],
         {"action": "store",
@@ -112,16 +83,13 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
     ]
 
     virtualenv_requirements = [
-        os.path.join('tests', 'b2g', 'b2g-unittest-requirements.txt')
     ]
 
     virtualenv_modules = [
-        'mozinstall',
-        {'marionette': os.path.join('tests', 'marionette')}
     ]
 
     def __init__(self, require_config_file=False):
-        super(B2GEmulatorTest, self).__init__(
+        super(Androidx86EmulatorTest, self).__init__(
             config_options=self.config_options,
             all_actions=['clobber',
                          'read-buildbot-config',
@@ -139,8 +107,7 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
                 'virtualenv_modules': self.virtualenv_modules,
                 'virtualenv_requirements': self.virtualenv_requirements,
                 'require_test_zip': True,
-                'emulator': 'arm',
-                # This is a special IP that has meaning to the emulator
+                # IP address of the host as seen from the emulator
                 'remote_webserver': '10.0.2.2',
             }
         )
@@ -152,30 +119,23 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
         self.installer_path = c.get('installer_path')
         self.test_url = c.get('test_url')
         self.test_manifest = c.get('test_manifest')
-        self.busybox_path = None
 
     # TODO detect required config items and fail if not set
 
     def query_abs_dirs(self):
         if self.abs_dirs:
             return self.abs_dirs
-        abs_dirs = super(B2GEmulatorTest, self).query_abs_dirs()
+        abs_dirs = super(Androidx86EmulatorTest, self).query_abs_dirs()
         dirs = {}
         dirs['abs_test_install_dir'] = os.path.join(
             abs_dirs['abs_work_dir'], 'tests')
         dirs['abs_xre_dir'] = os.path.join(
             abs_dirs['abs_work_dir'], 'xre')
-        dirs['abs_emulator_dir'] = os.path.join(
-            abs_dirs['abs_work_dir'], 'emulator')
-        dirs['abs_b2g-distro_dir'] = os.path.join(
-            dirs['abs_emulator_dir'], 'b2g-distro')
         dirs['abs_mochitest_dir'] = os.path.join(
             dirs['abs_test_install_dir'], 'mochitest')
         dirs['abs_modules_dir'] = os.path.join(
             dirs['abs_test_install_dir'], 'modules')
         dirs['abs_reftest_dir'] = os.path.join(
-            dirs['abs_test_install_dir'], 'reftest')
-        dirs['abs_crashtest_dir'] = os.path.join(
             dirs['abs_test_install_dir'], 'reftest')
         dirs['abs_xpcshell_dir'] = os.path.join(
             dirs['abs_test_install_dir'], 'xpcshell')
@@ -185,84 +145,155 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
         self.abs_dirs = abs_dirs
         return self.abs_dirs
 
+    def _build_arg(self, option, value):
+        """
+        Build a command line argument
+        """
+        if not value:
+            return []
+        return [str(option), str(value)]
+
     def download_and_extract(self):
-        super(B2GEmulatorTest, self).download_and_extract()
+        super(Androidx86EmulatorTest, self).download_and_extract()
         dirs = self.query_abs_dirs()
-        self.install_emulator()
         if self.config.get('download_minidump_stackwalk'):
             self.install_minidump_stackwalk()
+
+        self.download_file(self.config['robocop_url'], file_name='robocop.apk',
+                                    parent_dir=dirs['abs_mochitest_dir'],
+                                    error_level=FATAL)
+
+        self.download_file(self.config['symbols_url'], file_name='crashreporter-symbols.zip',
+                                    parent_dir=dirs['abs_work_dir'],
+                                    error_level=FATAL)
 
         self.mkdir_p(dirs['abs_xre_dir'])
         self._download_unzip(self.config['xre_url'],
                              dirs['abs_xre_dir'])
 
-        if self.config['busybox_url']:
-            self.download_file(self.config['busybox_url'],
-                               file_name='busybox',
-                               parent_dir=dirs['abs_work_dir'])
-            self.busybox_path = os.path.join(dirs['abs_work_dir'], 'busybox')
+    def preflight_install(self):
+        # in the base class, this checks for mozinstall, but we don't use it
+        pass
 
-    def _query_abs_base_cmd(self, suite):
+    def install(self):
         dirs = self.query_abs_dirs()
-        cmd = [self.query_python_path('python')]
-        cmd.append(self.config['run_file_names'][suite])
+        config={'device-id': self.config['device_id'], 'enable_automation': True, 'device_package_name': self.config['application']}
 
-        str_format_values = {
-            'adbpath': self.adb_path,
-            'b2gpath': dirs['abs_b2g-distro_dir'],
-            'emulator': self.config['emulator'],
-            'logcat_dir': dirs['abs_work_dir'],
-            'modules_dir': dirs['abs_modules_dir'],
-            'remote_webserver': self.config['remote_webserver'],
-            'xre_path': os.path.join(dirs['abs_xre_dir'], 'bin'),
-            'test_manifest': self.test_manifest,
-            'gecko_path': os.path.dirname(self.binary_path),
-            'symbols_path': self.symbols_path,
-            'busybox': self.busybox_path,
-            'total_chunks': self.config.get('total_chunks'),
-            'this_chunk': self.config.get('this_chunk'),
-        }
+        dh = ADBDeviceHandler(config=config)
+        dh.device_id = self.config['device_id']
 
-        name = '%s_options' % suite
-        options = self.tree_config.get(name, self.config.get(name))
-        if options:
-            for option in options:
-                option = option % str_format_values
-                if not option.endswith('None'):
-                    cmd.append(option)
+        #install fennec
+        dh.install_app(self.installer_path)
+
+        #also install robocop apk if required
+        if self.config['test_suite'] == 'robocop':
+            config['device_package_name'] = 'org.mozilla.roboexample.test'
+            robocop_path = os.path.join(dirs['abs_mochitest_dir'], 'robocop.apk')
+            dh.install_app(robocop_path)
+
+
+    def _build_mochitest_args(self):
+        c = self.config
+        dirs = self.query_abs_dirs()
+        python = self.query_python_path('python')
+        cmd = [
+            python, os.path.join(dirs['abs_mochitest_dir'], 'runtestsremote.py'),
+            '--autorun',
+            '--close-when-done',
+            '--dm_trans=sut',
+            '--console-level', 'INFO',
+            '--app', c['application'],
+            '--remote-webserver', c['remote_webserver'],
+            '--run-only-tests', self.test_manifest,
+            '--xre-path', os.path.join(dirs['abs_xre_dir'], 'bin'),
+            '--deviceIP', self.config['device_ip'],
+            '--devicePort', self.config['device_port'],
+            '--http-port', self.config['http_port'],
+            '--ssl-port', self.config['ssl_port']
+        ]
+        cmd.extend(self._build_arg('--total-chunks', c.get('total_chunks')))
+        cmd.extend(self._build_arg('--this-chunk', c.get('this_chunk')))
+        cmd.extend(self._build_arg('--symbols-path', 'crashreporter-symbols.zip'))
+
         return cmd
+
+    def _build_robocop_args(self):
+        c = self.config
+        dirs = self.query_abs_dirs()
+        python = self.query_python_path('python')
+        cmd = [
+            python, os.path.join(dirs['abs_mochitest_dir'], 'runtestsremote.py'),
+            '--robocop-path=.',
+            '--robocop-ids=fennec_ids.txt',
+            '--dm_trans=sut',
+            '--console-level', 'INFO',
+            '--app', c['application'],
+            '--remote-webserver', c['remote_webserver'],
+            '--robocop', self.test_manifest,
+            '--xre-path', os.path.join(dirs['abs_xre_dir'], 'bin'),
+            '--deviceIP', self.config['device_ip'],
+            '--devicePort', self.config['device_port'],
+            '--http-port', self.config['http_port'],
+            '--ssl-port', self.config['ssl_port']
+        ]
+        cmd.extend(self._build_arg('--total-chunks', c.get('total_chunks')))
+        cmd.extend(self._build_arg('--this-chunk', c.get('this_chunk')))
+        cmd.extend(self._build_arg('--symbols-path', 'crashreporter-symbols.zip'))
+
+        return cmd
+
+    def _build_reftest_args(self, is_jsreftest=False):
+        c = self.config
+        dirs = self.query_abs_dirs()
+        python = self.query_python_path('python')
+
+        cmd = [
+            python, 'remotereftest.py',
+            '--app=' + self.config['application'],
+            '--ignore-window-size',
+            '--remote-webserver', c['remote_webserver'],
+            '--xre-path', os.path.join(dirs['abs_xre_dir'], 'bin'),
+            '--deviceIP', self.config['device_ip'],
+            '--devicePort', self.config['device_port'],
+            '--http-port', self.config['http_port'],
+            '--ssl-port', self.config['ssl_port']
+        ]
+
+        cmd.extend(self._build_arg('--total-chunks', c.get('total_chunks')))
+        cmd.extend(self._build_arg('--this-chunk', c.get('this_chunk')))
+        cmd.extend(self._build_arg('--symbols-path', 'crashreporter-symbols.zip'))
+
+        # extra argument only for jsreftest
+        if is_jsreftest:
+            cmd.append('--extra-profile-file=jsreftest/tests/user.js')
+
+        cmd.append(self.test_manifest)
+        return cmd
+
+    def _build_xpcshell_args(self):
+        pass
 
     def _query_adb(self):
         return self.which('adb') or \
-               os.getenv('ADB_PATH') or \
-               os.path.join(self.query_abs_dirs()['abs_b2g-distro_dir'],
-                            'out', 'host', 'linux-x86', 'bin', 'adb')
-
-    def _dump_logcat(self, parser):
-        if parser.fail_count != 0 or parser.crashed or parser.leaked:
-            dirs = self.query_abs_dirs()
-            logcat = os.path.join(dirs['abs_work_dir'], 'emulator-5554.log')
-            if os.access(logcat, os.F_OK):
-                self.info('dumping logcat')
-                self.run_command(['cat', logcat], error_list=LogcatErrorList)
-            else:
-                self.info('no logcat file found')
+               os.getenv('ADB_PATH')
 
     def preflight_run_tests(self):
-        super(B2GEmulatorTest, self).preflight_run_tests()
+        super(Androidx86EmulatorTest, self).preflight_run_tests()
         suite = self.config['test_suite']
         # set default test manifest by suite if none specified
         if not self.test_manifest:
             if suite == 'mochitest':
-                self.test_manifest = 'b2g.json'
+                self.test_manifest = 'androidx86.json'
+            elif suite == 'robocop':
+                self.test_manifest = 'robocop.ini'
             elif suite == 'reftest':
                 self.test_manifest = os.path.join('tests', 'layout',
                                                   'reftests', 'reftest.list')
-            elif suite == 'xpcshell':
-                self.test_manifest = os.path.join('tests', 'xpcshell_b2g.ini')
             elif suite == 'crashtest':
                 self.test_manifest = os.path.join('tests', 'testing',
                                                   'crashtest', 'crashtests.list')
+            elif suite == 'jsreftest':
+                self.test_manifest = os.path.join('..','jsreftest', 'tests', 'jstests.list')
 
         if not os.path.isfile(self.adb_path):
             self.fatal("The adb binary '%s' is not a valid file!" % self.adb_path)
@@ -276,18 +307,23 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
         error_list = self.error_list
         error_list.extend(BaseErrorList)
 
-        suite = self.config['test_suite']
-        if suite not in self.test_suites:
-            self.fatal("Don't know how to run --test-suite '%s'!" % suite)
-
-        cmd = self._query_abs_base_cmd(suite)
-        cwd = dirs['abs_%s_dir' % suite]
-
-        # TODO we probably have to move some of the code in
-        # scripts/desktop_unittest.py and scripts/marionette.py to
-        # mozharness.mozilla.testing.unittest so we can share it.
-        # In the short term, I'm ok with some duplication of code if it
-        # expedites things; please file bugs to merge if that happens.
+        if self.config['test_suite'] == 'mochitest':
+            cmd = self._build_mochitest_args()
+            cwd = dirs['abs_mochitest_dir']
+        elif self.config['test_suite'] == 'robocop':
+            cmd = self._build_robocop_args()
+            cwd = dirs['abs_mochitest_dir']
+        elif self.config['test_suite'] in ('reftest', 'crashtest'):
+            cmd = self._build_reftest_args()
+            cwd = dirs['abs_reftest_dir']
+        elif self.config['test_suite'] == 'jsreftest':
+            cmd = self._build_reftest_args(True)
+            cwd = dirs['abs_reftest_dir']
+        elif self.config['test_suite'] == 'xpcshell':
+            cmd = self._build_xpcshell_args()
+            cwd = dirs['abs_xpcshell_dir']
+        else:
+            self.fatal("Don't know how to run --test-suite '%s'!" % self.config['test_suite'])
 
         suite_name = [x for x in self.test_suites if x in self.config['test_suite']][0]
         if self.config.get('this_chunk'):
@@ -305,22 +341,13 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
             env['MINIDUMP_STACKWALK'] = self.minidump_stackwalk_path
         env = self.query_env(partial_env=env)
 
-        for i in range(0, 5):
-            # We retry the run because sometimes installing gecko on the
-            # emulator can cause B2G not to restart properly - Bug 812935.
-            parser = MarionetteUnittestOutputParser(suite_category=suite_name,
-                                                    config=self.config,
-                                                    log_obj=self.log_obj,
-                                                    error_list=error_list)
-            return_code = self.run_command(cmd, cwd=cwd, env=env,
-                                           output_parser=parser,
-                                           success_codes=success_codes)
-            if not parser.install_gecko_failed:
-                self._dump_logcat(parser)
-                break
-        else:
-            self._dump_logcat(parser)
-            self.fatal("Failed to install gecko 5 times in a row, aborting")
+        parser = DesktopUnittestOutputParser(suite_category=suite_name,
+                                             config=self.config,
+                                             log_obj=self.log_obj,
+                                             error_list=error_list)
+        return_code = self.run_command(cmd, cwd=cwd, env=env,
+                                       output_parser=parser,
+                                       success_codes=success_codes)
 
         tbpl_status, log_level = parser.evaluate_parser(return_code)
         parser.append_tinderboxprint_line(suite_name)
@@ -330,5 +357,5 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
                  (suite_name, suite, tbpl_status), level=log_level)
 
 if __name__ == '__main__':
-    emulatorTest = B2GEmulatorTest()
+    emulatorTest = Androidx86EmulatorTest()
     emulatorTest.run()

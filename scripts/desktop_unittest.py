@@ -188,7 +188,6 @@ class DesktopUnittest(TestingMixin, MercurialScript):
         if self.binary_path:
             c = self.config
             dirs = self.query_abs_dirs()
-            options = []
             run_file = c['run_file_names'][suite_category]
             base_cmd = [self.query_python_path('python'), '-u']
             base_cmd.append(dirs["abs_%s_dir" % suite_category] + "/" + run_file)
@@ -200,9 +199,12 @@ class DesktopUnittest(TestingMixin, MercurialScript):
             # self.symbols_path when downloading/extracting.
             if self.symbols_path:
                 str_format_values['symbols_path'] = self.symbols_path
-            if self.config['%s_options' % suite_category]:
-                for option in self.config['%s_options' % suite_category]:
-                    options.append(option % str_format_values)
+
+            name = '%s_options' % suite_category
+            options = self.tree_config.get(name, self.config.get(name))
+            if options:
+                for i, option in enumerate(options):
+                    options[i] = option % str_format_values
                 abs_base_cmd = base_cmd + options
                 return abs_base_cmd
             else:

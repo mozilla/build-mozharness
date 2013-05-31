@@ -9,6 +9,7 @@ import copy
 import os
 import platform
 
+from mozharness.base.config import ReadOnlyDict, parse_config_file
 from mozharness.base.errors import BaseErrorList
 from mozharness.base.log import FATAL
 from mozharness.base.python import virtualenv_config_options, VirtualenvMixin
@@ -64,6 +65,7 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin):
     binary_path = None
     test_url = None
     test_zip_path = None
+    tree_config = ReadOnlyDict({})
     symbols_url = None
     symbols_path = None
     minidump_stackwalk_path = None
@@ -186,6 +188,19 @@ You can set this by:
         # TODO error_list
         self.run_command(unzip_cmd, cwd=test_install_dir, halt_on_failure=True)
 
+    def _read_tree_config(self):
+        """Reads an in-tree config file"""
+        dirs = self.query_abs_dirs()
+        test_install_dir = dirs.get('abs_test_install_dir',
+                                    os.path.join(dirs['abs_work_dir'], 'tests'))
+        tree_config_path = os.path.join(test_install_dir, 'config', 'mozharness_config.py')
+
+        if os.path.isfile(tree_config_path):
+            self.tree_config.update(parse_config_file(tree_config_path))
+            self.dump_config(file_path=os.path.join(dirs['abs_log_dir'], 'treeconfig.json'),
+                             config=self.tree_config)
+        self.tree_config.lock()
+
     def _download_installer(self):
         file_name = None
         if self.installer_path:
@@ -221,6 +236,7 @@ You can set this by:
         if self.test_url:
             self._download_test_zip()
             self._extract_test_zip(target_unzip_dirs=target_unzip_dirs)
+            self._read_tree_config()
         self._download_installer()
         if self.config.get('download_symbols'):
             self._download_and_extract_symbols()
