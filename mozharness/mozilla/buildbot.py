@@ -48,6 +48,7 @@ EXIT_STATUS_DICT = {
 class BuildbotMixin(object):
     buildbot_config = None
     buildbot_properties = {}
+    worst_buildbot_status = TBPL_SUCCESS
 
     def read_buildbot_config(self):
         c = self.config
@@ -81,9 +82,12 @@ class BuildbotMixin(object):
                         tbpl_status = TBPL_FAILURE
             if not level:
                 level = TBPL_STATUS_DICT[tbpl_status]
-            self.add_summary("# TBPL %s #" % tbpl_status, level=level)
+            self.worst_buildbot_status = self.worst_level(tbpl_status, self.worst_buildbot_status, TBPL_STATUS_DICT.keys())
+            if self.worst_buildbot_status != tbpl_status:
+                self.info("Current worst status %s is worse; keeping it." % self.worst_buildbot_status)
+            self.add_summary("# TBPL %s #" % self.worst_buildbot_status, level=level)
             if set_return_code:
-                self.return_code = EXIT_STATUS_DICT[tbpl_status]
+                self.return_code = EXIT_STATUS_DICT[self.worst_buildbot_status]
 
     def set_buildbot_property(self, prop_name, prop_value, write_to_file=False):
         self.info("Setting buildbot property %s to %s" % (prop_name, prop_value))
