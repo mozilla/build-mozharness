@@ -1239,6 +1239,16 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin, Toolto
 
             if self.config["target"] == "panda" and self.config.get('sendchange_masters'):
                 self.sendchange(downloadables=[download_url, "%s/%s" % (download_url, "gaia-tests.zip")])
+            if self.config["target"] == "generic" and self.config.get('sendchange_masters'):
+                # yay hardcodes
+                matches = glob.glob(os.path.join(dirs['abs_upload_dir'], 'b2g*tests.zip'))
+                if matches:
+                    self.sendchange(
+                        downloadables=[
+                            '%s/%s' % (download_url, 'emulator.tar.gz'),
+                            "%s/%s" % (download_url, os.path.basename(matches[0])),
+                        ]
+                    )
 
     def make_socorro_json(self):
         self.info("Creating socorro.json...")

@@ -17,7 +17,6 @@ from mozharness.base.errors import BaseErrorList
 from mozharness.base.log import ERROR, FATAL
 from mozharness.base.script import BaseScript
 from mozharness.base.vcs.vcsbase import VCSMixin
-from mozharness.mozilla.testing.errors import LogcatErrorList
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
 from mozharness.mozilla.testing.unittest import DesktopUnittestOutputParser, EmulatorMixin
 from mozharness.mozilla.tooltool import TooltoolMixin
