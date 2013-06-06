@@ -84,11 +84,7 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, MercurialScript
         {'regex': re.compile(r'''(Timeout|NoSuchAttribute|Javascript|NoSuchElement|XPathLookup|NoSuchWindow|StaleElement|ScriptTimeout|ElementNotVisible|NoSuchFrame|InvalidElementState|NoAlertPresent|InvalidCookieDomain|UnableToSetCookie|InvalidSelector|MoveTargetOutOfBounds)Exception'''), 'level': ERROR},
     ]
 
-    virtualenv_modules = [
-        'mozinstall',
-        {'marionette': os.path.join('tests', 'marionette')}
-    ]
-
+    virtualenv_modules = None
     repos = []
 
     gaia_ui_tests_repo = {'repo': 'http://hg.mozilla.org/integration/gaia-ui-tests/',
@@ -113,15 +109,14 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, MercurialScript
                              'install',
                              'run-marionette'],
             require_config_file=require_config_file,
-            config={'virtualenv_modules': self.virtualenv_modules,
-                    'require_test_zip': True,})
+            config={'require_test_zip': True,})
 
         # these are necessary since self.config is read only
         c = self.config
         self.installer_url = c.get('installer_url')
         self.installer_path = c.get('installer_path')
         self.binary_path = c.get('binary_path')
-        self.test_url = self.config.get('test_url')
+        self.test_url = c.get('test_url')
 
     def _pre_config_lock(self, rw_config):
         if not self.config.get('emulator') and not self.config.get('marionette_address'):
@@ -152,7 +147,32 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, MercurialScript
         return self.abs_dirs
 
     def create_virtualenv(self, **kwargs):
-        super(MarionetteTest, self).create_virtualenv(**kwargs)
+        if self.tree_config.get('use_puppetagain_packages'):
+            self.virtualenv_modules = [
+                'mozinstall',
+                { 'marionette': os.path.join('tests', 'marionette') },
+            ]
+        else:
+            mozbase_dir = os.path.join('tests', 'mozbase')
+            # XXX Bug 879765: Dependent modules need to be listed before parent
+            # modules, otherwise they will get installed from the pypi server.
+            self.virtualenv_modules = [
+                { 'manifestparser': os.path.join(mozbase_dir, 'manifestdestiny') },
+                { 'mozfile': os.path.join(mozbase_dir, 'mozfile') },
+                { 'mozlog': os.path.join(mozbase_dir, 'mozlog') },
+                { 'moznetwork': os.path.join(mozbase_dir, 'moznetwork') },
+                { 'mozinfo': os.path.join(mozbase_dir, 'mozinfo') },
+                { 'mozhttpd': os.path.join(mozbase_dir, 'mozhttpd') },
+                { 'mozcrash': os.path.join(mozbase_dir, 'mozcrash') },
+                { 'mozinstall': os.path.join(mozbase_dir, 'mozinstall') },
+                { 'mozdevice': os.path.join(mozbase_dir, 'mozdevice') },
+                { 'mozprofile': os.path.join(mozbase_dir, 'mozprofile') },
+                { 'mozprocess': os.path.join(mozbase_dir, 'mozprocess') },
+                { 'mozrunner': os.path.join(mozbase_dir, 'mozrunner') },
+                { 'marionette': os.path.join('tests', 'marionette') },
+            ]
+
+        super(MarionetteTest, self).create_virtualenv(modules=self.virtualenv_modules, **kwargs)
 
         if self.config.get('gaiatest'):
             dirs = self.query_abs_dirs()
