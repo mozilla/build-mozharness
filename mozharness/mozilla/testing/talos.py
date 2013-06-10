@@ -13,10 +13,11 @@ import pprint
 import re
 
 from mozharness.base.config import parse_config_file
-from mozharness.base.errors import PythonErrorList, TarErrorList
+from mozharness.base.errors import PythonErrorList
 from mozharness.base.log import OutputParser, DEBUG, ERROR, CRITICAL, FATAL
 from mozharness.base.script import BaseScript
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options, INSTALLER_SUFFIXES
+from mozharness.base.vcs.vcsbase import VCSMixin
 
 TalosErrorList = PythonErrorList + [
  {'regex': re.compile(r'''run-as: Package '.*' is unknown'''), 'level': DEBUG},
@@ -63,7 +64,7 @@ talos_config_options = [
     ]
 
 
-class Talos(TestingMixin, BaseScript):
+class Talos(TestingMixin, BaseScript, VCSMixin):
     """
     install and run Talos tests:
     https://wiki.mozilla.org/Buildbot/Talos
@@ -138,6 +139,8 @@ class Talos(TestingMixin, BaseScript):
         self.talos_json_url = self.config.get("talos_json_url")
         self.talos_json = self.config.get("talos_json")
         self.talos_json_config = self.config.get("talos_json_config")
+        self.talos_path = os.path.join(self.workdir, 'talos_repo')
+        self.has_cloned_talos = False
         self.tests = None
         self.pagesets_url = None
         self.pagesets_parent_dir_path = None
@@ -317,6 +320,10 @@ class Talos(TestingMixin, BaseScript):
         # add datazilla results urls
         for url in self.config.get('datazilla_urls', []):
             options.extend(['--datazilla-url', url])
+        # add datazilla authfile
+        authfile = self.config.get('datazilla_authfile')
+        if authfile:
+            options.extend(['--authfile', authfile])
         # extra arguments
         if args is None:
             args = self.query_talos_options()
@@ -340,19 +347,22 @@ class Talos(TestingMixin, BaseScript):
         talos_webdir = os.path.join(c['webroot'], 'talos')
         self.mkdir_p(c['webroot'], error_level=FATAL)
         self.rmtree(talos_webdir, error_level=FATAL)
-        tarball = self.download_file(talos_url, parent_dir=self.workdir,
-                                     error_level=FATAL)
-        if self._is_windows():
-            tarball = self.query_msys_path(tarball)
-        command = c.get('webroot_extract_cmd')
-        if command:
-            command = command % {'tarball': tarball}
-        else:
-            tar = self.query_exe('tar', return_type='list')
-            command = tar + ['zx', '--strip-components=1', '-f', tarball,
-                             '**/talos/']
-        self.run_command(command, cwd=c['webroot'],
-                         error_list=TarErrorList, halt_on_failure=True)
+
+        # clone talos' repo
+        repo = {
+            'repo': 'http://hg.mozilla.org/build/talos',
+            'vcs': 'hgtool',
+            'dest': self.talos_path,
+            'revision': self.talos_json_config['global']['talos_revision']
+            }
+        self.vcs_checkout(**repo)
+        self.has_cloned_talos = True
+
+        # the apache server needs the talos directory (talos/talos)
+        # to be in the webroot
+        src_talos_webdir = os.path.join(self.talos_path, 'talos')
+        self.copytree(src_talos_webdir, talos_webdir)
+
         if c.get('use_talos_json'):
             if self.query_pagesets_url():
                 self.info("Downloading pageset...")
@@ -382,14 +392,13 @@ class Talos(TestingMixin, BaseScript):
 
     def create_virtualenv(self, **kwargs):
         """VirtualenvMixin.create_virtualenv() assuemes we're using
-        self.config['virtualenv_modules'].  Since we're overriding talos_url
-        when using the talos json, we have to wrap that method here."""
-        if self.query_talos_json_config():
-            talos_url = self.query_talos_url()
-            virtualenv_modules = self.config.get('virtualenv_modules', [])
+        self.config['virtualenv_modules']. Since we are installing
+        talos from its source, we have to wrap that method here."""
+        if self.has_cloned_talos:
+            virtualenv_modules = self.config.get('virtualenv_modules', [])[:]
             if 'talos' in virtualenv_modules:
                 i = virtualenv_modules.index('talos')
-                virtualenv_modules[i] = {'talos': talos_url}
+                virtualenv_modules[i] = {'talos': self.talos_path}
                 self.info(pprint.pformat(virtualenv_modules))
             return super(Talos, self).create_virtualenv(modules=virtualenv_modules)
         else:

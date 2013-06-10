@@ -19,6 +19,8 @@ config = {
     },
     "title": os.uname()[1].lower().split('.')[0],
     "results_url": "http://graphs.mozilla.org/server/collect.cgi",
+    "datazilla_urls": ["https://datazilla.mozilla.org/test"],
+    "datazilla_authfile": "http://people.mozilla.com/~yshun/slaves.txt",
     "default_actions": [
         "clobber",
         "read-buildbot-config",
@@ -28,6 +30,6 @@ config = {
         "run-tests",
     ],
     "python_webserver": False,
-    "webroot": '/home/cltbld/talos-slave/talos-data',
+    "webroot": '/builds/slave/talos-slave/talos-data',
     "populate_webroot": True,
 }
