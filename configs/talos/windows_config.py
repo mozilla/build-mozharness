@@ -30,6 +30,8 @@ config = {
     },
     "title": socket.gethostname().split('.')[0],
     "results_url": "http://graphs.mozilla.org/server/collect.cgi",
+    "datazilla_urls": ["https://datazilla.mozilla.org/test"],
+    "datazilla_authfile": "http://people.mozilla.com/~yshun/slaves.txt",
     "default_actions": [
         "clobber",
         "read-buildbot-config",

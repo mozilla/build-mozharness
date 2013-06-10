@@ -318,6 +318,10 @@ class Talos(TestingMixin, BaseScript, VCSMixin):
         # add datazilla results urls
         for url in self.config.get('datazilla_urls', []):
             options.extend(['--datazilla-url', url])
+        # add datazilla authfile
+        authfile = self.config.get('datazilla_authfile')
+        if authfile:
+            options.extend(['--authfile', authfile])
         # extra arguments
         if args is None:
             args = self.query_talos_options()
