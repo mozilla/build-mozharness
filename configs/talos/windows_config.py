@@ -3,7 +3,7 @@ import socket
 
 PYTHON = 'c:/mozilla-build/python27/python'
 PYTHON_DLL = 'c:/mozilla-build/python27/python27.dll'
-VENV_PATH = 'c:/talos-slave/test/build/venv'
+VENV_PATH = os.path.join(os.getcwd(), 'build/venv')
 
 config = {
     "log_name": "talos",
