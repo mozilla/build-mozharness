@@ -201,7 +201,7 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
             ]
             self.virtualenv_modules = [
                 'mozinstall',
-                { 'marionette': os.path.join('tests', 'marionette') },
+                {'marionette': os.path.join('tests', 'marionette')},
             ]
         else:
             mozbase_dir = os.path.join('tests', 'mozbase')
@@ -209,19 +209,19 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
             # XXX Bug 879765: Dependent modules need to be listed before parent
             # modules, otherwise they will get installed from the pypi server.
             self.virtualenv_modules = [
-                { 'manifestparser': os.path.join(mozbase_dir, 'manifestdestiny') },
-                { 'mozfile': os.path.join(mozbase_dir, 'mozfile') },
-                { 'mozlog': os.path.join(mozbase_dir, 'mozlog') },
-                { 'moznetwork': os.path.join(mozbase_dir, 'moznetwork') },
-                { 'mozinfo': os.path.join(mozbase_dir, 'mozinfo') },
-                { 'mozhttpd': os.path.join(mozbase_dir, 'mozhttpd') },
-                { 'mozcrash': os.path.join(mozbase_dir, 'mozcrash') },
-                { 'mozinstall': os.path.join(mozbase_dir, 'mozinstall') },
-                { 'mozdevice': os.path.join(mozbase_dir, 'mozdevice') },
-                { 'mozprofile': os.path.join(mozbase_dir, 'mozprofile') },
-                { 'mozprocess': os.path.join(mozbase_dir, 'mozprocess') },
-                { 'mozrunner': os.path.join(mozbase_dir, 'mozrunner') },
-                { 'marionette': os.path.join('tests', 'marionette') },
+                {'manifestparser': os.path.join(mozbase_dir, 'manifestdestiny')},
+                {'mozfile': os.path.join(mozbase_dir, 'mozfile')},
+                {'mozlog': os.path.join(mozbase_dir, 'mozlog')},
+                {'moznetwork': os.path.join(mozbase_dir, 'moznetwork')},
+                {'mozinfo': os.path.join(mozbase_dir, 'mozinfo')},
+                {'mozhttpd': os.path.join(mozbase_dir, 'mozhttpd')},
+                {'mozcrash': os.path.join(mozbase_dir, 'mozcrash')},
+                {'mozinstall': os.path.join(mozbase_dir, 'mozinstall')},
+                {'mozdevice': os.path.join(mozbase_dir, 'mozdevice')},
+                {'mozprofile': os.path.join(mozbase_dir, 'mozprofile')},
+                {'mozprocess': os.path.join(mozbase_dir, 'mozprocess')},
+                {'mozrunner': os.path.join(mozbase_dir, 'mozrunner')},
+                {'marionette': os.path.join('tests', 'marionette')},
             ]
 
         super(B2GEmulatorTest, self).create_virtualenv(modules=self.virtualenv_modules,
