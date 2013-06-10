@@ -26,6 +26,7 @@ config = {
                          '%s/scripts/easy_install-2.7-script.py' % VENV_PATH],
         'mozinstall': ['%s/scripts/python' % VENV_PATH,
                        '%s/scripts/mozinstall-script.py' % VENV_PATH],
+        'hg': 'c:/mozilla-build/hg/hg',
     },
     "title": socket.gethostname().split('.')[0],
     "results_url": "http://graphs.mozilla.org/server/collect.cgi",
