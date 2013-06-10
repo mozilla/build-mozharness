@@ -17,6 +17,7 @@ from mozharness.base.errors import PythonErrorList, TarErrorList
 from mozharness.base.log import OutputParser, DEBUG, ERROR, CRITICAL, FATAL
 from mozharness.base.script import BaseScript
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options, INSTALLER_SUFFIXES
+from mozharness.base.vcs.vcsbase import VCSMixin
 
 TalosErrorList = PythonErrorList + [
  {'regex': re.compile(r'''run-as: Package '.*' is unknown'''), 'level': DEBUG},
@@ -63,7 +64,7 @@ talos_config_options = [
     ]
 
 
-class Talos(TestingMixin, BaseScript):
+class Talos(TestingMixin, BaseScript, VCSMixin):
     """
     install and run Talos tests:
     https://wiki.mozilla.org/Buildbot/Talos
@@ -340,19 +341,22 @@ class Talos(TestingMixin, BaseScript):
         talos_webdir = os.path.join(c['webroot'], 'talos')
         self.mkdir_p(c['webroot'], error_level=FATAL)
         self.rmtree(talos_webdir, error_level=FATAL)
-        tarball = self.download_file(talos_url, parent_dir=self.workdir,
-                                     error_level=FATAL)
-        if self._is_windows():
-            tarball = self.query_msys_path(tarball)
-        command = c.get('webroot_extract_cmd')
-        if command:
-            command = command % {'tarball': tarball}
-        else:
-            tar = self.query_exe('tar', return_type='list')
-            command = tar + ['zx', '--strip-components=1', '-f', tarball,
-                             '**/talos/']
-        self.run_command(command, cwd=c['webroot'],
-                         error_list=TarErrorList, halt_on_failure=True)
+
+        # clone talos' repo
+        talos_repo_path = os.path.join(self.workdir, 'talos_repo')
+        repo = {
+            'repo': 'http://hg.mozilla.org/build/talos',
+            'vcs': 'hgtool',
+            'dest': os.path.join(self.workdir, talos_repo_path),
+            'revision': self.talos_json_config['global']['talos_revision']
+            }
+        self.vcs_checkout(**repo)
+
+        src_talos_path = os.path.join(talos_repo_path, 'talos')
+        dest_talos_path = os.path.join(self.workdir, 'talos')
+        mv_command = ['mv', src_talos_path, dest_talos_path]
+        self.run_command(mv_command, cwd=self.workdir)
+
         if c.get('use_talos_json'):
             if self.query_pagesets_url():
                 self.info("Downloading pageset...")
