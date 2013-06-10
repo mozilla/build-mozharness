@@ -139,6 +139,8 @@ class Talos(TestingMixin, BaseScript, VCSMixin):
         self.talos_json_url = self.config.get("talos_json_url")
         self.talos_json = self.config.get("talos_json")
         self.talos_json_config = self.config.get("talos_json_config")
+        self.talos_path = os.path.join(self.workdir, 'talos_repo')
+        self.has_cloned_talos = False
         self.tests = None
         self.pagesets_url = None
         self.pagesets_parent_dir_path = None
@@ -347,19 +349,19 @@ class Talos(TestingMixin, BaseScript, VCSMixin):
         self.rmtree(talos_webdir, error_level=FATAL)
 
         # clone talos' repo
-        talos_repo_path = os.path.join(self.workdir, 'talos_repo')
         repo = {
             'repo': 'http://hg.mozilla.org/build/talos',
             'vcs': 'hgtool',
-            'dest': os.path.join(self.workdir, talos_repo_path),
+            'dest': self.talos_path,
             'revision': self.talos_json_config['global']['talos_revision']
             }
         self.vcs_checkout(**repo)
+        self.has_cloned_talos = True
 
-        src_talos_path = os.path.join(talos_repo_path, 'talos')
-        dest_talos_path = os.path.join(self.workdir, 'talos')
-        mv_command = ['mv', src_talos_path, dest_talos_path]
-        self.run_command(mv_command, cwd=self.workdir)
+        # the apache server needs the talos directory (talos/talos)
+        # to be in the webroot
+        src_talos_webdir = os.path.join(self.talos_path, 'talos')
+        self.copytree(src_talos_webdir, talos_webdir)
 
         if c.get('use_talos_json'):
             if self.query_pagesets_url():
@@ -390,14 +392,13 @@ class Talos(TestingMixin, BaseScript, VCSMixin):
 
     def create_virtualenv(self, **kwargs):
         """VirtualenvMixin.create_virtualenv() assuemes we're using
-        self.config['virtualenv_modules'].  Since we're overriding talos_url
-        when using the talos json, we have to wrap that method here."""
-        if self.query_talos_json_config():
-            talos_url = self.query_talos_url()
-            virtualenv_modules = self.config.get('virtualenv_modules', [])
+        self.config['virtualenv_modules']. Since we are installing
+        talos from its source, we have to wrap that method here."""
+        if self.has_cloned_talos:
+            virtualenv_modules = self.config.get('virtualenv_modules', [])[:]
             if 'talos' in virtualenv_modules:
                 i = virtualenv_modules.index('talos')
-                virtualenv_modules[i] = {'talos': talos_url}
+                virtualenv_modules[i] = {'talos': self.talos_path}
                 self.info(pprint.pformat(virtualenv_modules))
             return super(Talos, self).create_virtualenv(modules=virtualenv_modules)
         else:
