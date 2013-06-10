@@ -28,6 +28,6 @@ config = {
         "run-tests",
     ],
     "python_webserver": False,
-    "webroot": '/home/cltbld/talos-slave/talos-data',
+    "webroot": '/builds/slave/talos-slave/talos-data',
     "populate_webroot": True,
 }
