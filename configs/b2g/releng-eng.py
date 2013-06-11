@@ -44,6 +44,7 @@ config = {
         "GAIA_OPTIMIZE": "1",
         "B2G_UPDATER": "1",
         "B2G_SYSTEM_APPS": "1",
+        "WGET_OPTS": "-c -q",
     },
     "manifest": {
         "upload_remote_host": "stage.mozilla.org",

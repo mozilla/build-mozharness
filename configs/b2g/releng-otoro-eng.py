@@ -57,6 +57,7 @@ config = {
         "POST_SYMBOL_UPLOAD_CMD": "/usr/local/bin/post-symbol-upload.py",
         "B2G_UPDATER": "1",
         "B2G_SYSTEM_APPS": "1",
+        "WGET_OPTS": "-c -q",
     },
     "purge_minsize": 15,
     "clobberer_url": "http://clobberer.pvt.build.mozilla.org/index.php",
