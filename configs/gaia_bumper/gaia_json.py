@@ -2,10 +2,11 @@
 
 config = {
     "log_name": "gaia_bump",
+    "log_to_console": False,
     "log_max_rotate": 99,
-    "ssh_key": "~/.ssh/id_rsa",
-    "ssh_user": "asasaki@mozilla.com",
-    "hg_user": "Test Pusher <aki@escapewindow.com>",
+    "ssh_key": "~/.ssh/ffxbld_dsa",
+    "ssh_user": "ffxbld",
+    "hg_user": "Gaia Pushbot <release+gaiajson@mozilla.com>",
     "revision_file": "b2g/config/gaia.json",
     "exes": {
         # Get around the https warnings
@@ -16,8 +17,8 @@ config = {
         "branch": "default",
         "repo_url": "https://hg.mozilla.org/integration/gaia-central",
         "repo_name": "gaia-central",
-        "target_push_url": "ssh://hg.mozilla.org/users/asasaki_mozilla.com/birch",
-        "target_pull_url": "https://hg.mozilla.org/users/asasaki_mozilla.com/birch",
+        "target_push_url": "ssh://hg.mozilla.org/projects/birch",
+        "target_pull_url": "https://hg.mozilla.org/projects/birch",
         "target_tag": "default",
         "target_repo_name": "birch",
     }],
