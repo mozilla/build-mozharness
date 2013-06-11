@@ -75,7 +75,7 @@ class MercurialVCS(ScriptMixin, LogMixin, object):
         #  ssh_key: ssh_key,
         # }
         self.vcs_config = vcs_config
-        self.hg = [self.query_exe('hg')] + HG_OPTIONS
+        self.hg = self.query_exe("hg", return_type="list") + HG_OPTIONS
 
     def _make_absolute(self, repo):
         if repo.startswith("file://"):
