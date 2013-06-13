@@ -76,6 +76,27 @@ class MozpoolMixin(object):
         self.request_url = response['request']['url']
         self.info("Got request, url=%s" % self.request_url)
         self._wait_for_request_ready()
+        
+        def retrieve_android_device(self, b2gbase):
+          mph = self.query_mozpool_handler(self.mozpool_device)
+          for retry in self._retry_sleep(
+                  error_message="INFRA-ERROR: Could not request device '%s'" % self.mozpool_device,
+                  tbpl_status=TBPL_RETRY):
+              try:
+                  image = 'android'
+                  response = mph.request_device(self.mozpool_device, image, assignee=self.mozpool_assignee, \
+                                 b2gbase=b2gbase, pxe_config=None)
+                  break
+              except self.MozpoolConflictException:
+                  self.warning("Device unavailable. Retry#%i.." % retry)
+              except self.MozpoolException, e:
+                  self.buildbot_status(TBPL_RETRY)
+                  self.fatal("We could not request the device: %s" % str(e))
+  
+          self.request_url = response['request']['url']
+          self.info("Got request, url=%s" % self.request_url)
+          self._wait_for_request_ready()
+
 
     def _retry_job_and_close_request(self, message, exception=None):
         mph = self.query_mozpool_handler(self.mozpool_device)

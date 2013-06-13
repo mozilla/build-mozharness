@@ -60,7 +60,7 @@ config = {
         "plain5": ["--total-chunks=5", "--this-chunk=5", "--chunk-by-dir=4"],
         "chrome": ["--chrome"],
         "browser-chrome": ["--browser-chrome"],
-        "metro-immersive": ["--browser-chrome", "--metro-immersive"],
+        "mochitest-metro-chrome": ["--browser-chrome", "--metro-immersive"],
         "a11y": ["--a11y"],
         "plugins": ['--setpref=dom.ipc.plugins.enabled=false',
                     '--setpref=dom.ipc.plugins.enabled.x86_64=false',
