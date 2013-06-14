@@ -23,17 +23,17 @@ config = {
        "--utility-path=../hostutils/bin", "--certificate-path=certs",
        "--app=%(app_name)s", "--console-level=INFO",
        "--http-port=%(http_port)s", "--ssl-port=%(ssl_port)s",
-       "--run-only-tests", "android.json", "--symbols-path", "%(symbols_path)s"
+       "--run-only-tests=android.json", "--symbols-path=%(symbols_path)s"
      ],
-     # reftests other than crashtests or jsreftests not currently run for pandas
+     # reftests other than crashtests or jsreftests not currently run on pandas
      "reftest_options": [
         "--deviceIP=%(device_ip)s",
         "--xre-path=../hostutils/xre",
         "--utility-path=../hostutils/bin",
         "--certificate-path=certs",
         "--app=%(app_name)s", "--console-level=INFO",
-        "--symbols-path=%(symbols_path)s",
         "--http-port=%(http_port)s", "--ssl-port=%(ssl_port)s",
+        "--symbols-path=%(symbols_path)s",
         "reftest/tests/testing/crashtest/crashtests.list"
      ],
      "crashtest_options": [
@@ -42,10 +42,9 @@ config = {
         "--utility-path=../hostutils/bin",
         "--app=%(app_name)s",
         "--enable-privilege", "--ignore-window-size", "--bootstrap",
-        "--symbols-path=%(symbols_path)s",
         "--http-port=%(http_port)s", "--ssl-port=%(ssl_port)s",
-        "reftest/tests/testing/crashtest/crashtests.list",
-
+        "--symbols-path=%(symbols_path)s",
+        "reftest/tests/testing/crashtest/crashtests.list"
      ],
      "jsreftest_options": [
         "--deviceIP=%(device_ip)s",
@@ -54,8 +53,8 @@ config = {
         "--app=%(app_name)s",
         "--enable-privilege", "--ignore-window-size", "--bootstrap",
         "--extra-profile-file=jsreftest/tests/user.js", "jsreftest/tests/jstests.list",
-        "--symbols-path=%(symbols_path)s",
         "--http-port=%(http_port)s", "--ssl-port=%(ssl_port)s",
+        "--symbols-path=%(symbols_path)s"
      ],
      "robocop_options": [
         "--deviceIP=%(device_ip)s",
@@ -63,8 +62,8 @@ config = {
         "--utility-path=../hostutils/bin",
         "--certificate-path=certs",
         "--app=%(app_name)s", "--console-level=INFO",
-        "--symbols-path=%(symbols_path)s",
         "--http-port=%(http_port)s", "--ssl-port=%(ssl_port)s",
+        "--symbols-path=%(symbols_path)s",
         "--robocop=mochitest/robocop.ini"
      ],
      "all_mochitest_suites": {
@@ -97,7 +96,6 @@ config = {
         "robocop-1": ["--total-chunks=3", "--this-chunk=1"],
         "robocop-2": ["--total-chunks=3", "--this-chunk=2"],
     },
-
     "find_links": ["http://repos/python/packages"],
     "buildbot_json_path": "buildprops.json",
     "mobile_imaging_format": "http://mobile-imaging-%03i.p%i.releng.scl1.mozilla.com",

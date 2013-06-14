@@ -188,7 +188,9 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
                 cmd = abs_base_cmd[:]
                 replace_dict = {}
                 for arg in suites[suite]:
-                    cmd.append(arg % replace_dict)
+                    cmd.append(arg % replace_dict)              
+                if 'mochitest-gl' in suite:
+                     cmd.remove("--run-only-tests=android.json")                   
                 tbpl_status, log_level = None, None
                 error_list = BaseErrorList + [{
                     'regex': re.compile(r"(?:TEST-UNEXPECTED-FAIL|PROCESS-CRASH) \| .* \| (application crashed|missing output line for total leaks!|negative leaks caught!|\d+ bytes leaked)"),
@@ -203,7 +205,7 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
                 return_code = self.run_command(cmd, dirs['abs_test_install_dir'], env=env, output_parser=test_summary_parser)
 
                 tbpl_status, log_level = test_summary_parser.evaluate_parser(return_code)
-            
+
                 if tbpl_status != TBPL_SUCCESS:
                     self.info("Output logcat...")
                     try:
@@ -280,8 +282,8 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
          dirs = self.query_abs_dirs()
          self.apk_url = self.installer_url[:self.installer_url.rfind('/')]
          robocop_url = self.apk_url + '/robocop.apk'
-         self.info("Downloading robocop...")
-         self.download_file(robocop_url, 'robocop.apk', dirs['abs_robocop_dir'], error_level=FATAL)
+         self.info("Downloading robocop...")   
+         self.download_file(robocop_url, 'robocop.apk', dirs['abs_work_dir'], error_level=FATAL)
 
     def query_abs_dirs(self):
         if self.abs_dirs:
@@ -306,7 +308,8 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
             abs_dirs['abs_work_dir'], 'certs')
         dirs['abs_hostutils_dir'] = os.path.join(
             abs_dirs['abs_work_dir'], 'hostutils')
-        dirs['abs_robocop_dir'] = abs_dirs['abs_work_dir'].replace('test','talos-data')
+        dirs['abs_robocop_dir'] = os.path.join(
+             dirs['abs_test_install_dir'], 'mochitest')
         for key in dirs.keys():
             if key not in abs_dirs:
                 abs_dirs[key] = dirs[key]
@@ -325,7 +328,6 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
         dirs = self.query_abs_dirs()
         options = []
         run_file = c['run_file_names'][suite_category]
-        #base_cmd = [self.query_python_path('python')]
         base_cmd = ['python']
         base_cmd.append(os.path.join((dirs["abs_%s_dir" % suite_category]), run_file))
         self.device_ip = socket.gethostbyname(self.mozpool_device)
@@ -335,7 +337,7 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
         hostnumber = int(self.mozpool_device.split('-')[1])
         http_port =  '30%03i' % hostnumber
         ssl_port =  '31%03i' %  hostnumber
-        #get filename from installer_url 
+        #get filename from installer_url
         self.filename_apk = self.installer_url.split('/')[-1]
         #find appname from package-name.txt - assumes download-and-extract has completed successfully
         apk_dir = self.abs_dirs['abs_work_dir']
