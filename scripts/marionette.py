@@ -279,6 +279,9 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, MercurialScript
         env = {}
         if self.query_minidump_stackwalk():
             env['MINIDUMP_STACKWALK'] = self.minidump_stackwalk_path
+        if self.config.get('gaiatest'):
+            env['GAIATEST_ACKNOWLEDGED_RISKS'] = 1
+            env['GAIATEST_SKIP_WARNING'] = 1
         env = self.query_env(partial_env=env)
 
         for i in range(0, 5):
