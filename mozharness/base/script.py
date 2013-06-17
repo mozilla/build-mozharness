@@ -79,6 +79,7 @@ class ScriptMixin(object):
         if self._is_windows():
             # Call _rmtree_windows() directly, since even checking
             # os.path.exists(path) will hang if path is longer than MAX_PATH.
+            self.info("Using _rmtree_windows ...")
             return self.retry(
                 self._rmtree_windows,
                 error_level=error_level,
@@ -128,7 +129,6 @@ class ScriptMixin(object):
         """ Windows-specific rmtree that handles path lengths longer than MAX_PATH.
             Ported from clobberer.py.
         """
-        self.info("Using _rmtree_windows ...")
         assert self._is_windows()
         path = os.path.realpath(path)
         full_path = '\\\\?\\' + path
