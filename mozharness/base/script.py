@@ -16,6 +16,7 @@ import platform
 import pprint
 import re
 import shutil
+import socket
 import subprocess
 import sys
 import time
@@ -170,7 +171,7 @@ class ScriptMixin(object):
         """ Helper script for download_file()
             """
         try:
-            f = urllib2.urlopen(url)
+            f = urllib2.urlopen(url, timeout=30)
             local_file = open(file_name, 'wb')
             while True:
                 block = f.read(1024 ** 2)
@@ -194,6 +195,9 @@ class ScriptMixin(object):
                 }]
                 self.run_command([nslookup, remote_host],
                                  error_list=error_list)
+            raise
+        except socket.timeout:
+            self.warning("Timed out accessing: %s" % url)
             raise
 
     # http://www.techniqal.com/blog/2008/07/31/python-file-read-write-with-urllib2/
@@ -219,7 +223,7 @@ class ScriptMixin(object):
             self._download_file,
             args=(url, file_name),
             failure_status=None,
-            retry_exceptions=(urllib2.HTTPError, urllib2.URLError),
+            retry_exceptions=(urllib2.HTTPError, urllib2.URLError, socket.timeout),
             error_message="Can't download from %s to %s!" % (url, file_name),
             error_level=error_level,
         )
