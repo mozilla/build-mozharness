@@ -9,8 +9,8 @@ import os
 import re
 
 from mozharness.mozilla.testing.errors import TinderBoxPrintRe
-from mozharness.base.log import OutputParser, WARNING, INFO
-from mozharness.mozilla.buildbot import TBPL_WARNING, TBPL_FAILURE
+from mozharness.base.log import OutputParser, WARNING, INFO, CRITICAL
+from mozharness.mozilla.buildbot import TBPL_WARNING, TBPL_FAILURE, TBPL_RETRY
 from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_STATUS_DICT
 
 SUITE_CATEGORIES = ['mochitest', 'reftest', 'xpcshell']
@@ -64,6 +64,7 @@ class DesktopUnittestOutputParser(OutputParser):
         self.summary_suite_re = TinderBoxPrintRe.get('%s_summary' % suite_category, {})
         self.harness_error_re = TinderBoxPrintRe['harness_error']['minimum_regex']
         self.full_harness_error_re = TinderBoxPrintRe['harness_error']['full_regex']
+        self.harness_retry_re = TinderBoxPrintRe['harness_error']['retry_regex']
         self.fail_count = -1
         self.pass_count = -1
         # known_fail_count does not exist for some suites
@@ -110,6 +111,11 @@ class DesktopUnittestOutputParser(OutputParser):
                     self.leaked = None
                 else:
                     self.leaked = True
+            return  # skip base parse_single_line
+        if self.harness_retry_re.search(line):
+            self.critical(' %s' % line)
+            self.worst_log_level = CRITICAL
+            self.tbpl_status = TBPL_RETRY
             return  # skip base parse_single_line
         super(DesktopUnittestOutputParser, self).parse_single_line(line)
 
