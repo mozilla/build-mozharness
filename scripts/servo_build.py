@@ -100,7 +100,7 @@ class ServoBuild(MockMixin, BaseScript, VCSMixin, BuildbotMixin):
     def clobber_obj(self):
         dirs = self.query_abs_dirs()
 
-        if self.config.get('backup_rust') and os.path.exists(os.path.exists(dirs['objdir'], 'Makefile')):
+        if self.config.get('backup_rust') and os.path.exists(os.path.join(dirs['objdir'], 'Makefile')):
             self.run_command(['make', 'backup-rust'], cwd=dirs['objdir'],
                              halt_on_failure=True)
         self.rmtree(dirs['objdir'])
