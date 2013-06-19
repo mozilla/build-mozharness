@@ -204,7 +204,7 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
         self._download_unzip(self.config['xre_url'],
                              dirs['abs_xre_dir'])
 
-        if self.config['busybox_url']:
+        if self.config.get('busybox_url'):
             self.download_file(self.config['busybox_url'],
                                file_name='busybox',
                                parent_dir=dirs['abs_work_dir'])
@@ -309,6 +309,13 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
 
         if not os.path.isfile(self.adb_path):
             self.fatal("The adb binary '%s' is not a valid file!" % self.adb_path)
+
+    def install(self):
+        if self.config.get('update_files'):
+            # For non-update runs, the emulator was already extracted during
+            # the download-and-extract phase, and we don't have a separate
+            # b2g package to extract.
+            super(B2GEmulatorTest, self).install()
 
     def run_tests(self):
         """
