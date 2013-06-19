@@ -69,6 +69,12 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, MercurialScript
          "help": "Runs gaia-ui-tests by pulling down the test repo and invoking "
                  "gaiatest's runtests.py rather than Marionette's."
         }],
+        [["--no-update"],
+        {"action": "store_false",
+         "dest": "update_files",
+         "default": True,
+         "help": "Don't update emulator and gecko before running tests"
+        }],
         [["--test-manifest"],
         {"action": "store",
          "dest": "test_manifest",
@@ -197,16 +203,25 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, MercurialScript
 
     def download_and_extract(self):
         super(MarionetteTest, self).download_and_extract()
+
         if self.config.get('emulator'):
             dirs = self.query_abs_dirs()
-            self.workdir = dirs['abs_work_dir']
-            self.install_emulator()
-            self.mkdir_p(dirs['abs_gecko_dir'])
-            tar = self.query_exe('tar', return_type='list')
-            self.run_command(tar + ['zxf', self.installer_path],
-                             cwd=dirs['abs_gecko_dir'],
-                             error_list=TarErrorList,
-                             halt_on_failure=True)
+            if self.config.get('update_files'):
+                self.workdir = dirs['abs_work_dir']
+                self.install_emulator()
+                self.mkdir_p(dirs['abs_gecko_dir'])
+                tar = self.query_exe('tar', return_type='list')
+                self.run_command(tar + ['zxf', self.installer_path],
+                                 cwd=dirs['abs_gecko_dir'],
+                                 error_list=TarErrorList,
+                                 halt_on_failure=True)
+            else:
+                self.mkdir_p(dirs['abs_emulator_dir'])
+                tar = self.query_exe('tar', return_type='list')
+                self.run_command(tar + ['zxf', self.installer_path],
+                                 cwd=dirs['abs_emulator_dir'],
+                                 error_list=TarErrorList,
+                                 halt_on_failure=True)
             if self.config.get('download_minidump_stackwalk'):
                 self.install_minidump_stackwalk()
 
@@ -260,8 +275,10 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, MercurialScript
                 # emulator Marionette-webapi tests
                 cmd.extend(self._build_arg('--logcat-dir', dirs['abs_work_dir']))
                 cmd.extend(self._build_arg('--emulator', self.config['emulator']))
-                cmd.extend(self._build_arg('--gecko-path',
-                                           os.path.join(dirs['abs_gecko_dir'], 'b2g')))
+                if self.config.get('update_files'):
+                    cmd.extend(self._build_arg('--gecko-path',
+                                               os.path.join(dirs['abs_gecko_dir'],
+                                                            'b2g')))
                 cmd.extend(self._build_arg('--homedir',
                                            os.path.join(dirs['abs_emulator_dir'],
                                                         'b2g-distro')))
@@ -279,6 +296,9 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, MercurialScript
         env = {}
         if self.query_minidump_stackwalk():
             env['MINIDUMP_STACKWALK'] = self.minidump_stackwalk_path
+        if self.config.get('gaiatest'):
+            env['GAIATEST_ACKNOWLEDGED_RISKS'] = 1
+            env['GAIATEST_SKIP_WARNING'] = 1
         env = self.query_env(partial_env=env)
 
         for i in range(0, 5):

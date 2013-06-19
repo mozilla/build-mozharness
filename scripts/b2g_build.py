@@ -127,6 +127,11 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin, Toolto
             "dest": "publish_channel",
             "help": "channel where build is published to",
         }],
+        [["--debug"], {
+            "dest": "debug_build",
+            "action": "store_true",
+            "help": "Set B2G_DEBUG=1 (debug build)",
+        }],
     ]
 
     def __init__(self, require_config_file=False):
@@ -412,7 +417,8 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin, Toolto
                 channel=self.query_update_channel(),
                 version=self.query_b2g_version(),
             )
-
+        if self.config.get('debug_build'):
+            env['B2G_DEBUG'] = '1'
         return env
 
     def query_hgweb_url(self, repo, rev, filename=None):

@@ -128,6 +128,8 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
         env = self.query_env()
         env["DM_TRANS"] = "sut"
         env["TEST_DEVICE"] = self.mozpool_device
+        env["GAIATEST_ACKNOWLEDGED_RISKS"] = 1
+        env["GAIATEST_SKIP_WARNING"] = 1
         self.info("Running tests...")
         dirs = self.query_abs_dirs()
         cmd = [self.query_python_path('gaiatest'),

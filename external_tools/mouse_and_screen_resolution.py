@@ -18,6 +18,7 @@ except:
 import os
 import sys
 import urllib2
+import socket
 import platform
 import time
 
@@ -25,23 +26,20 @@ default_screen_resolution = {"x": 1024, "y": 768}
 default_mouse_position = {"x": 1010, "y": 10}
 
 def wfetch(url, retries=5):
-    while retries >= 0:
+    while True:
         try:
-            return urllib2.urlopen(url).read()
+            return urllib2.urlopen(url, timeout=30).read()
         except urllib2.HTTPError, e:
             print("Failed to fetch '%s': %s" % (url, str(e)))
-            if retries == 0:
-                raise
-            print("Retrying...")
-            retries = retries - 1
         except urllib2.URLError, e:
             print("Failed to fetch '%s': %s" % (url, str(e)))
-            if retries == 0:
-                raise
-            print("Retrying...")
-            retries = retries - 1
+        except socket.timeout:
+            print("Timed out accessing: %s" % url)
+        if retries == 0:
+            raise Exception("Could not fetch url '%s'" % url)
+        retries -= 1
+        print("Retrying...")
         time.sleep(60)
-    raise Exception("Could not fetch url '%s'" % url)
 
 def main():
     '''

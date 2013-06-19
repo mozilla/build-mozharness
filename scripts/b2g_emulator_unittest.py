@@ -13,7 +13,7 @@ import sys
 # load modules from parent dir
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
-from mozharness.base.errors import BaseErrorList
+from mozharness.base.errors import BaseErrorList, TarErrorList
 from mozharness.base.log import ERROR
 from mozharness.base.script import BaseScript
 from mozharness.base.vcs.vcsbase import VCSMixin
@@ -49,6 +49,12 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
          "dest": "test_type",
          "default": "browser",
          "help": "The type of tests to run",
+        }],
+        [["--no-update"],
+        {"action": "store_false",
+         "dest": "update_files",
+         "default": True,
+         "help": "Don't update emulator and gecko before running tests"
         }],
         [["--busybox-url"],
         {"action": "store",
@@ -180,7 +186,17 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
     def download_and_extract(self):
         super(B2GEmulatorTest, self).download_and_extract()
         dirs = self.query_abs_dirs()
-        self.install_emulator()
+
+        if self.config.get('update_files'):
+            self.install_emulator()
+        else:
+            self.mkdir_p(dirs['abs_emulator_dir'])
+            tar = self.query_exe('tar', return_type='list')
+            self.run_command(tar + ['zxf', self.installer_path],
+                             cwd=dirs['abs_emulator_dir'],
+                             error_list=TarErrorList,
+                             halt_on_failure=True)
+
         if self.config.get('download_minidump_stackwalk'):
             self.install_minidump_stackwalk()
 
@@ -188,7 +204,7 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
         self._download_unzip(self.config['xre_url'],
                              dirs['abs_xre_dir'])
 
-        if self.config['busybox_url']:
+        if self.config.get('busybox_url'):
             self.download_file(self.config['busybox_url'],
                                file_name='busybox',
                                parent_dir=dirs['abs_work_dir'])
@@ -241,12 +257,14 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
             'remote_webserver': self.config['remote_webserver'],
             'xre_path': os.path.join(dirs['abs_xre_dir'], 'bin'),
             'test_manifest': self.test_manifest,
-            'gecko_path': os.path.dirname(self.binary_path),
             'symbols_path': self.symbols_path,
             'busybox': self.busybox_path,
             'total_chunks': self.config.get('total_chunks'),
             'this_chunk': self.config.get('this_chunk'),
         }
+
+        if self.config.get('update_files'):
+            str_format_values['gecko_path'] = os.path.dirname(self.binary_path)
 
         name = '%s_options' % suite
         options = self.tree_config.get(name, self.config.get(name))
@@ -291,6 +309,13 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
 
         if not os.path.isfile(self.adb_path):
             self.fatal("The adb binary '%s' is not a valid file!" % self.adb_path)
+
+    def install(self):
+        if self.config.get('update_files'):
+            # For non-update runs, the emulator was already extracted during
+            # the download-and-extract phase, and we don't have a separate
+            # b2g package to extract.
+            super(B2GEmulatorTest, self).install()
 
     def run_tests(self):
         """

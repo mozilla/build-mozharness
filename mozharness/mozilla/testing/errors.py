@@ -43,9 +43,22 @@ TinderBoxPrintRe = {
         'fail_group': "Failed",
         'known_fail_group': None,
     },
+    "jsreftest_summary": {
+        'regex': re.compile(r'''REFTEST INFO \| (Successful|Unexpected|Known problems): (\d+) \('''),
+        'pass_group': "Successful",
+        'fail_group': "Unexpected",
+        'known_fail_group': "Known problems",
+    },
+    "robocop_summary": {
+        'regex': re.compile(r'''(\d+ INFO (Passed|Failed|Todo):\ +(\d+)|\t(Passed|Failed|Todo): (\d+))'''),
+        'pass_group': "Passed",
+        'fail_group': "Failed",
+        'known_fail_group': "Todo",
+    },
     "harness_error": {
         'full_regex': re.compile(r"(?:TEST-UNEXPECTED-FAIL|PROCESS-CRASH) \| .* \| (application crashed|missing output line for total leaks!|negative leaks caught!|\d+ bytes leaked)"),
-        'minimum_regex': re.compile(r'''(TEST-UNEXPECTED|PROCESS-CRASH)''')
+        'minimum_regex': re.compile(r'''(TEST-UNEXPECTED|PROCESS-CRASH)'''),
+        'retry_regex': re.compile(r'''FAIL-SHOULD-RETRY''')
     },
 }
 
