@@ -248,6 +248,9 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
         cmd = [self.query_python_path('python')]
         cmd.append(self.config['run_file_names'][suite])
 
+        if self.config.get('update_files'):
+            cmd.append('--gecko-path=%s' %  os.path.dirname(self.binary_path))
+
         str_format_values = {
             'adbpath': self.adb_path,
             'b2gpath': dirs['abs_b2g-distro_dir'],
@@ -262,9 +265,6 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
             'total_chunks': self.config.get('total_chunks'),
             'this_chunk': self.config.get('this_chunk'),
         }
-
-        if self.config.get('update_files'):
-            str_format_values['gecko_path'] = os.path.dirname(self.binary_path)
 
         name = '%s_options' % suite
         options = self.tree_config.get(name, self.config.get(name))
