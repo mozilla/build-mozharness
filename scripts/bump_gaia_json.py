@@ -176,12 +176,15 @@ class BumpGaiaJson(MercurialScript):
         repos = [repo_config]
         super(BumpGaiaJson, self).pull(repos=repos)
 
+    def query_revision(self, revision_config):
+        return revision_config['changesets'][-1]['node']
+
     def _do_looped_push(self, repo_config, revision_config):
         hg = self.query_exe("hg", return_type="list")
         self._pull_target_repo(repo_config)
         repo_path = self.query_repo_path(repo_config)
         gaia_config_file = os.path.join(repo_path, self.config['revision_file'])
-        revision = revision_config['changesets'][-1]['node']
+        revision = self.query_revision(revision_config)
         parts = urlparse.urlparse(repo_config["repo_url"])
         json_repo_path = parts.path
         status = self._update_json(gaia_config_file, revision, json_repo_path)
@@ -238,12 +241,14 @@ class BumpGaiaJson(MercurialScript):
                     self._do_looped_push,
                     args=(repo_config, revision_config),
                 ):
-                    # Don't FATAL; we may have another repo to update
+                    # Keep going, in case there's a further revision that has
+                    # CLOSED TREE (bug 885051)
+                    self.truncated_revisions = True
+                    revision = self.query_revision(revision_config)
                     self.add_summary(
-                        "Unable to push to %s; breaking out of revision loop" % repo_config['target_push_url'],
+                        "Unable to update %s for revision %s." % (repo_config['target_push_url'], revision),
                         level=ERROR,
                     )
-                    break
 
 
 # __main__ {{{1
