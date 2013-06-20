@@ -11,7 +11,7 @@ import re
 from mozharness.mozilla.testing.errors import TinderBoxPrintRe
 from mozharness.base.log import OutputParser, WARNING, INFO, CRITICAL
 from mozharness.mozilla.buildbot import TBPL_WARNING, TBPL_FAILURE, TBPL_RETRY
-from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_STATUS_DICT
+from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_WORST_LEVEL_TUPLE
 
 SUITE_CATEGORIES = ['mochitest', 'reftest', 'xpcshell']
 
@@ -101,7 +101,7 @@ class DesktopUnittestOutputParser(OutputParser):
             self.warning(' %s' % line)
             self.worst_log_level = self.worst_level(WARNING, self.worst_log_level)
             self.tbpl_status = self.worst_level(TBPL_WARNING, self.tbpl_status,
-                                                levels=TBPL_STATUS_DICT.keys())
+                                                levels=TBPL_WORST_LEVEL_TUPLE)
             full_harness_match = self.full_harness_error_re.match(line)
             if full_harness_match:
                 r = full_harness_match.group(1)
@@ -114,14 +114,16 @@ class DesktopUnittestOutputParser(OutputParser):
             return  # skip base parse_single_line
         if self.harness_retry_re.search(line):
             self.critical(' %s' % line)
-            self.worst_log_level = CRITICAL
-            self.tbpl_status = TBPL_RETRY
+            self.worst_log_level = self.worst_level(CRITICAL, self.worst_log_level)
+            self.tbpl_status = self.worst_level(TBPL_RETRY, self.tbpl_status,
+                                                levels=TBPL_WORST_LEVEL_TUPLE)
             return  # skip base parse_single_line
         super(DesktopUnittestOutputParser, self).parse_single_line(line)
 
     def evaluate_parser(self, return_code):
         if self.num_errors:  # mozharness ran into a script error
-            self.tbpl_status = TBPL_FAILURE
+            self.tbpl_status = self.worst_level(TBPL_FAILURE, self.tbpl_status,
+                                                levels=TBPL_WORST_LEVEL_TUPLE)
 
         # I have to put this outside of parse_single_line because this checks not
         # only if fail_count was more then 0 but also if fail_count is still -1
@@ -129,7 +131,7 @@ class DesktopUnittestOutputParser(OutputParser):
         if self.fail_count != 0:
             self.worst_log_level = self.worst_level(WARNING, self.worst_log_level)
             self.tbpl_status = self.worst_level(TBPL_WARNING, self.tbpl_status,
-                                                levels=TBPL_STATUS_DICT.keys())
+                                                levels=TBPL_WORST_LEVEL_TUPLE)
         # we can trust in parser.worst_log_level in either case
         return (self.tbpl_status, self.worst_log_level)
 

@@ -43,6 +43,8 @@ EXIT_STATUS_DICT = {
     TBPL_EXCEPTION: 3,
     TBPL_RETRY: 4,
 }
+TBPL_WORST_LEVEL_TUPLE = (TBPL_RETRY, TBPL_EXCEPTION, TBPL_FAILURE,
+                          TBPL_WARNING, TBPL_SUCCESS)
 
 
 class BuildbotMixin(object):
