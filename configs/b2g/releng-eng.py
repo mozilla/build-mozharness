@@ -55,7 +55,7 @@ config = {
             'mozilla-b2g18_v1_0_0': '1.0.0',
             'mozilla-b2g18_v1_0_1': '1.0.1',
             'mozilla-b2g18': '1.1.0',
-            'mozilla-central': '2.0.0',
+            'mozilla-central': '1.2.0',
         },
         'target_suffix': '-eng',
         "translate_hg_to_git": True,
