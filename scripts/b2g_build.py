@@ -1144,6 +1144,8 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin, Toolto
         target = self.load_gecko_config().get('upload_platform', self.config['target'])
         if c.get("target_suffix"):
             target += c["target_suffix"]
+        if self.config.get('debug_build'):
+            target += "-debug"
         if c['enable_try_uploads']:
             try:
                 user = self.buildbot_config['sourcestamp']['changes'][0]['who']
