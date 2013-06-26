@@ -115,7 +115,9 @@ class BumpGaiaJson(MercurialScript):
         if self.truncated_revisions:
             message += "Truncated some number of revisions since the previous bump.\n"
             self.truncated_revisions = False
-        return message + comments
+        message += comments
+        message = message.encode("utf-8")
+        return message
 
     def query_repo_path(self, repo_config):
         dirs = self.query_abs_dirs()
