@@ -446,7 +446,7 @@ class ScriptMixin(object):
                 if cleanup:
                     cleanup()
                 if n == attempts:
-                    self.log(error_message, level=error_level)
+                    self.log(error_message % {'action': action, 'attempts': n}, level=error_level)
                     return failure_status
                 if sleeptime > 0:
                     self.info("retry: Failed, sleeping %d seconds before retrying" %
