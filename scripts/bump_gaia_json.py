@@ -102,7 +102,7 @@ class BumpGaiaJson(MercurialScript):
         for changeset_config in reversed(revision_config['changesets']):
             revision_list.append(changeset_config['node'])
             comments += "\n========\n"
-            comments += '\n%s/rev/%s\nAuthor: %s\nDesc: %s\n' % (
+            comments += u'\n%s/rev/%s\nAuthor: %s\nDesc: %s\n' % (
                 repo_url,
                 changeset_config['node'][:12],
                 changeset_config['author'],
@@ -230,11 +230,14 @@ class BumpGaiaJson(MercurialScript):
             if contents:
                 prev_revision = contents.get('revision')
             revision_list = self.get_revision_list(repo_config, prev_revision=prev_revision)
-            if not revision_list:
+            if revision_list is None:
                 self.add_summary(
                     "Unable to get revision_list for %s" % repo_config['repo_url'],
                     level=ERROR,
                 )
+                continue
+            if not revision_list:
+                self.add_summary("No new changes for %s" % repo_config['repo_url'])
                 continue
             for revision_config in revision_list:
                 if self.retry(
