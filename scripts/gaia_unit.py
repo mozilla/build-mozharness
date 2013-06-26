@@ -220,7 +220,7 @@ class GaiaUnitTest(TestingMixin, TooltoolMixin, MercurialScript):
         cmd.extend(self._build_arg('--binary', os.path.join(dirs['abs_work_dir'],
                                                             'b2g', 'b2g-bin')))
         cmd.extend(self._build_arg('--profile', os.path.join(dirs['abs_gaia_dir'],
-                                                             'profile')))
+                                                             'profile-debug')))
 
         output_parser = TestSummaryOutputParserHelper(config=self.config,
                                                       log_obj=self.log_obj,
