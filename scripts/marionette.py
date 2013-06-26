@@ -94,9 +94,9 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, MercurialScript
     repos = []
 
     gaia_ui_tests_repo = {'repo': 'http://hg.mozilla.org/integration/gaia-ui-tests/',
-                          'revision': 'default',
+                          'revision': 'master',
                           'dest': 'gaia-ui-tests',
-                          'branch': 'default'}
+                          'branch': None}
 
     def __init__(self, require_config_file=False):
         super(MarionetteTest, self).__init__(
@@ -264,7 +264,7 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, MercurialScript
             cmd.extend(self._build_arg('--type', self.config['test_type']))
             cmd.extend(self._build_arg('--testvars', testvars))
             manifest = os.path.join(dirs['abs_gaiatest_dir'], 'gaiatest', 'tests',
-                                    'manifest.ini')
+                                    'desktop_manifest.ini')
             cmd.append(manifest)
         else:
             # Marionette or Marionette-webapi tests
@@ -297,8 +297,8 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, MercurialScript
         if self.query_minidump_stackwalk():
             env['MINIDUMP_STACKWALK'] = self.minidump_stackwalk_path
         if self.config.get('gaiatest'):
-            env['GAIATEST_ACKNOWLEDGED_RISKS'] = 1
-            env['GAIATEST_SKIP_WARNING'] = 1
+            env['GAIATEST_ACKNOWLEDGED_RISKS'] = '1'
+            env['GAIATEST_SKIP_WARNING'] = '1'
         env = self.query_env(partial_env=env)
 
         for i in range(0, 5):
