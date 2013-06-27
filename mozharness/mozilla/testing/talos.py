@@ -335,6 +335,9 @@ class Talos(TestingMixin, BaseScript, VCSMixin):
         options = ['-v',] # hardcoded options (for now)
         if self.config.get('python_webserver', True):
             options.append('--develop')
+        # talos can't gather data if the process name ends with '.exe'
+        if binary_path.endswith('.exe'):
+            binary_path = binary_path[:-4]
         kw_options = {'output': 'talos.yml', # options overwritten from **kw
                       'executablePath': binary_path,
                       'results_url': self.results_url}
