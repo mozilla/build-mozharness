@@ -1,6 +1,9 @@
 # This is a template config file for panda android tests on production.
 import socket
 
+
+MINIDUMP_STACKWALK_PATH = "/builds/minidump_stackwalk"
+
 config = {
     # Values for the foopies
     "exes": {
@@ -109,4 +112,6 @@ config = {
         'run-test',
         'close-request',
     ],
+    "minidump_stackwalk_path": MINIDUMP_STACKWALK_PATH,
+    "minidump_save_path": "%(abs_work_dir)s/../minidumps",
 }
