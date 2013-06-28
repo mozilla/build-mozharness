@@ -192,13 +192,14 @@ class BumpGaiaJson(MercurialScript):
         status = self._update_json(gaia_config_file, revision, json_repo_path)
         if status is not None:
             return status
+        env = self.query_env(partial_env={'LANG': 'en_US.UTF-8'})
         message = self.build_commit_message(
             revision_config, repo_config["repo_name"],
             repo_config["repo_url"],
         )
         command = hg + ["commit", "-u", self.config['hg_user'],
                         "-m", message]
-        self.run_command(command, cwd=repo_path)
+        self.run_command(command, cwd=repo_path, env=env)
         command = hg + ["push", "-e",
                         "ssh -oIdentityFile=%s -l %s" % (
                             self.config["ssh_key"], self.config["ssh_user"],
