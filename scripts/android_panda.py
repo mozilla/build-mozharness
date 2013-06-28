@@ -188,14 +188,20 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
                 cmd = abs_base_cmd[:]
                 replace_dict = {}
                 for arg in suites[suite]:
-                    cmd.append(arg % replace_dict)              
+                    cmd.append(arg % replace_dict)
                 if 'mochitest-gl' in suite:
-                     cmd.remove("--run-only-tests=android.json")                   
+                     cmd.remove("--run-only-tests=android.json")
                 tbpl_status, log_level = None, None
                 error_list = BaseErrorList + [{
                     'regex': re.compile(r"(?:TEST-UNEXPECTED-FAIL|PROCESS-CRASH) \| .* \| (application crashed|missing output line for total leaks!|negative leaks caught!|\d+ bytes leaked)"),
                     'level': ERROR,
                 }]
+                c = self.config
+                if c.get('minidump_stackwalk_path'):
+                    env['MINIDUMP_STACKWALK'] = c['minidump_stackwalk_path']
+                if c.get('minidump_save_path'):
+                    env['MINIDUMP_SAVE_PATH'] = c['minidump_save_path']
+                env = self.query_env(partial_env=env, log_level=INFO)
                 test_summary_parser = DesktopUnittestOutputParser(suite_category,
                                                      config=self.config,
                                                      error_list=error_list,
@@ -282,7 +288,7 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
          dirs = self.query_abs_dirs()
          self.apk_url = self.installer_url[:self.installer_url.rfind('/')]
          robocop_url = self.apk_url + '/robocop.apk'
-         self.info("Downloading robocop...")   
+         self.info("Downloading robocop...")
          self.download_file(robocop_url, 'robocop.apk', dirs['abs_work_dir'], error_level=FATAL)
 
     def query_abs_dirs(self):
