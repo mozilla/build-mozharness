@@ -2,7 +2,7 @@
 
 config = {
     # marionette options
-    "test_type": "b2g-bluetooth-antenna-carrier-wifi-sdcard-offline-camera-xfail",
+    "test_type": "b2g-xfail",
     "marionette_address": "localhost:2828",
     "gaiatest": True,
 
