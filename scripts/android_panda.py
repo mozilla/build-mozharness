@@ -30,7 +30,7 @@ SUITE_CATEGORIES = ['mochitest', 'reftest', 'crashtest', 'jsreftest', 'robocop']
 
 
 class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, BuildbotMixin, SUTDeviceMozdeviceMixin):
-    test_suites =  SUITE_CATEGORIES
+    test_suites = SUITE_CATEGORIES
     config_options = [
         [["--mozpool-api-url"], {
             "dest": "mozpool_api_url",
@@ -45,67 +45,67 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
             "help": "Set mozpool assignee (requestor name, free-form)",
         }],
         [["--total-chunks"], {
-             "action": "store",
-             "dest": "total_chunks",
-             "help": "Number of total chunks",
+            "action": "store",
+            "dest": "total_chunks",
+            "help": "Number of total chunks",
         }],
         [["--this-chunk"], {
-             "action": "store",
-             "dest": "this_chunk",
-             "help": "Number of this chunk",
+            "action": "store",
+            "dest": "this_chunk",
+            "help": "Number of this chunk",
         }],
         [["--extra-args"], {
-             "action": "store",
-             "dest": "extra_args",
-             "help": "Extra arguments",
+            "action": "store",
+            "dest": "extra_args",
+            "help": "Extra arguments",
         }],
         [['--mochitest-suite', ], {
-             "action": "extend",
-             "dest": "specified_mochitest_suites",
-             "type": "string",
-             "help": "Specify which mochi suite to run. "
+            "action": "extend",
+            "dest": "specified_mochitest_suites",
+            "type": "string",
+            "help": "Specify which mochi suite to run. "
                     "Suites are defined in the config file.\n"
                     "Examples: 'all', 'plain1', 'plain5', 'chrome', or 'a11y'"}
          ],
-         [['--reftest-suite', ], {
-             "action": "extend",
-             "dest": "specified_reftest_suites",
-             "type": "string",
-             "help": "Specify which reftest suite to run. "
-                     "Suites are defined in the config file.\n"
-                     "Examples: 'all', 'crashplan', or 'jsreftest'"}
+        [['--reftest-suite', ], {
+            "action": "extend",
+            "dest": "specified_reftest_suites",
+            "type": "string",
+            "help": "Specify which reftest suite to run. "
+                    "Suites are defined in the config file.\n"
+                    "Examples: 'all', 'crashplan', or 'jsreftest'"}
          ],
-         [['--crashtest-suite', ], {
-             "action": "extend",
-             "dest": "specified_crashtest_suites",
-             "type": "string",
-             "help": "Specify which crashtest suite to run. "
-                     "Suites are defined in the config file\n."
-                     "Examples: 'crashtest'"}
+        [['--crashtest-suite', ], {
+            "action": "extend",
+            "dest": "specified_crashtest_suites",
+            "type": "string",
+            "help": "Specify which crashtest suite to run. "
+                    "Suites are defined in the config file\n."
+                    "Examples: 'crashtest'"}
          ],
-         [['--jsreftest-suite', ], {
-             "action": "extend",
-             "dest": "specified_jsreftest_suites",
-             "type": "string",
-             "help": "Specify which jsreftest suite to run. "
-                     "Suites are defined in the config file\n."
-                     "Examples: 'jsreftest'"}
+        [['--jsreftest-suite', ], {
+            "action": "extend",
+            "dest": "specified_jsreftest_suites",
+            "type": "string",
+            "help": "Specify which jsreftest suite to run. "
+                    "Suites are defined in the config file\n."
+                    "Examples: 'jsreftest'"}
          ],
-         [['--robocop-suite', ], {
-             "action": "extend",
-             "dest": "specified_robocop_suites",
-             "type": "string",
-             "help": "Specify which robocop suite to run. "
-                     "Suites are defined in the config file\n."
-                     "Examples: 'robocop'"}
+        [['--robocop-suite', ], {
+            "action": "extend",
+            "dest": "specified_robocop_suites",
+            "type": "string",
+            "help": "Specify which robocop suite to run. "
+                    "Suites are defined in the config file\n."
+                    "Examples: 'robocop'"}
          ],
-         [['--run-all-suites', ], {
+        [['--run-all-suites', ], {
             "action": "store_true",
             "dest": "run_all_suites",
             "default": False,
             "help": "This will run all suites that are specified "
                     "in the config file. You do not need to specify "
-                    "any other suites.\nBeware, this may take a while ;)"}
+                    "any other suites. Beware, this may take a while ;)"}
          ],
     ] + copy.deepcopy(testing_config_options)
 
@@ -145,8 +145,7 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
 
     def postflight_read_buildbot_config(self):
         super(PandaTest, self).postflight_read_buildbot_config()
-        self.mozpool_device = self.config.get('mozpool_device', \
-                self.buildbot_config.get('properties')["slavename"])
+        self.mozpool_device = self.config.get('mozpool_device', self.buildbot_config.get('properties')["slavename"])
 
     def request_device(self):
         self.retrieve_android_device(b2gbase="")
@@ -154,7 +153,7 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
         try:
             from verify import verifyDevice
             #call verifyscript to get location of it on the filesystem
-            if verifyDevice(self.mozpool_device, checksut=True, doCheckStalled=False, watcherINI=True) == False:
+            if verifyDevice(self.mozpool_device, checksut=True, doCheckStalled=False, watcherINI=True) is False:
                 self.error("failed to run verify on %s" % (self.mozpool_device))
             else:
                 self.info("Successfully verified the device")
@@ -163,8 +162,8 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
 
     def _sut_prep_steps(self):
         device_time = self.set_device_epoch_time()
-        self.info("Current time on device: %s - %s" % \
-            (device_time, time.strftime("%x %H:%M:%S", time.gmtime(float(device_time)))))
+        self.info("Current time on device: %s - %s" %
+                  (device_time, time.strftime("%x %H:%M:%S", time.gmtime(float(device_time)))))
 
     def _run_category_suites(self, suite_category, preflight_run_method=None):
         """run suite(s) to a specific category"""
@@ -180,6 +179,14 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
         if suites:
             self.info('#### Running %s suites' % suite_category)
             for suite in suites:
+                dirs = self.query_abs_dirs()
+                #touch the shutdown file
+                shutdown_file = os.path.join(dirs['shutdown_dir'], 'shutdown.stamp')
+                try:
+                    self.info("*** Touching the shutdown file **")
+                    open(shutdown_file, 'w').close()
+                except Exception, e:
+                    self.warning("We failed to create the shutdown file: str(%s)" % str(e))
                 self._download_unzip_hostutils()
                 abs_base_cmd = self._query_abs_base_cmd(suite_category)
                 if 'robocop' in suite:
@@ -190,7 +197,7 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
                 for arg in suites[suite]:
                     cmd.append(arg % replace_dict)
                 if 'mochitest-gl' in suite:
-                     cmd.remove("--run-only-tests=android.json")
+                    cmd.remove("--run-only-tests=android.json")
                 tbpl_status, log_level = None, None
                 error_list = BaseErrorList + [{
                     'regex': re.compile(r"(?:TEST-UNEXPECTED-FAIL|PROCESS-CRASH) \| .* \| (application crashed|missing output line for total leaks!|negative leaks caught!|\d+ bytes leaked)"),
@@ -203,11 +210,10 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
                     env['MINIDUMP_SAVE_PATH'] = c['minidump_save_path']
                 env = self.query_env(partial_env=env, log_level=INFO)
                 test_summary_parser = DesktopUnittestOutputParser(suite_category,
-                                                     config=self.config,
-                                                     error_list=error_list,
-                                                     log_obj=self.log_obj)
+                                                                  config=self.config,
+                                                                  error_list=error_list,
+                                                                  log_obj=self.log_obj)
 
-                dirs = self.query_abs_dirs()
                 return_code = self.run_command(cmd, dirs['abs_test_install_dir'], env=env, output_parser=test_summary_parser)
 
                 tbpl_status, log_level = test_summary_parser.evaluate_parser(return_code)
@@ -227,7 +233,7 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
                 self.buildbot_status(tbpl_status, level=level)
 
                 self.log("The %s suite: %s ran with return status: %s" %
-                            (suite_category, suite, tbpl_status), level=log_level)
+                         (suite_category, suite, tbpl_status), level=log_level)
 
     def _query_specified_suites(self, category):
         # logic goes: if at least one '--{category}-suite' was given,
@@ -256,12 +262,9 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
 
         return suites
 
-
     def run_test(self):
-       # do we need to set the device time?
-       # command doesn't work anyways
+       # do we need to set the device time? command doesn't work anyways
        # self._sut_prep_steps()
-
         env = self.query_env()
         env["DM_TRANS"] = "sut"
         env["TEST_DEVICE"] = self.mozpool_device
@@ -271,25 +274,25 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
             self._run_category_suites(category)
 
     def _download_unzip_hostutils(self):
-          c = self.config
-          dirs = self.query_abs_dirs()
-          self.host_utils_url = c['hostutils_url']
-          #create the hostutils dir, get the zip and extract it
-          self.mkdir_p(dirs['abs_hostutils_dir'])
-          self._download_unzip(self.host_utils_url,dirs['abs_hostutils_dir'])
+        c = self.config
+        dirs = self.query_abs_dirs()
+        self.host_utils_url = c['hostutils_url']
+        #create the hostutils dir, get the zip and extract it
+        self.mkdir_p(dirs['abs_hostutils_dir'])
+        self._download_unzip(self.host_utils_url, dirs['abs_hostutils_dir'])
 
     def _install_app(self):
-          c = self.config
-          base_work_dir = c['base_work_dir']
-          cmd = ['python',self.config.get("install_app_path"), self.device_ip, 'build/'+ str(self.filename_apk), self.app_name]
-          self.run_command(cmd, base_work_dir, halt_on_failure=True)
+        c = self.config
+        base_work_dir = c['base_work_dir']
+        cmd = ['python', self.config.get("install_app_path"), self.device_ip, 'build/' + str(self.filename_apk), self.app_name]
+        self.run_command(cmd, base_work_dir, halt_on_failure=True)
 
     def _download_robocop_apk(self):
-         dirs = self.query_abs_dirs()
-         self.apk_url = self.installer_url[:self.installer_url.rfind('/')]
-         robocop_url = self.apk_url + '/robocop.apk'
-         self.info("Downloading robocop...")
-         self.download_file(robocop_url, 'robocop.apk', dirs['abs_work_dir'], error_level=FATAL)
+        dirs = self.query_abs_dirs()
+        self.apk_url = self.installer_url[:self.installer_url.rfind('/')]
+        robocop_url = self.apk_url + '/robocop.apk'
+        self.info("Downloading robocop...")
+        self.download_file(robocop_url, 'robocop.apk', dirs['abs_work_dir'], error_level=FATAL)
 
     def query_abs_dirs(self):
         if self.abs_dirs:
@@ -307,15 +310,16 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
         dirs['abs_jsreftest_dir'] = os.path.join(
             dirs['abs_test_install_dir'], 'reftest')
         dirs['abs_xre_dir'] = os.path.join(
-             abs_dirs['abs_work_dir'], 'xre')
+            abs_dirs['abs_work_dir'], 'xre')
         dirs['abs_utility_path'] = os.path.join(
-            abs_dirs['abs_work_dir'],'bin')
+            abs_dirs['abs_work_dir'], 'bin')
         dirs['abs_certificate_path'] = os.path.join(
             abs_dirs['abs_work_dir'], 'certs')
         dirs['abs_hostutils_dir'] = os.path.join(
             abs_dirs['abs_work_dir'], 'hostutils')
         dirs['abs_robocop_dir'] = os.path.join(
-             dirs['abs_test_install_dir'], 'mochitest')
+            dirs['abs_test_install_dir'], 'mochitest')
+        dirs['shutdown_dir'] = abs_dirs['abs_work_dir'].rsplit("/", 2)[0]
         for key in dirs.keys():
             if key not in abs_dirs:
                 abs_dirs[key] = dirs[key]
@@ -341,27 +345,27 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
         # TestingMixin._download_and_extract_symbols() will set
         # self.symbols_path when downloading/extracting.
         hostnumber = int(self.mozpool_device.split('-')[1])
-        http_port =  '30%03i' % hostnumber
-        ssl_port =  '31%03i' %  hostnumber
+        http_port = '30%03i' % hostnumber
+        ssl_port = '31%03i' % hostnumber
         #get filename from installer_url
         self.filename_apk = self.installer_url.split('/')[-1]
         #find appname from package-name.txt - assumes download-and-extract has completed successfully
         apk_dir = self.abs_dirs['abs_work_dir']
         self.apk_path = os.path.join(apk_dir, self.filename_apk)
         unzip = self.query_exe("unzip")
-        package_path  = os.path.join(apk_dir,'package-name.txt')
+        package_path = os.path.join(apk_dir, 'package-name.txt')
         unzip_cmd = [unzip, '-q', '-o',  self.apk_path]
         self.run_command(unzip_cmd, cwd=apk_dir, halt_on_failure=True)
-        self.app_name = str(self.read_from_file(package_path,verbose=True)).rstrip()
+        self.app_name = str(self.read_from_file(package_path, verbose=True)).rstrip()
 
         str_format_values = {
-                'device_ip': self.device_ip,
-                'hostname': self.mozpool_device,
-                'symbols_path': self._query_symbols_url(),
-                'http_port': http_port,
-                'ssl_port':  ssl_port,
-                'app_name':  self.app_name
-            }
+            'device_ip': self.device_ip,
+            'hostname': self.mozpool_device,
+            'symbols_path': self._query_symbols_url(),
+            'http_port': http_port,
+            'ssl_port':  ssl_port,
+            'app_name':  self.app_name
+        }
         if self.config['%s_options' % suite_category]:
             for option in self.config['%s_options' % suite_category]:
                 options.append(option % str_format_values)
@@ -372,12 +376,12 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
                          "\nIf you meant to have options for this suite, "
                          "please make sure they are specified in your "
                          "config under %s_options" %
-                          (suite_category, suite_category))
+                         (suite_category, suite_category))
 
     ###### helper methods
     def _pre_config_lock(self, rw_config):
         c = self.config
-        if not c.get('run_all_suites') :
+        if not c.get('run_all_suites'):
             return  # configs are valid
         for category in SUITE_CATEGORIES:
             specific_suites = c.get('specified_%s_suites' % (category))
