@@ -264,7 +264,7 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, MercurialScript
             cmd.extend(self._build_arg('--type', self.config['test_type']))
             cmd.extend(self._build_arg('--testvars', testvars))
             manifest = os.path.join(dirs['abs_gaiatest_dir'], 'gaiatest', 'tests',
-                                    'desktop_manifest.ini')
+                                    'tbpl-manifest.ini')
             cmd.append(manifest)
         else:
             # Marionette or Marionette-webapi tests
@@ -327,13 +327,23 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, MercurialScript
             tbpl_status = TBPL_FAILURE
 
         # dump logcat output if there were failures
-        if self.config.get('emulator') and (marionette_parser.failed != "0" or 'T-FAIL' in marionette_parser.tsummary):
-            logcat = os.path.join(dirs['abs_work_dir'], 'emulator-5554.log')
-            if os.access(logcat, os.F_OK):
-                self.info('dumping logcat')
-                self.run_command(['cat', logcat], error_list=LogcatErrorList)
+        if self.config.get('emulator'):
+            if marionette_parser.failed != "0" or 'T-FAIL' in marionette_parser.tsummary:
+                logcat = os.path.join(dirs['abs_work_dir'], 'emulator-5554.log')
+                if os.access(logcat, os.F_OK):
+                    self.info('dumping logcat')
+                    self.run_command(['cat', logcat], error_list=LogcatErrorList)
+                else:
+                    self.info('no logcat file found')
+        else:
+            # .. or gecko.log if it exists
+            gecko_log = os.path.join(self.config['base_work_dir'], 'gecko.log')
+            if os.access(gecko_log, os.F_OK):
+                self.info('dumping gecko.log')
+                self.run_command(['cat', gecko_log])
+                self.rmtree(gecko_log)
             else:
-                self.info('no logcat file found')
+                self.info('gecko.log not found')
 
         marionette_parser.print_summary('marionette')
 

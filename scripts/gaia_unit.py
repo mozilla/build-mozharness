@@ -202,6 +202,7 @@ class GaiaUnitTest(TestingMixin, TooltoolMixin, MercurialScript):
                          cwd=dirs['abs_gaia_dir'],
                          env={'DEBUG': '1',
                               'NOFTU': '1',
+                              'DESKTOP': '0',
                               'USE_LOCAL_XULRUNNER_SDK': '1'
                               },
                          halt_on_failure=True)
