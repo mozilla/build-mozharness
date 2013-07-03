@@ -264,7 +264,7 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, MercurialScript
             cmd.extend(self._build_arg('--type', self.config['test_type']))
             cmd.extend(self._build_arg('--testvars', testvars))
             manifest = os.path.join(dirs['abs_gaiatest_dir'], 'gaiatest', 'tests',
-                                    'desktop_manifest.ini')
+                                    'tbpl-manifest.ini')
             cmd.append(manifest)
         else:
             # Marionette or Marionette-webapi tests
