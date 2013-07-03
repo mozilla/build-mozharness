@@ -2,7 +2,7 @@
 
 config = {
     # marionette options
-    "test_type": "b2g-xfail",
+    "test_type": "b2g",
     "marionette_address": "localhost:2828",
     "gaiatest": True,
 
