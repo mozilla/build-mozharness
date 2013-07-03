@@ -145,6 +145,9 @@ class Talos(TestingMixin, BaseScript, VCSMixin):
         self.pagesets_url = None
         self.pagesets_parent_dir_path = None
         self.pagesets_manifest_path = None
+        self.abs_pagesets_paths = None
+        self.pagesets_manifest_filename = None
+        self.pagesets_manifest_parent_path = None
         if 'run-tests' in self.actions:
             self.preflight_run_tests()
 
@@ -288,6 +291,39 @@ class Talos(TestingMixin, BaseScript, VCSMixin):
             self.pagesets_manifest_path = self.talos_json_config['suites'][self.config['suite']].get('pagesets_manifest_path')
             return self.pagesets_manifest_path
 
+    def query_pagesets_manifest_filename(self):
+        if self.pagesets_manifest_filename:
+            return self.pagesets_manifest_filename
+        else:
+            manifest_path = self.query_pagesets_manifest_path()
+            self.pagesets_manifest_filename = os.path.basename(manifest_path)
+            return self.pagesets_manifest_filename
+
+    def query_pagesets_manifest_parent_path(self):
+        if self.pagesets_manifest_parent_path:
+            return self.pagesets_manifest_parent_path
+        if self.query_talos_json_config():
+            manifest_path = self.query_pagesets_manifest_path()
+            self.pagesets_manifest_parent_path = os.path.dirname(manifest_path)
+            return self.pagesets_manifest_parent_path
+
+    def query_abs_pagesets_paths(self):
+        """ Returns a bunch of absolute pagesets directory paths.
+        We need this to make the dir and copy the manifest to the local dir.
+        """
+        if self.abs_pagesets_paths:
+            return self.abs_pagesets_paths
+        else:
+            paths = {}
+            manifest_parent_path = self.query_pagesets_manifest_parent_path()
+            paths['pagesets_manifest_parent'] = os.path.join(self.talos_path, manifest_parent_path)
+
+            manifest_path = self.query_pagesets_manifest_path()
+            paths['pagesets_manifest'] = os.path.join(self.talos_path, manifest_path)
+
+            self.abs_pagesets_paths = paths
+            return self.abs_pagesets_paths
+
     def talos_options(self, args=None, **kw):
         """return options to talos"""
         # binary path
@@ -299,6 +335,9 @@ class Talos(TestingMixin, BaseScript, VCSMixin):
         options = ['-v',] # hardcoded options (for now)
         if self.config.get('python_webserver', True):
             options.append('--develop')
+        # talos can't gather data if the process name ends with '.exe'
+        if binary_path.endswith('.exe'):
+            binary_path = binary_path[:-4]
         kw_options = {'output': 'talos.yml', # options overwritten from **kw
                       'executablePath': binary_path,
                       'results_url': self.results_url}
@@ -368,6 +407,16 @@ class Talos(TestingMixin, BaseScript, VCSMixin):
                 self.info("Downloading pageset...")
                 pagesets_path = os.path.join(c['webroot'], self.query_pagesets_parent_dir_path())
                 self._download_unzip(self.pagesets_url, pagesets_path)
+
+                # mkdir for the missing manifest directory in talos_repo/talos/page_load_test directory
+                abs_pagesets_paths = self.query_abs_pagesets_paths()
+                abs_manifest_parent_path = abs_pagesets_paths['pagesets_manifest_parent']
+                self.mkdir_p(abs_manifest_parent_path, error_level=FATAL)
+
+                # copy all the manifest file from unzipped zip file into the manifest dir
+                src_manifest_file = os.path.join(c['webroot'], self.query_pagesets_manifest_path())
+                dest_manifest_file = abs_pagesets_paths['pagesets_manifest']
+                self.copyfile(src_manifest_file, dest_manifest_file, error_level=FATAL)
             plugins_url = self.talos_json_config['suites'][c['suite']].get('plugins', {}).get(c['system_bits'])
             if plugins_url:
                 self.info("Downloading plugin...")
