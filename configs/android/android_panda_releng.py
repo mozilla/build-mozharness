@@ -16,6 +16,7 @@ config = {
         "crashtest": "remotereftest.py",
         "jsreftest": "remotereftest.py",
         "robocop": "runtestsremote.py",
+        "xpcshell": "remotexpcshelltests.py"
     },
     "hostutils_url" :  "http://bm-remote.build.mozilla.org/tegra/tegra-host-utils.Linux.742597.zip",
     "verify_path" :  "/builds/sut_tools/verify.py",
@@ -69,7 +70,17 @@ config = {
         "--symbols-path=%(symbols_path)s",
         "--robocop=mochitest/robocop.ini"
      ],
-     "all_mochitest_suites": {
+    "xpcshell_options": [
+        "--deviceIP=%(device_ip)s",
+        "--xre-path=../hostutils/xre",
+        "--manifest", "xpcshell/tests/xpcshell_android.ini",
+        "--build-info-json", "xpcshell/mozinfo.json",
+        "--testing-modules-dir", "modules",
+        #  '--local-lib-dir', WithProperties('../%(exedir)s'),
+        #  '--apk', WithProperties('../%(build_filename)s'),
+        "--no-logfiles"
+    ],
+    "all_mochitest_suites": {
         "mochitest-1": ["--total-chunks=8", "--this-chunk=1"],
         "mochitest-2": ["--total-chunks=8", "--this-chunk=2"],
         "mochitest-3": ["--total-chunks=8", "--this-chunk=3"],
@@ -79,25 +90,28 @@ config = {
         "mochitest-7": ["--total-chunks=8", "--this-chunk=7"],
         "mochitest-8": ["--total-chunks=8", "--this-chunk=8"],
         "mochitest-gl": ["--test-path", "content/canvas/test/webgl"],
-     },
-     "all_reftest_suites": {
+    },
+    "all_reftest_suites": {
         "reftest-1": ["--total-chunks=4", "--this-chunk=1"],
         "reftest-2": ["--total-chunks=4", "--this-chunk=2"],
         "reftest-3": ["--total-chunks=4", "--this-chunk=3"],
         "reftest-4": ["--total-chunks=4", "--this-chunk=4"],
-     },
-     "all_crashtest_suites": {
+    },
+    "all_crashtest_suites": {
         "crashtest": []
-     },
-     "all_jsreftest_suites": {
+    },
+    "all_jsreftest_suites": {
         "jsreftest-1": ["--total-chunks=3", "--this-chunk=1"],
         "jsreftest-2": ["--total-chunks=3", "--this-chunk=2"],
         "jsreftest-3": ["--total-chunks=3", "--this-chunk=3"],
     },
-     "all_robocop_suites": {
+    "all_robocop_suites": {
         #plain is split
         "robocop-1": ["--total-chunks=3", "--this-chunk=1"],
         "robocop-2": ["--total-chunks=3", "--this-chunk=2"],
+    },
+    "all_xpcshell_suites": {
+        "xpcshell": []
     },
     "find_links": ["http://repos/python/packages"],
     "buildbot_json_path": "buildprops.json",
