@@ -26,7 +26,7 @@ class TestSummaryOutputParserHelper(OutputParser):
 
     def parse_single_line(self, line):
         super(TestSummaryOutputParserHelper, self).parse_single_line(line)
-        m = self.regex.match(line)
+        m = self.regex.search(line)
         if m:
             try:
                 setattr(self, m.group(1), int(m.group(2)))
