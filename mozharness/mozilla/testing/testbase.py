@@ -186,7 +186,9 @@ You can set this by:
         if target_unzip_dirs:
             unzip_cmd.extend(target_unzip_dirs)
         # TODO error_list
-        self.run_command(unzip_cmd, cwd=test_install_dir, halt_on_failure=True)
+        # unzip return code 11 is 'no matching files were found'
+        self.run_command(unzip_cmd, cwd=test_install_dir,
+                         halt_on_failure=True, success_codes=[0, 11])
 
     def _read_tree_config(self):
         """Reads an in-tree config file"""
