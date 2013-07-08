@@ -31,7 +31,7 @@ config = {
         "reftest": "runreftest.py",
         "xpcshell": "runxpcshelltests.py"
     },
-    "minimum_tests_zip_dirs": ["bin/*", "certs/*", "modules/*", "mozbase/*"],
+    "minimum_tests_zip_dirs": ["bin/*", "certs/*", "modules/*", "mozbase/*", "config/*"],
     "specific_tests_zip_dirs": {
         "mochitest": ["mochitest/*"],
         "reftest": ["reftest/*", "jsreftest/*"],
