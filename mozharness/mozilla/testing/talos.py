@@ -17,7 +17,7 @@ from mozharness.base.errors import PythonErrorList
 from mozharness.base.log import OutputParser, DEBUG, ERROR, CRITICAL, FATAL
 from mozharness.base.script import BaseScript
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options, INSTALLER_SUFFIXES
-from mozharness.base.vcs.vcsbase import VCSMixin
+from mozharness.base.vcs.vcsbase import MercurialScript
 
 TalosErrorList = PythonErrorList + [
  {'regex': re.compile(r'''run-as: Package '.*' is unknown'''), 'level': DEBUG},
@@ -64,7 +64,7 @@ talos_config_options = [
     ]
 
 
-class Talos(TestingMixin, BaseScript, VCSMixin):
+class Talos(TestingMixin, MercurialScript):
     """
     install and run Talos tests:
     https://wiki.mozilla.org/Buildbot/Talos
@@ -390,7 +390,7 @@ class Talos(TestingMixin, BaseScript, VCSMixin):
         # clone talos' repo
         repo = {
             'repo': 'http://hg.mozilla.org/build/talos',
-            'vcs': 'hgtool',
+            'vcs': 'hg',
             'dest': self.talos_path,
             'revision': self.talos_json_config['global']['talos_revision']
             }
