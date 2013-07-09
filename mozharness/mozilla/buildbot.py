@@ -134,9 +134,9 @@ class BuildbotMixin(object):
         if branch is None:
             if self.config.get("debug_build"):
                 platform = re.sub('[_-]debug', '', self.buildbot_config["properties"]["platform"])
-                branch = '%s-b2g_%s-debug-unittest' % (self.buildbot_config["properties"]["branch"], platform)
+                branch = '%s-%s-debug-unittest' % (self.buildbot_config["properties"]["branch"], platform)
             else:
-                branch = '%s-b2g_%s-opt-unittest' % (self.buildbot_config["properties"]["branch"], self.buildbot_config["properties"]["platform"])
+                branch = '%s-%s-opt-unittest' % (self.buildbot_config["properties"]["branch"], self.buildbot_config["properties"]["platform"])
         sendchange = [
             'sendchange',
             '--master', self.config.get("sendchange_masters")[0],
