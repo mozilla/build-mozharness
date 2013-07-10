@@ -18,4 +18,4 @@ from mozharness.mozilla.testing.talos import Talos
 
 if __name__ == '__main__':
     talos = Talos()
-    talos.run()
+    talos.run_and_exit()

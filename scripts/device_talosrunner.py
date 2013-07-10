@@ -192,4 +192,4 @@ class DeviceTalosRunner(DeviceMixin, Talos):
 # __main__ {{{1
 if __name__ == '__main__':
     device_talos_runner = DeviceTalosRunner()
-    device_talos_runner.run()
+    device_talos_runner.run_and_exit()

@@ -354,4 +354,4 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, MercurialScript
 
 if __name__ == '__main__':
     marionetteTest = MarionetteTest()
-    marionetteTest.run()
+    marionetteTest.run_and_exit()

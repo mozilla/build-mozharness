@@ -357,4 +357,4 @@ class Androidx86EmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixi
 
 if __name__ == '__main__':
     emulatorTest = Androidx86EmulatorTest()
-    emulatorTest.run()
+    emulatorTest.run_and_exit()

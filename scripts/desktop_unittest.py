@@ -371,4 +371,4 @@ class DesktopUnittest(TestingMixin, MercurialScript):
 # main {{{1
 if __name__ == '__main__':
     desktop_unittest = DesktopUnittest()
-    desktop_unittest.run()
+    desktop_unittest.run_and_exit()

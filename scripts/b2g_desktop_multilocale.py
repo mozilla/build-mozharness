@@ -204,4 +204,4 @@ class B2gMultilocale(LocalesMixin, BaseScript, VCSMixin, GaiaLocalesMixin):
 # main {{{1
 if __name__ == '__main__':
     myScript = B2gMultilocale()
-    myScript.run()
+    myScript.run_and_exit()

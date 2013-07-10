@@ -260,4 +260,4 @@ class BumpGaiaJson(MercurialScript):
 # __main__ {{{1
 if __name__ == '__main__':
     bump_gaia_json = BumpGaiaJson()
-    bump_gaia_json.run()
+    bump_gaia_json.run_and_exit()

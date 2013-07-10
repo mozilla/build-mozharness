@@ -207,4 +207,4 @@ You need to either specify --repo or specify it after the options:
 # __main__ {{{1
 if __name__ == '__main__':
     source_tool = SourceTool()
-    source_tool.run()
+    source_tool.run_and_exit()

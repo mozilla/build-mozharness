@@ -282,4 +282,4 @@ class PepTest(TestingMixin, BaseScript):
 
 if __name__ == '__main__':
     peptest = PepTest()
-    peptest.run()
+    peptest.run_and_exit()

@@ -515,4 +515,4 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
 # main {{{1
 if __name__ == '__main__':
     single_locale = MobileSingleLocale()
-    single_locale.run()
+    single_locale.run_and_exit()

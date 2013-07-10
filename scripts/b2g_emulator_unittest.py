@@ -381,4 +381,4 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
 
 if __name__ == '__main__':
     emulatorTest = B2GEmulatorTest()
-    emulatorTest.run()
+    emulatorTest.run_and_exit()

@@ -1469,4 +1469,4 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin, Toolto
 # main {{{1
 if __name__ == '__main__':
     myScript = B2GBuild()
-    myScript.run()
+    myScript.run_and_exit()
