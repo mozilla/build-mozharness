@@ -11,6 +11,7 @@ mozharness.
 """
 
 import codecs
+import inspect
 import os
 import platform
 import pprint
@@ -19,6 +20,7 @@ import shutil
 import subprocess
 import sys
 import time
+import traceback
 import urllib2
 import urlparse
 if os.name == 'nt':
@@ -722,10 +724,120 @@ class ScriptMixin(object):
             return output
 
 
+def PreScriptRun(func):
+    """Decorator for methods that will be called before script execution.
+
+    Each method on a BaseScript having this decorator will be called at the
+    beginning of BaseScript.run().
+
+    The return value is ignored. Exceptions will abort execution.
+    """
+    func._pre_run_listener = True
+    return func
+
+
+def PostScriptRun(func):
+    """Decorator for methods that will be called after script execution.
+
+    This is similar to PreScriptRun except it is called at the end of
+    execution. The method will always be fired, even if execution fails.
+    """
+    func._post_run_listener = True
+    return func
+
+
+def PreScriptAction(action=None):
+    """Decorator for methods that will be called at the beginning of each action.
+
+    Each method on a BaseScript having this decorator will be called during
+    BaseScript.run() before an individual action is executed. The method will
+    receive the action's name as an argument.
+
+    If no values are passed to the decorator, it will be applied to every
+    action. If a string is passed, the decorated function will only be called
+    for the action of that name.
+
+    The return value of the method is ignored. Exceptions will abort execution.
+    """
+    def _wrapped(func):
+        func._pre_action_listener = action
+        return func
+
+    def _wrapped_none(func):
+        func._pre_action_listener = None
+        return func
+
+    if type(action) == type(_wrapped):
+        return _wrapped_none(action)
+
+    return _wrapped
+
+
+def PostScriptAction(action=None):
+    """Decorator for methods that will be called at the end of each action.
+
+    This behaves similarly to PreScriptAction. It varies in that it is called
+    after execution of the action.
+
+    The decorated method will receive the action name as a positional argument.
+    It will then receive the following named arguments:
+
+        success - Bool indicating whether the action finished successfully.
+
+    The decorated method will always be called, even if the action threw an
+    exception.
+
+    The return value is ignored.
+    """
+    def _wrapped(func):
+        func._post_action_listener = action
+        return func
+
+    def _wrapped_none(func):
+        func._post_action_listener = None
+        return func
+
+    if type(action) == type(_wrapped):
+        return _wrapped_none(action)
+
+    return _wrapped
+
+
 # BaseScript {{{1
 class BaseScript(ScriptMixin, LogMixin, object):
     def __init__(self, config_options=None, default_log_level="info", **kwargs):
         super(BaseScript, self).__init__()
+
+        # Collect decorated methods. We simply iterate over the attributes of
+        # the current class instance and look for signatures deposited by
+        # the decorators.
+        self._listeners = dict(
+            pre_run=[],
+            pre_action=[],
+            post_action=[],
+            post_run=[],
+        )
+        for k in dir(self):
+            item = getattr(self, k)
+
+            # We only decorate methods, so ignore other types.
+            if not inspect.ismethod(item):
+                continue
+
+            if hasattr(item, '_pre_run_listener'):
+                self._listeners['pre_run'].append(k)
+
+            if hasattr(item, '_pre_action_listener'):
+                self._listeners['pre_action'].append((k,
+                    item._pre_action_listener))
+
+            if hasattr(item, '_post_action_listener'):
+                self._listeners['post_action'].append((k,
+                    item._post_action_listener))
+
+            if hasattr(item, '_post_run_listener'):
+                self._listeners['post_run'].append(k)
+
         self.return_code = 0
         self.log_obj = None
         self.abs_dirs = None
@@ -791,6 +903,68 @@ class BaseScript(ScriptMixin, LogMixin, object):
                                     long_desc='%s log' % log_name,
                                     max_backups=self.config.get("log_max_rotate", 0))
 
+    def run_action(self, action):
+        if action not in self.actions:
+            self.action_message("Skipping %s step." % action)
+            return
+
+        method_name = action.replace("-", "_")
+        self.action_message("Running %s step." % action)
+
+        # An exception during a pre action listener should abort execution.
+        for fn, target in self._listeners['pre_action']:
+            if target is not None and target != action:
+                continue
+
+            try:
+                self.info("Running pre-action listener: %s" % fn)
+                method = getattr(self, fn)
+                method(action)
+            except Exception:
+                self.error("Exception during pre-action for %s: %s" % (action,
+                    traceback.format_exc()))
+
+                for fn, target in self._listeners['post_action']:
+                    if target is not None and target != action:
+                        continue
+
+                    try:
+                        self.info("Running post-action listener: %s" % fn)
+                        method = getattr(self, fn)
+                        method(action, success=False)
+                    except Exception:
+                        self.error("An additional exception occurred during "
+                            "post-action for %s: %s" % (action,
+                                traceback.format_exc()))
+
+                self.fatal("Aborting due to exception in pre-action listener.")
+
+        # We always run post action listeners, even if the main routine failed.
+        success = False
+        try:
+            self.info("Running main action method: %s" % method_name)
+            self._possibly_run_method("preflight_%s" % method_name)
+            self._possibly_run_method(method_name, error_if_missing=True)
+            self._possibly_run_method("postflight_%s" % method_name)
+            success = True
+        finally:
+            post_success = True
+            for fn, target in self._listeners['post_action']:
+                if target is not None and target != action:
+                    continue
+
+                try:
+                    self.info("Running post-action listener: %s" % fn)
+                    method = getattr(self, fn)
+                    method(action, success=success and self.return_code == 0)
+                except Exception:
+                    post_success = False
+                    self.error("Exception during post-action for %s: %s" % (
+                        action, traceback.format_exc()))
+
+            if not post_success:
+                self.fatal("Aborting due to failure in post-action listener.")
+
     def run(self):
         """Default run method.
         This is the "do everything" method, based on actions and all_actions.
@@ -806,17 +980,48 @@ class BaseScript(ScriptMixin, LogMixin, object):
         Postflight is quick testing for success after an action.
 
         """
+        for fn in self._listeners['pre_run']:
+            try:
+                self.info("Running pre-run listener: %s" % fn)
+                method = getattr(self, fn)
+                method()
+            except Exception:
+                self.error("Exception during pre-run listener: %s" %
+                    traceback.format_exc())
+
+                for fn in self._listeners['post_run']:
+                    try:
+                        method = getattr(self, fn)
+                        method()
+                    except Exception:
+                        self.error("An additional exception occurred during a "
+                            "post-run listener: %s" % traceback.format_exc())
+
+                self.fatal("Aborting due to failure in pre-run listener.")
+
         self.dump_config()
-        for action in self.all_actions:
-            if action not in self.actions:
-                self.action_message("Skipping %s step." % action)
-            else:
-                method_name = action.replace("-", "_")
-                self.action_message("Running %s step." % action)
-                self._possibly_run_method("preflight_%s" % method_name)
-                self._possibly_run_method(method_name, error_if_missing=True)
-                self._possibly_run_method("postflight_%s" % method_name)
+        try:
+            for action in self.all_actions:
+                self.run_action(action)
+        except Exception:
+            self.fatal("Uncaught exception: %s" % traceback.format_exc())
+        finally:
+            post_success = True
+            for fn in self._listeners['post_run']:
+                try:
+                    self.info("Running post-run listener: %s" % fn)
+                    method = getattr(self, fn)
+                    method()
+                except Exception:
+                    post_success = False
+                    self.error("Exception during post-run listener: %s" %
+                        traceback.format_exc())
+
+            if not post_success:
+                self.fatal("Aborting due to failure in post-run listener.")
+
         self.copy_logs_to_upload_dir()
+
         return self.return_code
 
     def run_and_exit(self):
