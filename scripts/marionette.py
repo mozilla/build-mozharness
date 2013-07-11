@@ -257,7 +257,7 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, MercurialScript
             # gaia-ui-tests on B2G desktop builds
             cmd = [python, '-u', os.path.join(dirs['abs_gaiatest_dir'],
                                               'gaiatest',
-                                              'runtests.py')]
+                                              'cli.py')]
             cmd.extend(self._build_arg('--binary', os.path.join(dirs['abs_work_dir'],
                                                                 'b2g', 'b2g')))
             cmd.extend(self._build_arg('--address', self.config['marionette_address']))
