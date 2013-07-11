@@ -18,4 +18,4 @@ from mozharness.mozilla.l10n.multi_locale_build import MultiLocaleBuild
 
 if __name__ == '__main__':
     multi_locale_build = MultiLocaleBuild()
-    multi_locale_build.run()
+    multi_locale_build.run_and_exit()

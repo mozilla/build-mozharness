@@ -250,4 +250,4 @@ class GaiaUnitTest(TestingMixin, TooltoolMixin, MercurialScript):
 
 if __name__ == '__main__':
     gaia_unit_test = GaiaUnitTest()
-    gaia_unit_test.run()
+    gaia_unit_test.run_and_exit()

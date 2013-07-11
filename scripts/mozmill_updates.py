@@ -177,4 +177,4 @@ class MozmillUpdate(VirtualenvMixin, MercurialScript):
 # __main__ {{{1
 if __name__ == '__main__':
     mozmill_update = MozmillUpdate()
-    mozmill_update.run()
+    mozmill_update.run_and_exit()

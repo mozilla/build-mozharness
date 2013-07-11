@@ -137,4 +137,4 @@ class ServoBuild(MockMixin, BaseScript, VCSMixin, BuildbotMixin):
 # main {{{1
 if __name__ == '__main__':
     myScript = ServoBuild()
-    myScript.run()
+    myScript.run_and_exit()

@@ -408,4 +408,4 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
 
 if __name__ == '__main__':
     pandaTest = PandaTest()
-    pandaTest.run()
+    pandaTest.run_and_exit()

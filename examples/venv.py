@@ -38,4 +38,4 @@ class VirtualenvExample(VirtualenvMixin, BaseScript):
 # __main__ {{{1
 if __name__ == '__main__':
     venv_example = VirtualenvExample()
-    venv_example.run()
+    venv_example.run_and_exit()

@@ -817,7 +817,11 @@ class BaseScript(ScriptMixin, LogMixin, object):
                 self._possibly_run_method(method_name, error_if_missing=True)
                 self._possibly_run_method("postflight_%s" % method_name)
         self.copy_logs_to_upload_dir()
-        sys.exit(self.return_code)
+        return self.return_code
+
+    def run_and_exit(self):
+        """Runs the script and exits the current interpreter."""
+        sys.exit(self.run())
 
     def clobber(self):
         """

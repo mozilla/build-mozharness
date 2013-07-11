@@ -236,7 +236,7 @@ class JetPerf(Talos):
 def main(args=sys.argv[1:]):
     """CLI entry point"""
     jetperf = JetPerf()
-    jetperf.run()
+    jetperf.run_and_exit()
 
 if __name__ == '__main__':
     main()

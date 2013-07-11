@@ -139,4 +139,4 @@ class ConfigTest(BaseScript):
 # __main__ {{{1
 if __name__ == '__main__':
     config_test = ConfigTest()
-    config_test.run()
+    config_test.run_and_exit()

@@ -324,4 +324,4 @@ class MobilePartnerRepack(LocalesMixin, ReleaseMixin, MobileSigningMixin,
 # main {{{1
 if __name__ == '__main__':
     mobile_partner_repack = MobilePartnerRepack()
-    mobile_partner_repack.run()
+    mobile_partner_repack.run_and_exit()
