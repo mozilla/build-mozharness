@@ -126,7 +126,7 @@ class Talos(TestingMixin, MercurialScript):
                                              ])
         kwargs.setdefault('config', {})
         kwargs['config'].setdefault('virtualenv_modules', ["talos", "mozinstall"])
-        BaseScript.__init__(self, **kwargs)
+        super(Talos, self).__init__(**kwargs)
 
         self.workdir = self.query_abs_dirs()['abs_work_dir'] # convenience
 
