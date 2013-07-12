@@ -62,6 +62,22 @@ class VirtualenvMixin(object):
     python_paths = {}
     site_packages_path = None
 
+    def __init__(self, *args, **kwargs):
+        self._virtualenv_modules = []
+        super(VirtualenvMixin, self).__init__(*args, **kwargs)
+
+    def register_virtualenv_module(self, name, url=None, method=None,
+            requirements=None):
+        """Register a module to be installed with the virtualenv.
+
+        This method can be called up until create_virtualenv() to register
+        modules that should be installed in the virtualenv.
+
+        See the documentation for install_module for how the arguments are
+        applied.
+        """
+        self._virtualenv_modules.append((name, url, method, requirements))
+
     def query_virtualenv_path(self):
         c = self.config
         dirs = self.query_abs_dirs()
@@ -312,6 +328,11 @@ class VirtualenvMixin(object):
                                 module_url=module_url,
                                 install_method=install_method,
                                 requirements=requirements)
+
+        for module, url, method, requirements in self._virtualenv_modules:
+            self.install_module(module=module, module_url=url,
+                install_method=method, requirements=requirements or ())
+
         self.info("Done creating virtualenv %s." % venv_path)
 
         self.package_versions(log_output=True)

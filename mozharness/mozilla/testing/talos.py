@@ -443,6 +443,7 @@ class Talos(TestingMixin, MercurialScript):
         """VirtualenvMixin.create_virtualenv() assuemes we're using
         self.config['virtualenv_modules']. Since we are installing
         talos from its source, we have to wrap that method here."""
+        # XXX This method could likely be replaced with a PreScriptAction hook.
         if self.has_cloned_talos:
             virtualenv_modules = self.config.get('virtualenv_modules', [])[:]
             if 'talos' in virtualenv_modules:

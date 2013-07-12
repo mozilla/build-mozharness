@@ -15,6 +15,7 @@ sys.path.insert(1, os.path.dirname(sys.path[0]))
 
 from mozharness.base.errors import TarErrorList, ZipErrorList, HgErrorList
 from mozharness.base.log import INFO, ERROR, WARNING, FATAL
+from mozharness.base.script import PreScriptAction
 from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_WARNING, TBPL_FAILURE
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
@@ -131,13 +132,10 @@ class GaiaUnitTest(TestingMixin, TooltoolMixin, MercurialScript):
         self.abs_dirs = abs_dirs
         return self.abs_dirs
 
-    def create_virtualenv(self, **kwargs):
-        super(GaiaUnitTest, self).create_virtualenv(**kwargs)
-
-        dirs = self.query_abs_dirs()
-        self.install_module(module='gaia-unit-tests',
-                            module_url=dirs['abs_runner_dir'],
-                            install_method='pip')
+    @PreScriptAction('create-virtualenv')
+    def _pre_create_virtualenv(self, action):
+        self.register_virtualenv_module('gaia-unit-tests',
+            url=self.query_abs_dirs()['abs_runner_dir'])
 
     def _build_arg(self, option, value):
         """
