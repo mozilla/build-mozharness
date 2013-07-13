@@ -437,10 +437,21 @@ class ResourceMonitoringMixin(object):
                 'Read bytes: {io_read_bytes}; Write bytes: {io_write_bytes}; ' \
                 'Read time: {io_read_time}; Write time: {io_write_time}'
 
-            self.info(message.format(prefix=prefix, duration=duration,
-                cpu_percent=cpu_percent, io_read_bytes=io.read_bytes,
-                io_write_bytes=io.write_bytes, io_read_time=io.read_time,
-                io_write_time=io.write_time))
+            # XXX Some test harnesses are complaining about a string being
+            # being fed into a 'f' formatter. This will help diagnose the
+            # issue.
+            try:
+                self.info(message.format(prefix=prefix, duration=duration,
+                    cpu_percent=cpu_percent, io_read_bytes=io.read_bytes,
+                    io_write_bytes=io.write_bytes, io_read_time=io.read_time,
+                    io_write_time=io.write_time))
+            except ValueError:
+                self.warning("Exception when formatting: %s" %
+                    traceback.format_exc())
+                self.warning(duration)
+                self.warning(cpu_percent)
+                self.warning(cpu_times)
+                self.warning(io)
 
         cpu_percent, cpu_times, io = resources(None)
         duration = rm.end_time - rm.start_time
