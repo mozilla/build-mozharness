@@ -67,7 +67,7 @@ class VirtualenvMixin(object):
         super(VirtualenvMixin, self).__init__(*args, **kwargs)
 
     def register_virtualenv_module(self, name, url=None, method=None,
-            requirements=None):
+            requirements=None, optional=False):
         """Register a module to be installed with the virtualenv.
 
         This method can be called up until create_virtualenv() to register
@@ -76,7 +76,8 @@ class VirtualenvMixin(object):
         See the documentation for install_module for how the arguments are
         applied.
         """
-        self._virtualenv_modules.append((name, url, method, requirements))
+        self._virtualenv_modules.append((name, url, method, requirements,
+            optional))
 
     def query_virtualenv_path(self):
         c = self.config
@@ -166,7 +167,7 @@ class VirtualenvMixin(object):
             return True
 
     def install_module(self, module=None, module_url=None, install_method=None,
-                       requirements=()):
+                       requirements=(), optional=False):
         """
         Install module via pip.
 
@@ -235,7 +236,11 @@ class VirtualenvMixin(object):
         if self.run_command(command,
                             error_list=VirtualenvErrorList,
                             cwd=dirs['abs_work_dir']) != 0:
-            self.fatal("Unable to install %s!" % module_url)
+            if optional:
+                self.warning("Unable to install optional package %s." %
+                    module_url)
+            else:
+                self.fatal("Unable to install %s!" % module_url)
 
     def create_virtualenv(self, modules=(), requirements=()):
         """
@@ -329,9 +334,11 @@ class VirtualenvMixin(object):
                                 install_method=install_method,
                                 requirements=requirements)
 
-        for module, url, method, requirements in self._virtualenv_modules:
+        for module, url, method, requirements,optional in \
+            self._virtualenv_modules:
             self.install_module(module=module, module_url=url,
-                install_method=method, requirements=requirements or ())
+                install_method=method, requirements=requirements or (),
+                optional=optional)
 
         self.info("Done creating virtualenv %s." % venv_path)
 
