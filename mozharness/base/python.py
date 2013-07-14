@@ -448,10 +448,6 @@ class ResourceMonitoringMixin(object):
             except ValueError:
                 self.warning("Exception when formatting: %s" %
                     traceback.format_exc())
-                self.warning(duration)
-                self.warning(cpu_percent)
-                self.warning(cpu_times)
-                self.warning(io)
 
         cpu_percent, cpu_times, io = resources(None)
         duration = rm.end_time - rm.start_time
