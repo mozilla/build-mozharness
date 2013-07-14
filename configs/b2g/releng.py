@@ -26,7 +26,7 @@ config = {
     "hgtool_share_base": "/builds/hg-shared",
     "hgtool_base_mirror_urls": ["http://hg-internal.dmz.scl3.mozilla.com"],
     "hgtool_base_bundle_urls": ["http://ftp.mozilla.org/pub/mozilla.org/firefox/bundles"],
-    "sendchange_masters": ["buildbot-master36.build.mozilla.org:9301"],
+    "sendchange_masters": ["buildbot-master81.build.mozilla.org:9301"],
     "exes": {
         "tooltool.py": "/tools/tooltool.py",
         "buildbot": "/tools/buildbot/bin/buildbot",
