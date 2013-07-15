@@ -156,7 +156,7 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, MercurialScript
     def _configure_marionette_virtualenv(self, action):
         if self.tree_config.get('use_puppetagain_packages'):
             self.register_virtualenv_module('mozinstall')
-            self.register_virtualenv_module('marionette', os.path.join('tests'
+            self.register_virtualenv_module('marionette', os.path.join('tests',
                 'marionette'))
 
             return
