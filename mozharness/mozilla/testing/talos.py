@@ -15,7 +15,6 @@ import re
 from mozharness.base.config import parse_config_file
 from mozharness.base.errors import PythonErrorList
 from mozharness.base.log import OutputParser, DEBUG, ERROR, CRITICAL, FATAL
-from mozharness.base.script import BaseScript
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options, INSTALLER_SUFFIXES
 from mozharness.base.vcs.vcsbase import MercurialScript
 
