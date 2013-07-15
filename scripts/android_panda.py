@@ -166,13 +166,6 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
     def _run_category_suites(self, suite_category, preflight_run_method=None):
         """run suite(s) to a specific category"""
 
-        sys.path.append(self.config.get("sut_lib_path"))
-        try:
-            import sut_lib
-            sut_lib.log = self.log_obj
-        except ImportError, e:
-            self.fatal("Can't import sut_lib %s\n" % str(e))
-
         env = self.query_env(partial_env={'DM_TRANS': "sut", 'TEST_DEVICE': self.mozpool_device})
         self.info("Running tests...")
 
