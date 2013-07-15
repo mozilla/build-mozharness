@@ -82,8 +82,7 @@ class DesktopUnittest(TestingMixin, MercurialScript):
     def __init__(self, require_config_file=True):
         # abs_dirs defined already in BaseScript but is here to make pylint happy
         self.abs_dirs = None
-        MercurialScript.__init__(
-            self,
+        super(DesktopUnittest, self).__init__(
             config_options=self.config_options,
             all_actions=[
                 'clobber',

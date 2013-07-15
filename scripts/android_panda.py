@@ -149,16 +149,14 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
 
     def request_device(self):
         self.retrieve_android_device(b2gbase="")
-        sys.path.append(self.config.get("verify_path"))
-        try:
-            from verify import verifyDevice
-            #call verifyscript to get location of it on the filesystem
-            if verifyDevice(self.mozpool_device, checksut=True, doCheckStalled=False, watcherINI=True) is False:
-                self.error("failed to run verify on %s" % (self.mozpool_device))
-            else:
-                self.info("Successfully verified the device")
-        except ImportError, e:
-            self.fatal("Can't import DeviceManagerSUT! %s\nDid you check out talos?" % str(e))
+        env = self.query_env()
+        cmd = [self.query_exe('python'), self.config.get("verify_path")]
+        if self.run_command(cmd, env=env):
+            self.critical("Preparing to abort run due to failed verify check.")
+            self.close_request()
+            self.fatal("Dieing due to failing verification")
+        else:
+            self.info("Successfully verified the device")
 
     def _sut_prep_steps(self):
         device_time = self.set_device_epoch_time()
@@ -167,6 +165,13 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
 
     def _run_category_suites(self, suite_category, preflight_run_method=None):
         """run suite(s) to a specific category"""
+
+        sys.path.append(self.config.get("sut_lib_path"))
+        try:
+            import sut_lib
+            sut_lib.log = self.log_obj
+        except ImportError, e:
+            self.fatal("Can't import sut_lib %s\n" % str(e))
 
         env = self.query_env(partial_env={'DM_TRANS': "sut", 'TEST_DEVICE': self.mozpool_device})
         self.info("Running tests...")

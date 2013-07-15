@@ -12,7 +12,11 @@ import platform
 from mozharness.base.config import ReadOnlyDict, parse_config_file
 from mozharness.base.errors import BaseErrorList
 from mozharness.base.log import FATAL
-from mozharness.base.python import virtualenv_config_options, VirtualenvMixin
+from mozharness.base.python import (
+    ResourceMonitoringMixin,
+    VirtualenvMixin,
+    virtualenv_config_options,
+)
 from mozharness.mozilla.buildbot import BuildbotMixin
 
 INSTALLER_SUFFIXES = ('.tar.bz2', '.zip', '.dmg', '.exe', '.apk', '.tar.gz')
@@ -54,7 +58,7 @@ testing_config_options = [
 
 
 # TestingMixin {{{1
-class TestingMixin(VirtualenvMixin, BuildbotMixin):
+class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin):
     """
     The steps to identify + download the proper bits for [browser] unit
     tests and Talos.

@@ -8,7 +8,13 @@
 '''
 
 import os
+import traceback
 
+from mozharness.base.script import (
+    PostScriptAction,
+    PostScriptRun,
+    PreScriptAction,
+)
 from mozharness.base.errors import VirtualenvErrorList
 from mozharness.base.log import WARNING, FATAL
 
@@ -61,6 +67,23 @@ class VirtualenvMixin(object):
     '''
     python_paths = {}
     site_packages_path = None
+
+    def __init__(self, *args, **kwargs):
+        self._virtualenv_modules = []
+        super(VirtualenvMixin, self).__init__(*args, **kwargs)
+
+    def register_virtualenv_module(self, name, url=None, method=None,
+            requirements=None, optional=False):
+        """Register a module to be installed with the virtualenv.
+
+        This method can be called up until create_virtualenv() to register
+        modules that should be installed in the virtualenv.
+
+        See the documentation for install_module for how the arguments are
+        applied.
+        """
+        self._virtualenv_modules.append((name, url, method, requirements,
+            optional))
 
     def query_virtualenv_path(self):
         c = self.config
@@ -150,7 +173,7 @@ class VirtualenvMixin(object):
             return True
 
     def install_module(self, module=None, module_url=None, install_method=None,
-                       requirements=()):
+                       requirements=(), optional=False):
         """
         Install module via pip.
 
@@ -219,7 +242,11 @@ class VirtualenvMixin(object):
         if self.run_command(command,
                             error_list=VirtualenvErrorList,
                             cwd=dirs['abs_work_dir']) != 0:
-            self.fatal("Unable to install %s!" % module_url)
+            if optional:
+                self.warning("Unable to install optional package %s." %
+                    module_url)
+            else:
+                self.fatal("Unable to install %s!" % module_url)
 
     def create_virtualenv(self, modules=(), requirements=()):
         """
@@ -312,9 +339,125 @@ class VirtualenvMixin(object):
                                 module_url=module_url,
                                 install_method=install_method,
                                 requirements=requirements)
+
+        for module, url, method, requirements,optional in \
+            self._virtualenv_modules:
+            self.install_module(module=module, module_url=url,
+                install_method=method, requirements=requirements or (),
+                optional=optional)
+
         self.info("Done creating virtualenv %s." % venv_path)
 
         self.package_versions(log_output=True)
+
+    def activate_virtualenv(self):
+        """Import the virtualenv's packages into this Python interpreter."""
+        bin_dir = os.path.dirname(self.query_python_path())
+        activate = os.path.join(bin_dir, 'activate_this.py')
+        execfile(activate, dict(__file__=activate))
+
+
+class ResourceMonitoringMixin(object):
+    """Provides resource monitoring capabilities to scripts.
+
+    When this class is in the inheritance chain, resource usage stats of the
+    executing script will be recorded.
+
+    This class requires the VirtualenvMixin in order to install a package used
+    for recording resource usage.
+
+    While we would like to record resource usage for the entirety of a script,
+    since we require an external package, we can only record resource usage
+    after that package is installed (as part of creating the virtualenv).
+    That's just the way things have to be.
+    """
+    def __init__(self, *args, **kwargs):
+        super(ResourceMonitoringMixin, self).__init__(*args, **kwargs)
+
+        self.register_virtualenv_module('psutil==0.7.1', method='pip',
+            optional=True)
+        self.register_virtualenv_module('mozsystemmonitor==0.0.0',
+            method='pip', optional=True)
+        self._resource_monitor = None
+
+    @PostScriptAction('create-virtualenv')
+    def _start_resource_monitoring(self, action, success=None):
+        self.activate_virtualenv()
+
+        try:
+            from mozsystemmonitor.resourcemonitor import SystemResourceMonitor
+
+            self.info("Starting resource monitoring.")
+            self._resource_monitor = SystemResourceMonitor(poll_interval=1.0)
+            self._resource_monitor.start()
+        except Exception:
+            self.warning("Unable to start resource monitor: %s" %
+                traceback.format_exc())
+
+    @PreScriptAction
+    def _resource_record_pre_action(self, action):
+        # Resource monitor isn't available until after create-virtualenv.
+        if not self._resource_monitor:
+            return
+
+        self._resource_monitor.begin_phase(action)
+
+    @PostScriptAction
+    def _resource_record_post_action(self, action, success=None):
+        # Resource monitor isn't available until after create-virtualenv.
+        if not self._resource_monitor:
+            return
+
+        self._resource_monitor.finish_phase(action)
+
+    @PostScriptRun
+    def _resource_record_post_run(self):
+        if not self._resource_monitor:
+            return
+
+        self._resource_monitor.stop()
+        self._log_resource_usage()
+
+    def _log_resource_usage(self):
+        rm = self._resource_monitor
+
+        if rm.start_time is None:
+            return
+
+        def resources(phase):
+            cpu_percent = rm.aggregate_cpu_percent(phase=phase, per_cpu=False)
+            cpu_times = rm.aggregate_cpu_times(phase=phase, per_cpu=False)
+            io = rm.aggregate_io(phase=phase)
+
+            return cpu_percent, cpu_times, io
+
+        def log_usage(prefix, duration, cpu_percent, cpu_times, io):
+            message = '{prefix} - Wall time: {duration:.0f}s; ' \
+                'CPU: {cpu_percent:.0f}%; ' \
+                'Read bytes: {io_read_bytes}; Write bytes: {io_write_bytes}; ' \
+                'Read time: {io_read_time}; Write time: {io_write_time}'
+
+            # XXX Some test harnesses are complaining about a string being
+            # being fed into a 'f' formatter. This will help diagnose the
+            # issue.
+            try:
+                self.info(message.format(prefix=prefix, duration=duration,
+                    cpu_percent=cpu_percent, io_read_bytes=io.read_bytes,
+                    io_write_bytes=io.write_bytes, io_read_time=io.read_time,
+                    io_write_time=io.write_time))
+            except ValueError:
+                self.warning("Exception when formatting: %s" %
+                    traceback.format_exc())
+
+        cpu_percent, cpu_times, io = resources(None)
+        duration = rm.end_time - rm.start_time
+
+        log_usage('Total resource usage', duration, cpu_percent, cpu_times, io)
+
+        for phase in rm.phases.keys():
+            start_time, end_time = rm.phases[phase]
+            cpu_percent, cpu_times, io = resources(phase)
+            log_usage(phase, end_time - start_time, cpu_percent, cpu_times, io)
 
 
 # __main__ {{{1

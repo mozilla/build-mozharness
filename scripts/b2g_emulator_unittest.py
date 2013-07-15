@@ -15,7 +15,10 @@ sys.path.insert(1, os.path.dirname(sys.path[0]))
 
 from mozharness.base.errors import BaseErrorList, TarErrorList
 from mozharness.base.log import ERROR
-from mozharness.base.script import BaseScript
+from mozharness.base.script import (
+    BaseScript,
+    PreScriptAction,
+)
 from mozharness.base.vcs.vcsbase import VCSMixin
 from mozharness.mozilla.testing.errors import LogcatErrorList
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
@@ -117,9 +120,6 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
         {'regex': re.compile(r'''(Timeout|NoSuchAttribute|Javascript|NoSuchElement|XPathLookup|NoSuchWindow|StaleElement|ScriptTimeout|ElementNotVisible|NoSuchFrame|InvalidElementState|NoAlertPresent|InvalidCookieDomain|UnableToSetCookie|InvalidSelector|MoveTargetOutOfBounds)Exception'''), 'level': ERROR},
     ]
 
-    virtualenv_modules = None
-    virtualenv_requirements = None
-
     def __init__(self, require_config_file=False):
         super(B2GEmulatorTest, self).__init__(
             config_options=self.config_options,
@@ -210,38 +210,33 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
                                parent_dir=dirs['abs_work_dir'])
             self.busybox_path = os.path.join(dirs['abs_work_dir'], 'busybox')
 
-    def create_virtualenv(self):
+    @PreScriptAction('create-virtualenv')
+    def _pre_create_virtualenv(self, action):
         if self.tree_config.get('use_puppetagain_packages'):
-            self.virtualenv_requirements = [
-                os.path.join('tests', 'b2g', 'b2g-unittest-requirements.txt')
-            ]
-            self.virtualenv_modules = [
-                'mozinstall',
-                {'marionette': os.path.join('tests', 'marionette')},
-            ]
-        else:
-            mozbase_dir = os.path.join('tests', 'mozbase')
-            self.virtualenv_requirements = None
-            # XXX Bug 879765: Dependent modules need to be listed before parent
-            # modules, otherwise they will get installed from the pypi server.
-            self.virtualenv_modules = [
-                {'manifestparser': os.path.join(mozbase_dir, 'manifestdestiny')},
-                {'mozfile': os.path.join(mozbase_dir, 'mozfile')},
-                {'mozlog': os.path.join(mozbase_dir, 'mozlog')},
-                {'moznetwork': os.path.join(mozbase_dir, 'moznetwork')},
-                {'mozinfo': os.path.join(mozbase_dir, 'mozinfo')},
-                {'mozhttpd': os.path.join(mozbase_dir, 'mozhttpd')},
-                {'mozcrash': os.path.join(mozbase_dir, 'mozcrash')},
-                {'mozinstall': os.path.join(mozbase_dir, 'mozinstall')},
-                {'mozdevice': os.path.join(mozbase_dir, 'mozdevice')},
-                {'mozprofile': os.path.join(mozbase_dir, 'mozprofile')},
-                {'mozprocess': os.path.join(mozbase_dir, 'mozprocess')},
-                {'mozrunner': os.path.join(mozbase_dir, 'mozrunner')},
-                {'marionette': os.path.join('tests', 'marionette')},
-            ]
+            requirements = [os.path.join('tests', 'b2g',
+                'b2g-unittest-requirements.txt')]
 
-        super(B2GEmulatorTest, self).create_virtualenv(modules=self.virtualenv_modules,
-                                                       requirements=self.virtualenv_requirements)
+            self.register_virtualenv_module('mozinstall',
+                requirements=requirements)
+            self.register_virtualenv_module('marionette',
+                url=os.path.join('tests', 'marionette'), requirements=requirements)
+
+            return
+
+        mozbase_dir = os.path.join('tests', 'mozbase')
+        # XXX Bug 879765: Dependent modules need to be listed before parent
+        # modules, otherwise they will get installed from the pypi server.
+        self.register_virtualenv_module('manifestparser',
+            url=os.path.join(mozbase_dir, 'manifestdestiny'))
+
+        for m in ('mozfile', 'mozlog', 'moznetwork', 'mozinfo', 'mozhttpd',
+        'mozcrash', 'mozinstall', 'mozdevice', 'mozprofile', 'mozprocess',
+        'mozrunner'):
+            self.register_virtualenv_module(m, url=os.path.join(mozbase_dir,
+                m))
+
+        self.register_virtualenv_module('marionette', url=os.path.join('tests',
+            'marionette'))
 
     def _query_abs_base_cmd(self, suite):
         dirs = self.query_abs_dirs()
