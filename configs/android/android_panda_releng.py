@@ -96,8 +96,8 @@ config = {
     },
      "all_robocop_suites": {
         #plain is split
-        "robocop-1": ["--total-chunks=3", "--this-chunk=1"],
-        "robocop-2": ["--total-chunks=3", "--this-chunk=2"],
+        "robocop-1": ["--total-chunks=2", "--this-chunk=1"],
+        "robocop-2": ["--total-chunks=2", "--this-chunk=2"],
     },
     "find_links": ["http://repos/python/packages"],
     "buildbot_json_path": "buildprops.json",
