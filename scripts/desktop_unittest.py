@@ -346,6 +346,7 @@ class DesktopUnittest(TestingMixin, MercurialScript):
                     env['MINIDUMP_SAVE_PATH'] = c['minidump_save_path']
                 env = self.query_env(partial_env=env, log_level=INFO)
                 return_code = self.run_command(cmd, cwd=dirs['abs_work_dir'],
+                                               output_timeout=1000,
                                                output_parser=parser,
                                                env=env)
 

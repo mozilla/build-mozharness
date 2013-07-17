@@ -22,10 +22,12 @@ class TestSummaryOutputParserHelper(OutputParser):
         self.failed = 0
         self.passed = 0
         self.todo = 0
+        self.last_line = None
         super(TestSummaryOutputParserHelper, self).__init__(**kwargs)
 
     def parse_single_line(self, line):
         super(TestSummaryOutputParserHelper, self).parse_single_line(line)
+        self.last_line = line
         m = self.regex.search(line)
         if m:
             try:

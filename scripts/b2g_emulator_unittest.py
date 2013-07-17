@@ -358,6 +358,7 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
                                                     log_obj=self.log_obj,
                                                     error_list=error_list)
             return_code = self.run_command(cmd, cwd=cwd, env=env,
+                                           output_timeout=1000,
                                            output_parser=parser,
                                            success_codes=success_codes)
             if not parser.install_gecko_failed:
