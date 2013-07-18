@@ -301,6 +301,7 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, MercurialScript
                                                        log_obj=self.log_obj,
                                                        error_list=self.error_list)
             code = self.run_command(cmd, env=env,
+                                    output_timeout=1000,
                                     output_parser=marionette_parser)
             if not marionette_parser.install_gecko_failed:
                 break

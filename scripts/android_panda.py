@@ -212,7 +212,7 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
                                                                   error_list=error_list,
                                                                   log_obj=self.log_obj)
 
-                return_code = self.run_command(cmd, dirs['abs_test_install_dir'], env=env, output_parser=test_summary_parser)
+                return_code = self.run_command(cmd, cwd=dirs['abs_test_install_dir'], env=env, output_parser=test_summary_parser)
 
                 tbpl_status, log_level = test_summary_parser.evaluate_parser(return_code)
 
@@ -283,7 +283,7 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
         c = self.config
         base_work_dir = c['base_work_dir']
         cmd = ['python', self.config.get("install_app_path"), self.device_ip, 'build/' + str(self.filename_apk), self.app_name]
-        self.run_command(cmd, base_work_dir, halt_on_failure=True)
+        self.run_command(cmd, cwd=base_work_dir, halt_on_failure=True)
 
     def _download_robocop_apk(self):
         dirs = self.query_abs_dirs()

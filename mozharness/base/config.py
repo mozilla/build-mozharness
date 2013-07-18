@@ -28,6 +28,8 @@ from copy import deepcopy
 from optparse import OptionParser, Option, OptionGroup
 import os
 import sys
+import urllib2
+import time
 try:
     import simplejson as json
 except ImportError:
@@ -135,6 +137,35 @@ def parse_config_file(file_name, quiet=False, search_path=None,
         raise RuntimeError("Unknown config file type %s!" % file_name)
     # TODO return file_path
     return config
+
+
+def download_config_file(url, file_name):
+    n = 0
+    attempts = 5
+    sleeptime = 60
+    max_sleeptime = 5 * 60
+    while n < attempts:
+        try:
+            contents = urllib2.urlopen(url).read()
+            break
+        except urllib2.URLError, e:
+            print "Error downloading from url %s: %s" % (url, str(e))
+            print "Sleeping %d seconds before retrying" % sleeptime
+            time.sleep(sleeptime)
+            sleeptime = sleeptime * 2
+            if sleeptime > max_sleeptime:
+                sleeptime = max_sleeptime
+            n += 1
+    else:
+        print "Failed to download from url %s after %d attempts, quiting..." % (url, attempts)
+        raise SystemError(-1)
+    try:
+        f = open(file_name, 'w')
+        f.write(contents)
+        f.close()
+    except IOError, e:
+        print "Error writing downloaded contents to file %s: %s" % (file_name, str(e))
+        raise SystemError(-1)
 
 
 # BaseConfig {{{1
@@ -315,7 +346,13 @@ class BaseConfig(object):
         else:
             config = {}
             for cf in options.config_files:
-                config.update(parse_config_file(cf))
+                if '://' in cf: # config file is an url
+                    file_name = os.path.basename(cf)
+                    file_path = os.path.join(os.getcwd(), file_name)
+                    download_config_file(cf, file_path)
+                    config.update(parse_config_file(file_path))
+                else:
+                    config.update(parse_config_file(cf))
             self.set_config(config)
         for key in defaults.keys():
             value = getattr(options, key)
