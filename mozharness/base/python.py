@@ -415,8 +415,14 @@ class ResourceMonitoringMixin(object):
         if not self._resource_monitor:
             return
 
-        self._resource_monitor.stop()
-        self._log_resource_usage()
+        # This should never raise an exception. This is a workaround until
+        # mozsystemmonitor is fixed. See bug 895388.
+        try:
+            self._resource_monitor.stop()
+            self._log_resource_usage()
+        except Exception:
+            self.warning("Exception when reporting resource usage: %s" %
+                traceback.format_exc())
 
     def _log_resource_usage(self):
         rm = self._resource_monitor
