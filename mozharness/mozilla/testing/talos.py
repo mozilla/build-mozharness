@@ -254,10 +254,11 @@ class Talos(TestingMixin, MercurialScript):
         """Where do we install the talos python package from?
         This needs to be overrideable by the talos json.
         """
+        default_repo = "http://hg.mozilla.org/build/talos"
         if self.query_talos_json_config():
-            return self.talos_json_config['global']['talos_repo']
+            return self.talos_json_config.get('global', {}).get('talos_repo', default_repo)
         else:
-            return self.config.get('talos_repo')
+            return self.config.get('talos_repo', default_repo)
 
     def query_talos_revision(self):
         """Which talos revision do we want to use?
