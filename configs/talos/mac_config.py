@@ -35,6 +35,7 @@ config = {
         "clobber",
         "read-buildbot-config",
         "download-and-extract",
+        "clone-talos",
         "create-virtualenv",
         "install",
         "run-tests",
