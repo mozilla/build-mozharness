@@ -113,12 +113,14 @@ class Talos(TestingMixin, MercurialScript):
         kwargs.setdefault('all_actions', ['clobber',
                                           'read-buildbot-config',
                                           'download-and-extract',
+                                          'clone-talos',
                                           'create-virtualenv',
                                           'install',
                                           'run-tests',
                                          ])
         kwargs.setdefault('default_actions', ['clobber',
                                               'download-and-extract',
+                                              'clone-talos',
                                               'create-virtualenv',
                                               'install',
                                               'run-tests',
@@ -252,10 +254,11 @@ class Talos(TestingMixin, MercurialScript):
         """Where do we install the talos python package from?
         This needs to be overrideable by the talos json.
         """
+        default_repo = "http://hg.mozilla.org/build/talos"
         if self.query_talos_json_config():
-            return self.talos_json_config['global']['talos_repo']
+            return self.talos_json_config.get('global', {}).get('talos_repo', default_repo)
         else:
-            return self.config.get('talos_repo')
+            return self.config.get('talos_repo', default_repo)
 
     def query_talos_revision(self):
         """Which talos revision do we want to use?
@@ -441,9 +444,9 @@ class Talos(TestingMixin, MercurialScript):
     # Action methods. {{{1
     # clobber defined in BaseScript
     # read_buildbot_config defined in BuildbotMixin
+    # download_and_extract defined in TestingMixin
 
-    def download_and_extract(self):
-        super(Talos, self).download_and_extract()
+    def clone_talos(self):
         c = self.config
         if not c.get('python_webserver', True) and c.get('populate_webroot'):
             self._populate_webroot()
