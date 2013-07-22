@@ -64,8 +64,9 @@ class MozpoolMixin(object):
                 tbpl_status=TBPL_EXCEPTION):
             try:
                 image = 'b2g'
+                duration = 4 * 60 * 60 # request valid for 14400 seconds == 4 hours
                 response = mph.request_device(self.mozpool_device, image, assignee=self.mozpool_assignee, \
-                               b2gbase=b2gbase, pxe_config=None)
+                               b2gbase=b2gbase, pxe_config=None, duration=duration)
                 break
             except self.MozpoolConflictException:
                 self.warning("Device unavailable. Retry#%i.." % retry)
