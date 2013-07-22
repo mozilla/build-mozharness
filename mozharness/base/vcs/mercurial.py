@@ -195,9 +195,7 @@ class MercurialVCS(ScriptMixin, LogMixin, object):
                 cmd.extend(['-b', branch])
 
         cmd.extend([repo, dest])
-        output_timeout = self.config.get("vcs_output_timeout", None)
-        self.run_command(cmd, output_timeout=output_timeout,
-                         error_list=HgErrorList)
+        self.run_command(cmd, error_list=HgErrorList)
 
         if update_dest:
             return self.update(dest, branch, revision)
