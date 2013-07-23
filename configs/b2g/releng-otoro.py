@@ -31,7 +31,8 @@ config = {
     },
     "manifest": {
         "upload_remote_host": "stage.mozilla.org",
-        "upload_remote_basepath": "/pub/mozilla.org/b2g/manifests/%(version)s",
+        "upload_remote_basepath": "/pub/mozilla.org/b2g/manifests/nightly/%(version)s",
+        "depend_upload_remote_basepath": "/pub/mozilla.org/b2g/manifests/depend/%(branch)s/%(platform)s/%(buildid)s",
         "ssh_key": os.path.expanduser("~/.ssh/b2gbld_dsa"),
         "ssh_user": "b2gbld",
         "branches": {

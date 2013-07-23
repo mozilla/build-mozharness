@@ -16,6 +16,7 @@ sys.path.insert(1, os.path.dirname(sys.path[0]))
 from mozharness.base.errors import TarErrorList
 from mozharness.base.log import INFO, ERROR, WARNING
 from mozharness.base.script import PreScriptAction
+from mozharness.base.transfer import TransferMixin
 from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_WARNING, TBPL_FAILURE
 from mozharness.mozilla.testing.errors import LogcatErrorList
@@ -41,7 +42,7 @@ class MarionetteOutputParser(TestSummaryOutputParserHelper):
             self.install_gecko_failed = True
         super(MarionetteOutputParser, self).parse_single_line(line)
 
-class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, MercurialScript):
+class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, MercurialScript, TransferMixin):
     config_options = [
         [["--test-type"],
         {"action": "store",
@@ -181,8 +182,33 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, MercurialScript
 
     def pull(self, **kwargs):
         repos = copy.deepcopy(self.config.get('repos', []))
+
         if self.config.get('gaiatest'):
-            repos.append(self.config.get("gaia_ui_tests_repo", self.gaia_ui_tests_repo))
+            gaia_ui_tests_repo = self.config.get("gaia_ui_tests_repo", self.gaia_ui_tests_repo)
+            if self.buildbot_config is not None:
+                # get gaia.json from gecko hgweb
+                revision = self.buildbot_config['properties']['revision']
+                repo_path = self.buildbot_config['properties']['repo_path']
+                url = "https://hg.mozilla.org/{repo_path}/raw-file/{rev}/b2g/config/gaia.json".format(
+                    repo_path=repo_path,
+                    rev=revision)
+                contents = self.retry(self.load_json_from_url, args=(url,))
+                if contents.get('repo_path') and contents.get('revision'):
+                    # get gaia-ui-tests.json from gaia hgweb
+                    gaia_ui_tests_url = 'https://hg.mozilla.org/{repo_path}/raw-file/{rev}/tests/python/gaia-ui-tests.json'.format(
+                        repo_path=contents['repo_path'],
+                        rev=contents['revision'])
+                    contents = self.retry(self.load_json_from_url, args=(gaia_ui_tests_url,))
+                    if contents.get('repo') and contents.get('revision'):
+                        gaia_ui_tests_repo['repo'] = contents['repo']
+                        gaia_ui_tests_repo['revision'] = contents['revision']
+                    else:
+                        self.fatal('error parsing gaia-ui-tests.json')
+                else:
+                    self.fatal('error parsing gaia.json')
+
+            repos.append(gaia_ui_tests_repo)
+
         kwargs['repos'] = repos
         super(MarionetteTest, self).pull(**kwargs)
 
