@@ -66,14 +66,18 @@ class DesktopUnittest(TestingMixin, MercurialScript):
          ],
     ] + copy.deepcopy(testing_config_options)
 
+    # XXX Bug 879765: Dependent modules need to be listed before parent
+    # modules, otherwise they will get installed from the pypi server.
     virtualenv_modules = [
         "simplejson",
         {'mozfile': os.path.join('tests', 'mozbase', 'mozfile')},
         {'mozlog': os.path.join('tests', 'mozbase', 'mozlog')},
         {'mozinfo': os.path.join('tests', 'mozbase', 'mozinfo')},
         {'mozhttpd': os.path.join('tests', 'mozbase', 'mozhttpd')},
+        {'mozcrash': os.path.join('tests', 'mozbase', 'mozcrash')},
         {'mozinstall': os.path.join('tests', 'mozbase', 'mozinstall')},
         {'manifestdestiny': os.path.join('tests', 'mozbase', 'manifestdestiny')},
+        {'mozdevice': os.path.join('tests', 'mozbase', 'mozdevice')},
         {'mozprofile': os.path.join('tests', 'mozbase', 'mozprofile')},
         {'mozprocess': os.path.join('tests', 'mozbase', 'mozprocess')},
         {'mozrunner': os.path.join('tests', 'mozbase', 'mozrunner')},
