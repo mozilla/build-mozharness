@@ -34,7 +34,7 @@ config = {
         "--xre-path=../hostutils/xre",
         "--utility-path=../hostutils/bin",
         "--certificate-path=certs",
-        "--app=%(app_name)s", "--console-level=INFO",
+        "--app=%(app_name)s", "--ignore-window-size", "--console-level=INFO",
         "--http-port=%(http_port)s", "--ssl-port=%(ssl_port)s",
         "--symbols-path=%(symbols_path)s",
         "reftest/tests/testing/crashtest/crashtests.list"

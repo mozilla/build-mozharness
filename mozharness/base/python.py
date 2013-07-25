@@ -237,10 +237,15 @@ class VirtualenvMixin(object):
         if module_url:
             command += [module_url]
 
+        # Prevents a return code of 1 being marked as an ERROR in the log
+        # for optional packages.
+        success_codes = [0, 1] if optional else [0]
+
         # Allow for errors while building modules, but require a
         # return status of 0.
         if self.run_command(command,
                             error_list=VirtualenvErrorList,
+                            success_codes=success_codes,
                             cwd=dirs['abs_work_dir']) != 0:
             if optional:
                 self.warning("Unable to install optional package %s." %
