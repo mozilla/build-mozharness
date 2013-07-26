@@ -167,7 +167,7 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, MercurialScript
         # modules, otherwise they will get installed from the pypi server.
         self.register_virtualenv_module('manifestparser',
                 os.path.join(mozbase_dir, 'manifestdestiny'))
-        for m in ('mozfile', 'mozlog', 'moznetwork', 'mozinfo', 'mozhttpd',
+        for m in ('mozfile', 'mozlog', 'mozinfo', 'moznetwork', 'mozhttpd',
                 'mozcrash', 'mozinstall', 'mozdevice', 'mozprofile',
                 'mozprocess', 'mozrunner'):
             self.register_virtualenv_module(m, os.path.join(mozbase_dir,
