@@ -226,6 +226,11 @@ class BaseConfig(object):
             "-c", "--config-file", "--cfg", action="extend", dest="config_files",
             type="string", help="Specify the config files"
         )
+        self.config_parser.add_option(
+            "-C", "--opt-config-file", "--opt-cfg", action="extend",
+            dest="opt_config_files", type="string", default=[],
+            help="Specify the optional config files"
+        )
 
         # Logging
         log_option_group = OptionGroup(self.config_parser, "Logging")
@@ -345,14 +350,22 @@ class BaseConfig(object):
                 raise SystemExit(-1)
         else:
             config = {}
-            for cf in options.config_files:
-                if '://' in cf: # config file is an url
-                    file_name = os.path.basename(cf)
-                    file_path = os.path.join(os.getcwd(), file_name)
-                    download_config_file(cf, file_path)
-                    config.update(parse_config_file(file_path))
-                else:
-                    config.update(parse_config_file(cf))
+            # append opt_config to allow them to overwrite previous configs
+            all_config_files = options.config_files + options.opt_config_files
+            for cf in all_config_files:
+                try:
+                    if '://' in cf: # config file is an url
+                        file_name = os.path.basename(cf)
+                        file_path = os.path.join(os.getcwd(), file_name)
+                        download_config_file(cf, file_path)
+                        config.update(parse_config_file(file_path))
+                    else:
+                        config.update(parse_config_file(cf))
+                except Exception:
+                    if cf in options.opt_config_files:
+                        print("WARNING: optional config file not found %s" % cf)
+                    else:
+                        raise
             self.set_config(config)
         for key in defaults.keys():
             value = getattr(options, key)
