@@ -45,7 +45,7 @@ class MarionetteUnittestOutputParser(DesktopUnittestOutputParser):
 
 
 class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, BaseScript):
-    test_suites = ('reftest', 'mochitest', 'xpcshell', 'crashtest')
+    test_suites = ('jsreftest', 'reftest', 'mochitest', 'xpcshell', 'crashtest')
     config_options = [
         [["--type"],
         {"action": "store",
@@ -175,6 +175,8 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
             dirs['abs_test_install_dir'], 'reftest')
         dirs['abs_crashtest_dir'] = os.path.join(
             dirs['abs_test_install_dir'], 'reftest')
+        dirs['abs_jsreftest_dir'] = os.path.join(
+            dirs['abs_test_install_dir'], 'reftest')
         dirs['abs_xpcshell_dir'] = os.path.join(
             dirs['abs_test_install_dir'], 'xpcshell')
         for key in dirs.keys():
@@ -301,6 +303,9 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
             elif suite == 'crashtest':
                 self.test_manifest = os.path.join('tests', 'testing',
                                                   'crashtest', 'crashtests.list')
+            elif suite == 'jsreftest':
+                self.test_manifest = os.path.join('jsreftest', 'tests',
+                                                  'jstests.list')
 
         if not os.path.isfile(self.adb_path):
             self.fatal("The adb binary '%s' is not a valid file!" % self.adb_path)
