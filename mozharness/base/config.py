@@ -63,23 +63,6 @@ class ExtendOption(Option):
                 self, action, dest, opt, value, values, parser)
 
 
-def make_immutable(item):
-    item_type = type(item)
-    if item_type is list or item_type is tuple:
-        result = LockedTuple(item)
-    elif item_type is dict:
-        result = ReadOnlyDict(item)
-        result.lock()
-    else:
-        result = item
-    return result
-
-
-class LockedTuple(tuple):
-    def __new__(cls, items):
-        return tuple.__new__(cls, (make_immutable(x) for x in items))
-
-
 # ReadOnlyDict {{{1
 class ReadOnlyDict(dict):
     def __init__(self, dictionary):
@@ -90,8 +73,6 @@ class ReadOnlyDict(dict):
         assert not self._lock, "ReadOnlyDict is locked!"
 
     def lock(self):
-        for (k, v) in self.items():
-            self[k] = make_immutable(v)
         self._lock = True
 
     def __setitem__(self, *args):
