@@ -17,9 +17,9 @@ config = {
         "branch": "default",
         "repo_url": "https://hg.mozilla.org/integration/gaia-central",
         "repo_name": "gaia-central",
-        "target_push_url": "ssh://hg.mozilla.org/projects/birch",
-        "target_pull_url": "https://hg.mozilla.org/projects/birch",
+        "target_push_url": "ssh://hg.mozilla.org/integration/b2g-inbound",
+        "target_pull_url": "https://hg.mozilla.org/integration/b2g-inbound",
         "target_tag": "default",
-        "target_repo_name": "birch",
+        "target_repo_name": "b2g-inbound",
     }],
 }
