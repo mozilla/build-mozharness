@@ -107,7 +107,8 @@ class MozpoolMixin(object):
         self.buildbot_status(TBPL_RETRY)
         self.fatal(message)
 
-    def _retry_sleep(self, sleep_time=RETRY_INTERVAL, max_retries=MAX_RETRIES, error_message=None, tbpl_status=None):
+    def _retry_sleep(self, sleep_time=RETRY_INTERVAL, max_retries=MAX_RETRIES,
+                     error_message=None, tbpl_status=None, fail_cb=None):
         for x in range(1, max_retries + 1):
             yield x
             sleep(sleep_time)
@@ -115,13 +116,20 @@ class MozpoolMixin(object):
             self.error(error_message)
         if tbpl_status:
             self.buildbot_status(tbpl_status)
+        if fail_cb:
+            assert callable(fail_cb)
+            fail_cb()
         self.fatal('Retries limit exceeded')
 
     def _wait_for_request_ready(self):
         mph = self.query_mozpool_handler(self.mozpool_device)
+        def on_fail():
+            # Device is not ready after retries...
+            self.info("Aborting mozpool request.")
+            self.close_request()
         for retry in self._retry_sleep(sleep_time=RETRY_INTERVAL, max_retries=MAX_RETRIES,
                 error_message="INFRA-ERROR: Request did not become ready in time",
-                tbpl_status=TBPL_EXCEPTION):
+                tbpl_status=TBPL_EXCEPTION, fail_cb=on_fail):
             response = mph.query_request_status(self.request_url)
             state = response['state']
             if state == 'ready':
