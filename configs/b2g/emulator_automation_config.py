@@ -79,5 +79,6 @@ config = {
         "--logcat-dir=%(logcat_dir)s", "--manifest=%(test_manifest)s",
         "--testing-modules-dir=%(modules_dir)s", "--symbols-path=%(symbols_path)s",
         "--busybox=%(busybox)s", "--total-chunks=%(total_chunks)s", "--this-chunk=%(this_chunk)s",
+        "--test-plugin-path=%(test_plugin_path)s"
     ],
 }
