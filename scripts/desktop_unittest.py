@@ -203,11 +203,6 @@ class DesktopUnittest(TestingMixin, MercurialScript):
             if self.symbols_path:
                 str_format_values['symbols_path'] = self.symbols_path
 
-            # set pluginsPath
-            abs_app_dir = self.query_abs_app_dir()
-            abs_app_plugins_dir = os.path.join(abs_app_dir, 'plugins')
-            str_format_values['test_plugin_path'] = abs_app_plugins_dir
-
             name = '%s_options' % suite_category
             options = self.tree_config.get(name, self.config.get(name))
             if options:

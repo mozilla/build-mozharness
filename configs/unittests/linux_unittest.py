@@ -48,8 +48,7 @@ config = {
         "--console-level=INFO", "--setpref=webgl.force-enabled=true"
     ],
     "xpcshell_options": [
-        "--symbols-path=%(symbols_path)s",
-        "--test-plugin-path=%(test_plugin_path)s"
+        "--symbols-path=%(symbols_path)s"
     ],
     #local mochi suites
     "all_mochitest_suites": {
