@@ -29,6 +29,7 @@ from optparse import OptionParser, Option, OptionGroup
 import os
 import sys
 import urllib2
+import socket
 import time
 try:
     import simplejson as json
@@ -144,21 +145,26 @@ def download_config_file(url, file_name):
     attempts = 5
     sleeptime = 60
     max_sleeptime = 5 * 60
-    while n < attempts:
+    while True:
+        if n >= attempts:
+            print "Failed to download from url %s after %d attempts, quiting..." % (url, attempts)
+            raise SystemError(-1)
         try:
-            contents = urllib2.urlopen(url).read()
+            contents = urllib2.urlopen(url, timeout=30).read()
             break
         except urllib2.URLError, e:
             print "Error downloading from url %s: %s" % (url, str(e))
-            print "Sleeping %d seconds before retrying" % sleeptime
-            time.sleep(sleeptime)
-            sleeptime = sleeptime * 2
-            if sleeptime > max_sleeptime:
-                sleeptime = max_sleeptime
-            n += 1
-    else:
-        print "Failed to download from url %s after %d attempts, quiting..." % (url, attempts)
-        raise SystemError(-1)
+        except socket.timeout, e:
+            print "Time out accessing %s: %s" % (url, str(e))
+        except socket.error, e:
+            print "Socket error when accessing %s: %s" % (url, str(e))
+        print "Sleeping %d seconds before retrying" % sleeptime
+        time.sleep(sleeptime)
+        sleeptime = sleeptime * 2
+        if sleeptime > max_sleeptime:
+            sleeptime = max_sleeptime
+        n += 1
+
     try:
         f = open(file_name, 'w')
         f.write(contents)
