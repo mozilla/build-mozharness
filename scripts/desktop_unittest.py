@@ -25,7 +25,7 @@ from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
 from mozharness.mozilla.testing.unittest import DesktopUnittestOutputParser
 
-SUITE_CATEGORIES = ['mochitest', 'reftest', 'xpcshell']
+SUITE_CATEGORIES = ['cppunittest', 'mochitest', 'reftest', 'xpcshell']
 
 
 # DesktopUnittest {{{1
@@ -72,6 +72,7 @@ class DesktopUnittest(TestingMixin, MercurialScript):
         "simplejson",
         {'mozfile': os.path.join('tests', 'mozbase', 'mozfile')},
         {'mozlog': os.path.join('tests', 'mozbase', 'mozlog')},
+        {'mozcrash': os.path.join('tests', 'mozbase', 'mozcrash')},
         {'mozinfo': os.path.join('tests', 'mozbase', 'mozinfo')},
         {'mozhttpd': os.path.join('tests', 'mozbase', 'mozhttpd')},
         {'mozcrash': os.path.join('tests', 'mozbase', 'mozcrash')},
@@ -143,6 +144,7 @@ class DesktopUnittest(TestingMixin, MercurialScript):
         dirs['abs_mochitest_dir'] = os.path.join(dirs['abs_test_install_dir'], "mochitest")
         dirs['abs_reftest_dir'] = os.path.join(dirs['abs_test_install_dir'], "reftest")
         dirs['abs_xpcshell_dir'] = os.path.join(dirs['abs_test_install_dir'], "xpcshell")
+        dirs['abs_cppunittest_dir'] = os.path.join(dirs['abs_test_install_dir'], "cppunittests")
 
         if os.path.isabs(c['virtualenv_path']):
             dirs['abs_virtualenv_dir'] = c['virtualenv_path']
@@ -285,6 +287,7 @@ class DesktopUnittest(TestingMixin, MercurialScript):
         self._run_category_suites('reftest')
         self._run_category_suites('xpcshell',
                                   preflight_run_method=self.preflight_xpcshell)
+        self._run_category_suites('cppunittest')
 
     def preflight_xpcshell(self, suites):
         c = self.config

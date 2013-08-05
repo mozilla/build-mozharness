@@ -20,13 +20,15 @@ config = {
     "run_file_names": {
         "mochitest": "runtests.py",
         "reftest": "runreftest.py",
-        "xpcshell": "runxpcshelltests.py"
+        "xpcshell": "runxpcshelltests.py",
+        "cppunittest": "runcppunittests.py"
     },
     "minimum_tests_zip_dirs": ["bin/*", "certs/*", "modules/*", "mozbase/*", "config/*"],
     "specific_tests_zip_dirs": {
         "mochitest": ["mochitest/*"],
         "reftest": ["reftest/*", "jsreftest/*"],
-        "xpcshell": ["xpcshell/*"]
+        "xpcshell": ["xpcshell/*"],
+        "cppunittest": ["cppunittests/*"]
     },
     "reftest_options": [
         "--appname=%(binary_path)s", "--utility-path=tests/bin",
@@ -40,6 +42,10 @@ config = {
     ],
     "xpcshell_options": [
         "--symbols-path=%(symbols_path)s"
+    ],
+    "cppunittest_options": [
+        "--symbols-path=%(symbols_path)s",
+        "--xre-path=application/firefox"
     ],
     #local mochi suites
     "all_mochitest_suites": {
@@ -68,6 +74,9 @@ config = {
     "all_xpcshell_suites": {
         "xpcshell": ["--manifest=tests/xpcshell/tests/all-test-dirs.list",
         "%(abs_app_dir)s/" + XPCSHELL_NAME]
+    },
+    "all_cppunittest_suites": {
+        "cppunittest": ['tests/cppunittests']
     },
     "run_cmd_checks_enabled": True,
     "preflight_run_cmd_suites": [
