@@ -107,7 +107,8 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin):
                     expected_length = [2]
                 actual_length = len(files)
                 if actual_length not in expected_length:
-                    self.fatal("Unexpected number of files in buildbot config %s: %d != %d!" % (c['buildbot_json_path'], actual_length, expected_length))
+                    self.fatal("Unexpected number of files in buildbot config %s.\nExpected these number(s) of files: %s, but got: %d" %
+                               (c['buildbot_json_path'], str(expected_length), actual_length))
                 for f in files:
                     if f['name'].endswith('tests.zip'): # yuk
                         # str() because of unicode issues on mac
