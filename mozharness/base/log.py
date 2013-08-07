@@ -49,8 +49,11 @@ class LogMixin(object):
 
     def log(self, message, level=INFO, exit_code=-1):
         if self.log_obj:
-            return self.log_obj.log_message(message, level=level,
-                                            exit_code=exit_code)
+            return self.log_obj.log_message(
+                message, level=level,
+                exit_code=exit_code,
+                post_fatal_callback=self._post_fatal,
+            )
         if level == INFO:
             if self._log_level_at_least(level):
                 self._print(message)
@@ -63,7 +66,7 @@ class LogMixin(object):
         elif level == FATAL:
             if self._log_level_at_least(level):
                 self._print("FATAL: %s" % message, stderr=True)
-                raise SystemExit(exit_code)
+            raise SystemExit(exit_code)
 
     def worst_level(self, target_level, existing_level, levels=None):
         """returns either existing_level or target level.
@@ -107,6 +110,14 @@ class LogMixin(object):
 
     def fatal(self, message, exit_code=-1):
         self.log(message, level=FATAL, exit_code=exit_code)
+
+    def _post_fatal(self, message=None, exit_code=None):
+        """ Sometimes you want to create a report or cleanup
+            or notify on fatal(); override this method to do so.
+
+            Please don't use this for anything significantly long-running.
+        """
+        pass
 
 
 # OutputParser {{{1
@@ -195,25 +206,27 @@ class BaseLogger(object):
     error,critical,fatal messages for us to count up at the end (aiming
     for 0).
     """
-    LEVELS = {DEBUG: logging.DEBUG,
-              INFO: logging.INFO,
-              WARNING: logging.WARNING,
-              ERROR: logging.ERROR,
-              CRITICAL: logging.CRITICAL,
-              FATAL: FATAL_LEVEL
-              }
+    LEVELS = {
+        DEBUG: logging.DEBUG,
+        INFO: logging.INFO,
+        WARNING: logging.WARNING,
+        ERROR: logging.ERROR,
+        CRITICAL: logging.CRITICAL,
+        FATAL: FATAL_LEVEL
+    }
 
-    def __init__(self, log_level=INFO,
-                 log_format='%(message)s',
-                 log_date_format='%H:%M:%S',
-                 log_name='test',
-                 log_to_console=True,
-                 log_dir='.',
-                 log_to_raw=False,
-                 logger_name='',
-                 halt_on_failure=True,
-                 append_to_log=False,
-                 ):
+    def __init__(
+        self, log_level=INFO,
+        log_format='%(message)s',
+        log_date_format='%H:%M:%S',
+        log_name='test',
+        log_to_console=True,
+        log_dir='.',
+        log_to_raw=False,
+        logger_name='',
+        halt_on_failure=True,
+        append_to_log=False,
+    ):
         self.halt_on_failure = halt_on_failure,
         self.log_format = log_format
         self.log_date_format = log_date_format
@@ -309,7 +322,7 @@ class BaseLogger(object):
         self.logger.addHandler(file_handler)
         self.all_handlers.append(file_handler)
 
-    def log_message(self, message, level=INFO, exit_code=-1):
+    def log_message(self, message, level=INFO, exit_code=-1, post_fatal_callback=None):
         """Generic log method.
         There should be more options here -- do or don't split by line,
         use os.linesep instead of assuming \n, be able to pass in log level
@@ -321,7 +334,10 @@ class BaseLogger(object):
             return
         for line in message.splitlines():
             self.logger.log(self.get_logger_level(level), line)
-        if level == FATAL and self.halt_on_failure:
+        if level == FATAL:
+            if callable(post_fatal_callback):
+                self.logger.log(FATAL_LEVEL, "Running post_fatal callback...")
+                post_fatal_callback(message=message, exit_code=exit_code)
             self.logger.log(FATAL_LEVEL, 'Exiting %d' % exit_code)
             raise SystemExit(exit_code)
 
@@ -375,6 +391,5 @@ class MultiFileLogger(BaseLogger):
 
 
 # __main__ {{{1
-
 if __name__ == '__main__':
     pass
