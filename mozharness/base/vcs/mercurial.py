@@ -176,7 +176,7 @@ class MercurialVCS(ScriptMixin, LogMixin, object):
             msg += " to revision %s" % revision
         self.info("%s." % msg)
         parent_dest = os.path.dirname(dest)
-        if not os.path.exists(parent_dest):
+        if parent_dest and not os.path.exists(parent_dest):
             self.mkdir_p(parent_dest)
         if os.path.exists(dest):
             self.info("Removing %s before clone." % dest)
@@ -195,7 +195,8 @@ class MercurialVCS(ScriptMixin, LogMixin, object):
                 cmd.extend(['-b', branch])
 
         cmd.extend([repo, dest])
-        self.run_command(cmd, error_list=HgErrorList)
+        if self.run_command(cmd, error_list=HgErrorList) != 0:
+            raise VCSException("Unable to clone %s to %s!" % (repo, dest))
 
         if update_dest:
             return self.update(dest, branch, revision)
