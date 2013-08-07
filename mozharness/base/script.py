@@ -247,6 +247,10 @@ class ScriptMixin(object):
             self.log("IO error: %s" % str(e),
                      level=error_level, exit_code=exit_code)
             return -1
+        except shutil.Error, e:
+            self.log("shutil error: %s" % str(e),
+                     level=error_level, exit_code=exit_code)
+            return -1
         return 0
 
     def chmod(self, path, mode):
@@ -541,21 +545,19 @@ class ScriptMixin(object):
             self.log("Unknown return_type type %s requested in query_exe!" % return_type, level=error_level)
         return exe
 
-    def run_command(self, command, cwd=None, error_list=None, parse_at_end=False,
+    def run_command(self, command, cwd=None, error_list=None,
                     halt_on_failure=False, success_codes=None,
-                    env=None, return_type='status', throw_exception=False,
-                    output_parser=None, output_timeout=None):
+                    env=None, partial_env=None, return_type='status',
+                    throw_exception=False, output_parser=None,
+                    output_timeout=None):
         """Run a command, with logging and error parsing.
 
         output_timeout is the number of seconds without output before the process
         is killed; it requires that mozprocess is installed in the script's
         virtualenv.
 
-        TODO: parse_at_end, context_lines
-        TODO: retry_interval?
+        TODO: context_lines
         TODO: error_level_override?
-        TODO: Add a copy-pastable version of |command| if it's a list.
-        TODO: print env if set
 
         output_parser lets you provide an instance of your own OutputParser
         subclass, or pass None to use OutputParser.
@@ -605,6 +607,12 @@ class ScriptMixin(object):
         shell = True
         if isinstance(command, list):
             shell = False
+        if env is None:
+            if partial_env:
+                self.info("Using partial env: %s" % pprint.pformat(partial_env))
+                env = self.query_env(partial_env=partial_env)
+        else:
+            self.info("Using env: %s" % pprint.pformat(env))
 
         if output_parser is None:
             parser = OutputParser(config=self.config, log_obj=self.log_obj,
@@ -879,11 +887,13 @@ class BaseScript(ScriptMixin, LogMixin, object):
                 self._listeners['pre_run'].append(k)
 
             if hasattr(item, '_pre_action_listener'):
-                self._listeners['pre_action'].append((k,
+                self._listeners['pre_action'].append((
+                    k,
                     item._pre_action_listener))
 
             if hasattr(item, '_post_action_listener'):
-                self._listeners['post_action'].append((k,
+                self._listeners['post_action'].append((
+                    k,
                     item._post_action_listener))
 
             if hasattr(item, '_post_run_listener'):
@@ -972,8 +982,8 @@ class BaseScript(ScriptMixin, LogMixin, object):
                 method = getattr(self, fn)
                 method(action)
             except Exception:
-                self.error("Exception during pre-action for %s: %s" % (action,
-                    traceback.format_exc()))
+                self.error("Exception during pre-action for %s: %s" % (
+                    action, traceback.format_exc()))
 
                 for fn, target in self._listeners['post_action']:
                     if target is not None and target != action:
@@ -985,8 +995,8 @@ class BaseScript(ScriptMixin, LogMixin, object):
                         method(action, success=False)
                     except Exception:
                         self.error("An additional exception occurred during "
-                            "post-action for %s: %s" % (action,
-                                traceback.format_exc()))
+                                   "post-action for %s: %s" % (action,
+                                   traceback.format_exc()))
 
                 self.fatal("Aborting due to exception in pre-action listener.")
 
@@ -1038,7 +1048,7 @@ class BaseScript(ScriptMixin, LogMixin, object):
                 method()
             except Exception:
                 self.error("Exception during pre-run listener: %s" %
-                    traceback.format_exc())
+                           traceback.format_exc())
 
                 for fn in self._listeners['post_run']:
                     try:
@@ -1046,7 +1056,7 @@ class BaseScript(ScriptMixin, LogMixin, object):
                         method()
                     except Exception:
                         self.error("An additional exception occurred during a "
-                            "post-run listener: %s" % traceback.format_exc())
+                                   "post-run listener: %s" % traceback.format_exc())
 
                 self.fatal("Aborting due to failure in pre-run listener.")
 
@@ -1066,7 +1076,7 @@ class BaseScript(ScriptMixin, LogMixin, object):
                 except Exception:
                     post_success = False
                     self.error("Exception during post-run listener: %s" %
-                        traceback.format_exc())
+                               traceback.format_exc())
 
             if not post_success:
                 self.fatal("Aborting due to failure in post-run listener.")
