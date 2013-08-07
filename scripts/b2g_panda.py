@@ -55,8 +55,14 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
     virtualenv_modules = [
         'mozpoolclient',
         'mozinstall',
-        { 'marionette': os.path.join('tests', 'marionette/client') },
-        { 'gaiatest': 'gaia-ui-tests/' },
+        {
+            'name': 'marionette',
+            'url': os.path.join('tests', 'marionette/client'),
+        },
+        {
+            'name': 'gaiatest',
+            'url': 'gaia-ui-tests/',
+        },
     ]
 
     repos = [{

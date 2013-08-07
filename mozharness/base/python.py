@@ -173,7 +173,7 @@ class VirtualenvMixin(object):
             return True
 
     def install_module(self, module=None, module_url=None, install_method=None,
-                       requirements=(), optional=False):
+                       requirements=(), optional=False, global_options=[]):
         """
         Install module via pip.
 
@@ -208,6 +208,8 @@ class VirtualenvMixin(object):
                 command += ["-r", requirement]
             if c.get('find_links') and not c["pip_index"]:
                 command += ['--no-index']
+            for opt in global_options:
+                command += ["--global-option", opt]
         elif install_method == 'easy_install':
             if not module:
                 self.fatal("module parameter required with install_method='easy_install'")
@@ -268,13 +270,27 @@ class VirtualenvMixin(object):
 
             virtualenv_modules = ['module1', 'module2']
 
-        or it can be a list of dicts that define a module: url-or-path,
-        or a combination.
+        or it can be a heterogeneous list of modules names and dicts that
+        define a module by its name, url-or-path, and a list of its global
+        options.
 
             virtualenv_modules = [
-                'module1',
-                {'module2': 'http://url/to/package'},
-                {'module3': os.path.join('path', 'to', 'setup_py', 'dir')},
+                {
+                    'name': 'module1',
+                    'url': None,
+                    'global_options': ['--opt', '--without-gcc']
+                },
+                {
+                    'name': 'module2',
+                    'url': 'http://url/to/package',
+                    'global_options': ['--use-clang']
+                },
+                {
+                    'name': 'module3',
+                    'url': os.path.join('path', 'to', 'setup_py', 'dir')
+                    'global_options': []
+                },
+                'module4'
             ]
 
         virtualenv_requirements is an optional list of pip requirements files to
@@ -333,17 +349,26 @@ class VirtualenvMixin(object):
                                 install_method='pip')
         for module in modules:
             module_url = module
+            global_options= []
             if isinstance(module, dict):
-                (module, module_url) = module.items()[0]
+                if module.get('name', None):
+                    module_name = module['name']
+                else:
+                    self.fatal("Can't install module without module name: %s" %
+                               str(module))
+                module_url = module.get('url', None)
+                global_options = module.get('global_options', [])
             else:
                 module_url = self.config.get('%s_url' % module, module_url)
+                module_name = module
             install_method = 'pip'
-            if module in ('pywin32',):
+            if module_name in ('pywin32',):
                 install_method = 'easy_install'
-            self.install_module(module=module,
+            self.install_module(module=module_name,
                                 module_url=module_url,
                                 install_method=install_method,
-                                requirements=requirements)
+                                requirements=requirements,
+                                global_options=global_options)
 
         for module, url, method, requirements,optional in \
             self._virtualenv_modules:
