@@ -70,18 +70,54 @@ class DesktopUnittest(TestingMixin, MercurialScript):
     # modules, otherwise they will get installed from the pypi server.
     virtualenv_modules = [
         "simplejson",
-        {'mozfile': os.path.join('tests', 'mozbase', 'mozfile')},
-        {'mozlog': os.path.join('tests', 'mozbase', 'mozlog')},
-        {'mozcrash': os.path.join('tests', 'mozbase', 'mozcrash')},
-        {'mozinfo': os.path.join('tests', 'mozbase', 'mozinfo')},
-        {'mozhttpd': os.path.join('tests', 'mozbase', 'mozhttpd')},
-        {'mozcrash': os.path.join('tests', 'mozbase', 'mozcrash')},
-        {'mozinstall': os.path.join('tests', 'mozbase', 'mozinstall')},
-        {'manifestdestiny': os.path.join('tests', 'mozbase', 'manifestdestiny')},
-        {'mozdevice': os.path.join('tests', 'mozbase', 'mozdevice')},
-        {'mozprofile': os.path.join('tests', 'mozbase', 'mozprofile')},
-        {'mozprocess': os.path.join('tests', 'mozbase', 'mozprocess')},
-        {'mozrunner': os.path.join('tests', 'mozbase', 'mozrunner')},
+        {
+            'name': 'mozfile',
+            'url': os.path.join('tests', 'mozbase', 'mozfile'),
+        },
+        {
+            'name': 'mozlog',
+            'url': os.path.join('tests', 'mozbase', 'mozlog'),
+        },
+        {
+            'name': 'mozcrash',
+            'url': os.path.join('tests', 'mozbase', 'mozcrash'),
+        },
+        {
+            'name': 'mozinfo',
+            'url': os.path.join('tests', 'mozbase', 'mozinfo'),
+        },
+        {
+            'name': 'mozhttpd',
+            'url': os.path.join('tests', 'mozbase', 'mozhttpd'),
+        },
+        {
+            'name': 'mozcrash',
+            'url': os.path.join('tests', 'mozbase', 'mozcrash'),
+        },
+        {
+            'name': 'mozinstall',
+            'url': os.path.join('tests', 'mozbase', 'mozinstall'),
+        },
+        {
+            'name': 'manifestdestiny',
+            'url': os.path.join('tests', 'mozbase', 'manifestdestiny'),
+        },
+        {
+            'name': 'mozdevice',
+            'url': os.path.join('tests', 'mozbase', 'mozdevice'),
+        },
+        {
+            'name': 'mozprofile',
+            'url': os.path.join('tests', 'mozbase', 'mozprofile'),
+        },
+        {
+            'name': 'mozprocess',
+            'url': os.path.join('tests', 'mozbase', 'mozprocess'),
+        },
+        {
+            'name': 'mozrunner',
+            'url': os.path.join('tests', 'mozbase', 'mozrunner'),
+        },
     ]
 
     def __init__(self, require_config_file=True):
@@ -204,6 +240,11 @@ class DesktopUnittest(TestingMixin, MercurialScript):
             # self.symbols_path when downloading/extracting.
             if self.symbols_path:
                 str_format_values['symbols_path'] = self.symbols_path
+
+            # set pluginsPath
+            abs_app_dir = self.query_abs_app_dir()
+            abs_app_plugins_dir = os.path.join(abs_app_dir, 'plugins')
+            str_format_values['test_plugin_path'] = abs_app_plugins_dir
 
             name = '%s_options' % suite_category
             options = self.tree_config.get(name, self.config.get(name))

@@ -46,16 +46,43 @@ class PepTest(TestingMixin, BaseScript):
     ]
 
     virtualenv_modules = [
-     'simplejson',
-     {'mozlog': os.path.join('tests', 'mozbase', 'mozlog')},
-     {'mozinfo': os.path.join('tests', 'mozbase', 'mozinfo')},
-     {'mozhttpd': os.path.join('tests', 'mozbase', 'mozhttpd')},
-     {'mozinstall': os.path.join('tests', 'mozbase', 'mozinstall')},
-     {'manifestdestiny': os.path.join('tests', 'mozbase', 'manifestdestiny')},
-     {'mozprofile': os.path.join('tests', 'mozbase', 'mozprofile')},
-     {'mozprocess': os.path.join('tests', 'mozbase', 'mozprocess')},
-     {'mozrunner': os.path.join('tests', 'mozbase', 'mozrunner')},
-     {'peptest': os.path.join('tests', 'peptest')},
+        'simplejson',
+        {
+            'name': 'mozlog',
+            'url': os.path.join('tests', 'mozbase', 'mozlog'),
+        },
+        {
+            'name': 'mozinfo',
+            'url': os.path.join('tests', 'mozbase', 'mozinfo'),
+        },
+        {
+            'name': 'mozhttpd',
+            'url': os.path.join('tests', 'mozbase', 'mozhttpd'),
+        },
+        {
+            'name': 'mozinstall',
+            'url': os.path.join('tests', 'mozbase', 'mozinstall'),
+        },
+        {
+            'name': 'manifestdestiny',
+            'url': os.path.join('tests', 'mozbase', 'manifestdestiny'),
+        },
+        {
+            'name': 'mozprofile',
+            'url': os.path.join('tests', 'mozbase', 'mozprofile'),
+        },
+        {
+            'name': 'mozprocess',
+            'url': os.path.join('tests', 'mozbase', 'mozprocess'),
+        },
+        {
+            'name': 'mozrunner',
+            'url': os.path.join('tests', 'mozbase', 'mozrunner'),
+        },
+        {
+            'name': 'peptest',
+            'url': os.path.join('tests', 'peptest'),
+        },
     ]
 
     def __init__(self, require_config_file=False):
@@ -194,13 +221,13 @@ class PepTest(TestingMixin, BaseScript):
             else:
                 self.fatal("Server path '%s' is not a directory. Aborting" %
                            self.config.get('server_path'))
-            
+
             if os.path.isfile(self.config.get('server_proxy')):
                 self.server_proxy = self.config.get('server_proxy')
             elif os.path.isfile(os.path.join(peptest_dir, self.config.get('server_proxy'))):
                 self.server_proxy = os.path.join(peptest_dir, self.config.get('server_proxy'))
             else:
-                self.fatal("Server proxy '%s' is not a file. Aborting" % 
+                self.fatal("Server proxy '%s' is not a file. Aborting" %
                            self.config.get('server_proxy'))
 
 
@@ -237,7 +264,7 @@ class PepTest(TestingMixin, BaseScript):
             if hasattr(self, 'tp5n_install_dir'):
                 cmd.extend(['--proxy', os.path.join(self.tp5n_install_dir,
                                                     'server-locations.txt')])
-            
+
             if hasattr(self, 'server_path'):
                 cmd.extend(['--server-path', self.server_path])
 

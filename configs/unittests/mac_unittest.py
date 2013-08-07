@@ -41,7 +41,8 @@ config = {
         "--console-level=INFO"
     ],
     "xpcshell_options": [
-        "--symbols-path=%(symbols_path)s"
+        "--symbols-path=%(symbols_path)s",
+        "--test-plugin-path=%(test_plugin_path)s"
     ],
     "cppunittest_options": [
         "--symbols-path=%(symbols_path)s",
