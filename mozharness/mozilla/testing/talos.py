@@ -457,7 +457,7 @@ class Talos(TestingMixin, MercurialScript):
         talos from its source, we have to wrap that method here."""
         # XXX This method could likely be replaced with a PreScriptAction hook.
         if self.has_cloned_talos:
-            virtualenv_modules = self.config.get('virtualenv_modules', [])[:]
+            virtualenv_modules = list(self.config.get('virtualenv_modules', []))
             if 'talos' in virtualenv_modules:
 
                 # Bug 900015 - Silent warnings on osx when libyaml is not found

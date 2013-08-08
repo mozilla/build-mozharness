@@ -9,6 +9,7 @@
 This should be a mostly generic multilocale build script.
 """
 
+from copy import deepcopy
 import os
 import sys
 
@@ -122,12 +123,12 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
         # Replace %(user_repo_override)s with c['user_repo_override']
         if c.get("user_repo_override"):
             replace_dict['user_repo_override'] = c['user_repo_override']
-            for repo_dict in c['repos']:
+            for repo_dict in deepcopy(c['repos']):
                 repo_dict['repo'] = repo_dict['repo'] % replace_dict
                 repos.append(repo_dict)
         else:
             repos = c['repos']
-        self.vcs_checkout_repos(c['repos'], tag_override=c.get('tag_override'))
+        self.vcs_checkout_repos(repos, tag_override=c.get('tag_override'))
 
     # pull_locale_source() defined in LocalesMixin.
 
