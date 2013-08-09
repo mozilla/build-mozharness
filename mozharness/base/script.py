@@ -24,6 +24,8 @@ import time
 import traceback
 import urllib2
 import urlparse
+from distutils.sysconfig import get_python_lib
+
 if os.name == 'nt':
     try:
         import win32file
@@ -570,7 +572,12 @@ class ScriptMixin(object):
         (context_lines isn't written yet)
         """
         if output_timeout:
-            site_packages_path = self.query_python_site_packages_path()
+            # Using get_python_lib here because some callers like MercurialVCS
+            # do not inherit VirtualenvMixin.
+            # We could've implemented https://bugzilla.mozilla.org/show_bug.cgi?id=840305#c478
+            # but get_python_site_packages have some dependencies on other
+            # classes.
+            site_packages_path = get_python_lib()
             sys_path = ''.join(sys.path)
             if 'mozprocess' not in sys_path:
                 if site_packages_path not in sys_path:
