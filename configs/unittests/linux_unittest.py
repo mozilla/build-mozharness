@@ -121,6 +121,7 @@ config = {
         },
     ],
     "repos": [{"repo": "http://hg.mozilla.org/build/tools"}],
+    "vcs_output_timeout": 1000,
     "minidump_stackwalk_path": MINIDUMP_STACKWALK_PATH,
     "minidump_save_path": "%(abs_work_dir)s/../minidumps",
     "buildbot_max_log_size": 52428800,
