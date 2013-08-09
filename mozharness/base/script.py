@@ -575,7 +575,7 @@ class ScriptMixin(object):
             # Using get_python_lib here because some callers like MercurialVCS
             # do not inherit VirtualenvMixin.
             # We could've implemented https://bugzilla.mozilla.org/show_bug.cgi?id=840305#c478
-            # but get_python_site_packages have some dependencies on other
+            # but query_python_site_packages_path have some dependencies on other
             # classes.
             site_packages_path = get_python_lib()
             sys_path = ''.join(sys.path)
