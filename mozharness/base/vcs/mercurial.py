@@ -195,9 +195,7 @@ class MercurialVCS(ScriptMixin, LogMixin, object):
                 cmd.extend(['-b', branch])
 
         cmd.extend([repo, dest])
-        output_timeout = self.config.get("vcs_output_timeout", None)
-        if self.run_command(cmd, output_timeout=output_timeout,
-                            error_list=HgErrorList) != 0:
+        if self.run_command(cmd, error_list=HgErrorList) != 0:
             raise VCSException("Unable to clone %s to %s!" % (repo, dest))
 
         if update_dest:
