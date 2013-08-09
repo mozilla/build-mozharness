@@ -11,6 +11,7 @@ else:
     JSON_TYPE = 'simplejson'
 
 import mozharness.base.config as config
+from copy import deepcopy
 
 MH_DIR = os.path.dirname(os.path.dirname(__file__))
 
@@ -103,6 +104,10 @@ class TestReadOnlyDict(unittest.TestCase):
         'b': '2',
         'c': {'d': '4'},
         'e': ['f', 'g'],
+        'e': ['f', 'g', {'turtles': ['turtle1']}],
+        'd': {
+            'turtles': ['turtle1']
+        }
     }
 
     def get_unlocked_ROD(self):
@@ -196,6 +201,49 @@ class TestReadOnlyDict(unittest.TestCase):
         r = self.get_locked_ROD()
         self.assertRaises(AssertionError, r.clear)
 
+    def test_locked_second_level_dict_pop(self):
+        r = self.get_locked_ROD()
+        self.assertRaises(AssertionError, r['c'].update, {})
+
+    def test_locked_second_level_list_pop(self):
+        r = self.get_locked_ROD()
+        with self.assertRaises(AttributeError):
+            r['e'].pop()
+
+    def test_locked_third_level_mutate(self):
+        r = self.get_locked_ROD()
+        with self.assertRaises(AttributeError):
+            r['d']['turtles'].append('turtle2')
+
+    def test_locked_object_in_tuple_mutate(self):
+        r = self.get_locked_ROD()
+        with self.assertRaises(AttributeError):
+            r['e'][2]['turtles'].append('turtle2')
+
+    def test_locked_second_level_dict_pop(self):
+        r = self.get_locked_ROD()
+        self.assertRaises(AssertionError, r['c'].update, {})
+
+    def test_locked_second_level_list_pop(self):
+        r = self.get_locked_ROD()
+        with self.assertRaises(AttributeError):
+            r['e'].pop()
+
+    def test_locked_third_level_mutate(self):
+        r = self.get_locked_ROD()
+        with self.assertRaises(AttributeError):
+            r['d']['turtles'].append('turtle2')
+
+    def test_locked_object_in_tuple_mutate(self):
+        r = self.get_locked_ROD()
+        with self.assertRaises(AttributeError):
+            r['e'][2]['turtles'].append('turtle2')
+
+    def test_locked_deepcopy_set(self):
+        r = self.get_locked_ROD()
+        c = deepcopy(r)
+        c['e'] = 'hey'
+        self.assertEqual(c['e'], 'hey', "can't set var in ROD after deepcopy")
 
 class TestActions(unittest.TestCase):
     all_actions = ['a', 'b', 'c', 'd', 'e']

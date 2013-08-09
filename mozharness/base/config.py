@@ -64,6 +64,24 @@ class ExtendOption(Option):
                 self, action, dest, opt, value, values, parser)
 
 
+def make_immutable(item):
+    if isinstance(item, list) or isinstance(item, tuple):
+        result = LockedTuple(item)
+    elif isinstance(item, dict):
+        result = ReadOnlyDict(item)
+        result.lock()
+    else:
+        result = item
+    return result
+
+
+class LockedTuple(tuple):
+    def __new__(cls, items):
+        return tuple.__new__(cls, (make_immutable(x) for x in items))
+    def __deepcopy__(self, memo):
+        return [deepcopy(elem, memo) for elem in self]
+
+
 # ReadOnlyDict {{{1
 class ReadOnlyDict(dict):
     def __init__(self, dictionary):
@@ -74,6 +92,8 @@ class ReadOnlyDict(dict):
         assert not self._lock, "ReadOnlyDict is locked!"
 
     def lock(self):
+        for (k, v) in self.items():
+            self[k] = make_immutable(v)
         self._lock = True
 
     def __setitem__(self, *args):
@@ -104,6 +124,18 @@ class ReadOnlyDict(dict):
         self._check_lock()
         dict.update(self, *args)
 
+    def __deepcopy__(self, memo):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            setattr(result, k, deepcopy(v, memo))
+        result._lock = False
+        for k, v in self.items():
+            result[k] = deepcopy(v, memo)
+        print result
+        print result._lock
+        return result
 
 # parse_config_file {{{1
 def parse_config_file(file_name, quiet=False, search_path=None,
