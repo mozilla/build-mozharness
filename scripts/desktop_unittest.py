@@ -87,6 +87,10 @@ class DesktopUnittest(TestingMixin, MercurialScript):
             'url': os.path.join('tests', 'mozbase', 'mozinfo'),
         },
         {
+            'name': 'moznetwork',
+            'url': os.path.join('tests', 'mozbase', 'moznetwork'),
+        },
+        {
             'name': 'mozhttpd',
             'url': os.path.join('tests', 'mozbase', 'mozhttpd'),
         },
