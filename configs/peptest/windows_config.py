@@ -9,9 +9,9 @@ config = {
     "buildbot_json_path": "buildprops.json",
     "virtualenv_path": 'c:/talos-slave/test/build/venv',
     "virtualenv_python_dll": 'c:/mozilla-build/python25/python25.dll',
-    "distribute_url": "http://build.mozilla.org/talos/zips/distribute-0.6.24.tar.gz",
-    "pip_url": "http://build.mozilla.org/talos/zips/pip-1.0.2.tar.gz",
-    "simplejson_url": "http://build.mozilla.org/talos/zips/simplejson-2.2.1.tar.gz",
+    "distribute_url": "http://talos-bundles.pvt.build.mozilla.org/zips/distribute-0.6.24.tar.gz",
+    "pip_url": "http://talos-bundles.pvt.build.mozilla.org/zips/pip-1.0.2.tar.gz",
+    "simplejson_url": "http://talos-bundles.pvt.build.mozilla.org/zips/simplejson-2.2.1.tar.gz",
     # peptest options
     # defaults to firefox, can also be thunderbird, fennec, etc.
     "app": "firefox",
@@ -27,7 +27,7 @@ config = {
     # related files at this document root
     "server_path": "tests/firefox/server",
     "server_proxy": "tests/firefox/server-locations.txt",
-    "tp5n_url": "http://build.mozilla.org/talos/zips/tp5n.zip",
+    "tp5n_url": "http://talos-bundles.pvt.build.mozilla.org/zips/tp5n.zip",
     "server_port": None,
     # EventTracer setting, the threshold to count a failure (ms)
     "tracer_threshold": 0,
