@@ -29,12 +29,10 @@ class HgtoolParser(OutputParser):
 
 
 class HgtoolVCS(ScriptMixin, LogMixin):
-    def __init__(self, log_obj=None, config=None, vcs_config=None,
-                 script_obj=None):
+    def __init__(self, log_obj=None, config=None, vcs_config=None):
         super(HgtoolVCS, self).__init__()
 
         self.log_obj = log_obj
-        self.script_obj = script_obj
         if config:
             self.config = config
         else:

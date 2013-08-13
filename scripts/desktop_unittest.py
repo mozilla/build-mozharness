@@ -129,8 +129,8 @@ class DesktopUnittest(TestingMixin, MercurialScript):
                 'clobber',
                 'read-buildbot-config',
                 'download-and-extract',
-                'create-virtualenv',
                 'pull',
+                'create-virtualenv',
                 'install',
                 'run-tests',
             ],
@@ -247,7 +247,7 @@ class DesktopUnittest(TestingMixin, MercurialScript):
             str_format_values['test_plugin_path'] = abs_app_plugins_dir
 
             name = '%s_options' % suite_category
-            options = list(self.tree_config.get(name, c.get(name)))
+            options = self.tree_config.get(name, self.config.get(name))
             if options:
                 for i, option in enumerate(options):
                     options[i] = option % str_format_values
@@ -313,7 +313,7 @@ class DesktopUnittest(TestingMixin, MercurialScript):
 
         target_unzip_dirs = None
         if c['specific_tests_zip_dirs']:
-            target_unzip_dirs = list(c['minimum_tests_zip_dirs'])
+            target_unzip_dirs = c['minimum_tests_zip_dirs']
             for category in c['specific_tests_zip_dirs'].keys():
                 if c['run_all_suites'] or self._query_specified_suites(category) \
                         or 'run-tests' not in self.actions:
@@ -371,7 +371,7 @@ class DesktopUnittest(TestingMixin, MercurialScript):
                 env = {}
                 if isinstance(suites[suite], dict):
                     options_list = suites[suite]['options']
-                    env = copy.deepcopy(suites[suite]['env'])
+                    env = suites[suite]['env']
                 else:
                     options_list = suites[suite]
 

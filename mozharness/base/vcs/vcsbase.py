@@ -76,7 +76,6 @@ class VCSMixin(object):
             log_obj=self.log_obj,
             config=self.config,
             vcs_config=kwargs,
-            script_obj=self,
         )
         return self.retry(
             self._get_revision,
