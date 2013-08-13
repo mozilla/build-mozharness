@@ -16,6 +16,7 @@ config = {
         "crashtest": "remotereftest.py",
         "jsreftest": "remotereftest.py",
         "robocop": "runtestsremote.py",
+        "xpcshell": "remotexpcshelltests.py"
     },
     "hostutils_url" :  "http://bm-remote.build.mozilla.org/tegra/tegra-host-utils.Linux.742597.zip",
     "verify_path" :  "/builds/sut_tools/verify.py",
@@ -68,6 +69,17 @@ config = {
         "--symbols-path=%(symbols_path)s",
         "--robocop=mochitest/robocop.ini"
      ],
+     "xpcshell_options": [
+        "--deviceIP=%(device_ip)s",
+        "--xre-path=../hostutils/xre",
+        "--manifest=xpcshell/tests/xpcshell_android.ini",
+        "--build-info-json=xpcshell/mozinfo.json",
+        "--testing-modules-dir=modules",
+        "--local-lib-dir=../fennec",
+        "--apk=../%(apk_name)s",
+        "--no-logfiles",
+        "--symbols-path=%(symbols_path)s"
+     ],
      "all_mochitest_suites": {
         "mochitest-1": ["--total-chunks=8", "--this-chunk=1"],
         "mochitest-2": ["--total-chunks=8", "--this-chunk=2"],
@@ -97,6 +109,9 @@ config = {
         #plain is split
         "robocop-1": ["--total-chunks=3", "--this-chunk=1"],
         "robocop-2": ["--total-chunks=3", "--this-chunk=2"],
+    },
+    "all_xpcshell_suites": {
+        "xpcshell": []
     },
     "find_links": ["http://repos/python/packages"],
     "buildbot_json_path": "buildprops.json",
