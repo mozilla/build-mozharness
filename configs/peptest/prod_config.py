@@ -7,9 +7,9 @@ config = {
     # mozharness script options
     "log_name": "pep",
     "buildbot_json_path": "buildprops.json",
-    "simplejson_url": "http://build.mozilla.org/talos/zips/simplejson-2.2.1.tar.gz",
+    "simplejson_url": "http://talos-bundles.pvt.build.mozilla.org/zips/simplejson-2.2.1.tar.gz",
     # tp5n url used by talos
-    "tp5n_url": "http://build.mozilla.org/talos/zips/tp5n.zip",
+    "tp5n_url": "http://talos-bundles.pvt.build.mozilla.org/zips/tp5n.zip",
 
     # peptest options
     # defaults to firefox, can also be thunderbird, fennec, etc.

@@ -24,10 +24,12 @@ class GittoolParser(OutputParser):
 
 
 class GittoolVCS(ScriptMixin, LogMixin):
-    def __init__(self, log_obj=None, config=None, vcs_config=None):
+    def __init__(self, log_obj=None, config=None, vcs_config=None,
+                 script_obj=None):
         super(GittoolVCS, self).__init__()
 
         self.log_obj = log_obj
+        self.script_obj = script_obj
         if config:
             self.config = config
         else:
