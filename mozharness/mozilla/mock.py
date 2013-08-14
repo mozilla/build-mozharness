@@ -122,12 +122,12 @@ class MockMixin(object):
         self.init_mock(t)
 
         if mock_packages is None:
-            mock_packages = c.get('mock_packages')
+            mock_packages = list(c.get('mock_packages'))
         if mock_packages:
             self.install_mock_packages(t, mock_packages)
 
         if mock_files is None:
-            mock_files = c.get('mock_files')
+            mock_files = list(c.get('mock_files'))
         if mock_files:
             self.copy_mock_files(t, mock_files)
 
