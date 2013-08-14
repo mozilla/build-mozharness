@@ -82,7 +82,7 @@ config = {
         "autoconf213", "mozilla-python27-mercurial", "ccache",
         "android-sdk15", "android-sdk16", "android-ndk5", "android-ndk8",
         "zip", "java-1.6.0-openjdk-devel", "zlib-devel", "glibc-static",
-        "openssh-clients", "mpfr", "wget",
+        "openssh-clients", "mpfr", "wget", "gcc472_0moz1",
     ],
     "mock_files": [
         ("/home/cltbld/.ssh", "/home/mock_mozilla/.ssh"),

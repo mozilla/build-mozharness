@@ -466,18 +466,20 @@ class ResourceMonitoringMixin(object):
 
         def log_usage(prefix, duration, cpu_percent, cpu_times, io):
             message = '{prefix} - Wall time: {duration:.0f}s; ' \
-                'CPU: {cpu_percent:.0f}%; ' \
+                'CPU: {cpu_percent}; ' \
                 'Read bytes: {io_read_bytes}; Write bytes: {io_write_bytes}; ' \
                 'Read time: {io_read_time}; Write time: {io_write_time}'
 
             # XXX Some test harnesses are complaining about a string being
             # being fed into a 'f' formatter. This will help diagnose the
             # issue.
+            cpu_percent_str = str(round(cpu_percent)) + '%' if cpu_percent else "Can't collect data"
+
             try:
                 self.info(
                     message.format(
                         prefix=prefix, duration=duration,
-                        cpu_percent=cpu_percent, io_read_bytes=io.read_bytes,
+                        cpu_percent=cpu_percent_str, io_read_bytes=io.read_bytes,
                         io_write_bytes=io.write_bytes, io_read_time=io.read_time,
                         io_write_time=io.write_time
                     )

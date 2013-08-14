@@ -528,12 +528,12 @@ class ScriptMixin(object):
             # allow for 'make': '%(abs_work_dir)s/...' etc.
             dirs = self.query_abs_dirs()
             repl_dict['abs_work_dir'] = dirs['abs_work_dir']
-        if isinstance(exe, list):
+        if isinstance(exe, list) or isinstance(exe, tuple):
             exe = [x % repl_dict for x in exe]
         elif isinstance(exe, str):
             exe = exe % repl_dict
         else:
-            self.log("query_exe: %s is not a string or list: %s!" % (exe_name, str(exe)), level=error_level)
+            self.log("query_exe: %s is not a list, tuple or string: %s!" % (exe_name, str(exe)), level=error_level)
             return exe
         if return_type == "list":
             if isinstance(exe, str):
