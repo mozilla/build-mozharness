@@ -92,10 +92,11 @@ config = {
         "mochitest-gl": ["--test-path", "content/canvas/test/webgl"],
     },
     "all_reftest_suites": {
-        "reftest-1": ["--total-chunks=4", "--this-chunk=1"],
-        "reftest-2": ["--total-chunks=4", "--this-chunk=2"],
-        "reftest-3": ["--total-chunks=4", "--this-chunk=3"],
-        "reftest-4": ["--total-chunks=4", "--this-chunk=4"],
+        "reftest-1": ["--total-chunks=5", "--this-chunk=1"],
+        "reftest-2": ["--total-chunks=5", "--this-chunk=2"],
+        "reftest-3": ["--total-chunks=5", "--this-chunk=3"],
+        "reftest-4": ["--total-chunks=5", "--this-chunk=4"],
+        "reftest-5": ["--total-chunks=5", "--this-chunk=5"],
     },
     "all_crashtest_suites": {
         "crashtest": []
