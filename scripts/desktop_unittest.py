@@ -56,6 +56,14 @@ class DesktopUnittest(TestingMixin, MercurialScript):
                     "Suites are defined in the config file\n."
                     "Examples: 'xpcshell'"}
          ],
+        [['--cppunittest-suite', ], {
+            "action": "extend",
+            "dest": "specified_cppunittest_suites",
+            "type": "string",
+            "help": "Specify which cpp unittest suite to run. "
+                    "Suites are defined in the config file\n."
+                    "Examples: 'cppunittest'"}
+         ],
         [['--run-all-suites', ], {
             "action": "store_true",
             "dest": "run_all_suites",
