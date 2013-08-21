@@ -157,31 +157,28 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, MercurialScript
     def _configure_marionette_virtualenv(self, action):
         if self.tree_config.get('use_puppetagain_packages'):
             self.register_virtualenv_module('mozinstall')
-            self.register_virtualenv_module(
-                'marionette',
-                os.path.join('tests', 'marionette'))
+            self.register_virtualenv_module('marionette', os.path.join('tests',
+                'marionette'))
 
             return
 
         mozbase_dir = os.path.join('tests', 'mozbase')
         # XXX Bug 879765: Dependent modules need to be listed before parent
         # modules, otherwise they will get installed from the pypi server.
-        self.register_virtualenv_module(
-            'manifestparser',
-            os.path.join(mozbase_dir, 'manifestdestiny'))
+        self.register_virtualenv_module('manifestparser',
+                os.path.join(mozbase_dir, 'manifestdestiny'))
         for m in ('mozfile', 'mozlog', 'mozinfo', 'moznetwork', 'mozhttpd',
-                  'moztest', 'mozcrash', 'mozinstall', 'mozdevice',
-                  'mozprofile', 'mozprocess', 'mozrunner'):
-            self.register_virtualenv_module(m, os.path.join(mozbase_dir, m))
+                'mozcrash', 'mozinstall', 'mozdevice', 'mozprofile',
+                'mozprocess', 'mozrunner'):
+            self.register_virtualenv_module(m, os.path.join(mozbase_dir,
+                m))
 
-        self.register_virtualenv_module('marionette',
-                                        os.path.join('tests', 'marionette'))
+        self.register_virtualenv_module('marionette', os.path.join('tests',
+            'marionette'))
 
         if self.config.get('gaiatest'):
-            self.register_virtualenv_module(
-                'gaia-ui-tests',
-                url=self.query_abs_dirs()['abs_gaiatest_dir'],
-                method='pip')
+            self.register_virtualenv_module('gaia-ui-tests',
+                url=self.query_abs_dirs()['abs_gaiatest_dir'], method='pip')
 
     def pull(self, **kwargs):
         repos = copy.deepcopy(self.config.get('repos', []))
