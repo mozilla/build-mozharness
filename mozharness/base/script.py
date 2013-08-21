@@ -631,7 +631,7 @@ class ScriptMixin(object):
                                    env=env,
                                    cwd=cwd,
                                    storeOutput=False,
-                                   onTimeout=(onTimeout),
+                                   onTimeout=(onTimeout,),
                                    processOutputLine=[processOutput])
                 self.info("Calling %s with output_timeout %d" % (command, output_timeout))
                 p.run(outputTimeout=output_timeout)
