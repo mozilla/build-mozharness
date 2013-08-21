@@ -136,4 +136,7 @@ config = {
     "minidump_stackwalk_path": MINIDUMP_STACKWALK_PATH,
     "minidump_save_path": "%(abs_work_dir)s/../minidumps",
     "buildbot_max_log_size": 52428800,
+    "default_blob_upload_servers": [
+         "http://10.134.48.49:8080",
+    ],
 }
