@@ -22,7 +22,6 @@ sys.path.insert(1, os.path.dirname(sys.path[0]))
 from mozharness.base.errors import BaseErrorList
 from mozharness.base.log import INFO, ERROR
 from mozharness.base.vcs.vcsbase import MercurialScript
-from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_options
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
 from mozharness.mozilla.testing.unittest import DesktopUnittestOutputParser
 
@@ -30,7 +29,8 @@ SUITE_CATEGORIES = ['cppunittest', 'mochitest', 'reftest', 'xpcshell']
 
 
 # DesktopUnittest {{{1
-class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin):
+class DesktopUnittest(TestingMixin, MercurialScript):
+
     config_options = [
         [['--mochitest-suite', ], {
             "action": "extend",
@@ -72,9 +72,7 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin):
                     "in the config file. You do not need to specify "
                     "any other suites.\nBeware, this may take a while ;)"}
          ],
-    ] + copy.deepcopy(testing_config_options) + \
-        copy.deepcopy(blobupload_config_options)
-
+    ] + copy.deepcopy(testing_config_options)
 
     # XXX Bug 879765: Dependent modules need to be listed before parent
     # modules, otherwise they will get installed from the pypi server.
@@ -195,7 +193,6 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin):
         dirs['abs_reftest_dir'] = os.path.join(dirs['abs_test_install_dir'], "reftest")
         dirs['abs_xpcshell_dir'] = os.path.join(dirs['abs_test_install_dir'], "xpcshell")
         dirs['abs_cppunittest_dir'] = os.path.join(dirs['abs_test_install_dir'], "cppunittests")
-        dirs['abs_blob_upload_dir'] = os.path.join(abs_dirs['abs_work_dir'], 'blobber_upload_dir')
 
         if os.path.isabs(c['virtualenv_path']):
             dirs['abs_virtualenv_dir'] = c['virtualenv_path']
@@ -318,7 +315,6 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin):
     # create_virtualenv is in VirtualenvMixin.
     # preflight_install is in TestingMixin.
     # install is in TestingMixin.
-    # upload_blobber_files is in BlobUploadMixin
 
     def download_and_extract(self):
         """
@@ -406,10 +402,8 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin):
                                                      log_obj=self.log_obj)
                 if c.get('minidump_stackwalk_path'):
                     env['MINIDUMP_STACKWALK'] = c['minidump_stackwalk_path']
-                env['MOZ_UPLOAD_DIR'] = self.query_abs_dirs()['abs_blob_upload_dir']
-                env['MINIDUMP_SAVE_PATH'] = self.query_abs_dirs()['abs_blob_upload_dir']
-                if not os.path.isdir(env['MOZ_UPLOAD_DIR']):
-                    self.mkdir_p(env['MOZ_UPLOAD_DIR'])
+                if c.get('minidump_save_path'):
+                    env['MINIDUMP_SAVE_PATH'] = c['minidump_save_path']
                 env = self.query_env(partial_env=env, log_level=INFO)
                 return_code = self.run_command(cmd, cwd=dirs['abs_work_dir'],
                                                output_timeout=1000,

@@ -133,7 +133,4 @@ config = {
     "minidump_stackwalk_path": "%(abs_work_dir)s/tools/breakpad/win32/minidump_stackwalk.exe",
     "minidump_save_path": "%(abs_work_dir)s/../minidumps",
     "buildbot_max_log_size": 52428800,
-    "default_blob_upload_servers": [
-         "http://10.134.48.49:8080",
-    ],
 }
