@@ -624,12 +624,16 @@ class ScriptMixin(object):
             if output_timeout:
                 def processOutput(line):
                     parser.add_lines(line)
+                def onTimeout():
+                    self.info("mozprocess timed out")
 
                 p = ProcessHandler(command,
                                    env=env,
                                    cwd=cwd,
                                    storeOutput=False,
+                                   onTimeout=(onTimeout,),
                                    processOutputLine=[processOutput])
+                self.info("Calling %s with output_timeout %d" % (command, output_timeout))
                 p.run(outputTimeout=output_timeout)
                 p.wait()
                 if p.timedOut:
