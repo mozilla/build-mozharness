@@ -225,7 +225,7 @@ class GaiaUnitTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin):
     def make_gaia(self):
         dirs = self.query_abs_dirs()
         self.run_command(['ls', '-al'], cwd=os.path.join(dirs['abs_gaia_dir'],
-                                                         self.config.get('xre_path'))
+                                                         self.config.get('xre_path')))
         self.run_command(['make'],
                          cwd=dirs['abs_gaia_dir'],
                          env={'DEBUG': '1',
