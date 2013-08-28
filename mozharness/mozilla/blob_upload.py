@@ -56,7 +56,7 @@ class BlobUploadMixin(VirtualenvMixin):
 
             if not os.listdir(blob_dir):
                 self.info("There are no files to upload in the directory. "
-                          "Skipping the blob upload machansim ...")
+                          "Skipping the blob upload mechanism ...")
                 return
 
             self.info("Preparing to upload files from %s." % blob_dir)
