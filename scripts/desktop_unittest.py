@@ -247,9 +247,11 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin):
             run_file = c['run_file_names'][suite_category]
             base_cmd = [self.query_python_path('python'), '-u']
             base_cmd.append(dirs["abs_%s_dir" % suite_category] + "/" + run_file)
+            abs_app_dir = self.query_abs_app_dir()
             str_format_values = {
                 'binary_path': self.binary_path,
-                'symbols_path': self._query_symbols_url()
+                'symbols_path': self._query_symbols_url(),
+                'abs_app_dir': abs_app_dir
             }
             # TestingMixin._download_and_extract_symbols() will set
             # self.symbols_path when downloading/extracting.
@@ -257,7 +259,6 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin):
                 str_format_values['symbols_path'] = self.symbols_path
 
             # set pluginsPath
-            abs_app_dir = self.query_abs_app_dir()
             abs_app_plugins_dir = os.path.join(abs_app_dir, 'plugins')
             str_format_values['test_plugin_path'] = abs_app_plugins_dir
 

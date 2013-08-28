@@ -57,7 +57,7 @@ config = {
     ],
     "cppunittest_options": [
         "--symbols-path=%(symbols_path)s",
-        "--xre-path=application/firefox"
+        "--xre-path=%(abs_app_dir)s"
     ],
     #local mochi suites
     "all_mochitest_suites": {
