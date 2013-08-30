@@ -68,23 +68,34 @@ def add_project(manifest, name, path, remote=None, revision=None):
     manifest.documentElement.appendChild(project)
 
 
-def remove_project(manifest, name):
+def remove_project(manifest, name=None, path=None):
     """
-    Removes a project from manifest
+    Removes a project from manifest.
+    One of name or path must be set. If path is specified, then the project
+    with the given path is removed, otherwise the project with the given name
+    is removed.
     """
-    node = get_project(manifest, name)
+    assert name or path
+    node = get_project(manifest, name, path)
     if node:
         node.parentNode.removeChild(node)
     return node
 
 
-def get_project(manifest, name):
+def get_project(manifest, name=None, path=None):
     """
-    Gets a project node from the manifest by name
+    Gets a project node from the manifest.
+    One of name or path must be set. If path is specified, then the project
+    with the given path is returned, otherwise the project with the given name
+    is returned.
     """
+    assert name or path
     for node in manifest.getElementsByTagName('project'):
+        if path is not None and node.getAttribute('path') == path:
+            return node
         if node.getAttribute('name') == name:
             return node
+
 
 def get_remote(manifest, name):
     for node in manifest.getElementsByTagName('remote'):

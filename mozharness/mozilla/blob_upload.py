@@ -28,7 +28,7 @@ class BlobUploadMixin(VirtualenvMixin):
     #TODO: documentation about the Blobber Server on wiki
     def __init__(self, *args, **kwargs):
         requirements = [
-            'blobuploader==0.2',
+            'blobuploader',
         ]
         super(BlobUploadMixin, self).__init__(*args, **kwargs)
         for req in requirements:
@@ -56,7 +56,7 @@ class BlobUploadMixin(VirtualenvMixin):
 
             if not os.listdir(blob_dir):
                 self.info("There are no files to upload in the directory. "
-                          "Skipping the blob upload machansim ...")
+                          "Skipping the blob upload mechanism ...")
                 return
 
             self.info("Preparing to upload files from %s." % blob_dir)
