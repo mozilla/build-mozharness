@@ -44,6 +44,12 @@ class GaiaUnitTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin):
           "default": "default",
           "help": "branch of gaia repo to clone"
          }],
+        [["--xre-path"],
+         {"action": "store",
+          "dest": "xre_path",
+          "default": "xulrunner-sdk",
+          "help": "directory (relative to gaia repo) of xulrunner-sdk"
+         }],
         [["--xre-url"],
          {"action": "store",
           "dest": "xre_url",
@@ -185,7 +191,8 @@ class GaiaUnitTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin):
             # Gaia assumes that xpcshell is in a 'xulrunner-sdk' dir, but
             # xre.zip doesn't have a top-level directory name, so we'll
             # create it.
-            parent_dir = os.path.join(parent_dir, "xulrunner-sdk")
+            parent_dir = os.path.join(parent_dir,
+                                      self.config.get('xre_path'))
             if not os.access(parent_dir, os.F_OK):
                 self.mkdir_p(parent_dir, error_level=FATAL)
             self.run_command(command,
@@ -200,7 +207,8 @@ class GaiaUnitTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin):
         if xre_url:
             dirs = self.query_abs_dirs()
             xulrunner_bin = os.path.join(dirs['abs_gaia_dir'],
-                                         'xulrunner-sdk', 'bin', 'xpcshell')
+                                         self.config.get('xre_path'),
+                                         'bin', 'xpcshell')
             if not os.access(xulrunner_bin, os.F_OK):
                 xre = self.download_file(xre_url, parent_dir=dirs['abs_work_dir'])
                 self.extract_xre(xre, parent_dir=dirs['abs_gaia_dir'])
@@ -216,12 +224,15 @@ class GaiaUnitTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin):
 
     def make_gaia(self):
         dirs = self.query_abs_dirs()
+        self.run_command(['ls', '-al'], cwd=os.path.join(dirs['abs_gaia_dir'],
+                                                         self.config.get('xre_path')))
         self.run_command(['make'],
                          cwd=dirs['abs_gaia_dir'],
                          env={'DEBUG': '1',
                               'NOFTU': '1',
                               'DESKTOP': '0',
-                              'USE_LOCAL_XULRUNNER_SDK': '1'
+                              'USE_LOCAL_XULRUNNER_SDK': '1',
+                              'XULRUNNER_DIRECTORY': self.config.get('xre_path')
                               },
                          halt_on_failure=True)
 
