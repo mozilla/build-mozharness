@@ -133,8 +133,8 @@ config = {
     "default_actions": [
         'clobber',
         'read-buildbot-config',
-        'create-virtualenv',
         'download-and-extract',
+        'create-virtualenv',
         'request-device',
         'run-test',
         'close-request',

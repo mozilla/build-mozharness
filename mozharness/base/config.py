@@ -362,6 +362,19 @@ class BaseConfig(object):
                 raise SystemExit(-1)
         return action_list
 
+    def verify_actions_order(self, action_list):
+        try:
+            indexes = [ self.all_actions.index(elt) for elt in action_list ]
+            sorted_indexes = sorted(indexes)
+            for i in range(len(indexes)):
+                if indexes[i] != sorted_indexes[i]:
+                    print(("Action %s comes in different order in %s\n" +
+                           "than in %s") % (action_list[i], action_list, self.all_actions))
+                    raise SystemExit(-1)
+        except ValueError as e:
+            print("Invalid action found: " + str(e))
+            raise SystemExit(-1)
+
     def list_actions(self):
         print "Actions available: " + ', '.join(self.all_actions)
         if self.default_actions != self.all_actions:
@@ -443,6 +456,7 @@ class BaseConfig(object):
         if self._config.get('default_actions'):
             default_actions = self.verify_actions(self._config['default_actions'])
             self.default_actions = default_actions
+        self.verify_actions_order(self.default_actions)
         if options.list_actions:
             self.list_actions()
         self.actions = self.default_actions[:]

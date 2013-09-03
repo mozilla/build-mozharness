@@ -53,16 +53,18 @@ class SpidermonkeyBuild(MockMixin, BaseScript, VCSMixin, BuildbotMixin, Tooltool
                                 'checkout-tools',
 
                                 # First, build an optimized JS shell for running the analysis
-                                'checkout-shell',
+                                'checkout-source',
                                 'clobber-shell',
                                 'configure-shell',
                                 'build-shell',
 
                                 # Next, build a tree with the analysis plugin
-                                # active. This is a little weird, in that we're
-                                # reusing the same checkout for the JS shell
-                                # build and the build of the source to be
-                                # analyzed. (Different objdir, though.)
+                                # active. Note that we are using the same
+                                # checkout for the JS shell build and the build
+                                # of the source to be analyzed, which is a
+                                # little unnecessary (no need to rebuild the JS
+                                # shell all the time). (Different objdir,
+                                # though.)
                                 'clobber-analysis',
                                 'setup-analysis',
                                 'run-analysis',
@@ -71,7 +73,7 @@ class SpidermonkeyBuild(MockMixin, BaseScript, VCSMixin, BuildbotMixin, Tooltool
                                 #'reuse-mock',
                                 'setup-mock',
                                 'checkout-tools',
-                                'checkout-shell',
+                                'checkout-source',
                                 'clobber-shell',
                                 'configure-shell',
                                 'build-shell',

@@ -28,8 +28,8 @@ config = {
 
     "default_actions": [
         'clobber',
-        'pull',
         'read-buildbot-config',
+        'pull',
         'download-and-extract',
         'create-virtualenv',
         'install',
