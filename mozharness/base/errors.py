@@ -62,7 +62,11 @@ HgErrorList = BaseErrorList + [
   'explanation': 'Automation Error: hg extension missing'},
 ]
 
-GitErrorList = BaseErrorList
+GitErrorList = BaseErrorList + [
+    {'substr': r'''Permission denied (publickey).''', 'level': ERROR},
+    {'substr': r'''fatal: The remote end hung up unexpectedly''', 'level': ERROR},
+    {'substr': r'''error: src refspec''', 'level': ERROR},
+]
 
 PythonErrorList = BaseErrorList + [
  {'substr': r'''Traceback (most recent call last)''', 'level': ERROR},

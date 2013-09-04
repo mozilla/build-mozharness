@@ -107,6 +107,7 @@ config = {
         "jsreftest-3": ["--total-chunks=3", "--this-chunk=3"],
     },
     "all_robocop_suites": {
+        #plain is split
         "robocop-1": ["--total-chunks=3", "--this-chunk=1"],
         "robocop-2": ["--total-chunks=3", "--this-chunk=2"],
         "robocop-3": ["--total-chunks=3", "--this-chunk=3"],
