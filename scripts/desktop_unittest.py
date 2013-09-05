@@ -26,7 +26,7 @@ from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_op
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
 from mozharness.mozilla.testing.unittest import DesktopUnittestOutputParser
 
-SUITE_CATEGORIES = ['cppunittest', 'mochitest', 'reftest', 'xpcshell']
+SUITE_CATEGORIES = ['cppunittest', 'jittest', 'mochitest', 'reftest', 'xpcshell']
 
 
 # DesktopUnittest {{{1
@@ -63,6 +63,14 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin):
             "help": "Specify which cpp unittest suite to run. "
                     "Suites are defined in the config file\n."
                     "Examples: 'cppunittest'"}
+         ],
+        [['--jittest-suite', ], {
+            "action": "extend",
+            "dest": "specified_jittest_suites",
+            "type": "string",
+            "help": "Specify which jit-test suite to run. "
+                    "Suites are defined in the config file\n."
+                    "Examples: 'jittest'"}
          ],
         [['--run-all-suites', ], {
             "action": "store_true",
@@ -196,6 +204,7 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin):
         dirs['abs_xpcshell_dir'] = os.path.join(dirs['abs_test_install_dir'], "xpcshell")
         dirs['abs_cppunittest_dir'] = os.path.join(dirs['abs_test_install_dir'], "cppunittests")
         dirs['abs_blob_upload_dir'] = os.path.join(abs_dirs['abs_work_dir'], 'blobber_upload_dir')
+        dirs['abs_jittest_dir'] = os.path.join(os.path.join(dirs['abs_test_install_dir'], "jit-test"), "jit-test")
 
         if os.path.isabs(c['virtualenv_path']):
             dirs['abs_virtualenv_dir'] = c['virtualenv_path']
@@ -337,6 +346,9 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin):
                     target_unzip_dirs.extend(c['specific_tests_zip_dirs'][category])
         super(DesktopUnittest, self).download_and_extract(target_unzip_dirs=target_unzip_dirs)
 
+        dirs = self.query_abs_dirs()
+        self._download_unzip(self.query_jsshell_url(), dirs['abs_test_bin_dir'])
+
     # pull defined in VCSScript.
     # preflight_run_tests defined in TestingMixin.
 
@@ -346,6 +358,7 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin):
         self._run_category_suites('xpcshell',
                                   preflight_run_method=self.preflight_xpcshell)
         self._run_category_suites('cppunittest')
+        self._run_category_suites('jittest')
 
     def preflight_xpcshell(self, suites):
         c = self.config

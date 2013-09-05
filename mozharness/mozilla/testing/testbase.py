@@ -72,8 +72,33 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin):
     tree_config = ReadOnlyDict({})
     symbols_url = None
     symbols_path = None
+    jsshell_url = None
     minidump_stackwalk_path = None
     default_tools_repo = 'http://hg.mozilla.org/build/tools'
+
+    def query_jsshell_url(self):
+        """
+        Attempt to determine the url of the js shell package given
+        the installer url.
+        """
+        if self.jsshell_url:
+            return self.jsshell_url
+        if not self.installer_url:
+            self.fatal("Can't figure out jsshell without an installer_url!")
+
+        last_slash = self.installer_url.rfind('/')
+        base_url = self.installer_url[:last_slash]
+
+        for suffix in INSTALLER_SUFFIXES:
+            if self.installer_url.endswith(suffix):
+                no_suffix = self.installer_url[:-len(suffix)]
+                last_dot = no_suffix.rfind('.')
+                platform = no_suffix[last_dot + 1:]
+
+                self.jsshell_url = base_url + '/jsshell-' + platform + '.zip'
+                return self.jsshell_url
+        else:
+            self.fatal("Can't figure out jsshell from installer_url %s!" % self.installer_url)
 
     def query_symbols_url(self):
         if self.symbols_url:

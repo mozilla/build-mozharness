@@ -32,14 +32,16 @@ config = {
         "mochitest": "runtests.py",
         "reftest": "runreftest.py",
         "xpcshell": "runxpcshelltests.py",
-        "cppunittest": "runcppunittests.py"
+        "cppunittest": "runcppunittests.py",
+        "jittest": "jit_test.py"
     },
     "minimum_tests_zip_dirs": ["bin/*", "certs/*", "modules/*", "mozbase/*", "config/*"],
     "specific_tests_zip_dirs": {
         "mochitest": ["mochitest/*"],
         "reftest": ["reftest/*", "jsreftest/*"],
         "xpcshell": ["xpcshell/*"],
-        "cppunittest": ["cppunittests/*"]
+        "cppunittest": ["cppunittests/*"],
+        "jittest": ["jit-test/*"]
     },
     "reftest_options": [
         "--appname=%(binary_path)s", "--utility-path=tests/bin",
@@ -58,6 +60,10 @@ config = {
     "cppunittest_options": [
         "--symbols-path=%(symbols_path)s",
         "--xre-path=%(abs_app_dir)s"
+    ],
+    "jittest_options": [
+        "tests/bin/js",
+        "--tinderbox"
     ],
     #local mochi suites
     "all_mochitest_suites": {
@@ -89,6 +95,9 @@ config = {
     },
     "all_cppunittest_suites": {
         "cppunittest": ['tests/cppunittests']
+    },
+    "all_jittest_suites": {
+        "jittest": []
     },
     "run_cmd_checks_enabled": True,
     "preflight_run_cmd_suites": [

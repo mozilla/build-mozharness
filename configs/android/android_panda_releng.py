@@ -16,7 +16,8 @@ config = {
         "crashtest": "remotereftest.py",
         "jsreftest": "remotereftest.py",
         "robocop": "runtestsremote.py",
-        "xpcshell": "remotexpcshelltests.py"
+        "xpcshell": "remotexpcshelltests.py",
+        "jittest": "jit_test.py"
     },
     "hostutils_url":  "http://bm-remote.build.mozilla.org/tegra/tegra-host-utils.Linux.742597.zip",
     "verify_path":  "/builds/sut_tools/verify.py",
@@ -80,6 +81,14 @@ config = {
         "--no-logfiles",
         "--symbols-path=%(symbols_path)s"
     ],
+    "jittest_options": [
+        "bin/js",
+        "--remote",
+        "--deviceTransport=sut",
+        "--deviceIP=%(device_ip)s",
+        "--localLib=../tests/bin",
+        "--tinderbox"
+     ],
     "all_mochitest_suites": {
         "mochitest-1": ["--total-chunks=8", "--this-chunk=1"],
         "mochitest-2": ["--total-chunks=8", "--this-chunk=2"],
@@ -114,6 +123,9 @@ config = {
     },
     "all_xpcshell_suites": {
         "xpcshell": []
+    },
+    "all_jittest_suites": {
+        "jittest": []
     },
     "find_links": [
         "http://repos/python/packages",
