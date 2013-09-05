@@ -735,6 +735,7 @@ class ScriptMixin(object):
         shell = True
         if isinstance(command, list):
             shell = False
+            self.info("Copy/paste: %s" % subprocess.list2cmdline(command))
         p = subprocess.Popen(command, shell=shell, stdout=tmp_stdout,
                              cwd=cwd, stderr=tmp_stderr, env=env)
         #XXX: changed from self.debug to self.log due to this error:
@@ -786,6 +787,22 @@ class ScriptMixin(object):
         else:
             return output
 
+    def unpack(self, filename, extract_to):
+        '''
+        This method allows us to extract a file regardless of its extension 
+        '''
+        # XXX: Make sure that filename has a extension of one of our supported file formats
+        m = re.search('\.tar\.(bz2|gz)$', filename)
+        if m:
+            command = self.query_exe('tar', return_type='list')
+            tar_cmd = "jxfv"
+            if m.group(1) == "gz":
+                tar_cmd = "zxfv"
+            command.extend([tar_cmd, filename, "-C", extract_to])
+            self.run_command(command, halt_on_failure=True)
+        else:
+            # XXX implement
+            pass
 
 def PreScriptRun(func):
     """Decorator for methods that will be called before script execution.
