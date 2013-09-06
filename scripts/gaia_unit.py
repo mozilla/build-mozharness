@@ -13,18 +13,20 @@ import sys
 # load modules from parent dir
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
-from mozharness.base.errors import TarErrorList, ZipErrorList, HgErrorList
+from mozharness.base.errors import TarErrorList, ZipErrorList
 from mozharness.base.log import INFO, ERROR, WARNING, FATAL
 from mozharness.base.script import PreScriptAction
 from mozharness.base.transfer import TransferMixin
 from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_WARNING, TBPL_FAILURE
+from mozharness.mozilla.gaia import GaiaMixin
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
 from mozharness.mozilla.testing.unittest import TestSummaryOutputParserHelper
 from mozharness.mozilla.tooltool import TooltoolMixin
 
 
-class GaiaUnitTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin):
+class GaiaUnitTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin,
+                   GaiaMixin):
     config_options = [
         [["--gaia-dir"],
          {"action": "store",
@@ -76,14 +78,12 @@ class GaiaUnitTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin):
                          'download-and-extract',
                          'create-virtualenv',
                          'install',
-                         'make-gaia',
                          'run-tests'],
             default_actions=['clobber',
                              'pull',
                              'download-and-extract',
                              'create-virtualenv',
                              'install',
-                             'make-gaia',
                              'run-tests'],
             require_config_file=require_config_file,
             config={'virtualenv_modules': self.virtualenv_modules,
@@ -98,48 +98,25 @@ class GaiaUnitTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin):
 
     def pull(self, **kwargs):
         dirs = self.query_abs_dirs()
-        repos = copy.deepcopy(self.config.get('repos', []))
+        dest = dirs['abs_gaia_dir']
 
-        gaia_repo_path = self.config.get('gaia_repo')
-        gaia_revision = 'default'
-        gaia_branch = self.config.get('gaia_branch')
+        repo = {
+          'repo_path': self.config.get('gaia_repo'),
+          'revision': 'default',
+          'branch': self.config.get('gaia_branch')
+        }
 
         if self.buildbot_config is not None:
             # get gaia commit via hgweb
-            revision = self.buildbot_config['properties']['revision']
-            repo_path = self.buildbot_config['properties']['repo_path']
-            url = "https://hg.mozilla.org/{repo_path}/raw-file/{rev}/b2g/config/gaia.json".format(
-                repo_path=repo_path,
-                rev=revision)
-            contents = self.retry(self.load_json_from_url, args=(url,))
-            if contents.get('repo_path') and contents.get('revision'):
-                gaia_repo_path = 'https://hg.mozilla.org/%s' % contents['repo_path']
-                gaia_revision = contents['revision']
-                gaia_branch = None
+            repo.update({
+              'revision': self.buildbot_config['properties']['revision'],
+              'repo_path': 'https://hg.mozilla.org/%s' % self.buildbot_config['properties']['repo_path']
+            })
 
-        repos.append({'repo': gaia_repo_path,
-                      'revision': gaia_revision,
-                      'dest': 'gaia',
-                      'branch': gaia_branch})
+        self.clone_gaia(dest, repo,
+                        use_gaia_json=self.buildbot_config is not None)
 
-        for repo in repos:
-            dest = None
-            if repo.get('dest') == 'gaia':
-                dest = os.path.dirname(dirs['abs_gaia_dir'])
-                repo_dir = os.path.join(dest, 'gaia')
-
-                # purge the repo if it already exists
-                if os.access(repo_dir, os.F_OK):
-                    cmd = [self.query_exe('hg'),
-                           '--config',
-                           'extensions.purge=',
-                           'purge']
-                    if self.run_command(cmd, cwd=repo_dir, error_list=HgErrorList):
-                        self.fatal("Unable to purge %s!" % repo_dir)
-
-            kwargs['parent_dir'] = dest
-            kwargs['repos'] = [repo]
-            super(GaiaUnitTest, self).pull(**kwargs)
+        super(GaiaUnitTest, self).pull(**kwargs)
 
     def query_abs_dirs(self):
         if self.abs_dirs:
@@ -222,25 +199,16 @@ class GaiaUnitTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin):
                          error_list=TarErrorList,
                          halt_on_failure=True)
 
-    def make_gaia(self):
-        dirs = self.query_abs_dirs()
-        self.run_command(['ls', '-al'], cwd=os.path.join(dirs['abs_gaia_dir'],
-                                                         self.config.get('xre_path')))
-        self.run_command(['make'],
-                         cwd=dirs['abs_gaia_dir'],
-                         env={'DEBUG': '1',
-                              'NOFTU': '1',
-                              'DESKTOP': '0',
-                              'USE_LOCAL_XULRUNNER_SDK': '1',
-                              'XULRUNNER_DIRECTORY': self.config.get('xre_path')
-                              },
-                         halt_on_failure=True)
-
     def run_tests(self):
         """
         Run the Gaia unit tests
         """
         dirs = self.query_abs_dirs()
+
+        # make the gaia profile
+        self.make_gaia(dirs['abs_gaia_dir'],
+                       self.config.get('xre_path'),
+                       debug=True)
 
         # build the testrunner command arguments
         python = self.query_python_path('python')
