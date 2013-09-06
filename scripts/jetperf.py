@@ -40,7 +40,8 @@ class JetPerf(Talos):
                'create-virtualenv',
                'install',
                'test',
-               'baseline'
+               'baseline',
+               'report-tbpl-status'
                ]
 
     default_actions = ['clobber',

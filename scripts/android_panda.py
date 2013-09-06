@@ -26,7 +26,7 @@ from mozharness.mozilla.testing.device import SUTDeviceMozdeviceMixin
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
 from mozharness.mozilla.testing.unittest import DesktopUnittestOutputParser
 
-SUITE_CATEGORIES = ['mochitest', 'reftest', 'crashtest', 'jsreftest', 'robocop', 'xpcshell']
+SUITE_CATEGORIES = ['mochitest', 'reftest', 'crashtest', 'jsreftest', 'robocop', 'xpcshell', 'jittest']
 
 
 class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, BuildbotMixin, SUTDeviceMozdeviceMixin):
@@ -107,6 +107,14 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
                     "Suites are defined in the config file\n."
                     "Examples: 'xpcshell'"}
          ],
+         [['--jittest-suite', ], {
+            "action": "extend",
+            "dest": "specified_jittest_suites",
+            "type": "string",
+            "help": "Specify which jittest suite to run. "
+                    "Suites are defined in the config file\n."
+                    "Examples: 'jittest'"}
+         ],
         [['--run-all-suites', ], {
             "action": "store_true",
             "dest": "run_all_suites",
@@ -122,7 +130,8 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
 
     virtualenv_modules = [
         'mozpoolclient',
-        'mozcrash'
+        'mozcrash',
+        {'name': 'mozdevice', 'url': os.path.join('tests', os.path.join('mozbase', 'mozdevice'))}
     ]
 
     def __init__(self, require_config_file=False):
@@ -137,8 +146,8 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
                          'close-request'],
             default_actions=['clobber',
                              'read-buildbot-config',
-                             'create-virtualenv',
                              'download-and-extract',
+                             'create-virtualenv',
                              'request-device',
                              'run-test',
                              'close-request'],
@@ -147,6 +156,7 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
 
         self.mozpool_assignee = self.config.get('mozpool_assignee', getpass.getuser())
         self.request_url = None
+        self.installer_url = self.config.get("installer_url")
         self.test_url = self.config.get("test_url")
         self.mozpool_device = self.config.get("mozpool_device")
         self.symbols_url = self.config.get('symbols_url')
@@ -197,6 +207,11 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
                 abs_base_cmd = self._query_abs_base_cmd(suite_category)
                 if 'robocop' in suite:
                     self._download_robocop_apk()
+
+                if 'jittest' in suite:
+                    dirs = self.query_abs_dirs()
+                    self._download_unzip(self.query_jsshell_url(), dirs['abs_test_bin_dir'])
+
                 self._install_app()
                 cmd = abs_base_cmd[:]
                 replace_dict = {}
@@ -307,6 +322,7 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
         dirs = {}
         dirs['abs_test_install_dir'] = os.path.join(
             abs_dirs['abs_work_dir'], 'tests')
+        dirs['abs_test_bin_dir'] = os.path.join(dirs['abs_test_install_dir'], 'bin')
         dirs['abs_mochitest_dir'] = os.path.join(
             dirs['abs_test_install_dir'], 'mochitest')
         dirs['abs_reftest_dir'] = os.path.join(
@@ -327,6 +343,7 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
             abs_dirs['abs_work_dir'], 'hostutils')
         dirs['abs_robocop_dir'] = os.path.join(
             dirs['abs_test_install_dir'], 'mochitest')
+        dirs['abs_jittest_dir'] = os.path.join(os.path.join(dirs['abs_test_install_dir'], "jit-test"), "jit-test")
         dirs['shutdown_dir'] = abs_dirs['abs_work_dir'].rsplit("/", 2)[0]
         for key in dirs.keys():
             if key not in abs_dirs:
@@ -352,7 +369,10 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
         #applies to mochitest, reftest, jsreftest
         # TestingMixin._download_and_extract_symbols() will set
         # self.symbols_path when downloading/extracting.
-        hostnumber = int(self.mozpool_device.split('-')[1])
+        hostnumber = 0
+        mozpool_device_list = self.mozpool_device.split('-')
+        if len(mozpool_device_list) == 2:
+            hostnumber = int(mozpool_device_list[1])
         http_port = '30%03i' % hostnumber
         ssl_port = '31%03i' % hostnumber
         #get filename from installer_url

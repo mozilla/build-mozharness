@@ -9,6 +9,14 @@ import copy
 import os
 import re
 import sys
+import signal
+import socket
+import subprocess
+import telnetlib
+import time
+import tempfile
+
+sleeptime = 60
 
 # load modules from parent dir
 sys.path.insert(1, os.path.dirname(sys.path[0]))
@@ -24,61 +32,31 @@ from mozharness.mozilla.tooltool import TooltoolMixin
 from mozharness.mozilla.testing.device import ADBDeviceHandler
 
 class Androidx86EmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, BaseScript):
-    test_suites = ('mochitest', 'robocop', 'reftest', 'jsreftest', 'crashtest')
     config_options = [
-        [["--type"],
+        [["--robocop-url"],
         {"action": "store",
-         "dest": "test_type",
-         "default": "browser",
-         "help": "The type of tests to run",
+         "dest": "robocop_url",
+         "default": None,
+         "help": "URL to the robocop apk",
         }],
-        [["--xre-url"],
+        [["--host-utils-url"],
         {"action": "store",
          "dest": "xre_url",
          "default": None,
-         "help": "URL to the desktop xre zip",
-        }],
-        [["--gecko-url"],
-        {"action": "store",
-         "dest": "gecko_url",
-         "default": None,
-         "help": "URL to the gecko build injected into the emulator",
-        }],
-        [["--test-manifest"],
-        {"action": "store",
-         "dest": "test_manifest",
-         "default": None,
-         "help": "Path to test manifest to run",
+         "help": "URL to the host utils zip",
         }],
         [["--test-suite"],
-        {"action": "store",
-         "dest": "test_suite",
-         "type": "choice",
-         "choices": test_suites,
-         "help": "Which test suite to run",
+        {"action": "append",
+         "dest": "test_suites",
         }],
         [["--adb-path"],
         {"action": "store",
          "dest": "adb_path",
          "default": None,
          "help": "Path to adb",
-        }],
-        [["--total-chunks"],
-        {"action": "store",
-         "dest": "total_chunks",
-         "help": "Number of total chunks",
-        }],
-        [["--this-chunk"],
-        {"action": "store",
-         "dest": "this_chunk",
-         "help": "Number of this chunk",
         }]] + copy.deepcopy(testing_config_options)
 
     error_list = [
-        {'substr': 'FAILED (errors=', 'level': ERROR},
-        {'substr': r'''Could not successfully complete transport of message to Gecko, socket closed''', 'level': ERROR},
-        {'substr': 'Timeout waiting for marionette on port', 'level': ERROR},
-        {'regex': re.compile(r'''(Timeout|NoSuchAttribute|Javascript|NoSuchElement|XPathLookup|NoSuchWindow|StaleElement|ScriptTimeout|ElementNotVisible|NoSuchFrame|InvalidElementState|NoAlertPresent|InvalidCookieDomain|UnableToSetCookie|InvalidSelector|MoveTargetOutOfBounds)Exception'''), 'level': ERROR},
     ]
 
     virtualenv_requirements = [
@@ -92,15 +70,20 @@ class Androidx86EmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixi
             config_options=self.config_options,
             all_actions=['clobber',
                          'read-buildbot-config',
+                         'setup-avds',
+                         'start-emulators',
                          'download-and-extract',
                          'create-virtualenv',
                          'install',
-                         'run-tests'],
+                         'run-tests',
+                         'stop-emulators'],
             default_actions=['clobber',
+                             'start-emulators',
                              'download-and-extract',
                              'create-virtualenv',
                              'install',
-                             'run-tests'],
+                             'run-tests',
+                             'stop-emulators'],
             require_config_file=require_config_file,
             config={
                 'virtualenv_modules': self.virtualenv_modules,
@@ -118,8 +101,14 @@ class Androidx86EmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixi
         self.installer_path = c.get('installer_path')
         self.test_url = c.get('test_url')
         self.test_manifest = c.get('test_manifest')
-
-    # TODO detect required config items and fail if not set
+        self.robocop_url = c.get('robocop_url')
+        self.host_utils_url = c.get('host_utils_url')
+        self.emulators = c.get('emulators')
+        self.emulator_components = c.get('emulator_components')
+        self.test_suite_definitions = c['test_suite_definitions']
+        self.test_suites = c.get('test_suites')
+        for suite in self.test_suites:
+            assert suite in self.test_suite_definitions
 
     def query_abs_dirs(self):
         if self.abs_dirs:
@@ -129,7 +118,7 @@ class Androidx86EmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixi
         dirs['abs_test_install_dir'] = os.path.join(
             abs_dirs['abs_work_dir'], 'tests')
         dirs['abs_xre_dir'] = os.path.join(
-            abs_dirs['abs_work_dir'], 'xre')
+            abs_dirs['abs_work_dir'], 'hostutils')
         dirs['abs_mochitest_dir'] = os.path.join(
             dirs['abs_test_install_dir'], 'mochitest')
         dirs['abs_modules_dir'] = os.path.join(
@@ -152,209 +141,306 @@ class Androidx86EmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixi
             return []
         return [str(option), str(value)]
 
+    def _redirectSUT(self, emuport, sutport1, sutport2):
+        '''
+        This redirects the default SUT ports for a given emulator.
+        This is needed if more than one emulator is started.
+        '''
+        attempts = 0
+        tn = None
+        while attempts < 5:
+            if attempts == 0:
+               self.info("Sleeping 10 seconds")
+               time.sleep(10)
+            else:
+               self.info("Sleeping 30 seconds")
+               time.sleep(30)
+            attempts += 1
+            self.info("  Attempt #%d to redirect ports: (%d, %d, %d)" % \
+                    (attempts, emuport, sutport1, sutport2))
+            try:
+                tn = telnetlib.Telnet('localhost', emuport, 300)
+                break
+            except socket.error, e:
+                self.info("Trying again after exception: %s" % str(e))
+                pass
+
+        if tn != None:
+            tn.read_until('OK')
+            tn.write('redir add tcp:' + str(sutport1) + ':' + str(self.config["default_sut_port1"]) + '\n')
+            tn.write('redir add tcp:' + str(sutport2) + ':' + str(self.config["default_sut_port2"]) + '\n')
+            tn.write('quit\n')
+            res = tn.read_all()
+            if res.find('OK') == -1:
+                self.critical('error adding redirect:'+str(res))
+        else:
+            self.fatal('We have not been able to establish a telnet' + \
+                       'connection with the emulator')
+
+    def _launch_emulator(self, emulator):
+        env = self.query_env()
+        command = [
+            "emulator", "-avd", emulator["name"],
+            "-debug", "all",
+            "-port", str(emulator["emulator_port"]),
+            "-kernel", self.emulator_components["kernel_path"],
+            "-system", self.emulator_components["system_image_path"],
+            "-ramdisk", self.emulator_components["ramdisk_path"]
+        ]
+        self.info("Trying to start the emulator with this command: %s" % ' '.join(command))
+        proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
+        self._redirectSUT(emulator["emulator_port"], emulator["sut_port1"], emulator["sut_port2"])
+        self.info("%s: %s; sut port: %s/%s" % \
+                (emulator["name"], emulator["emulator_port"], emulator["sut_port1"], emulator["sut_port2"]))
+        return proc
+
+    def _kill_processes(self, process_name):
+        p = subprocess.Popen(['ps', '-A'], stdout=subprocess.PIPE)
+        out, err = p.communicate()
+        self.info("Let's kill every process called %s" % process_name)
+        for line in out.splitlines():
+            if process_name in line:
+                pid = int(line.split(None, 1)[0])
+                self.info("Killing pid %d." % pid)
+                os.kill(pid, signal.SIGKILL)
+
+    def _post_fatal(self, message=None, exit_code=None):
+        """ After we call fatal(), run this method before exiting.
+        """
+        self._kill_processes("emulator64-x86")
+
+        # XXX aki, I' not sure exactly what this block is for
+        if 'notify' in self.actions:
+            self.notify(message=message, fatal=True)
+        self.copy_logs_to_upload_dir()
+
+    # XXX: This and android_panda.py's function might make sense to take higher up
+    def _download_robocop_apk(self):
+        dirs = self.query_abs_dirs()
+        self.apk_url = self.installer_url[:self.installer_url.rfind('/')]
+        robocop_url = self.apk_url + '/robocop.apk'
+        self.info("Downloading robocop...")
+        self.download_file(robocop_url, 'robocop.apk', dirs['abs_work_dir'], error_level=FATAL)
+
     def download_and_extract(self):
+        # This will download and extract the fennec.apk and tests.zip
         super(Androidx86EmulatorTest, self).download_and_extract()
         dirs = self.query_abs_dirs()
         if self.config.get('download_minidump_stackwalk'):
             self.install_minidump_stackwalk()
 
-        self.download_file(self.config['robocop_url'], file_name='robocop.apk',
-                                    parent_dir=dirs['abs_mochitest_dir'],
-                                    error_level=FATAL)
+        self._download_robocop_apk()
 
-        self.download_file(self.config['symbols_url'], file_name='crashreporter-symbols.zip',
-                                    parent_dir=dirs['abs_work_dir'],
-                                    error_level=FATAL)
+        self.download_file(self.symbols_url, file_name='crashreporter-symbols.zip',
+                           parent_dir=dirs['abs_work_dir'],
+                           error_level=FATAL)
 
         self.mkdir_p(dirs['abs_xre_dir'])
-        self._download_unzip(self.config['xre_url'],
-                             dirs['abs_xre_dir'])
+        self._download_unzip(self.host_utils_url, dirs['abs_xre_dir'])
 
     def preflight_install(self):
         # in the base class, this checks for mozinstall, but we don't use it
         pass
 
-    def install(self):
-        dirs = self.query_abs_dirs()
-        config={'device-id': self.config['device_id'], 'enable_automation': True, 'device_package_name': self.config['application']}
-
-        dh = ADBDeviceHandler(config=config)
-        dh.device_id = self.config['device_id']
-
-        #install fennec
-        dh.install_app(self.installer_path)
-
-        #also install robocop apk if required
-        if self.config['test_suite'] == 'robocop':
-            config['device_package_name'] = 'org.mozilla.roboexample.test'
-            robocop_path = os.path.join(dirs['abs_mochitest_dir'], 'robocop.apk')
-            dh.install_app(robocop_path)
-
-
-    def _build_mochitest_args(self):
+    def _build_command(self, emulator, suite_name):
         c = self.config
         dirs = self.query_abs_dirs()
-        python = self.query_python_path('python')
+        suite_category = self.test_suite_definitions[suite_name]["category"]
         cmd = [
-            python, os.path.join(dirs['abs_mochitest_dir'], 'runtestsremote.py'),
-            '--autorun',
-            '--close-when-done',
-            '--dm_trans=sut',
-            '--console-level', 'INFO',
-            '--app', c['application'],
-            '--remote-webserver', c['remote_webserver'],
-            '--run-only-tests', self.test_manifest,
-            '--xre-path', os.path.join(dirs['abs_xre_dir'], 'bin'),
-            '--deviceIP', self.config['device_ip'],
-            '--devicePort', self.config['device_port'],
-            '--http-port', self.config['http_port'],
-            '--ssl-port', self.config['ssl_port']
-        ]
-        cmd.extend(self._build_arg('--total-chunks', c.get('total_chunks')))
-        cmd.extend(self._build_arg('--this-chunk', c.get('this_chunk')))
-        cmd.extend(self._build_arg('--symbols-path', 'crashreporter-symbols.zip'))
-
-        return cmd
-
-    def _build_robocop_args(self):
-        c = self.config
-        dirs = self.query_abs_dirs()
-        python = self.query_python_path('python')
-        cmd = [
-            python, os.path.join(dirs['abs_mochitest_dir'], 'runtestsremote.py'),
-            '--robocop-path=.',
-            '--robocop-ids=fennec_ids.txt',
-            '--dm_trans=sut',
-            '--console-level', 'INFO',
-            '--app', c['application'],
-            '--remote-webserver', c['remote_webserver'],
-            '--robocop', self.test_manifest,
-            '--xre-path', os.path.join(dirs['abs_xre_dir'], 'bin'),
-            '--deviceIP', self.config['device_ip'],
-            '--devicePort', self.config['device_port'],
-            '--http-port', self.config['http_port'],
-            '--ssl-port', self.config['ssl_port']
-        ]
-        cmd.extend(self._build_arg('--total-chunks', c.get('total_chunks')))
-        cmd.extend(self._build_arg('--this-chunk', c.get('this_chunk')))
-        cmd.extend(self._build_arg('--symbols-path', 'crashreporter-symbols.zip'))
-
-        return cmd
-
-    def _build_reftest_args(self, is_jsreftest=False):
-        c = self.config
-        dirs = self.query_abs_dirs()
-        python = self.query_python_path('python')
-
-        cmd = [
-            python, 'remotereftest.py',
-            '--app=' + self.config['application'],
-            '--ignore-window-size',
-            '--remote-webserver', c['remote_webserver'],
-            '--xre-path', os.path.join(dirs['abs_xre_dir'], 'bin'),
-            '--deviceIP', self.config['device_ip'],
-            '--devicePort', self.config['device_port'],
-            '--http-port', self.config['http_port'],
-            '--ssl-port', self.config['ssl_port']
+            self.query_python_path('python'),
+            os.path.join(
+                dirs["abs_%s_dir" % suite_category],
+                c["suite_definitions"][suite_category]["run_filename"]
+            ),
         ]
 
-        cmd.extend(self._build_arg('--total-chunks', c.get('total_chunks')))
-        cmd.extend(self._build_arg('--this-chunk', c.get('this_chunk')))
-        cmd.extend(self._build_arg('--symbols-path', 'crashreporter-symbols.zip'))
+        str_format_values = {
+            'app': c['fennec_package_name'],
+            'remote_webserver': c['remote_webserver'],
+            'xre_path': os.path.join(dirs['abs_xre_dir'], 'xre'),
+            'utility_path':  os.path.join(dirs['abs_xre_dir'], 'bin'),
+            'device_ip': self.config['device_ip'],
+            'device_port': str(emulator['sut_port1']),
+            'http_port': emulator['http_port'],
+            'ssl_port': emulator['ssl_port'],
+            'certs_path': os.path.join(dirs['abs_work_dir'], 'tests/certs'),
+            'symbols_path': 'crashreporter-symbols.zip',
+            'modules_dir': dirs['abs_modules_dir'],
+        }
+        for option in c["suite_definitions"][suite_category]["options"]:
+           cmd.extend([option % str_format_values])
+        cmd.extend(self.test_suite_definitions[suite_name]["extra_args"])
 
-        # extra argument only for jsreftest
-        if is_jsreftest:
-            cmd.append('--extra-profile-file=jsreftest/tests/user.js')
-
-        cmd.append(self.test_manifest)
         return cmd
-
-    def _build_xpcshell_args(self):
-        pass
 
     def _query_adb(self):
-        return self.which('adb') or \
-               os.getenv('ADB_PATH')
+        return self.which('adb') or os.getenv('ADB_PATH')
 
     def preflight_run_tests(self):
         super(Androidx86EmulatorTest, self).preflight_run_tests()
-        suite = self.config['test_suite']
-        # set default test manifest by suite if none specified
-        if not self.test_manifest:
-            if suite == 'mochitest':
-                self.test_manifest = 'androidx86.json'
-            elif suite == 'robocop':
-                self.test_manifest = 'robocop.ini'
-            elif suite == 'reftest':
-                self.test_manifest = os.path.join('tests', 'layout',
-                                                  'reftests', 'reftest.list')
-            elif suite == 'crashtest':
-                self.test_manifest = os.path.join('tests', 'testing',
-                                                  'crashtest', 'crashtests.list')
-            elif suite == 'jsreftest':
-                self.test_manifest = os.path.join('..','jsreftest', 'tests', 'jstests.list')
 
         if not os.path.isfile(self.adb_path):
             self.fatal("The adb binary '%s' is not a valid file!" % self.adb_path)
 
-    def run_tests(self):
+    def _trigger_test(self, suite_name, emulator_index):
         """
-        Run the tests
+        Run a test suite on an emulator
+
+        We return a dictionary with the following information:
+         - subprocess object that is running the test on the emulator
+         - the filename where the stdout is going to
+         - the stdout where the output is going to
+         - the suite name that is associated
         """
         dirs = self.query_abs_dirs()
-
-        error_list = self.error_list
-        error_list.extend(BaseErrorList)
-
-        if self.config['test_suite'] == 'mochitest':
-            cmd = self._build_mochitest_args()
-            cwd = dirs['abs_mochitest_dir']
-        elif self.config['test_suite'] == 'robocop':
-            cmd = self._build_robocop_args()
-            cwd = dirs['abs_mochitest_dir']
-        elif self.config['test_suite'] in ('reftest', 'crashtest'):
-            cmd = self._build_reftest_args()
-            cwd = dirs['abs_reftest_dir']
-        elif self.config['test_suite'] == 'jsreftest':
-            cmd = self._build_reftest_args(True)
-            cwd = dirs['abs_reftest_dir']
-        elif self.config['test_suite'] == 'xpcshell':
-            cmd = self._build_xpcshell_args()
-            cwd = dirs['abs_xpcshell_dir']
-        else:
-            self.fatal("Don't know how to run --test-suite '%s'!" % self.config['test_suite'])
-
-        suite_name = [x for x in self.test_suites if x in self.config['test_suite']][0]
-        if self.config.get('this_chunk'):
-            suite = '%s-%s' % (suite_name, self.config['this_chunk'])
-        else:
-            suite = suite_name
-
-        # bug 773703
-        success_codes = None
-        if suite_name == 'xpcshell':
-            success_codes = [0, 1]
+        cmd = self._build_command(self.emulators[emulator_index], suite_name)
+        try:
+            cwd = dirs['abs_%s_dir' % self.test_suite_definitions[suite_name]["category"]]
+        except:
+            self.fatal("Don't know how to run --test-suite '%s'!" % suite_name)
 
         env = {}
         if self.query_minidump_stackwalk():
             env['MINIDUMP_STACKWALK'] = self.minidump_stackwalk_path
         env = self.query_env(partial_env=env)
 
-        parser = DesktopUnittestOutputParser(suite_category=suite_name,
-                                             config=self.config,
-                                             log_obj=self.log_obj,
-                                             error_list=error_list)
-        return_code = self.run_command(cmd, cwd=cwd, env=env,
-                                       output_parser=parser,
-                                       success_codes=success_codes)
+        self.info("Running on %s the command %s" % (self.emulators[emulator_index]["name"], subprocess.list2cmdline(cmd)))
+        tmp_file = tempfile.NamedTemporaryFile(mode='w')
+        tmp_stdout = open(tmp_file.name, 'w')
+        self.info("Created temp file %s." % tmp_file.name)
+        return {
+            "process": subprocess.Popen(cmd, cwd=cwd, stdout=tmp_stdout, stderr=tmp_stdout, env=env),
+            "tmp_file": tmp_file,
+            "tmp_stdout": tmp_stdout,
+            "suite_name": suite_name
+            }
 
-        tbpl_status, log_level = parser.evaluate_parser(return_code)
-        parser.append_tinderboxprint_line(suite_name)
+    ##########################################
+    ### Actions for Androidx86EmulatorTest ###
+    ##########################################
 
-        self.buildbot_status(tbpl_status, level=log_level)
-        self.log("The %s suite: %s ran with return status: %s" %
-                 (suite_name, suite, tbpl_status), level=log_level)
+    def setup_avds(self):
+        '''
+        We have deployed through Puppet tar ball with the pristine templates.
+        If they have not been untarred before we go ahead and do so.
+        '''
+        if not os.path.exists(os.path.join(self.config[".avds_dir"], "test-x86-1.avd")):
+            avds_path = self.config["avds_path"]
+            self.mkdir_p(self.config[".avds_dir"])
+            self.unpack(avds_path, self.config[".avds_dir"])
+
+    def start_emulators(self):
+        '''
+        This action starts the emulators and redirects the two SUT ports for each one of them
+        '''
+        assert len(self.test_suites) <= len(self.emulators), \
+            "We can't run more tests that the number of emulators we start"
+        # We kill compiz because it sometimes prevents us from starting the emulators
+        self._kill_processes("compiz")
+        self.procs = []
+        emulator_index = 0
+        for test in self.test_suites:
+            emulator = self.emulators[emulator_index]
+            emulator_index+=1
+
+            proc = self._launch_emulator(emulator)
+            self.procs.append(proc)
+            self.info("Emulators staggered start up. Sleeping %d secs." % sleeptime)
+            time.sleep(sleeptime)
+
+    def install(self):
+        assert self.installer_path is not None, \
+            "Either add installer_path to the config or use --installer-path."
+        dirs = self.query_abs_dirs()
+        emulator_index = 0
+        for suite_name in self.test_suites:
+            emulator = self.emulators[emulator_index]
+            emulator_index+=1
+
+            config = {
+                'device-id': emulator["device_id"],
+                'enable_automation': True,
+                'device_package_name': self.config['fennec_package_name']
+            }
+            config = dict(config.items() + self.config.items())
+
+            dh = ADBDeviceHandler(config=config)
+            dh.device_id = emulator['device_id']
+
+            # Install Fennec
+            dh.install_app(self.installer_path)
+
+            # Install the robocop apk if required
+            if suite_name.startswith('robocop'):
+                config['device_package_name'] = c["robocop_package_name"]
+                robocop_path = os.path.join(dirs['abs_mochitest_dir'], 'robocop.apk')
+                dh.install_app(robocop_path)
+
+    def run_tests(self):
+        """
+        Run the tests
+        """
+        procs = []
+
+        emulator_index = 0
+        for suite_name in self.test_suites:
+            procs.append(self._trigger_test(suite_name, emulator_index))
+            emulator_index+=1
+
+        joint_return_code = 0
+        while True:
+            for p in procs:
+                return_code = p["process"].poll()
+                if return_code!=None:
+                    suite_name = p["suite_name"]
+                    self.info("##### %s log begins" % p["suite_name"])
+                    if return_code !=0:
+                        joint_return_code=1
+                    # Let's close the stdout
+                    p["tmp_stdout"].close()
+                    # Let's read the file that now has the output
+                    output = self.read_from_file(p["tmp_file"].name, verbose=False)
+                    # Let's output all the log
+                    self.info(output)
+                    # Let's parse the output and determine what the results should be
+                    suite_category = self.test_suite_definitions[p["suite_name"]]["category"]
+                    parser = DesktopUnittestOutputParser(
+                                 suite_category=suite_category,
+                                 config=self.config,
+                                 log_obj=self.log_obj,
+                                 error_list=self.error_list)
+                    for line in output.splitlines():
+                        parser.parse_single_line(line)
+
+                    tbpl_status, log_level = parser.evaluate_parser(return_code)
+                    parser.append_tinderboxprint_line(p["suite_name"])
+
+                    # XXX: Is this the right way of setting the buildbot status?
+                    #      :/ - We're running it multiple times
+                    # self.buildbot_status(tbpl_status, level=log_level)
+
+                    # I'm not using the concept of "plain-#" like other jobs; do I need this logging?
+                    # e.g. The mochitest suite: plain4 ran with return status: SUCCESS
+                    #self.log("The %s suite: %s ran with return status: %s" %
+                    #         (suite_category, p["suite_name"], tbpl_status), level=log_level)
+                    self.info("##### %s log ends" % p["suite_name"])
+                    procs.remove(p)
+            if procs == []:
+                break
+            else:
+                # Printing something on the log prevents buildbot from
+                # killing the job for lack of output
+                sys.stdout.write('#')
+                time.sleep(30)
+
+        # XXX: We're going to need a joint tbpl_status
+
+    def stop_emulators(self):
+        '''
+        Let's make sure that every emulator has been stopped
+        '''
+        self._kill_processes('emulator64-x86')
 
 if __name__ == '__main__':
     emulatorTest = Androidx86EmulatorTest()
-    emulatorTest.run_and_exit()
+    emulatorTest.run()

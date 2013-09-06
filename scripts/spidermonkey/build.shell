@@ -1,0 +1,9 @@
+#!/bin/sh
+
+set -e
+set -x
+
+[ -d $ANALYZED_OBJDIR ] || mkdir $ANALYZED_OBJDIR
+cd $ANALYZED_OBJDIR
+$SOURCE/js/src/configure --enable-debug --enable-optimize --enable-root-analysis --without-intl-api
+make -j12 -s
