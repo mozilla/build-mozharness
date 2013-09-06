@@ -65,6 +65,7 @@ HgErrorList = BaseErrorList + [
 GitErrorList = BaseErrorList + [
     {'substr': r'''Permission denied (publickey).''', 'level': ERROR},
     {'substr': r'''fatal: The remote end hung up unexpectedly''', 'level': ERROR},
+    {'substr': r'''does not appear to be a git repository''', 'level': ERROR},
     {'substr': r'''error: src refspec''', 'level': ERROR},
 ]
 

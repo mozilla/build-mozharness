@@ -28,13 +28,13 @@ config = {
             "vcs": "git",
             "test_push": True,
         }, {
-            "target_dest": "github-beagle",
-            "vcs": "git",
-        }, {
             "target_dest": "m-c1/.git",
             "vcs": "git",
             "test_push": True,
             "force_push": True,
+        }, {
+            "target_dest": "github-beagle",
+            "vcs": "git",
         }],
         "bare_checkout": True,
         "vcs": "hg",
@@ -63,14 +63,6 @@ config = {
                 "tags": {'*': '*'},
             },
         }, {
-            "target_dest": "github-beagle",
-            "vcs": "git",
-            "tag_config": {
-                "tag_regexes": [
-                    "^B2G_",
-                ],
-            },
-        }, {
             "target_dest": "m-b2g18/.git",
             "vcs": "git",
             "test_push": True,
@@ -78,6 +70,14 @@ config = {
                 "branches": {
                     "b2g18": "master",
                 },
+            },
+        }, {
+            "target_dest": "github-beagle",
+            "vcs": "git",
+            "tag_config": {
+                "tag_regexes": [
+                    "^B2G_",
+                ],
             },
         }],
         "bare_checkout": True,
