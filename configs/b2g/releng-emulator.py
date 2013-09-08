@@ -59,7 +59,7 @@ config = {
         "POST_SYMBOL_UPLOAD_CMD": "/usr/local/bin/post-symbol-upload.py",
         "WGET_OPTS": "-c -q",
     },
-    "purge_minsize": 15,
+    "purge_minsize": 20,
     "clobberer_url": "http://clobberer.pvt.build.mozilla.org/index.php",
     "is_automation": True,
     "repo_mirror_dir": "/builds/git-shared/repo",
