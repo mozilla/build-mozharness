@@ -315,6 +315,29 @@ class HgGitScript(VirtualenvMixin, TooltoolMixin, TransferMixin, VCSScript):
                         halt_on_failure=True,
                     )
 
+    def _do_push_repo(self, base_command, refs_list=None, kwargs=None):
+        """ Helper method for _push_repo() since it has to be able to break
+            out of the target_repo list loop, and the commands loop borks that.
+            """
+        commands = []
+        if refs_list:
+            while len(refs_list) > 10:
+                commands.append(base_command + refs_list[0:10])
+                refs_list = refs_list[10:]
+                commands.append(base_command + refs_list)
+        else:
+            commands = [base_command]
+        if kwargs is None:
+            kwargs = {}
+        for command in commands:
+            # Do the push, with retry!
+            if self.retry(
+                self.run_command,
+                args=(command, ),
+                kwargs=kwargs,
+            ):
+                return -1
+
     def _push_repo(self, repo_config):
         """ Push a repo to a path ("test_push") or remote server.
 
@@ -353,7 +376,6 @@ class HgGitScript(VirtualenvMixin, TooltoolMixin, TransferMixin, VCSScript):
                 # We query hg for these because the conversion dir will have
                 # branches from multiple hg repos, and the regexes may match
                 # too many things.
-                commands = []
                 refs_list = []
                 branch_map = self.query_branches(
                     target_config.get('branch_config', repo_config.get('branch_config', {})),
@@ -398,34 +420,29 @@ class HgGitScript(VirtualenvMixin, TooltoolMixin, TransferMixin, VCSScript):
                             if regex.search(tag_name) is not None:
                                 refs_list += ['+refs/tags/%s:refs/tags/%s' % (tag_name, tag_name)]
                                 continue
-                if refs_list:
-                    while len(refs_list) > 10:
-                        commands.append(base_command + refs_list[0:10])
-                        refs_list = refs_list[10:]
-                    commands.append(base_command + refs_list)
-                else:
-                    commands = [base_command]
-                for command in commands:
-                    # Do the push, with retry!
-                    if self.retry(
-                        self.run_command,
-                        args=(command, ),
-                        kwargs={
-                            'output_timeout': target_config.get("output_timeout", 30 * 60),
-                            'cwd': os.path.join(conversion_dir, '.git'),
-                            'error_list': GitErrorList,
-                            'partial_env': env,
-                        },
-                    ):
-                        error_msg = "%s: Can't push %s to %s!" % (
-                            repo_config['repo_name'], conversion_dir, target_name)
-                        self.error(error_msg)
-                        return_status = error_msg
+                error_msg = "%s: Can't push %s to %s!\n" % (repo_config['repo_name'], conversion_dir, target_name)
+                if self._do_push_repo(
+                    base_command,
+                    refs_list=refs_list,
+                    kwargs={
+                        'output_timeout': target_config.get("output_timeout", 30 * 60),
+                        'cwd': os.path.join(conversion_dir, '.git'),
+                        'error_list': GitErrorList,
+                        'partial_env': env,
+                    }
+                ):
+                    if target_config.get("test_push"):
+                        error_msg += "This was a test push that failed; not proceeding any further with %s!\n" % repo_config['repo_name']
+                    self.error(error_msg)
+                    return_status += error_msg
+                    if target_config.get("test_push"):
+                        break
             else:
-                error_msg = "%s: Don't know how to deal with vcs %s!" % (
+                # TODO write hg
+                error_msg = "%s: Don't know how to deal with vcs %s!\n" % (
                     target_config['target_dest'], target_config['vcs'])
                 self.error(error_msg)
-                return_status = error_msg
+                return_status += error_msg
         return return_status
 
     def _query_mapped_revision(self, revision=None, mapfile=None):
@@ -673,8 +690,8 @@ intree=1
         # without committing
         self.run_command(git + ["checkout"], cwd=conversion_dir)
         self.run_command(
-            'ln -s ' + os.path.join(dirs['abs_cvs_history_dir'], 'objects',
-                                    'pack', '*') + ' .',
+            'cp ' + os.path.join(dirs['abs_cvs_history_dir'], 'objects',
+                                 'pack', '*') + ' .',
             cwd=os.path.join(git_conversion_dir, 'objects', 'pack')
         )
         self._check_initial_git_revisions(dirs['abs_cvs_history_dir'], 'e230b03',
@@ -781,7 +798,7 @@ intree=1
                 if not os.path.exists(target_dest):
                     self.info("Creating local target repo %s." % target_dest)
                     if target_config.get("vcs", "git") == "git":
-                        self.init_git_repo(target_dest, additional_args=['--bare'])
+                        self.init_git_repo(target_dest, additional_args=['--bare', '--shared=true'])
                     else:
                         self.fatal("Don't know how to deal with vcs %s!" % target_config['vcs'])
                 else:
