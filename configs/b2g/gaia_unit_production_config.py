@@ -35,7 +35,6 @@ config = {
         'download-and-extract',
         'create-virtualenv',
         'install',
-        'make-gaia',
         'run-tests',
     ],
 }
