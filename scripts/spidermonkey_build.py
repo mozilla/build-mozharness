@@ -394,7 +394,8 @@ jobs = 2
         for f, short, long in files:
             self.copy_to_upload_dir(os.path.join(analysis_dir, f),
                                     short_desc=short,
-                                    long_desc=long)
+                                    long_desc=long,
+                                    compress=True)
 
     def upload_analysis(self):
         if not self.query_do_upload():
