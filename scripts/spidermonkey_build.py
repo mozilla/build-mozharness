@@ -6,6 +6,7 @@
 import os
 import sys
 from datetime import datetime
+from functools import wraps
 
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
@@ -19,6 +20,17 @@ from mozharness.mozilla.tooltool import TooltoolMixin
 
 SUCCESS, WARNINGS, FAILURE, EXCEPTION = xrange(4)
 
+
+def requires(*queries):
+    def make_wrapper(f):
+        @wraps(f)
+        def wrapper(self, *args, **kwargs):
+            for query in queries:
+                val = query(self)
+                assert (val is not None and "None" not in str(val)), "invalid " + query.__name__
+            return f(self, *args, **kwargs)
+        return wrapper
+    return make_wrapper
 
 class SpidermonkeyBuild(MockMixin, BaseScript, VCSMixin, BuildbotMixin, TooltoolMixin, TransferMixin):
     config_options = [
@@ -397,6 +409,10 @@ jobs = 2
                                     long_desc=long,
                                     compress=True)
 
+    @requires(query_upload_path,
+              query_upload_ssh_key,
+              query_upload_ssh_user,
+              query_upload_ssh_server)
     def upload_analysis(self):
         if not self.query_do_upload():
             self.info("Uploads disabled for this build. Skipping...")
