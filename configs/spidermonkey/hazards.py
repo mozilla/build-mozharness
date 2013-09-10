@@ -30,7 +30,7 @@ config = {
     "mock_packages": [
         "autoconf213", "mozilla-python27-mercurial", "ccache",
         "zip", "zlib-devel", "glibc-static",
-        "openssh-clients", "mpfr", "wget",
+        "openssh-clients", "mpfr", "wget", "rsync",
         GCC_RPM,
         "gmp-devel", "nspr", "nspr-devel", "sixgill"
     ],
