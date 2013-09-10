@@ -93,9 +93,9 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin):
             if self.installer_url.endswith(suffix):
                 no_suffix = self.installer_url[:-len(suffix)]
                 last_dot = no_suffix.rfind('.')
-                platform = no_suffix[last_dot + 1:]
+                pf = no_suffix[last_dot + 1:]
 
-                self.jsshell_url = base_url + '/jsshell-' + platform + '.zip'
+                self.jsshell_url = base_url + '/jsshell-' + pf + '.zip'
                 return self.jsshell_url
         else:
             self.fatal("Can't figure out jsshell from installer_url %s!" % self.installer_url)

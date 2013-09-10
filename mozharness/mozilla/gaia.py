@@ -4,7 +4,7 @@ Module for performing gaia-specific tasks
 
 import os
 
-from mozharness.base.errors import TarErrorList, ZipErrorList, HgErrorList
+from mozharness.base.errors import HgErrorList
 
 
 class GaiaMixin(object):
@@ -44,7 +44,7 @@ class GaiaMixin(object):
                    'extensions.purge=',
                    'purge']
             if self.run_command(cmd, cwd=dest, error_list=HgErrorList):
-                self.fatal("Unable to purge %s!" % repo_dir)
+                self.fatal("Unable to purge %s!" % dest)
 
         repo = {
             'repo': repo_path,
