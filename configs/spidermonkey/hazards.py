@@ -26,6 +26,8 @@ config = {
         "dest": "tools"
     }],
 
+    "upload_remote_baseuri": 'http://ftp.mozilla.org/',
+
     # Mock.
     "mock_packages": [
         "autoconf213", "mozilla-python27-mercurial", "ccache",

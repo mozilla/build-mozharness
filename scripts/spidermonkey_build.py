@@ -32,6 +32,7 @@ def requires(*queries):
         return wrapper
     return make_wrapper
 
+
 class SpidermonkeyBuild(MockMixin, BaseScript, VCSMixin, BuildbotMixin, TooltoolMixin, TransferMixin):
     config_options = [
         [["--repo"], {
@@ -98,7 +99,7 @@ class SpidermonkeyBuild(MockMixin, BaseScript, VCSMixin, BuildbotMixin, Tooltool
                                 'run-analysis',
                                 'collect-analysis-output',
                                 'upload-analysis',
-                    ],
+                            ],
                             config={
                                 'default_vcs': 'hgtool',
                                 'vcs_share_base': os.environ.get('HG_SHARE_BASE_DIR'),
@@ -111,7 +112,7 @@ class SpidermonkeyBuild(MockMixin, BaseScript, VCSMixin, BuildbotMixin, Tooltool
                                 'upload_remote_basepath': None,
                                 'enable_try_uploads': True,
                             },
-                            )
+        )
 
         self.nonmock_env = self.query_env()
         self.env = self.nonmock_env
@@ -210,10 +211,16 @@ class SpidermonkeyBuild(MockMixin, BaseScript, VCSMixin, BuildbotMixin, Tooltool
         if self.config.get('upload_remote_basepath'):
             return self.config['upload_remote_basepath']
         else:
-            return "http://{upload_ssh_server}/pub/mozilla.org/{product}".format(
-                upload_ssh_server=self.query_upload_ssh_server(),
+            return "/pub/mozilla.org/{product}".format(
                 product=self.query_product(),
             )
+
+    def query_upload_remote_baseuri(self):
+        if self.buildbot_config and 'properties' in self.buildbot_config:
+            buildprops = self.buildbot_config['properties']
+            if 'upload_remote_baseuri' in buildprops:
+                return buildprops['upload_remote_baseuri']
+        return self.config.get('upload_remote_baseuri')
 
     def query_target(self):
         if self.buildbot_config and 'properties' in self.buildbot_config:
@@ -235,7 +242,7 @@ class SpidermonkeyBuild(MockMixin, BaseScript, VCSMixin, BuildbotMixin, Tooltool
                 return None
             try:
                 user = self.buildbot_config['sourcestamp']['changes'][0]['who']
-            except (KeyError,TypeError):
+            except (KeyError, TypeError):
                 user = "unknown"
             return "{basepath}/try-builds/{user}-{rev}/{branch}-{target}".format(
                 user=user,
@@ -412,7 +419,8 @@ jobs = 2
     @requires(query_upload_path,
               query_upload_ssh_key,
               query_upload_ssh_user,
-              query_upload_ssh_server)
+              query_upload_ssh_server,
+              query_upload_remote_baseuri)
     def upload_analysis(self):
         if not self.query_do_upload():
             self.info("Uploads disabled for this build. Skipping...")
@@ -432,8 +440,8 @@ jobs = 2
             self.error("failed to upload")
             self.return_code = 2
         else:
-            upload_url = "http://{upload_ssh_server}/{upload_path}".format(
-                upload_ssh_server=self.query_upload_ssh_server(),
+            upload_url = "{baseuri}{upload_path}".format(
+                baseuri=self.query_upload_remote_baseuri(),
                 upload_path=upload_path,
             )
 
