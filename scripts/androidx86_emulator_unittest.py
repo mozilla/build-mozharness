@@ -7,7 +7,6 @@
 
 import copy
 import os
-import re
 import sys
 import signal
 import socket
@@ -16,13 +15,10 @@ import telnetlib
 import time
 import tempfile
 
-sleeptime = 60
-
 # load modules from parent dir
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
-from mozharness.base.errors import BaseErrorList
-from mozharness.base.log import ERROR, FATAL
+from mozharness.base.log import FATAL
 from mozharness.base.script import BaseScript
 from mozharness.base.vcs.vcsbase import VCSMixin
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
@@ -65,6 +61,8 @@ class Androidx86EmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixi
     virtualenv_modules = [
     ]
 
+    app_name = None
+
     def __init__(self, require_config_file=False):
         super(Androidx86EmulatorTest, self).__init__(
             config_options=self.config_options,
@@ -96,13 +94,16 @@ class Androidx86EmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixi
 
         # these are necessary since self.config is read only
         c = self.config
+        abs_dirs = self.query_abs_dirs()
         self.adb_path = c.get('adb_path', self._query_adb())
         self.installer_url = c.get('installer_url')
         self.installer_path = c.get('installer_path')
         self.test_url = c.get('test_url')
         self.test_manifest = c.get('test_manifest')
         self.robocop_url = c.get('robocop_url')
+        self.robocop_path = os.path.join(abs_dirs['abs_work_dir'], "robocop.apk")
         self.host_utils_url = c.get('host_utils_url')
+        self.minidump_stackwalk_path = c.get("minidump_stackwalk_path")
         self.emulators = c.get('emulators')
         self.emulator_components = c.get('emulator_components')
         self.test_suite_definitions = c['test_suite_definitions']
@@ -209,11 +210,6 @@ class Androidx86EmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixi
         """
         self._kill_processes("emulator64-x86")
 
-        # XXX aki, I' not sure exactly what this block is for
-        if 'notify' in self.actions:
-            self.notify(message=message, fatal=True)
-        self.copy_logs_to_upload_dir()
-
     # XXX: This and android_panda.py's function might make sense to take higher up
     def _download_robocop_apk(self):
         dirs = self.query_abs_dirs()
@@ -222,21 +218,18 @@ class Androidx86EmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixi
         self.info("Downloading robocop...")
         self.download_file(robocop_url, 'robocop.apk', dirs['abs_work_dir'], error_level=FATAL)
 
-    def download_and_extract(self):
-        # This will download and extract the fennec.apk and tests.zip
-        super(Androidx86EmulatorTest, self).download_and_extract()
-        dirs = self.query_abs_dirs()
-        if self.config.get('download_minidump_stackwalk'):
-            self.install_minidump_stackwalk()
+    def _query_package_name(self):
+        if self.app_name == None:
+            #find appname from package-name.txt - assumes download-and-extract has completed successfully
+            apk_dir = self.abs_dirs['abs_work_dir']
+            self.apk_path = os.path.join(apk_dir, self.installer_path)
+            unzip = self.query_exe("unzip")
+            package_path = os.path.join(apk_dir, 'package-name.txt')
+            unzip_cmd = [unzip, '-q', '-o',  self.apk_path]
+            self.run_command(unzip_cmd, cwd=apk_dir, halt_on_failure=True)
+            self.app_name = str(self.read_from_file(package_path, verbose=True)).rstrip()
+        return self.app_name
 
-        self._download_robocop_apk()
-
-        self.download_file(self.symbols_url, file_name='crashreporter-symbols.zip',
-                           parent_dir=dirs['abs_work_dir'],
-                           error_level=FATAL)
-
-        self.mkdir_p(dirs['abs_xre_dir'])
-        self._download_unzip(self.host_utils_url, dirs['abs_xre_dir'])
 
     def preflight_install(self):
         # in the base class, this checks for mozinstall, but we don't use it
@@ -255,7 +248,7 @@ class Androidx86EmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixi
         ]
 
         str_format_values = {
-            'app': c['fennec_package_name'],
+            'app': self._query_package_name(),
             'remote_webserver': c['remote_webserver'],
             'xre_path': os.path.join(dirs['abs_xre_dir'], 'xre'),
             'utility_path':  os.path.join(dirs['abs_xre_dir'], 'bin'),
@@ -266,6 +259,7 @@ class Androidx86EmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixi
             'certs_path': os.path.join(dirs['abs_work_dir'], 'tests/certs'),
             'symbols_path': 'crashreporter-symbols.zip',
             'modules_dir': dirs['abs_modules_dir'],
+            'installer_path': self.installer_path,
         }
         for option in c["suite_definitions"][suite_category]["options"]:
            cmd.extend([option % str_format_values])
@@ -299,10 +293,8 @@ class Androidx86EmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixi
         except:
             self.fatal("Don't know how to run --test-suite '%s'!" % suite_name)
 
-        env = {}
-        if self.query_minidump_stackwalk():
-            env['MINIDUMP_STACKWALK'] = self.minidump_stackwalk_path
-        env = self.query_env(partial_env=env)
+        env = self.query_env()
+        self.query_minidump_stackwalk()
 
         self.info("Running on %s the command %s" % (self.emulators[emulator_index]["name"], subprocess.list2cmdline(cmd)))
         tmp_file = tempfile.NamedTemporaryFile(mode='w')
@@ -322,12 +314,13 @@ class Androidx86EmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixi
     def setup_avds(self):
         '''
         We have deployed through Puppet tar ball with the pristine templates.
-        If they have not been untarred before we go ahead and do so.
+        Let's unpack them every time.
         '''
-        if not os.path.exists(os.path.join(self.config[".avds_dir"], "test-x86-1.avd")):
-            avds_path = self.config["avds_path"]
-            self.mkdir_p(self.config[".avds_dir"])
-            self.unpack(avds_path, self.config[".avds_dir"])
+        if os.path.exists(os.path.join(self.config[".avds_dir"], "test-x86-1.avd")):
+           self.rmtree(self.config[".avds_dir"])
+        avds_path = self.config["avds_path"]
+        self.mkdir_p(self.config[".avds_dir"])
+        self.unpack(avds_path, self.config[".avds_dir"])
 
     def start_emulators(self):
         '''
@@ -345,13 +338,31 @@ class Androidx86EmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixi
 
             proc = self._launch_emulator(emulator)
             self.procs.append(proc)
-            self.info("Emulators staggered start up. Sleeping %d secs." % sleeptime)
-            time.sleep(sleeptime)
+
+    def download_and_extract(self):
+        # This will download and extract the fennec.apk and tests.zip
+        super(Androidx86EmulatorTest, self).download_and_extract()
+        dirs = self.query_abs_dirs()
+        # XXX: Why is it called "download" since we don't download it?
+        if self.config.get('download_minidump_stackwalk'):
+            # XXX: install_minidump_stackwalk will clone tools regardless if
+            # I already have a stackwalk_path on the machine
+            # Does it make sense?
+            self.install_minidump_stackwalk()
+
+        self._download_robocop_apk()
+
+        self.download_file(self.symbols_url, file_name='crashreporter-symbols.zip',
+                           parent_dir=dirs['abs_work_dir'],
+                           error_level=FATAL)
+
+        self.mkdir_p(dirs['abs_xre_dir'])
+        self._download_unzip(self.host_utils_url, dirs['abs_xre_dir'])
 
     def install(self):
         assert self.installer_path is not None, \
             "Either add installer_path to the config or use --installer-path."
-        dirs = self.query_abs_dirs()
+
         emulator_index = 0
         for suite_name in self.test_suites:
             emulator = self.emulators[emulator_index]
@@ -360,21 +371,25 @@ class Androidx86EmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixi
             config = {
                 'device-id': emulator["device_id"],
                 'enable_automation': True,
-                'device_package_name': self.config['fennec_package_name']
+                'device_package_name': self._query_package_name()
             }
             config = dict(config.items() + self.config.items())
 
+            self.info("Creating ADBDevicHandler for %s with config %s" % (emulator["name"], config))
             dh = ADBDeviceHandler(config=config)
             dh.device_id = emulator['device_id']
 
             # Install Fennec
+            self.info("Installing Fennec for %s" % emulator["name"])
             dh.install_app(self.installer_path)
 
             # Install the robocop apk if required
             if suite_name.startswith('robocop'):
-                config['device_package_name'] = c["robocop_package_name"]
-                robocop_path = os.path.join(dirs['abs_mochitest_dir'], 'robocop.apk')
-                dh.install_app(robocop_path)
+                self.info("Installing Robocop for %s" % emulator["name"])
+                config['device_package_name'] = self.config["robocop_package_name"]
+                dh.install_app(self.robocop_path)
+
+            self.info("Finished installing apps for %s" % emulator["name"])
 
     def run_tests(self):
         """
@@ -387,15 +402,17 @@ class Androidx86EmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixi
             procs.append(self._trigger_test(suite_name, emulator_index))
             emulator_index+=1
 
-        joint_return_code = 0
+        joint_tbpl_status = None
+        joint_log_level = None
+        start_time = int(time.time())
         while True:
             for p in procs:
                 return_code = p["process"].poll()
                 if return_code!=None:
                     suite_name = p["suite_name"]
+                    # To make reading the log of the suite not mix with the previous line
+                    sys.stdout.write('\n')
                     self.info("##### %s log begins" % p["suite_name"])
-                    if return_code !=0:
-                        joint_return_code=1
                     # Let's close the stdout
                     p["tmp_stdout"].close()
                     # Let's read the file that now has the output
@@ -403,37 +420,34 @@ class Androidx86EmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixi
                     # Let's output all the log
                     self.info(output)
                     # Let's parse the output and determine what the results should be
-                    suite_category = self.test_suite_definitions[p["suite_name"]]["category"]
                     parser = DesktopUnittestOutputParser(
-                                 suite_category=suite_category,
+                                 suite_category=self.test_suite_definitions[p["suite_name"]]["category"],
                                  config=self.config,
                                  log_obj=self.log_obj,
                                  error_list=self.error_list)
                     for line in output.splitlines():
                         parser.parse_single_line(line)
 
+                    # After parsing each line we should know what the summary for this suite should be
                     tbpl_status, log_level = parser.evaluate_parser(return_code)
                     parser.append_tinderboxprint_line(p["suite_name"])
+                    # After running all jobs we will report the worst status of all emulator runs
+                    joint_tbpl_status = self.worst_tbpl_status(tbpl_status, joint_tbpl_status)
+                    joint_log_level = self.worst_level(log_level, joint_log_level)
 
-                    # XXX: Is this the right way of setting the buildbot status?
-                    #      :/ - We're running it multiple times
-                    # self.buildbot_status(tbpl_status, level=log_level)
-
-                    # I'm not using the concept of "plain-#" like other jobs; do I need this logging?
-                    # e.g. The mochitest suite: plain4 ran with return status: SUCCESS
-                    #self.log("The %s suite: %s ran with return status: %s" %
-                    #         (suite_category, p["suite_name"], tbpl_status), level=log_level)
                     self.info("##### %s log ends" % p["suite_name"])
                     procs.remove(p)
             if procs == []:
                 break
             else:
-                # Printing something on the log prevents buildbot from
-                # killing the job for lack of output
-                sys.stdout.write('#')
+                # Every 5 minutes let's print something to stdout
+                # so buildbot won't kill the process due to lack of output
+                if int(time.time()) - start_time > 5 * 60:
+                    self.info('#')
+                    start_time = int(time.time())
                 time.sleep(30)
 
-        # XXX: We're going to need a joint tbpl_status
+        self.buildbot_status(joint_tbpl_status, level=joint_log_level)
 
     def stop_emulators(self):
         '''
@@ -443,4 +457,4 @@ class Androidx86EmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixi
 
 if __name__ == '__main__':
     emulatorTest = Androidx86EmulatorTest()
-    emulatorTest.run()
+    emulatorTest.run_and_exit()
