@@ -11,6 +11,7 @@ mozharness.
 """
 
 import codecs
+import gzip
 import inspect
 import os
 import platform
@@ -257,16 +258,35 @@ class ScriptMixin(object):
         self.info("Chmoding %s to %s" % (path, str(oct(mode))))
         os.chmod(path, mode)
 
-    def copyfile(self, src, dest, log_level=INFO, error_level=ERROR, copystat=False):
-        self.log("Copying %s to %s" % (src, dest), level=log_level)
-        try:
-            shutil.copyfile(src, dest)
-            if copystat:
+    def copyfile(self, src, dest, log_level=INFO, error_level=ERROR, copystat=False, compress=False):
+        if compress:
+            self.log("Compressing %s to %s" % (src, dest), level=log_level)
+            try:
+                infile = open(src, "rb")
+                outfile = gzip.open(dest, "wb")
+                outfile.writelines(infile)
+                outfile.close()
+                infile.close()
+            except IOError, e:
+                self.log("Can't compress %s to %s: %s!" % (src, dest, str(e)),
+                         level=error_level)
+                return -1
+        else:
+            self.log("Copying %s to %s" % (src, dest), level=log_level)
+            try:
+                shutil.copyfile(src, dest)
+            except (IOError, shutil.Error), e:
+                self.log("Can't copy %s to %s: %s!" % (src, dest, str(e)),
+                         level=error_level)
+                return -1
+
+        if copystat:
+            try:
                 shutil.copystat(src, dest)
-        except (IOError, shutil.Error), e:
-            self.log("Can't copy %s to %s: %s!" % (src, dest, str(e)),
-                     level=error_level)
-            return -1
+            except (IOError, shutil.Error), e:
+                self.log("Can't copy attributes of %s to %s: %s!" % (src, dest, str(e)),
+                         level=error_level)
+                return -1
 
     def copytree(self, src, dest, overwrite='no_overwrite', log_level=INFO,
                  error_level=ERROR):
@@ -1226,7 +1246,8 @@ class BaseScript(ScriptMixin, LogMixin, object):
 
     def copy_to_upload_dir(self, target, dest=None, short_desc="unknown",
                            long_desc="unknown", log_level=DEBUG,
-                           error_level=ERROR, max_backups=None):
+                           error_level=ERROR, max_backups=None,
+                           compress=False):
         """Copy target file to upload_dir/dest.
 
         Potentially update a manifest in the future if we go that route.
@@ -1239,14 +1260,18 @@ class BaseScript(ScriptMixin, LogMixin, object):
         upload_dir manifests.
         """
         dirs = self.query_abs_dirs()
+        dest_filename_given = dest is not None
         if dest is None:
             dest = os.path.basename(target)
         if dest.endswith('/'):
             dest_file = os.path.basename(target)
             dest_dir = os.path.join(dirs['abs_upload_dir'], dest)
+            dest_filename_given = False
         else:
             dest_file = os.path.basename(dest)
             dest_dir = os.path.join(dirs['abs_upload_dir'], os.path.dirname(dest))
+        if compress and not dest_filename_given:
+            dest_file += ".gz"
         dest = os.path.join(dest_dir, dest_file)
         if not os.path.exists(target):
             self.log("%s doesn't exist!" % target, level=error_level)
@@ -1280,7 +1305,7 @@ class BaseScript(ScriptMixin, LogMixin, object):
                 if self.rmtree(dest, log_level=log_level):
                     self.log("Unable to remove %s!" % dest, level=error_level)
                     return -1
-        self.copyfile(target, dest, log_level=log_level)
+        self.copyfile(target, dest, log_level=log_level, compress=compress)
         if os.path.exists(dest):
             return dest
         else:
