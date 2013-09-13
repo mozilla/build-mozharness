@@ -21,6 +21,7 @@ sys.path.insert(1, os.path.dirname(sys.path[0]))
 from mozharness.base.log import FATAL
 from mozharness.base.script import BaseScript
 from mozharness.base.vcs.vcsbase import VCSMixin
+from mozharness.mozilla.buildbot import TBPL_WORST_LEVEL_TUPLE
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
 from mozharness.mozilla.testing.unittest import DesktopUnittestOutputParser, EmulatorMixin
 from mozharness.mozilla.tooltool import TooltoolMixin
@@ -432,7 +433,7 @@ class Androidx86EmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixi
                     tbpl_status, log_level = parser.evaluate_parser(return_code)
                     parser.append_tinderboxprint_line(p["suite_name"])
                     # After running all jobs we will report the worst status of all emulator runs
-                    joint_tbpl_status = self.worst_tbpl_status(tbpl_status, joint_tbpl_status)
+                    joint_tbpl_status = self.worst_level(tbpl_status, joint_tbpl_status, TBPL_WORST_LEVEL_TUPLE)
                     joint_log_level = self.worst_level(log_level, joint_log_level)
 
                     self.info("##### %s log ends" % p["suite_name"])
