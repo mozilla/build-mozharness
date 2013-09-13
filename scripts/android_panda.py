@@ -230,6 +230,8 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
                 if c.get('minidump_save_path'):
                     env['MINIDUMP_SAVE_PATH'] = c['minidump_save_path']
                 env = self.query_env(partial_env=env, log_level=INFO)
+                if env.has_key('PYTHONPATH'):
+                    del env['PYTHONPATH']
                 test_summary_parser = DesktopUnittestOutputParser(suite_category,
                                                                   config=self.config,
                                                                   error_list=error_list,
