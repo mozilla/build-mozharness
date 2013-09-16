@@ -21,6 +21,7 @@ sys.path.insert(1, os.path.dirname(sys.path[0]))
 from mozharness.base.log import FATAL
 from mozharness.base.script import BaseScript
 from mozharness.base.vcs.vcsbase import VCSMixin
+from mozharness.mozilla.buildbot import TBPL_WORST_LEVEL_TUPLE
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
 from mozharness.mozilla.testing.unittest import DesktopUnittestOutputParser, EmulatorMixin
 from mozharness.mozilla.tooltool import TooltoolMixin
@@ -257,7 +258,9 @@ class Androidx86EmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixi
             'http_port': emulator['http_port'],
             'ssl_port': emulator['ssl_port'],
             'certs_path': os.path.join(dirs['abs_work_dir'], 'tests/certs'),
-            'symbols_path': 'crashreporter-symbols.zip',
+            # TestingMixin._download_and_extract_symbols() will set
+            # self.symbols_path when downloading/extracting.
+            'symbols_path': self.symbols_path,
             'modules_dir': dirs['abs_modules_dir'],
             'installer_path': self.installer_path,
         }
@@ -352,10 +355,6 @@ class Androidx86EmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixi
 
         self._download_robocop_apk()
 
-        self.download_file(self.symbols_url, file_name='crashreporter-symbols.zip',
-                           parent_dir=dirs['abs_work_dir'],
-                           error_level=FATAL)
-
         self.mkdir_p(dirs['abs_xre_dir'])
         self._download_unzip(self.host_utils_url, dirs['abs_xre_dir'])
 
@@ -432,7 +431,7 @@ class Androidx86EmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixi
                     tbpl_status, log_level = parser.evaluate_parser(return_code)
                     parser.append_tinderboxprint_line(p["suite_name"])
                     # After running all jobs we will report the worst status of all emulator runs
-                    joint_tbpl_status = self.worst_tbpl_status(tbpl_status, joint_tbpl_status)
+                    joint_tbpl_status = self.worst_level(tbpl_status, joint_tbpl_status, TBPL_WORST_LEVEL_TUPLE)
                     joint_log_level = self.worst_level(log_level, joint_log_level)
 
                     self.info("##### %s log ends" % p["suite_name"])

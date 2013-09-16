@@ -1249,14 +1249,16 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin, Toolto
                 self.sendchange(downloadables=[download_url, "%s/%s" % (download_url, "gaia-tests.zip")])
             if self.config["target"] == "generic" and self.config.get('sendchange_masters'):
                 # yay hardcodes
+                downloadables = [
+                    '%s/%s' % (download_url, 'emulator.tar.gz'),
+                ]
+                matches = glob.glob(os.path.join(dirs['abs_upload_dir'], 'b2g*crashreporter-symbols.zip'))
+                if matches:
+                    downloadables.append("%s/%s" % (download_url, os.path.basename(matches[0])))
                 matches = glob.glob(os.path.join(dirs['abs_upload_dir'], 'b2g*tests.zip'))
                 if matches:
-                    self.sendchange(
-                        downloadables=[
-                            '%s/%s' % (download_url, 'emulator.tar.gz'),
-                            "%s/%s" % (download_url, os.path.basename(matches[0])),
-                        ]
-                    )
+                    downloadables.append("%s/%s" % (download_url, os.path.basename(matches[0])))
+                    self.sendchange(downloadables=downloadables)
 
     def make_socorro_json(self):
         self.info("Creating socorro.json...")
