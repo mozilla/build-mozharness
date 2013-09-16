@@ -126,11 +126,6 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin,
 
     repos = []
 
-    gaia_ui_tests_repo = {'repo': 'http://hg.mozilla.org/integration/gaia-ui-tests/',
-                          'revision': 'master',
-                          'dest': 'gaia-ui-tests',
-                          'branch': None}
-
     def __init__(self, require_config_file=False):
         super(MarionetteTest, self).__init__(
             config_options=self.config_options,
@@ -177,13 +172,13 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin,
             abs_dirs['abs_work_dir'], 'gecko')
         dirs['abs_emulator_dir'] = os.path.join(
             abs_dirs['abs_work_dir'], 'emulator')
-        dirs['abs_gaiatest_dir'] = os.path.join(
-            abs_dirs['abs_work_dir'], 'gaia-ui-tests')
 
         gaia_root_dir = self.config.get('gaia_dir')
         if not gaia_root_dir:
             gaia_root_dir = self.config['base_work_dir']
         dirs['abs_gaia_dir'] = os.path.join(gaia_root_dir, 'gaia')
+        dirs['abs_gaiatest_dir'] = os.path.join(
+            dirs['abs_gaia_dir'], 'tests', 'python', 'gaia-ui-tests')
 
         for key in dirs.keys():
             if key not in abs_dirs:
@@ -229,11 +224,9 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin,
                 url=self.query_abs_dirs()['abs_gaiatest_dir'], method='pip')
 
     def pull(self, **kwargs):
-        repos = copy.deepcopy(self.config.get('repos', []))
-        dirs = self.query_abs_dirs()
-
         if self.config.get('gaiatest'):
             # clone the gaia dir
+            dirs = self.query_abs_dirs()
             dest = dirs['abs_gaia_dir']
 
             repo = {
@@ -252,33 +245,6 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin,
             self.clone_gaia(dest, repo,
                             use_gaia_json=self.buildbot_config is not None)
 
-            # clone the gaia-ui-tests repo
-            gaia_ui_tests_repo = self.config.get("gaia_ui_tests_repo", self.gaia_ui_tests_repo)
-            if self.buildbot_config is not None:
-                # get gaia.json from gecko hgweb
-                revision = self.buildbot_config['properties']['revision']
-                repo_path = self.buildbot_config['properties']['repo_path']
-                url = "https://hg.mozilla.org/{repo_path}/raw-file/{rev}/b2g/config/gaia.json".format(
-                    repo_path=repo_path,
-                    rev=revision)
-                contents = self.retry(self.load_json_from_url, args=(url,))
-                if contents.get('repo_path') and contents.get('revision'):
-                    # get gaia-ui-tests.json from gaia hgweb
-                    gaia_ui_tests_url = 'https://hg.mozilla.org/{repo_path}/raw-file/{rev}/tests/python/gaia-ui-tests.json'.format(
-                        repo_path=contents['repo_path'],
-                        rev=contents['revision'])
-                    contents = self.retry(self.load_json_from_url, args=(gaia_ui_tests_url,))
-                    if contents.get('repo') and contents.get('revision'):
-                        gaia_ui_tests_repo['repo'] = contents['repo']
-                        gaia_ui_tests_repo['revision'] = contents['revision']
-                    else:
-                        self.fatal('error parsing gaia-ui-tests.json')
-                else:
-                    self.fatal('error parsing gaia.json')
-
-            repos.append(gaia_ui_tests_repo)
-
-        kwargs['repos'] = repos
         super(MarionetteTest, self).pull(**kwargs)
 
     def _build_arg(self, option, value):
