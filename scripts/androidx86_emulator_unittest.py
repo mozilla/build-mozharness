@@ -258,7 +258,9 @@ class Androidx86EmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixi
             'http_port': emulator['http_port'],
             'ssl_port': emulator['ssl_port'],
             'certs_path': os.path.join(dirs['abs_work_dir'], 'tests/certs'),
-            'symbols_path': 'crashreporter-symbols.zip',
+            # TestingMixin._download_and_extract_symbols() will set
+            # self.symbols_path when downloading/extracting.
+            'symbols_path': self.symbols_path,
             'modules_dir': dirs['abs_modules_dir'],
             'installer_path': self.installer_path,
         }
@@ -352,10 +354,6 @@ class Androidx86EmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixi
             self.install_minidump_stackwalk()
 
         self._download_robocop_apk()
-
-        self.download_file(self.symbols_url, file_name='crashreporter-symbols.zip',
-                           parent_dir=dirs['abs_work_dir'],
-                           error_level=FATAL)
 
         self.mkdir_p(dirs['abs_xre_dir'])
         self._download_unzip(self.host_utils_url, dirs['abs_xre_dir'])
