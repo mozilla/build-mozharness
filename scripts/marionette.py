@@ -13,12 +13,13 @@ import sys
 # load modules from parent dir
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
-from mozharness.base.errors import TarErrorList
-from mozharness.base.log import INFO, ERROR, WARNING
+from mozharness.base.errors import TarErrorList, ZipErrorList
+from mozharness.base.log import INFO, ERROR, WARNING, FATAL
 from mozharness.base.script import PreScriptAction
 from mozharness.base.transfer import TransferMixin
 from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_WARNING, TBPL_FAILURE
+from mozharness.mozilla.gaia import GaiaMixin
 from mozharness.mozilla.testing.errors import LogcatErrorList
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
 from mozharness.mozilla.testing.unittest import EmulatorMixin, TestSummaryOutputParserHelper
@@ -42,8 +43,27 @@ class MarionetteOutputParser(TestSummaryOutputParserHelper):
             self.install_gecko_failed = True
         super(MarionetteOutputParser, self).parse_single_line(line)
 
-class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, MercurialScript, TransferMixin):
+class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin,
+                     MercurialScript, TransferMixin, GaiaMixin):
     config_options = [
+        [["--gaia-dir"],
+         {"action": "store",
+          "dest": "gaia_dir",
+          "default": None,
+          "help": "directory where gaia repo should be cloned"
+         }],
+        [["--gaia-repo"],
+         {"action": "store",
+          "dest": "gaia_repo",
+          "default": "http://hg.mozilla.org/integration/gaia-central",
+          "help": "url of gaia repo to clone"
+         }],
+        [["--gaia-branch"],
+         {"action": "store",
+          "dest": "gaia_branch",
+          "default": "default",
+          "help": "branch of gaia repo to clone"
+         }],
         [["--test-type"],
         {"action": "store",
          "dest": "test_type",
@@ -83,7 +103,19 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, MercurialScript
          "default": "unit-tests.ini",
          "help": "Path to test manifest to run relative to the Marionette "
                  "tests directory",
-        }]] + copy.deepcopy(testing_config_options)
+         }],
+        [["--xre-path"],
+         {"action": "store",
+          "dest": "xre_path",
+          "default": "xulrunner-sdk",
+          "help": "directory (relative to gaia repo) of xulrunner-sdk"
+         }],
+        [["--xre-url"],
+         {"action": "store",
+          "dest": "xre_url",
+          "default": None,
+          "help": "url of desktop xre archive"
+         }]] + copy.deepcopy(testing_config_options)
 
     error_list = [
         {'substr': 'FAILED (errors=', 'level': WARNING},
@@ -147,6 +179,12 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, MercurialScript
             abs_dirs['abs_work_dir'], 'emulator')
         dirs['abs_gaiatest_dir'] = os.path.join(
             abs_dirs['abs_work_dir'], 'gaia-ui-tests')
+
+        gaia_root_dir = self.config.get('gaia_dir')
+        if not gaia_root_dir:
+            gaia_root_dir = self.config['base_work_dir']
+        dirs['abs_gaia_dir'] = os.path.join(gaia_root_dir, 'gaia')
+
         for key in dirs.keys():
             if key not in abs_dirs:
                 abs_dirs[key] = dirs[key]
@@ -192,8 +230,29 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, MercurialScript
 
     def pull(self, **kwargs):
         repos = copy.deepcopy(self.config.get('repos', []))
+        dirs = self.query_abs_dirs()
 
         if self.config.get('gaiatest'):
+            # clone the gaia dir
+            dest = dirs['abs_gaia_dir']
+
+            repo = {
+              'repo_path': self.config.get('gaia_repo'),
+              'revision': 'default',
+              'branch': self.config.get('gaia_branch')
+            }
+
+            if self.buildbot_config is not None:
+                # get gaia commit via hgweb
+                repo.update({
+                  'revision': self.buildbot_config['properties']['revision'],
+                  'repo_path': 'https://hg.mozilla.org/%s' % self.buildbot_config['properties']['repo_path']
+                })
+
+            self.clone_gaia(dest, repo,
+                            use_gaia_json=self.buildbot_config is not None)
+
+            # clone the gaia-ui-tests repo
             gaia_ui_tests_repo = self.config.get("gaia_ui_tests_repo", self.gaia_ui_tests_repo)
             if self.buildbot_config is not None:
                 # get gaia.json from gecko hgweb
@@ -230,8 +289,48 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, MercurialScript
             return []
         return [str(option), str(value)]
 
+    def extract_xre(self, filename, parent_dir=None):
+        m = re.search('\.tar\.(bz2|gz)$', filename)
+        if m:
+            # a xulrunner archive, which has a top-level 'xulrunner-sdk' dir
+            command = self.query_exe('tar', return_type='list')
+            tar_cmd = "jxf"
+            if m.group(1) == "gz":
+                tar_cmd = "zxf"
+            command.extend([tar_cmd, filename])
+            self.run_command(command,
+                             cwd=parent_dir,
+                             error_list=TarErrorList,
+                             halt_on_failure=True)
+        else:
+            # a tooltool xre.zip
+            command = self.query_exe('unzip', return_type='list')
+            command.extend(['-q', '-o', filename])
+            # Gaia assumes that xpcshell is in a 'xulrunner-sdk' dir, but
+            # xre.zip doesn't have a top-level directory name, so we'll
+            # create it.
+            parent_dir = os.path.join(parent_dir,
+                                      self.config.get('xre_path'))
+            if not os.access(parent_dir, os.F_OK):
+                self.mkdir_p(parent_dir, error_level=FATAL)
+            self.run_command(command,
+                             cwd=parent_dir,
+                             error_list=ZipErrorList,
+                             halt_on_failure=True)
+
     def download_and_extract(self):
         super(MarionetteTest, self).download_and_extract()
+
+        if self.config.get('gaiatest'):
+            xre_url = self.config.get('xre_url')
+            if xre_url:
+                dirs = self.query_abs_dirs()
+                xulrunner_bin = os.path.join(dirs['abs_gaia_dir'],
+                                             self.config.get('xre_path'),
+                                             'bin', 'xpcshell')
+                if not os.access(xulrunner_bin, os.F_OK):
+                    xre = self.download_file(xre_url, parent_dir=dirs['abs_work_dir'])
+                    self.extract_xre(xre, parent_dir=dirs['abs_gaia_dir'])
 
         if self.config.get('emulator'):
             dirs = self.query_abs_dirs()
@@ -274,6 +373,12 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, MercurialScript
         """
         dirs = self.query_abs_dirs()
 
+        if self.config.get('gaiatest'):
+            # make the gaia profile
+            self.make_gaia(dirs['abs_gaia_dir'],
+                           self.config.get('xre_path'),
+                           debug=False)
+
         # build the marionette command arguments
         python = self.query_python_path('python')
         if self.config.get('gaiatest'):
@@ -292,6 +397,8 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin, MercurialScript
             cmd.extend(self._build_arg('--address', self.config['marionette_address']))
             cmd.extend(self._build_arg('--type', self.config['test_type']))
             cmd.extend(self._build_arg('--testvars', testvars))
+            cmd.extend(self._build_arg('--profile', os.path.join(dirs['abs_gaia_dir'],
+                                                                 'profile')))
             manifest = os.path.join(dirs['abs_gaiatest_dir'], 'gaiatest', 'tests',
                                     'tbpl-manifest.ini')
             cmd.append(manifest)
