@@ -127,9 +127,15 @@ class SpidermonkeyBuild(MockMixin, BaseScript, VCSMixin, BuildbotMixin, Tooltool
             self.read_buildbot_config()
 
         if self.buildbot_config:
+            bb_props = [('mock_target', 'mock_target'),
+                        ('base_bundle_urls', 'hgtool_base_bundle_urls'),
+                        ('base_mirror_urls', 'hgtool_base_mirror_urls'),
+                        ('hgurl', 'hgurl'),
+                        ]
             buildbot_props = self.buildbot_config.get('properties', {})
-            if not self.config.get('mock_target') and buildbot_props.get('mock_target'):
-                self.config['mock_target'] = buildbot_props['mock_target']
+            for bb_prop, cfg_prop in bb_props:
+                if not self.config.get(cfg_prop) and buildbot_props.get(bb_prop):
+                    self.config[cfg_prop] = buildbot_props[bb_prop]
 
         self.mock_env = self.query_env(replace_dict=self.config['mock_env_replacements'],
                                        partial_env=self.config['mock_env'])
@@ -287,7 +293,8 @@ class SpidermonkeyBuild(MockMixin, BaseScript, VCSMixin, BuildbotMixin, Tooltool
         )
         self.set_buildbot_property("tools_revision", rev, write_to_file=True)
 
-    def checkout_shell(self):
+    @requires(query_repo)
+    def checkout_source(self):
         dirs = self.query_abs_dirs()
         dest = os.path.join(dirs['abs_work_dir'], 'source')
 
