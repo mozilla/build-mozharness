@@ -33,8 +33,31 @@ config = {
         "autoconf213", "mozilla-python27-mercurial", "ccache",
         "zip", "zlib-devel", "glibc-static",
         "openssh-clients", "mpfr", "wget", "rsync",
+
+        # For the analysis
         GCC_RPM,
-        "gmp-devel", "nspr", "nspr-devel", "sixgill"
+
+        # For building the JS shell
+        "gmp-devel", "nspr", "nspr-devel", "sixgill",
+
+        # For building the browser
+        "dbus-devel", "dbus-glib-devel", "hal-devel",
+        "libICE-devel", "libIDL-devel",
+
+        'zip', 'git',
+        'libstdc++-static', 'perl-Test-Simple', 'perl-Config-General',
+        'gtk2-devel', 'libnotify-devel', 'yasm',
+        'alsa-lib-devel', 'libcurl-devel',
+        'wireless-tools-devel', 'libX11-devel',
+        'libXt-devel', 'mesa-libGL-devel',
+        'gnome-vfs2-devel', 'GConf2-devel', 'wget',
+        'mpfr', # required for system compiler
+        'xorg-x11-font*', # fonts required for PGO
+        'imake', # required for makedepend!?!
+        'pulseaudio-libs-devel',
+        'freetype-2.3.11-6.el6_1.8.x86_64',
+        'freetype-devel-2.3.11-6.el6_1.8.x86_64',
+        'gstreamer-devel', 'gstreamer-plugins-base-devel',
     ],
     "mock_files": [
         ("/home/cltbld/.ssh", "/home/mock_mozilla/.ssh"),
