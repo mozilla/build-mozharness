@@ -20,5 +20,14 @@ config = {
         "target_pull_url": "https://hg.mozilla.org/users/asasaki_mozilla.com/birch",
         "target_tag": "default",
         "target_repo_name": "birch",
+    }, {
+        "polling_url": "https://hg.mozilla.org/integration/gaia-1_2/json-pushes?full=1",
+        "branch": "default",
+        "repo_url": "https://hg.mozilla.org/integration/gaia-1_2",
+        "repo_name": "gaia-1_2",
+        "target_push_url": "ssh://hg.mozilla.org/users/asasaki_mozilla.com/mozilla-aurora",
+        "target_pull_url": "https://hg.mozilla.org/users/asasaki_mozilla.com/mozilla-aurora",
+        "target_tag": "default",
+        "target_repo_name": "mozilla-aurora",
     }],
 }
