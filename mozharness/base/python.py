@@ -195,12 +195,6 @@ class VirtualenvMixin(object):
                 command = [pip, "-v", "install"]
             else:
                 command = [pip, "install"]
-
-            # Wheels are preferred over source installs because they are faster
-            # and more consistent across machines. If a wheel isn't available,
-            # pip will fall back to source install.
-            command += ["--use-wheel"]
-
             pypi_url = c.get("pypi_url")
             if pypi_url:
                 command += ["--pypi-url", pypi_url]
