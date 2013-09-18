@@ -524,7 +524,8 @@ class ScriptMixin(object):
             env[key] = partial_env[key] % replace_dict
             self.log("ENV: %s is now %s" % (key, env[key]), level=log_level)
         for k in purge_env:
-            del env[k]
+            if k in env:
+                del env[k]
         if set_self_env:
             self.env = env
         return env
