@@ -491,6 +491,7 @@ class ScriptMixin(object):
                         sleeptime = max_sleeptime
 
     def query_env(self, partial_env=None, replace_dict=None,
+                  purge_env=(),
                   set_self_env=None, log_level=DEBUG):
         """Environment query/generation method.
 
@@ -522,6 +523,8 @@ class ScriptMixin(object):
         for key in partial_env.keys():
             env[key] = partial_env[key] % replace_dict
             self.log("ENV: %s is now %s" % (key, env[key]), level=log_level)
+        for k in purge_env:
+            del env[k]
         if set_self_env:
             self.env = env
         return env

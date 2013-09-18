@@ -298,13 +298,13 @@ class PandaTalosTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixi
         self._download_unzip(self.config['retry_url'],
                              dirs['abs_talosdata_dir'])
 
-        branch = self.config.get('branch', self.buildbot_config.get('properties')["branch"])
         revision = self.config.get('revision', self.buildbot_config.get('properties')["revision"])
+        repo_path = self.config.get('repo_path', self.buildbot_config.get('properties')["repo_path"])
         taloscode = self.config.get("talos_from_code_url")
         talosjson = self.config.get("talos_json_url")
 
-        talos_from_code_url = (taloscode % (branch, revision))
-        talos_json_url = (talosjson % (branch, revision))
+        talos_from_code_url = (taloscode % (repo_path, revision))
+        talos_json_url = (talosjson % (repo_path, revision))
 
         self.download_file(talos_from_code_url, file_name='talos_from_code.py',
                            parent_dir=dirs['abs_talosdata_dir'],

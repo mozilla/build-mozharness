@@ -33,6 +33,9 @@ def requires(*queries):
     return make_wrapper
 
 
+nuisance_env_vars = ['TERMCAP', 'LS_COLORS', 'PWD', '_']
+
+
 class SpidermonkeyBuild(MockMixin, BaseScript, VCSMixin, BuildbotMixin, TooltoolMixin, TransferMixin):
     config_options = [
         [["--repo"], {
@@ -114,7 +117,7 @@ class SpidermonkeyBuild(MockMixin, BaseScript, VCSMixin, BuildbotMixin, Tooltool
                             },
         )
 
-        self.nonmock_env = self.query_env()
+        self.nonmock_env = self.query_env(purge_env=nuisance_env_vars)
         self.env = self.nonmock_env
 
         self.buildtime = None
@@ -127,22 +130,35 @@ class SpidermonkeyBuild(MockMixin, BaseScript, VCSMixin, BuildbotMixin, Tooltool
             self.read_buildbot_config()
 
         if self.buildbot_config:
+            bb_props = [('mock_target', 'mock_target'),
+                        ('base_bundle_urls', 'hgtool_base_bundle_urls'),
+                        ('base_mirror_urls', 'hgtool_base_mirror_urls'),
+                        ('hgurl', 'hgurl'),
+                        ]
             buildbot_props = self.buildbot_config.get('properties', {})
-            if not self.config.get('mock_target') and buildbot_props.get('mock_target'):
-                self.config['mock_target'] = buildbot_props['mock_target']
+            for bb_prop, cfg_prop in bb_props:
+                if not self.config.get(cfg_prop) and buildbot_props.get(bb_prop):
+                    self.config[cfg_prop] = buildbot_props[bb_prop]
 
         self.mock_env = self.query_env(replace_dict=self.config['mock_env_replacements'],
-                                       partial_env=self.config['mock_env'])
+                                       partial_env=self.config['mock_env'],
+                                       purge_env=nuisance_env_vars)
 
     def query_abs_dirs(self):
         if self.abs_dirs:
             return self.abs_dirs
         abs_dirs = BaseScript.query_abs_dirs(self)
 
+        abs_work_dir = abs_dirs['abs_work_dir']
         dirs = {
-            'shell_objdir': os.path.join(abs_dirs['abs_work_dir'], self.config['shell-objdir']),
-            'mozharness_scriptdir': os.path.abspath(os.path.dirname(__file__)),
-            'abs_analysis_dir': os.path.join(abs_dirs['abs_work_dir'], self.config['analysis-dir']),
+            'shell_objdir':
+                os.path.join(abs_work_dir, self.config['shell-objdir']),
+            'mozharness_scriptdir':
+                os.path.abspath(os.path.dirname(__file__)),
+            'abs_analysis_dir':
+                os.path.join(abs_work_dir, self.config['analysis-dir']),
+            'abs_analyzed_objdir':
+                os.path.join(abs_work_dir, self.config['source-objdir']),
         }
 
         abs_dirs.update(dirs)
@@ -287,7 +303,8 @@ class SpidermonkeyBuild(MockMixin, BaseScript, VCSMixin, BuildbotMixin, Tooltool
         )
         self.set_buildbot_property("tools_revision", rev, write_to_file=True)
 
-    def checkout_shell(self):
+    @requires(query_repo)
+    def checkout_source(self):
         dirs = self.query_abs_dirs()
         dest = os.path.join(dirs['abs_work_dir'], 'source')
 
@@ -336,7 +353,7 @@ class SpidermonkeyBuild(MockMixin, BaseScript, VCSMixin, BuildbotMixin, Tooltool
     def build_shell(self):
         dirs = self.query_abs_dirs()
 
-        rc = self.run_command(['make', '-j', str(self.config['concurrency'])],
+        rc = self.run_command(['make', '-j', str(self.config['concurrency']), '-s'],
                               cwd=dirs['shell_objdir'],
                               env=self.env,
                               error_list=MakefileErrorList)
@@ -346,6 +363,7 @@ class SpidermonkeyBuild(MockMixin, BaseScript, VCSMixin, BuildbotMixin, Tooltool
     def clobber_analysis(self):
         dirs = self.query_abs_dirs()
         self.rmtree(dirs['abs_analysis_dir'])
+        self.rmtree(dirs['abs_analyzed_objdir'])
 
     def setup_analysis(self):
         dirs = self.query_abs_dirs()
@@ -356,7 +374,7 @@ class SpidermonkeyBuild(MockMixin, BaseScript, VCSMixin, BuildbotMixin, Tooltool
 
         values = {'js': os.path.join(dirs['shell_objdir'], 'js'),
                   'analysis_scriptdir': os.path.join(dirs['abs_work_dir'], 'source/js/src/devtools/rootAnalysis'),
-                  'source_objdir': os.path.join(dirs['abs_work_dir'], self.config['source-objdir']),
+                  'source_objdir': dirs['abs_analyzed_objdir'],
                   'source': os.path.join(dirs['abs_work_dir'], 'source'),
                   'sixgill': self.config['sixgill'],
                   'sixgill_bin': self.config['sixgill_bin'],
@@ -373,21 +391,23 @@ jobs = 2
 
         file(os.path.join(analysis_dir, 'defaults.py'), "w").write(defaults)
 
-        self.copyfile(os.path.join(dirs['mozharness_scriptdir'], 'spidermonkey/build.shell'),
-                      os.path.join(analysis_dir, 'build.shell'),
+        build_command = self.config['build_command']
+        self.copyfile(os.path.join(dirs['mozharness_scriptdir'],
+                                   os.path.join('spidermonkey', build_command)),
+                      os.path.join(analysis_dir, build_command),
                       copystat=True)
 
     def run_analysis(self):
         dirs = self.query_abs_dirs()
         analysis_dir = dirs['abs_analysis_dir']
         analysis_scriptdir = os.path.join(dirs['abs_work_dir'], 'source/js/src/devtools/rootAnalysis')
-        analyzed_objdir = os.path.join(dirs['abs_work_dir'], self.config['source-objdir'])
 
         # The build for the analysis is always a clobber build,
         # because the analysis needs to see every compile to work
-        self.rmtree(analyzed_objdir)
+        self.rmtree(dirs['abs_analyzed_objdir'])
 
-        build_command = os.path.abspath(os.path.join(analysis_dir, "build.shell"))
+        build_command = self.config['build_command']
+        build_command = os.path.abspath(os.path.join(analysis_dir, build_command))
         rc = self.run_command([self.config['python'], os.path.join(analysis_scriptdir, 'analyze.py'),
                                "--buildcommand=%s" % build_command],
                               cwd=analysis_dir,

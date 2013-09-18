@@ -27,6 +27,7 @@ config = {
     }],
 
     "mock_target": "mozilla-centos6-x86_64",
+    "build_command": "build.shell",
 
     "upload_remote_basepath": "/tmp/upload-base",
     "upload_ssh_server": "localhost",
