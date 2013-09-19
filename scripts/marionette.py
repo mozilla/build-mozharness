@@ -358,8 +358,15 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin,
             cmd = [python, '-u', os.path.join(dirs['abs_gaiatest_dir'],
                                               'gaiatest',
                                               'cli.py')]
-            cmd.extend(self._build_arg('--binary', os.path.join(dirs['abs_work_dir'],
-                                                                'b2g', 'b2g')))
+
+            # support desktop builds with and without a built-in profile
+            binary_path = os.path.join(dirs['abs_work_dir'], 'b2g')
+            binary = os.path.join(binary_path, 'b2g-bin')
+            if not os.access(binary, os.F_OK):
+                binary = os.path.join(binary_path, 'b2g')
+            cmd.extend(self._build_arg('--binary', binary))
+
+            cmd.append('--restart')
             cmd.extend(self._build_arg('--address', self.config['marionette_address']))
             cmd.extend(self._build_arg('--type', self.config['test_type']))
             cmd.extend(self._build_arg('--testvars', testvars))

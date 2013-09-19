@@ -60,7 +60,6 @@ config = {
         'clobber',
         'read-buildbot-config',
         'download-and-extract',
-        'clone-talos',
         'create-virtualenv',
         'request-device',
         'run-test',
