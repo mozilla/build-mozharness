@@ -366,6 +366,7 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin,
                 binary = os.path.join(binary_path, 'b2g')
             cmd.extend(self._build_arg('--binary', binary))
 
+            cmd.append('--restart')
             cmd.extend(self._build_arg('--address', self.config['marionette_address']))
             cmd.extend(self._build_arg('--type', self.config['test_type']))
             cmd.extend(self._build_arg('--testvars', testvars))
