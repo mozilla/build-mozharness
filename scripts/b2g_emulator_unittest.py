@@ -26,24 +26,6 @@ from mozharness.mozilla.testing.unittest import DesktopUnittestOutputParser, Emu
 from mozharness.mozilla.tooltool import TooltoolMixin
 
 
-class MarionetteUnittestOutputParser(DesktopUnittestOutputParser):
-    """
-    A class that extends DesktopUnittestOutputParser such that it can
-    catch failed gecko installation errors.
-    """
-
-    bad_gecko_install = re.compile(r'Error installing gecko!')
-
-    def __init__(self, **kwargs):
-        self.install_gecko_failed = False
-        super(MarionetteUnittestOutputParser, self).__init__(**kwargs)
-
-    def parse_single_line(self, line):
-        if self.bad_gecko_install.search(line):
-            self.install_gecko_failed = True
-        super(MarionetteUnittestOutputParser, self).parse_single_line(line)
-
-
 class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, BaseScript):
     test_suites = ('jsreftest', 'reftest', 'mochitest', 'xpcshell', 'crashtest')
     config_options = [
@@ -365,23 +347,15 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
             env['MINIDUMP_STACKWALK'] = self.minidump_stackwalk_path
         env = self.query_env(partial_env=env)
 
-        for i in range(0, 5):
-            # We retry the run because sometimes installing gecko on the
-            # emulator can cause B2G not to restart properly - Bug 812935.
-            parser = MarionetteUnittestOutputParser(suite_category=suite_name,
-                                                    config=self.config,
-                                                    log_obj=self.log_obj,
-                                                    error_list=error_list)
-            return_code = self.run_command(cmd, cwd=cwd, env=env,
-                                           output_timeout=1000,
-                                           output_parser=parser,
-                                           success_codes=success_codes)
-            if not parser.install_gecko_failed:
-                self._dump_logcat(parser)
-                break
-        else:
-            self._dump_logcat(parser)
-            self.fatal("Failed to install gecko 5 times in a row, aborting")
+        parser = DesktopUnittestOutputParser(suite_category=suite_name,
+                                             config=self.config,
+                                             log_obj=self.log_obj,
+                                             error_list=error_list)
+        return_code = self.run_command(cmd, cwd=cwd, env=env,
+                                       output_timeout=1000,
+                                       output_parser=parser,
+                                       success_codes=success_codes)
+        self._dump_logcat(parser)
 
         tbpl_status, log_level = parser.evaluate_parser(return_code)
         parser.append_tinderboxprint_line(suite_name)

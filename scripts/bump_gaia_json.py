@@ -108,7 +108,7 @@ class BumpGaiaJson(MercurialScript):
                 changeset_config['author'],
                 changeset_config['desc'],
             )
-        message = 'Bumping gaia.json for %d %s revision(s) a=NPOTB\n' % (
+        message = 'Bumping gaia.json for %d %s revision(s) a=gaia-bump\n' % (
             len(revision_list),
             repo_name
         )
