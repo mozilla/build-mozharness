@@ -146,7 +146,7 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin):
         dirs['abs_xpcshell_dir'] = os.path.join(dirs['abs_test_install_dir'], "xpcshell")
         dirs['abs_cppunittest_dir'] = os.path.join(dirs['abs_test_install_dir'], "cppunittests")
         dirs['abs_blob_upload_dir'] = os.path.join(abs_dirs['abs_work_dir'], 'blobber_upload_dir')
-        dirs['abs_jittest_dir'] = os.path.join(os.path.join(dirs['abs_test_install_dir'], "jit-test"), "jit-test")
+        dirs['abs_jittest_dir'] = os.path.join(dirs['abs_test_install_dir'], "jit-test", "jit-test")
 
         if os.path.isabs(c['virtualenv_path']):
             dirs['abs_virtualenv_dir'] = c['virtualenv_path']

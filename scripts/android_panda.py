@@ -345,7 +345,7 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
             abs_dirs['abs_work_dir'], 'hostutils')
         dirs['abs_robocop_dir'] = os.path.join(
             dirs['abs_test_install_dir'], 'mochitest')
-        dirs['abs_jittest_dir'] = os.path.join(os.path.join(dirs['abs_test_install_dir'], "jit-test"), "jit-test")
+        dirs['abs_jittest_dir'] = os.path.join(dirs['abs_test_install_dir'], "jit-test", "jit-test")
         dirs['shutdown_dir'] = abs_dirs['abs_work_dir'].rsplit("/", 2)[0]
         for key in dirs.keys():
             if key not in abs_dirs:
