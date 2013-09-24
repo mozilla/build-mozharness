@@ -164,6 +164,14 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
     def postflight_read_buildbot_config(self):
         super(PandaTest, self).postflight_read_buildbot_config()
         self.mozpool_device = self.config.get('mozpool_device', self.buildbot_config.get('properties')["slavename"])
+        dirs = self.query_abs_dirs()
+        #touch the shutdown file
+        shutdown_file = os.path.join(dirs['shutdown_dir'], 'shutdown.stamp')
+        try:
+            self.info("*** Touching the shutdown file **")
+            open(shutdown_file, 'w').close()
+        except Exception, e:
+            self.warning("We failed to create the shutdown file: str(%s)" % str(e)) 
 
     def request_device(self):
         self.retrieve_android_device(b2gbase="")
@@ -196,20 +204,12 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
             self.info('#### Running %s suites' % suite_category)
             for suite in suites:
                 dirs = self.query_abs_dirs()
-                #touch the shutdown file
-                shutdown_file = os.path.join(dirs['shutdown_dir'], 'shutdown.stamp')
-                try:
-                    self.info("*** Touching the shutdown file **")
-                    open(shutdown_file, 'w').close()
-                except Exception, e:
-                    self.warning("We failed to create the shutdown file: str(%s)" % str(e))
                 self._download_unzip_hostutils()
                 abs_base_cmd = self._query_abs_base_cmd(suite_category)
                 if 'robocop' in suite:
                     self._download_robocop_apk()
 
                 if 'jittest' in suite:
-                    dirs = self.query_abs_dirs()
                     self._download_unzip(self.query_jsshell_url(), dirs['abs_test_bin_dir'])
 
                 self._install_app()
