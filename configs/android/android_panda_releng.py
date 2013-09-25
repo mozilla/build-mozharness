@@ -30,12 +30,12 @@ config = {
         "--http-port=%(http_port)s", "--ssl-port=%(ssl_port)s",
         "--run-only-tests=android.json", "--symbols-path=%(symbols_path)s"
     ],
-    # reftests other than crashtests or jsreftests not currently run on pandas
     "reftest_options": [
         "--deviceIP=%(device_ip)s",
         "--xre-path=../hostutils/xre",
         "--utility-path=../hostutils/bin",
-        "--app=%(app_name)s", "--ignore-window-size",
+        "--app=%(app_name)s",
+        "--ignore-window-size", "--bootstrap",
         "--http-port=%(http_port)s", "--ssl-port=%(ssl_port)s",
         "--symbols-path=%(symbols_path)s",
         "reftest/tests/layout/reftests/reftest.list"
