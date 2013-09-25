@@ -51,6 +51,7 @@ config = {
         "remote-tsvg":  ["--activeTests=tsvg", "--noChrome"],
         "remote-tp4m_nochrome":  ["--activeTests=tp4m", "--noChrome", "--rss"],
         "remote-trobocheck2":  ["--activeTests=tcheck2", "--noChrome", "--fennecIDs=../fennec_ids.txt"],
+        "remote-tspaint": ["--activeTests=ts_paint", "--mozAfterPaint", "--noChrome"],
     },
     "find_links": ["http://repos/python/packages"],
     "buildbot_json_path": "buildprops.json",
