@@ -17,8 +17,7 @@ config = {
         "jsreftest": "remotereftest.py",
         "robocop": "runtestsremote.py",
         "xpcshell": "remotexpcshelltests.py",
-        "jittest": "jit_test.py",
-        "cppunittest": "remotecppunittests.py"
+        "jittest": "jit_test.py"
     },
     "hostutils_url":  "http://bm-remote.build.mozilla.org/tegra/tegra-host-utils.Linux.742597.zip",
     "verify_path":  "/builds/sut_tools/verify.py",
@@ -90,15 +89,6 @@ config = {
         "--localLib=../tests/bin",
         "--tinderbox"
      ],
-     "cppunittest_options": [
-        "--symbols-path=%(symbols_path)s",
-        "--xre-path=tests/bin",
-        "--dm_trans=SUT",
-        "--deviceIP=%(device_ip)s",
-        "--localBinDir=../tests/bin",
-        "--apk=%(apk_path)s",
-        "--skip-manifest=../tests/cppunittests/android_cppunittest_manifest.txt"
-     ],
     "all_mochitest_suites": {
         "mochitest-1": ["--total-chunks=8", "--this-chunk=1"],
         "mochitest-2": ["--total-chunks=8", "--this-chunk=2"],
@@ -139,9 +129,6 @@ config = {
     },
     "all_jittest_suites": {
         "jittest": []
-    },
-    "all_cppunittest_suites": {
-        "cppunittest": ['cppunittests']
     },
     "find_links": [
         "http://repos/python/packages",
