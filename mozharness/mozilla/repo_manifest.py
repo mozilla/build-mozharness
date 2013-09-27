@@ -3,6 +3,7 @@ Module for handling repo style XML manifests
 """
 import xml.dom.minidom
 import os
+import re
 
 
 def load_manifest(filename):
@@ -101,3 +102,81 @@ def get_remote(manifest, name):
     for node in manifest.getElementsByTagName('remote'):
         if node.getAttribute('name') == name:
             return node
+
+
+def get_default(manifest):
+    default = manifest.getElementsByTagName('default')[0]
+    return default
+
+
+def get_project_remote_url(manifest, project):
+    """
+    Gets the remote URL for the given project node. Will return the default
+    remote if the project doesn't explicitly specify one.
+    """
+    if project.hasAttribute('remote'):
+        remote = get_remote(manifest, project.getAttribute('remote'))
+    else:
+        default = get_default(manifest)
+        remote = get_remote(manifest, default.getAttribute('remote'))
+    return "%s/%s" % (
+        remote.getAttribute('fetch'), project.getAttribute('name'))
+
+
+def get_project_revision(manifest, project):
+    """
+    Gets the revision for the given project node. Will return the default
+    revision if the project doesn't explicitly specify one.
+    """
+    if project.hasAttribute('revision'):
+        return project.getAttribute('revision')
+    else:
+        default = get_default(manifest)
+        return default.getAttribute('revision')
+
+
+def remove_group(manifest, group):
+    """
+    Removes all projects with groups=`group`
+    """
+    retval = []
+    for node in manifest.getElementsByTagName('project'):
+        if node.getAttribute('groups') == group:
+            node.parentNode.removeChild(node)
+            retval.append(node)
+    return retval
+
+
+def map_remote(r, mappings):
+    """
+    Helper function for mapping git remotes
+    """
+    remote = r.getAttribute('fetch')
+    if remote in mappings:
+        r.setAttribute('fetch', mappings[remote])
+        return r
+    return None
+
+
+COMMIT_PATTERN = re.compile("[0-9a-f]{40}")
+
+
+def is_commitid(revision):
+    """
+    Returns True if revision looks like a commit id
+    i.e. 40 character string made up of 0-9a-f
+    """
+    return bool(re.match(COMMIT_PATTERN, revision))
+
+
+def cleanup(manifest, depth=0):
+    """
+    Remove any empty text nodes
+    """
+    for n in manifest.childNodes[:]:
+        n.normalize()
+        if n.nodeType == n.TEXT_NODE and not n.data.strip():
+            if not n.nextSibling:
+                depth -= 2
+            n.data = "\n" + (" " * depth)
+        cleanup(n, depth + 2)

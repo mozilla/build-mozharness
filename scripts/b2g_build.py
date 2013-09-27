@@ -36,7 +36,8 @@ from mozharness.mozilla.buildbot import BuildbotMixin
 from mozharness.mozilla.purge import PurgeMixin
 from mozharness.mozilla.signing import SigningMixin
 from mozharness.mozilla.repo_manifest import (load_manifest, rewrite_remotes,
-                                              remove_project, get_project, get_remote)
+                                              remove_project, get_project,
+                                              get_remote, map_remote)
 
 # B2G builds complain about java...but it doesn't seem to be a problem
 # Let's turn those into WARNINGS instead
@@ -46,19 +47,9 @@ B2GMakefileErrorList = MakefileErrorList + [
 B2GMakefileErrorList.insert(0, {'substr': r'/bin/bash: java: command not found', 'level': WARNING})
 
 
-def map_remote(r, mappings):
-    """
-    Helper function for mapping git remotes
-    """
-    remote = r.getAttribute('fetch')
-    if remote in mappings:
-        r.setAttribute('fetch', mappings[remote])
-        return r
-    return None
-
-
-class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin, TooltoolMixin,
-               TransferMixin, BuildbotMixin, GaiaLocalesMixin, SigningMixin):
+class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
+               TooltoolMixin, TransferMixin, BuildbotMixin, GaiaLocalesMixin,
+               SigningMixin):
     config_options = [
         [["--repo"], {
             "dest": "repo",
@@ -478,28 +469,46 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin, Toolto
     def checkout_sources(self):
         dirs = self.query_abs_dirs()
         gecko_config = self.load_gecko_config()
+        b2g_manifest_intree = gecko_config.get('b2g_manifest_intree')
+
         if gecko_config.get('config_version') >= 2:
-            # New behaviour!
-            # Get B2G, b2g-manifest
-            b2g_manifest_branch = gecko_config.get('b2g_manifest_branch', 'master')
             repos = [
                 {'vcs': 'gittool', 'repo': 'https://git.mozilla.org/b2g/B2G.git', 'dest': dirs['work_dir']},
-                {'vcs': 'gittool', 'repo': 'https://git.mozilla.org/b2g/b2g-manifest.git', 'dest': os.path.join(dirs['work_dir'], 'b2g-manifest'), 'branch': b2g_manifest_branch},
             ]
-            self.vcs_checkout_repos(repos)
 
-            # Now munge the manifest
-            manifest_filename = gecko_config.get('b2g_manifest', self.config['target'] + '.xml')
-            manifest_filename = os.path.join(dirs['work_dir'], 'b2g-manifest', manifest_filename)
+            if b2g_manifest_intree:
+                # Checkout top-level B2G repo now
+                self.vcs_checkout_repos(repos)
+                b2g_manifest_branch = 'master'
+
+                # Now checkout gecko inside the build directory
+                self.checkout_gecko()
+                conf_dir = os.path.join(dirs['src'], os.path.dirname(self.query_gecko_config_path()))
+                manifest_filename = os.path.join(conf_dir, 'sources.xml')
+                self.info("Using manifest at %s" % manifest_filename)
+                have_gecko = True
+            else:
+                # Checkout B2G and b2g-manifests. We'll do gecko later
+                b2g_manifest_branch = gecko_config.get('b2g_manifest_branch', 'master')
+                repos.append(
+                    {'vcs': 'gittool', 'repo': 'https://git.mozilla.org/b2g/b2g-manifest.git', 'dest': os.path.join(dirs['work_dir'], 'b2g-manifest'), 'branch': b2g_manifest_branch},
+                )
+                manifest_filename = gecko_config.get('b2g_manifest', self.config['target'] + '.xml')
+                manifest_filename = os.path.join(dirs['work_dir'], 'b2g-manifest', manifest_filename)
+                self.vcs_checkout_repos(repos)
+                have_gecko = False
+
             manifest = load_manifest(manifest_filename)
 
-            mapping_func = functools.partial(map_remote, mappings=self.config['repo_remote_mappings'])
+            if not b2g_manifest_intree:
+                # Now munge the manifest by mapping remotes to local remotes
+                mapping_func = functools.partial(map_remote, mappings=self.config['repo_remote_mappings'])
 
-            rewrite_remotes(manifest, mapping_func)
-            # Remove gecko, since we'll be checking that out ourselves
-            gecko_node = remove_project(manifest, path='gecko')
-            if not gecko_node:
-                self.fatal("couldn't remove gecko from manifest")
+                rewrite_remotes(manifest, mapping_func)
+                # Remove gecko, since we'll be checking that out ourselves
+                gecko_node = remove_project(manifest, path='gecko')
+                if not gecko_node:
+                    self.fatal("couldn't remove gecko from manifest")
 
             # repo requires a git repo to work with
             # so we create a temporary repo, put our manifest file into it, and
@@ -508,6 +517,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin, Toolto
             self.rmtree(manifest_dir)
             self.mkdir_p(manifest_dir)
 
+            self.info("Writing manifest to %s" % manifest_filename)
             manifest_filename = os.path.join(manifest_dir, self.config['target'] + '.xml')
             manifest_file = open(manifest_filename, 'w')
             manifest.writexml(manifest_file)
@@ -528,34 +538,29 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin, Toolto
             repo_repo = self.config['repo_repo']
 
             # Check it out!
+            repo = os.path.join(dirs['work_dir'], 'repo')
             if 'repo_mirror_dir' in self.config:
+                # Make our local .repo directory a symlink to the shared repo
+                # directory
                 repo_mirror_dir = self.config['repo_mirror_dir']
                 self.mkdir_p(repo_mirror_dir)
-                # Blow away .repo and start from scratch. This sucks.
-                # TODO: Can we avoid this?
-                self.rmtree(os.path.join(repo_mirror_dir, '.repo'))
-                repo = os.path.join(dirs['work_dir'], 'repo')
-                self.run_command([repo, "init", "--repo-url", repo_repo, "-q", "--mirror", "-u", manifest_dir, "-m", self.config['target'] + '.xml', '-b', b2g_manifest_branch], cwd=repo_mirror_dir, halt_on_failure=True)
-                # self.run_command([repo, "sync", "--quiet"], cwd=repo_mirror_dir, halt_on_failure=True)
-                # XXX Work around git failing to clone some repositories when
-                # running in quiet mode. It also fails when we run without a
-                # pty
-                # https://bugzilla.mozilla.org/show_bug.cgi?id=857158
-                self.run_command(['script', '-q', '-c', '%s sync' % repo], cwd=repo_mirror_dir, halt_on_failure=True)
+                repo_link = os.path.join(dirs['work_dir'], '.repo')
+                if not os.path.exists(repo_link) or not os.path.islink(repo_link):
+                    self.rmtree(repo_link)
+                    self.info("Creating link from %s to %s" % (repo_link, repo_mirror_dir))
+                    os.symlink(repo_mirror_dir, repo_link)
 
-                # Now check it out into our local working directory
-                self.run_command([repo, "init", "--repo-url", repo_repo, "-q", "--reference", repo_mirror_dir, "-u", manifest_dir, "-m", self.config['target'] + '.xml', '-b', b2g_manifest_branch], cwd=dirs['work_dir'], halt_on_failure=True)
-            else:
-                # Non-mirror mode
-                self.run_command([repo, "init", "--repo-url", repo_repo, "-q", "-u", manifest_dir, "-m", self.config['target'] + '.xml', '-b', b2g_manifest_branch], cwd=dirs['work_dir'], halt_on_failure=True)
+            self.run_command([repo, "init", "--repo-url", repo_repo, "-q", "-u", manifest_dir, "-m", self.config['target'] + '.xml', '-b', b2g_manifest_branch], cwd=dirs['work_dir'], halt_on_failure=True)
             # self.run_command([repo, "sync", "--quiet"], cwd=dirs['work_dir'], halt_on_failure=True)
-            # XXX Same workaround for git
+            # XXX Workaround git failing to clone some repositories when
+            # running in quiet mode. See bug 857158
             self.run_command(['script', '-q', '-c', '%s sync' % repo], cwd=dirs['work_dir'], halt_on_failure=True)
 
             # output our sources.xml, make a copy for update_sources_xml()
             self.run_command(["./gonk-misc/add-revision.py", "-o", "sources.xml", "--force", ".repo/manifest.xml"], cwd=dirs["work_dir"], halt_on_failure=True)
             self.run_command(["cat", "sources.xml"], cwd=dirs['work_dir'], halt_on_failure=True)
             self.run_command(["cp", "-p", "sources.xml", "sources.xml.original"], cwd=dirs['work_dir'], halt_on_failure=True)
+
             manifest = load_manifest(os.path.join(dirs['work_dir'], 'sources.xml'))
             gaia_node = get_project(manifest, path="gaia")
             gaia_rev = gaia_node.getAttribute("revision")
@@ -566,7 +571,8 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin, Toolto
             self.info("TinderboxPrint: gaia_revlink: %s" % gaia_url)
 
             # Now we can checkout gecko and other stuff
-            self.checkout_gecko()
+            if not have_gecko:
+                self.checkout_gecko()
             self.checkout_gecko_l10n()
             self.checkout_gaia_l10n()
             self.checkout_compare_locales()
@@ -848,6 +854,8 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin, Toolto
 
         for line in sources.splitlines():
             new_sources.append(line)
+            # XXX Bug here. We shouldn't look for a specific comment, and
+            # instead put these new nodes at the beginning / end.
             if 'Gonk specific things' in line:
                 new_sources.append('  <!-- Mercurial-Information: <remote fetch="http://hg.mozilla.org/" name="hgmozillaorg"> -->')
                 new_sources.append('  <!-- Mercurial-Information: <project name="%s" path="gecko" remote="hgmozillaorg" revision="%s"/> -->' %
