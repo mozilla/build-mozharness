@@ -48,7 +48,8 @@ class BlobUploadMixin(VirtualenvMixin):
             if dirs.get('abs_blob_upload_dir'):
                 blob_dir = dirs['abs_blob_upload_dir']
             else:
-                self.fatal("Couldn't find the blob upload folder's path!")
+                self.warning("Couldn't find the blob upload folder's path!")
+                return
 
             if not os.path.isdir(blob_dir):
                 self.warning("Blob upload directory does not exist!")
