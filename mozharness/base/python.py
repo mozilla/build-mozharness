@@ -8,6 +8,7 @@
 '''
 
 import os
+import sys
 import traceback
 
 from mozharness.base.script import (
@@ -428,6 +429,12 @@ class ResourceMonitoringMixin(object):
     @PostScriptAction('create-virtualenv')
     def _start_resource_monitoring(self, action, success=None):
         self.activate_virtualenv()
+
+        # Resource Monitor requires Python 2.7, however it's currently optional.
+        # Remove when all machines have had their Python version updated (bug 711299).
+        if sys.version_info[:2] < (2, 7):
+            self.warning('Resource monitoring will not be enabled! Python 2.7+ required.')
+            return
 
         try:
             from mozsystemmonitor.resourcemonitor import SystemResourceMonitor
