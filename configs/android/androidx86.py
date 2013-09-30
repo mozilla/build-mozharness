@@ -246,7 +246,7 @@ config = {
                 "--utility-path=%(utility_path)s", "--deviceIP=%(device_ip)s",
                 "--devicePort=%(device_port)s", "--http-port=%(http_port)s",
                 "--ssl-port=%(ssl_port)s", "--httpd-path", "reftest/components",
-                "--symbols-path=%(symbols_path)s"
+                "--symbols-path=%(symbols_path)s",
             ],
         },
         "xpcshell": {
@@ -254,7 +254,7 @@ config = {
             "options": ["--deviceIP=%(device_ip)s", "--devicePort=%(device_port)s",
                 "--xre-path=%(xre_path)s", "--testing-modules-dir=%(modules_dir)s",
                 "--apk=%(installer_path)s", "--no-logfiles",
-                "--symbols-path=%(symbols_path)s"
+                "--symbols-path=%(symbols_path)s",
             ],
         },
     }, # end of "suite_definitions"
