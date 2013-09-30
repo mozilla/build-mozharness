@@ -12,7 +12,7 @@ config = {
         "preflight_talos": "remotePerfConfigurator.py",
         "talos": "run_tests.py",
     },
-    "retry_url":  "http://build.mozilla.org/talos/zips/retry.zip",
+    "retry_url":  "http://talos-bundles.pvt.build.mozilla.org/zips/retry.zip",
     "verify_path":  "/builds/sut_tools/verify.py",
     "install_app_path":  "/builds/sut_tools/installApp.py",
     "talos_from_code_url": "http://hg.mozilla.org/%s/raw-file/%s/testing/talos/talos_from_code.py",
