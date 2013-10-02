@@ -61,6 +61,7 @@ class BuildbotMixin(object):
         else:
             # TODO try/except?
             self.buildbot_config = parse_config_file(c['buildbot_json_path'])
+            self.info("Using buildbot properties:")
             self.info(json.dumps(self.buildbot_config, indent=4))
 
     def tryserver_email(self):
