@@ -550,7 +550,15 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
                     self.info("Creating link from %s to %s" % (repo_link, repo_mirror_dir))
                     os.symlink(repo_mirror_dir, repo_link)
 
-            self.run_command([repo, "init", "--repo-url", repo_repo, "-q", "-u", manifest_dir, "-m", self.config['target'] + '.xml', '-b', b2g_manifest_branch], cwd=dirs['work_dir'], halt_on_failure=True)
+            self.run_command([
+                repo, "init", "--repo-url", repo_repo,
+                # Bug 922750 - use --no-repo-verify to work around busted
+                # upstream tagging
+                "--no-repo-verify",
+                "-q", "-u", manifest_dir,
+                "-m", self.config['target'] + '.xml',
+                '-b', b2g_manifest_branch],
+                cwd=dirs['work_dir'], halt_on_failure=True)
             # self.run_command([repo, "sync", "--quiet"], cwd=dirs['work_dir'], halt_on_failure=True)
             # XXX Workaround git failing to clone some repositories when
             # running in quiet mode. See bug 857158
