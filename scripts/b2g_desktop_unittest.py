@@ -97,10 +97,7 @@ class B2GDesktopTest(TestingMixin, TooltoolMixin, MercurialScript, BaseScript):
             return self.abs_dirs
         abs_dirs = super(B2GDesktopTest, self).query_abs_dirs()
         dirs = {}
-        for d in ('tests', 'xre'):
-            dirs['abs_%s_dir' % d] = os.path.join(
-                    abs_dirs['abs_work_dir'], self.config.get('%s_path' % d, d))
-
+        dirs['abs_tests_dir'] = os.path.join(abs_dirs['abs_work_dir'], 'tests')
         for d in ('mochitest', 'config', 'certs'):
             dirs['abs_%s_dir' % d] = os.path.join(
                     dirs['abs_tests_dir'], d)
@@ -113,10 +110,6 @@ class B2GDesktopTest(TestingMixin, TooltoolMixin, MercurialScript, BaseScript):
 
     def download_and_extract(self):
         super(B2GDesktopTest, self).download_and_extract()
-        dirs = self.query_abs_dirs()
-
-        self.mkdir_p(dirs['abs_xre_dir'])
-        self._download_unzip(self.config['xre_url'], dirs['abs_xre_dir'])
 
         if self.config.get('download_minidump_stackwalk'):
             self.install_minidump_stackwalk()
@@ -149,7 +142,7 @@ class B2GDesktopTest(TestingMixin, TooltoolMixin, MercurialScript, BaseScript):
             'test_manifest': self.test_manifest,
             'symbols_path': self.symbols_path,
             'gaia_profile': self.gaia_profile,
-            'utility_path': os.path.join(dirs['abs_xre_dir'], 'bin'),
+            'utility_path': os.path.join(dirs['abs_tests_dir'], 'bin'),
             'total_chunks': self.config.get('total_chunks'),
             'this_chunk': self.config.get('this_chunk'),
             'cert_path': dirs['abs_certs_dir'],

@@ -146,6 +146,7 @@ config = {
     "minidump_save_path": "%(abs_work_dir)s/../minidumps",
     "buildbot_max_log_size": 52428800,
     "default_blob_upload_servers": [
-         "http://10.134.48.49:8080",
+         "https://blobupload.elasticbeanstalk.com",
     ],
+    "blob_uploader_auth_file" : os.path.join(os.getcwd(), "oauth.txt"),
 }

@@ -70,7 +70,9 @@ class TestBlobUploadMechanism(unittest.TestCase):
         self.s = BlobUploadScript(config={'log_type': 'multi',
                                           'blob_upload_branch': 'test-branch',
                                           'default_blob_upload_servers':
-                                            ['http://blob_server.me']},
+                                            ['http://blob_server.me'],
+                                          'blob_uploader_auth_file':
+                                            os.path.abspath(__file__)},
                                   initial_config_file='test/test.json')
 
         content = "Hello world!"
@@ -83,7 +85,7 @@ class TestBlobUploadMechanism(unittest.TestCase):
         self.s.upload_blobber_files()
 
         expected_result = ['/path/to/blobberc', '-u', 'http://blob_server.me',
-                           '-b', 'test-branch', '-d']
+                           '-a', os.path.abspath(__file__), '-b', 'test-branch', '-d']
         expected_result.append(self.s.query_abs_dirs()['abs_blob_upload_dir'])
         self.assertEqual(expected_result, self.s.command)
 

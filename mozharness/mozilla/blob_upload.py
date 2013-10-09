@@ -28,7 +28,7 @@ class BlobUploadMixin(VirtualenvMixin):
     #TODO: documentation about the Blobber Server on wiki
     def __init__(self, *args, **kwargs):
         requirements = [
-            'blobuploader==0.9',
+            'blobuploader==0.995',
         ]
         super(BlobUploadMixin, self).__init__(*args, **kwargs)
         for req in requirements:
@@ -38,7 +38,8 @@ class BlobUploadMixin(VirtualenvMixin):
         self.debug("Check branch and server cmdline options.")
         if self.config.get('blob_upload_branch') and \
             (self.config.get('blob_upload_servers') or
-             self.config.get('default_blob_upload_servers')):
+             self.config.get('default_blob_upload_servers')) and \
+                 self.config.get('blob_uploader_auth_file'):
 
             self.info("Blob upload gear active.")
             upload = [self.query_python_path("blobberc.py")]
@@ -61,6 +62,10 @@ class BlobUploadMixin(VirtualenvMixin):
                 return
 
             self.info("Preparing to upload files from %s." % blob_dir)
+            auth_file = self.config.get('blob_uploader_auth_file')
+            if not os.path.isfile(auth_file):
+                self.warning("Could not find the credentials files!")
+                return
             blob_branch = self.config.get('blob_upload_branch')
             blob_servers_list = self.config.get('blob_upload_servers',
                                self.config.get('default_blob_upload_servers'))
@@ -68,6 +73,7 @@ class BlobUploadMixin(VirtualenvMixin):
             servers = []
             for server in blob_servers_list:
                 servers.extend(['-u', server])
+            auth = ['-a', auth_file]
             branch = ['-b', blob_branch]
             dir_to_upload = ['-d', blob_dir]
             self.info("Files from %s are to be uploaded with <%s> branch at "
@@ -75,7 +81,7 @@ class BlobUploadMixin(VirtualenvMixin):
                       ", ".join(["%s" % s for s in blob_servers_list])))
 
             # call blob client to upload files to server
-            self.run_command(upload + servers + branch + dir_to_upload)
+            self.run_command(upload + servers + auth + branch + dir_to_upload)
         else:
             self.warning("Blob upload gear skipped. Missing cmdline options.")
 
