@@ -67,6 +67,12 @@ GitErrorList = BaseErrorList + [
     {'substr': r'''fatal: The remote end hung up unexpectedly''', 'level': ERROR},
     {'substr': r'''does not appear to be a git repository''', 'level': ERROR},
     {'substr': r'''error: src refspec''', 'level': ERROR},
+    {'substr': r'''invalid author/committer line -''', 'level': ERROR},
+    {'substr': r'''remote: fatal: Error in object''', 'level': ERROR},
+    {'substr': r'''fatal: sha1 file '<stdout>' write error: Broken pipe''', 'level': ERROR},
+    {'substr': r'''error: failed to push some refs to ''', 'level': ERROR},
+    {'substr': r'''remote: error: denying non-fast-forward ''', 'level': ERROR},
+    {'substr': r'''! [remote rejected] ''', 'level': ERROR},
 ]
 
 PythonErrorList = BaseErrorList + [
