@@ -183,12 +183,12 @@ config = {
         "robocop-1": {
             "category": "mochitest",
             "extra_args": ["--total-chunks", "2", "--this-chunk", "1", "--robocop-path=../..",
-                "--robocop-ids=fennec_ids.txt", "--robocop=robocop_x86.ini"],
+                "--robocop-ids=fennec_ids.txt", "--robocop=robocop.ini"],
         },
         "robocop-2": {
             "category": "mochitest",
             "extra_args": ["--total-chunks", "2", "--this-chunk", "2", "--robocop-path=../..",
-                "--robocop-ids=fennec_ids.txt", "--robocop=robocop_x86.ini"],
+                "--robocop-ids=fennec_ids.txt", "--robocop=robocop.ini"],
         },
         "jsreftest-1": {
             "category": "reftest",
