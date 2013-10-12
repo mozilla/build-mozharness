@@ -332,7 +332,7 @@ config = {
     "remote_targets": {
         "github-beagle": {
             "repo": "git@github.com:escapewindow/test-beagle.git",
-            "ssh_key": "~/.ssh/github1_rsa",
+            "ssh_key": "~/.ssh/escapewindow_github_rsa",
             "vcs": "git",
         },
     },
@@ -359,28 +359,23 @@ config = {
         "mozprocess==0.11",
     ],
     "find_links": [
-        "http://puppetagain.pub.build.mozilla.org/data/python/packages/",
-        "http://releng-puppet2.srv.releng.use1.mozilla.com/python/packages/",
-        "http://releng-puppet1.srv.releng.use1.mozilla.com/python/packages/",
-        "http://releng-puppet2.build.mtv1.mozilla.com/python/packages/",
-        "http://releng-puppet2.srv.releng.usw2.mozilla.com/python/packages/",
-        "http://releng-puppet1.srv.releng.usw2.mozilla.com/python/packages/",
-        "http://releng-puppet2.srv.releng.scl3.mozilla.com/python/packages/",
-        "http://releng-puppet2.build.scl1.mozilla.com/python/packages/",
+        "http://pypi.pvt.build.mozilla.org/pub",
+        "http://pypi.pub.build.mozilla.org/pub",
     ],
     "pip_index": False,
 
     "upload_config": [{
         "ssh_key": "~/.ssh/id_rsa",
-        "ssh_user": "asasaki",
-        "remote_host": "github-sync3",
-        "remote_path": "/home/asasaki/beagle1/beagle-upload",
+        "ssh_user": "vcs2vcs",
+        "remote_host": "10.132.49.52",
+        "remote_path": "/opt/vcs2vcs/beagle-upload",
     }],
 
     "default_notify_from": "vcs2vcs@%s" % hostname,
     "notify_config": [{
         "to": "aki@mozilla.com",
-        "failure_only": True,
+        "failure_only": False,
+        "skip_empty_messages": True,
     }],
 
     # Disallow sharing.  We may need a better way of doing this.
