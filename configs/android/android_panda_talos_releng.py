@@ -53,7 +53,10 @@ config = {
         "remote-trobocheck2":  ["--activeTests=tcheck2", "--noChrome", "--fennecIDs=../fennec_ids.txt"],
         "remote-tspaint": ["--activeTests=ts_paint", "--mozAfterPaint"],
     },
-    "find_links": ["http://repos/python/packages"],
+    "find_links": [
+        "http://pypi.pvt.build.mozilla.org/pub",
+        "http://pypi.pub.build.mozilla.org/pub",
+    ],
     "buildbot_json_path": "buildprops.json",
     "mobile_imaging_format": "http://mobile-imaging-%03i.p%i.releng.scl1.mozilla.com",
     "mozpool_assignee": socket.gethostname(),
