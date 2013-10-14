@@ -84,7 +84,7 @@ class MozpoolMixin(object):
                 error_message="INFRA-ERROR: Could not request device '%s'" % self.mozpool_device,
                 tbpl_status=TBPL_RETRY):
             try:
-                image = 'android'
+                image = 'panda-android-4.0.4_v3.1'
                 response = mph.request_device(self.mozpool_device, image, assignee=self.mozpool_assignee, \
                                b2gbase=b2gbase, pxe_config=None)
                 break

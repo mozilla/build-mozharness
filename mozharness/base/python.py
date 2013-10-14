@@ -342,7 +342,7 @@ class VirtualenvMixin(object):
                                    ['--no-site-packages', '--distribute'])
 
         if os.path.exists(self.query_python_path()):
-            self.info("Virtualenv %s appears to already exist; skipping virtualenv creation.")
+            self.info("Virtualenv %s appears to already exist; skipping virtualenv creation." % self.query_python_path())
         else:
             self.run_command(virtualenv + virtualenv_options + [venv_path],
                              cwd=dirs['abs_work_dir'],

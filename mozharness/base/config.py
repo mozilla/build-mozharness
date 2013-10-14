@@ -133,8 +133,6 @@ class ReadOnlyDict(dict):
         result._lock = False
         for k, v in self.items():
             result[k] = deepcopy(v, memo)
-        print result
-        print result._lock
         return result
 
 # parse_config_file {{{1

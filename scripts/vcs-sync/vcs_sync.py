@@ -4,17 +4,17 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 # ***** END LICENSE BLOCK *****
-"""hg_git.py
+"""vcs_sync.py
 
-Multi-repo m-c hg->git conversions with cvs prepending, specifically for
-gecko.git and beagle support.
+hg<->git conversions.  Needs to support both the monolithic beagle/gecko.git
+type conversions, as well as many-to-many (l10n, build repos, etc.)
 """
 
 from copy import deepcopy
 import mmap
 import os
+import pprint
 import re
-import smtplib
 import sys
 import time
 
@@ -24,7 +24,7 @@ try:
 except ImportError:
     import json
 
-sys.path.insert(1, os.path.dirname(sys.path[0]))
+sys.path.insert(1, os.path.dirname(os.path.dirname(sys.path[0])))
 
 import mozharness
 external_tools_path = os.path.join(
@@ -32,16 +32,16 @@ external_tools_path = os.path.join(
     'external_tools',
 )
 
-from mozharness.base.errors import HgErrorList, GitErrorList, TarErrorList
+from mozharness.base.errors import HgErrorList, GitErrorList
 from mozharness.base.log import INFO, ERROR, FATAL
 from mozharness.base.python import VirtualenvMixin, virtualenv_config_options
 from mozharness.base.transfer import TransferMixin
-from mozharness.base.vcs.vcsbase import VCSScript
+from mozharness.base.vcs.vcssync import VCSSyncScript
 from mozharness.mozilla.tooltool import TooltoolMixin
 
 
 # HgGitScript {{{1
-class HgGitScript(VirtualenvMixin, TooltoolMixin, TransferMixin, VCSScript):
+class HgGitScript(VirtualenvMixin, TooltoolMixin, TransferMixin, VCSSyncScript):
     """ Beagle-oriented hg->git script (lots of mozilla-central hardcodes;
         assumption that we're going to be importing lots of branches).
 
@@ -53,6 +53,7 @@ class HgGitScript(VirtualenvMixin, TooltoolMixin, TransferMixin, VCSScript):
         """
 
     mapfile_binary_search = None
+    all_repos = None
 
     def __init__(self, require_config_file=True):
         super(HgGitScript, self).__init__(
@@ -60,12 +61,6 @@ class HgGitScript(VirtualenvMixin, TooltoolMixin, TransferMixin, VCSScript):
             all_actions=[
                 'clobber',
                 'create-virtualenv',
-                'pull',
-                'create-stage-mirror',
-                'create-work-mirror',
-                'initial-conversion',
-                'prepend-cvs',
-                'fix-tags',
                 'update-stage-mirror',
                 'update-work-mirror',
                 'push',
@@ -95,10 +90,6 @@ class HgGitScript(VirtualenvMixin, TooltoolMixin, TransferMixin, VCSScript):
         abs_dirs = super(HgGitScript, self).query_abs_dirs()
         abs_dirs['abs_cvs_history_dir'] = os.path.join(
             abs_dirs['abs_work_dir'], 'mozilla-cvs-history')
-        abs_dirs['abs_conversion_dir'] = os.path.join(
-            abs_dirs['abs_work_dir'], 'conversion',
-            self.config['conversion_dir']
-        )
         abs_dirs['abs_source_dir'] = os.path.join(
             abs_dirs['abs_work_dir'], 'stage_source')
         abs_dirs['abs_repo_sync_tools_dir'] = os.path.join(
@@ -107,6 +98,11 @@ class HgGitScript(VirtualenvMixin, TooltoolMixin, TransferMixin, VCSScript):
             abs_dirs['abs_work_dir'], 'mc-git-rewrite')
         abs_dirs['abs_target_dir'] = os.path.join(abs_dirs['abs_work_dir'],
                                                   'target')
+        if 'conversion_dir' in self.config:
+            abs_dirs['abs_conversion_dir'] = os.path.join(
+                abs_dirs['abs_work_dir'], 'conversion',
+                self.config['conversion_dir']
+            )
         self.abs_dirs = abs_dirs
         return self.abs_dirs
 
@@ -129,15 +125,154 @@ class HgGitScript(VirtualenvMixin, TooltoolMixin, TransferMixin, VCSScript):
             error_message="Can't set up %s!" % path
         )
 
+    def write_hggit_hgrc(self, dest):
+        # Update .hg/hgrc, if not already updated
+        hgrc = os.path.join(dest, '.hg', 'hgrc')
+        contents = ''
+        if os.path.exists(hgrc):
+            contents = self.read_from_file(hgrc)
+        if 'hggit=' not in contents:
+            hgrc_update = """[extensions]
+hggit=
+[git]
+intree=1
+"""
+            self.write_to_file(hgrc, hgrc_update, open_mode='a')
+
+    def _query_l10n_repos(self):
+        """ Since I didn't want to have to build a huge static list of l10n
+            repos, and since it would be nicest to read the list of locales
+            from their SSoT files.
+            """
+        l10n_repos = []
+        gecko_dict = deepcopy(self.config['l10n_config'].get('gecko_config', {}))
+        dirs = self.query_abs_dirs()
+        for name, gecko_config in gecko_dict.items():
+            file_name = self.download_file(gecko_config['locales_file_url'],
+                                           parent_dir=dirs['abs_work_dir'])
+            if not os.path.exists(file_name):
+                self.error("Can't download locales from %s; skipping!" % gecko_config['locales_file_url'])
+                continue
+            contents = self.read_from_file(file_name)
+            for locale in contents.splitlines():
+                replace_dict = {'locale': locale}
+                long_name = 'gecko_%s_%s' % (name, locale)
+                repo_dict = {
+                    'repo': gecko_config['hg_url'] % replace_dict,
+                    'revision': 'default',
+                    'repo_name': long_name,
+                    'conversion_dir': long_name,
+                    'mapfile_name': '%s-mapfile' % long_name,
+                    'targets': [{
+                        'target_dest': 'releases-l10n-%s-gecko/.git' % locale,
+                        'vcs': 'git',
+                        'test_push': True,
+                    }],
+                    'bare_checkout': True,
+                    'vcs': 'hg',
+                    'branch_config': {
+                        'branches': {
+                            'default': gecko_config['git_branch_name'],
+                        },
+                    },
+                    'tag_config': gecko_config.get('tag_config', {}),
+                }
+                for remote_target in gecko_config.get('targets', []):
+                    if not remote_target.get('target_dest') or remote_target['target_dest'] not in self.config['remote_targets']:
+                        self.fatal("Can't figure out remote target for %s!" % long_name)
+#                    target_config = deepcopy(self.config['remote_targets'][remote_target['target_dest']])
+#                    target_config['repo'] = target_config['repo'] % replace_dict
+#                    repo_dict['targets'].append(target_config)
+                l10n_repos.append(repo_dict)
+
+        gaia_dict = deepcopy(self.config['l10n_config'].get('gaia_config', {}))
+        # TODO other than locales and long_name I think these are the same; I
+        # need to un-dup code.
+        for name, gaia_config in gaia_dict.items():
+            contents = self.retry(
+                self.load_json_from_url,
+                args=(gaia_config['locales_file_url'],)
+            )
+            if not contents:
+                self.error("Can't download locales from %s; skipping!" % gaia_config['locales_file_url'])
+                continue
+            for locale in dict(contents).keys():
+                replace_dict = {'locale': locale}
+                long_name = 'gaia_%s_%s' % (name, locale)
+                repo_dict = {
+                    'repo': gaia_config['hg_url'] % replace_dict,
+                    'revision': 'default',
+                    'repo_name': long_name,
+                    'conversion_dir': long_name,
+                    'mapfile_name': '%s-mapfile' % long_name,
+                    'targets': [{
+                        'target_dest': 'releases-l10n-%s-gaia/.git' % locale,
+                        'vcs': 'git',
+                        'test_push': True,
+                    }],
+                    'bare_checkout': True,
+                    'vcs': 'hg',
+                    'branch_config': {
+                        'branches': {
+                            'default': gaia_config['git_branch_name'],
+                        },
+                    },
+                    'tag_config': gaia_config.get('tag_config', {}),
+                }
+                for remote_target in gaia_config.get('targets', []):
+                    if not remote_target.get('target_dest') or remote_target['target_dest'] not in self.config['remote_targets']:
+                        self.fatal("Can't figure out remote target for %s!" % long_name)
+#                    target_config = deepcopy(self.config['remote_targets'][remote_target['target_dest']])
+#                    target_config['repo'] = target_config['repo'] % replace_dict
+#                    repo_dict['targets'].append(target_config)
+                l10n_repos.append(repo_dict)
+        self.info("Built l10n_repos...")
+        self.info(pprint.pformat(l10n_repos, indent=4))
+        return l10n_repos
+
+    def _query_project_repos(self):
+        """ Since I didn't want to have to build a huge static list of project
+            branch repos.
+            """
+        project_repos = []
+        for project in self.config.get("project_branches", []):
+            repo_dict = {
+                'repo': self.config['project_branch_repo_url'] % {'project': project},
+                'revision': 'default',
+                'repo_name': project,
+                'targets': [{
+                    'target_dest': 'github-project-branches',
+                    'vcs': 'git',
+                }],
+                'bare_checkout': True,
+                'vcs': 'hg',
+                'branch_config': {
+                    'branches': {
+                        'default': project,
+                    },
+                },
+                'tag_config': {},
+            }
+            project_repos.append(repo_dict)
+        self.info("Built project_repos...")
+        self.info(pprint.pformat(project_repos, indent=4))
+        return project_repos
+
     def query_all_repos(self):
         """ Very simple method, but we need this concatenated list many times
             throughout the script.
             """
-        if self.config.get('initial_repo'):
-            all_repos = [self.config['initial_repo']] + list(self.config['conversion_repos'])
+        if self.all_repos:
+            return self.all_repos
+        if self.config.get('conversion_type') == 'b2g-l10n':
+            self.all_repos = self._query_l10n_repos()
+        elif self.config.get('initial_repo'):
+            self.all_repos = [self.config['initial_repo']] + list(self.config.get('conversion_repos', []))
         else:
-            all_repos = list(self.config['conversion_repos'])
-        return all_repos
+            self.all_repos = list(self.config.get('conversion_repos', []))
+        if self.config.get('conversion_type') == 'project-branches':
+            self.all_repos += self._query_project_repos()
+        return self.all_repos
 
     def _update_stage_repo(self, repo_config, retry=True, clobber=False):
         """ Update a stage repo.
@@ -165,6 +300,36 @@ class HgGitScript(VirtualenvMixin, TooltoolMixin, TransferMixin, VCSScript):
                         repo_config, retry=False, clobber=True)
                 else:
                     self.fatal("Can't clone %s!" % repo_config['repo'])
+        elif repo_config.get("incoming_check", True):
+            # Run |hg incoming| and skip all subsequent actions if there
+            # are no no changes.
+            # If you want to bypass this behavior (e.g. to update branches/tags
+            # on a repo without requiring a new commit), set
+            # repo_config["incoming_check"] = False.
+            cmd = hg + ['incoming', '-n', '-l', '1']
+            status = self.retry(
+                self.run_command,
+                args=(cmd, ),
+                kwargs={
+                    'output_timeout': 2 * 60,
+                    'cwd': source_dest,
+                    'error_list': HgErrorList,
+                    'success_codes': [0, 1, 256],
+                },
+            )
+            if status in (1, 256):
+                self.info("No changes for %s; skipping." % repo_config['repo_name'])
+                # Overload self.failures to tell downstream actions to noop on
+                # this repo
+                self.failures.append(repo_config['repo_name'])
+                return
+            elif status != 0:
+                self.add_failure(
+                    repo_config['repo_name'],
+                    message="Error getting changes for %s; skipping!" % repo_config['repo_name'],
+                    level=ERROR,
+                )
+                return
         cmd = hg + ['pull']
         if self.retry(
             self.run_command,
@@ -172,6 +337,7 @@ class HgGitScript(VirtualenvMixin, TooltoolMixin, TransferMixin, VCSScript):
             kwargs={
                 'output_timeout': 15 * 60,
                 'cwd': source_dest,
+                'error_list': HgErrorList,
             },
         ):
             if retry:
@@ -187,134 +353,6 @@ class HgGitScript(VirtualenvMixin, TooltoolMixin, TransferMixin, VCSScript):
 #            else:
 #                self.fatal("Can't verify %s!" % source_dest)
 
-    def _check_initial_git_revisions(self, repo_path, expected_sha1,
-                                     expected_sha2):
-        """ Verify that specific git revisions match expected shas.
-
-            This involves some hardcodes, which is unfortunate, but they save
-            time, especially since we're hardcoding mozilla-central behavior
-            anyway.
-            """
-        git = self.query_exe('git', return_type='list')
-        output = self.get_output_from_command(
-            git + ['log', '--oneline', '--grep', '374866'],
-            cwd=repo_path
-        )
-        # hardcode test
-        if not output:
-            self.fatal("No output from git log!")
-        rev = output.split(' ')[0]
-        if not rev.startswith(expected_sha1):
-            self.fatal("Output doesn't match expected sha %s for initial hg commit: %s" % (expected_sha1, str(output)))
-        output = self.get_output_from_command(
-            git + ['log', '-n', '1', '%s^' % rev],
-            cwd=repo_path
-        )
-        if not output:
-            self.fatal("No output from git log!")
-        rev = output.splitlines()[0].split(' ')[1]
-        if rev != expected_sha2:
-            self.fatal("Output rev %s doesn't show expected rev %s:\n\n%s" % (rev, expected_sha2, output))
-
-    def munge_mapfile(self):
-        """ From https://github.com/ehsan/mozilla-history-tools/blob/master/initial_conversion/translate_git-mapfile.py
-            """
-        self.info("Updating pre-cvs mapfile...")
-        dirs = self.query_abs_dirs()
-        orig_mapfile = os.path.join(dirs['abs_upload_dir'], 'pre-cvs-mapfile')
-        conversion_dir = dirs['abs_conversion_dir']
-        mapfile = os.path.join(dirs['abs_work_dir'], 'post-cvs-mapfile')
-        mapdir = os.path.join(dirs['abs_git_rewrite_dir'], 'map')
-        orig_mapfile_fh = open(orig_mapfile, "r")
-        mapfile_fh = open(mapfile, "w")
-        for line in orig_mapfile_fh:
-            tokens = line.split(" ")
-            if len(tokens) == 2:
-                git_sha = tokens[0].strip()
-                hg_sha = tokens[1].strip()
-                new_path = os.path.join(mapdir, git_sha)
-                if os.path.exists(new_path):
-                    translated_git_sha = open(new_path).read().strip()
-                    print >>mapfile_fh, "%s %s" % (translated_git_sha, hg_sha)
-                else:
-                    print >>mapfile_fh, "%s %s" % (git_sha, hg_sha)
-        orig_mapfile_fh.close()
-        mapfile_fh.close()
-        self.copyfile(
-            mapfile,
-            os.path.join(conversion_dir, '.hg', 'git-mapfile'),
-            error_level=FATAL,
-        )
-        self.copy_to_upload_dir(mapfile, dest="post-cvs-mapfile",
-                                log_level=INFO)
-
-    def make_repo_bare(self, path, tmpdir=None):
-        """ Since we do a |git checkout| in prepend_cvs(), and later want
-            a bare repo.
-            """
-        self.info("Making %s/.git a bare repo..." % path)
-        for p in (path, os.path.join(path, ".git")):
-            if not os.path.exists(p):
-                self.error("%s doesn't exist! Skipping..." % p)
-        if tmpdir is None:
-            tmpdir = os.path.dirname(os.path.abspath(path))
-        git = self.query_exe("git", return_type="list")
-        for dirname in (".git", ".hg"):
-            if os.path.exists(os.path.join(path, dirname)):
-                self.move(
-                    os.path.join(path, dirname),
-                    os.path.join(tmpdir, dirname),
-                    error_level=FATAL,
-                )
-        self.rmtree(path, error_level=FATAL)
-        self.mkdir_p(path)
-        for dirname in (".git", ".hg"):
-            if os.path.exists(os.path.join(tmpdir, dirname)):
-                self.move(
-                    os.path.join(tmpdir, dirname),
-                    os.path.join(path, dirname),
-                    error_level=FATAL,
-                )
-        self.run_command(
-            git + ['--git-dir', os.path.join(path, ".git"),
-                   'config', '--bool', 'core.bare', 'true'],
-            halt_on_failure=True,
-        )
-
-    def _fix_tags(self, conversion_dir, git_rewrite_dir):
-        """ Ehsan's git tag fixer, ported from bash.
-
-         `` Git's history rewriting is not smart about preserving the tags in
-            your repository, so you would end up with tags which point to
-            commits in the old history line. If you push your repository to
-            some other repository for example, all of the tags in the target
-            repository would be invalid, since they would be pointing to
-            commits that don't exist in that repository. ''
-
-            https://github.com/ehsan/mozilla-history-tools/blob/master/initial_conversion/translate_git_tags.sh
-            """
-        self.info("Fixing tags...")
-        git = self.query_exe('git', return_type='list')
-        output = self.get_output_from_command(
-            git + ['for-each-ref'],
-            cwd=conversion_dir,
-            halt_on_failure=True,
-        )
-        for line in output.splitlines():
-            old_sha1, the_rest = line.split(' ')
-            git_type, name = the_rest.split('	')
-            if git_type == 'commit' and name.startswith('refs/tags'):
-                path = os.path.join(git_rewrite_dir, 'map', old_sha1)
-                if os.path.exists(path):
-                    new_sha1 = self.read_from_file(path).rstrip()
-                    self.run_command(
-                        git + ['update-ref', name,
-                               new_sha1, old_sha1],
-                        cwd=conversion_dir,
-                        error_list=GitErrorList,
-                        halt_on_failure=True,
-                    )
-
     def _do_push_repo(self, base_command, refs_list=None, kwargs=None):
         """ Helper method for _push_repo() since it has to be able to break
             out of the target_repo list loop, and the commands loop borks that.
@@ -324,7 +362,7 @@ class HgGitScript(VirtualenvMixin, TooltoolMixin, TransferMixin, VCSScript):
             while len(refs_list) > 10:
                 commands.append(base_command + refs_list[0:10])
                 refs_list = refs_list[10:]
-                commands.append(base_command + refs_list)
+            commands.append(base_command + refs_list)
         else:
             commands = [base_command]
         if kwargs is None:
@@ -345,7 +383,9 @@ class HgGitScript(VirtualenvMixin, TooltoolMixin, TransferMixin, VCSScript):
             covers git pushes.
             """
         dirs = self.query_abs_dirs()
-        conversion_dir = dirs['abs_conversion_dir']
+        conversion_dir = self.query_abs_conversion_dir(repo_config)
+        if not conversion_dir:
+            self.fatal("No conversion_dir for %s!" % repo_config['repo_name'])
         source_dir = os.path.join(dirs['abs_source_dir'], repo_config['repo_name'])
         git = self.query_exe('git', return_type='list')
         hg = self.query_exe('hg', return_type='list')
@@ -490,6 +530,15 @@ class HgGitScript(VirtualenvMixin, TooltoolMixin, TransferMixin, VCSScript):
             fh.close()
         return repo_map
 
+    def query_abs_conversion_dir(self, repo_config):
+        dirs = self.query_abs_dirs()
+        if repo_config.get('conversion_dir'):
+            dest = os.path.join(dirs['abs_work_dir'], 'conversion',
+                                repo_config['conversion_dir'])
+        else:
+            dest = dirs.get('abs_conversion_dir')
+        return dest
+
     def _write_repo_update_json(self, repo_map):
         """ The write portion of _read_repo_update_json().
             """
@@ -539,253 +588,40 @@ class HgGitScript(VirtualenvMixin, TooltoolMixin, TransferMixin, VCSScript):
                         branch_map.setdefault(branch, branch)
         return branch_map
 
+    def combine_mapfiles(self, mapfiles, combined_mapfile='combined_mapfile'):
+        """ Ported from repo-sync-tools/combine_mapfiles
+
+            Consolidate multiple conversion processes' mapfiles into a
+            single mapfile.
+            """
+        self.info("Determining whether we need to combine mapfiles...")
+        existing_mapfiles = []
+        for f in mapfiles:
+            if os.path.exists(f):
+                existing_mapfiles.append(f)
+            else:
+                self.warning("%s doesn't exist!" % f)
+        if os.path.exists(combined_mapfile):
+            combined_timestamp = time.ctime(os.path.getmtime(combined_mapfile))
+            for f in existing_mapfiles:
+                if time.ctime(os.path.getmtime(f)) > combined_timestamp:
+                    # Yes, we want to combine mapfiles
+                    break
+            else:
+                self.info("No new mapfiles to combine.")
+                return
+            self.move(combined_mapfile, "%s.old" % combined_mapfile)
+        output = self.get_output_from_command(
+            ['sort', '--unique', '--field-separarator=" "',
+             '--key=2'] + existing_mapfiles,
+            silent=True, halt_on_failure=True,
+        )
+        self.write_to_file(combined_mapfile, output, verbose=False,
+                           error_level=FATAL)
+        self.run_command(['ln', '-sf', combined_mapfile,
+                          '%s-latest' % combined_mapfile])
+
     # Actions {{{1
-    def create_stage_mirror(self):
-        """ Rather than duplicate the logic here and in update_stage_mirror(),
-            just call it.
-
-            We could just create the initial_repo stage mirror here, but
-            there's no real harm in cloning all repos here either.  Putting
-            the time hit in the one-time-setup, rather than the first update
-            loop, makes sense.
-            """
-        self.update_stage_mirror()
-
-    def create_work_mirror(self):
-        """ Create the work_mirror, initial_repo only, from the stage_mirror.
-            This is where the conversion will occur.
-            """
-        hg = self.query_exe("hg", return_type="list")
-        git = self.query_exe("git", return_type="list")
-        dirs = self.query_abs_dirs()
-        repo_config = deepcopy(self.config['initial_repo'])
-        work_dest = dirs['abs_conversion_dir']
-        source_dest = os.path.join(
-            dirs['abs_source_dir'], repo_config['repo_name'])
-        if not os.path.exists(work_dest):
-            self.run_command(hg + ["init", work_dest],
-                             halt_on_failure=True)
-        self.run_command(hg + ["pull", source_dest],
-                         cwd=work_dest,
-                         error_list=HgErrorList,
-                         halt_on_failure=True)
-        # The revision 82e4f1b7bbb6e30a635b49bf2107b41a8c26e3d2
-        # reacts poorly to git-filter-branch-keep-rewrites (in
-        # prepend-cvs), resulting in diverging shas.
-        # To avoid this, strip back to 317fe0f314ab so the initial conversion
-        # doesn't include 82e4f1b7bbb6e30a635b49bf2107b41a8c26e3d2, and
-        # git-filter-branch-keep-rewrites is never run against this
-        # revision.  This takes 3 strips, due to forking/merging.
-        # See https://bugzilla.mozilla.org/show_bug.cgi?id=847727#c40 through
-        # https://bugzilla.mozilla.org/show_bug.cgi?id=847727#c60
-        # Also, yay hardcodes!
-        for hg_revision in ("26cb30a532a1", "aad29aa89237", "9f2fa4839e98"):
-            self.run_command(hg + ["--config", "extensions.mq=", "strip",
-                                   "--no-backup", hg_revision],
-                             cwd=work_dest,
-                             error_list=HgErrorList,
-                             halt_on_failure=True)
-        # Create .git for conversion, if it doesn't exist
-        git_dir = os.path.join(work_dest, '.git')
-        if not os.path.exists(git_dir):
-            self.run_command(git + ['init'], cwd=work_dest)
-            self.run_command(
-                git + ['--git-dir', git_dir, 'config', 'gc.auto', '0'],
-                cwd=work_dest
-            )
-        # Update .hg/hgrc, if not already updated
-        hgrc = os.path.join(work_dest, '.hg', 'hgrc')
-        contents = ''
-        if os.path.exists(hgrc):
-            contents = self.read_from_file(hgrc)
-        if 'hggit=' not in contents:
-            hgrc_update = """[extensions]
-hggit=
-[git]
-intree=1
-"""
-            self.write_to_file(hgrc, hgrc_update, open_mode='a')
-
-    def initial_conversion(self):
-        """ Run the initial hg-git conversion of the work_mirror.
-            This will create a git m-c repository without cvs history.
-            """
-        hg = self.query_exe("hg", return_type="list")
-        dirs = self.query_abs_dirs()
-        repo_config = deepcopy(self.config['initial_repo'])
-        source = os.path.join(dirs['abs_source_dir'], repo_config['repo_name'])
-        dest = dirs['abs_conversion_dir']
-        # bookmark all the branches in the repo_config, potentially
-        # renaming them.
-        # This follows a slightly different workflow than elsewhere; I don't
-        # want to fiddle with this logic more than I have to.
-        for (branch, target_branch) in repo_config.get('branch_config', {}).get('branches', {}).items():
-            output = self.get_output_from_command(
-                hg + ['id', '-r', branch], cwd=dest)
-            if output:
-                rev = output.split(' ')[0]
-            self.run_command(
-                hg + ['bookmark', '-f', '-r', rev, target_branch],
-                cwd=dest,
-                error_list=HgErrorList,
-                halt_on_failure=True,
-            )
-        # bookmark all the other branches, with the same name.
-        output = self.get_output_from_command(hg + ['branches', '-c'], cwd=source)
-        for line in output.splitlines():
-            branch_name = line.split(' ')[0]
-            if branch_name in repo_config.get('branches', {}):
-                continue
-            self.run_command(
-                hg + ['bookmark', '-f', '-r', branch_name, branch_name],
-                cwd=dest,
-                error_list=HgErrorList,
-                halt_on_failure=True,
-            )
-        # Do the conversion!  This will take a day or so.
-        self.retry(
-            self.run_command,
-            args=(hg + ['-v', 'gexport'], ),
-            kwargs={
-                'output_timeout': 15 * 60,
-                'cwd': dest,
-                'error_list': HgErrorList,
-            },
-            error_level=FATAL,
-        )
-        # Save the pre-cvs mapfile.
-        self.copy_to_upload_dir(os.path.join(dest, '.hg', 'git-mapfile'),
-                                dest="pre-cvs-mapfile", log_level=INFO)
-
-    def prepend_cvs(self):
-        """ Prepend converted CVS history to the converted git repository,
-            then munge the branches with git-filter-branch-keep-rewrites
-            to adjust the shas.
-
-            This step can take on the order of a week of compute time.
-            """
-        dirs = self.query_abs_dirs()
-        git = self.query_exe('git', return_type='list')
-        conversion_dir = dirs['abs_conversion_dir']
-        git_conversion_dir = os.path.join(conversion_dir, '.git')
-        grafts_file = os.path.join(git_conversion_dir, 'info', 'grafts')
-        map_dir = os.path.join(git_conversion_dir, '.git-rewrite', 'map')
-        if not os.path.exists(dirs["abs_cvs_history_dir"]):
-            # gd2 doesn't have access to tooltool :(
-            #manifest_path = self.create_tooltool_manifest(self.config['cvs_manifest'])
-            #if self.tooltool_fetch(manifest_path, output_dir=dirs['abs_work_dir']):
-            #    self.fatal("Unable to download cvs history via tooltool!")
-            # Temporary workaround
-            self.copyfile(
-                self.config['cvs_history_tarball'],
-                os.path.join(dirs['abs_work_dir'], "mozilla-cvs-history.tar.bz2")
-            )
-            self.run_command(
-                ["tar", "xjvf", "mozilla-cvs-history.tar.bz2"],
-                cwd=dirs["abs_work_dir"],
-                error_list=TarErrorList,
-                halt_on_failure=True
-            )
-        # We need to git checkout, or git thinks we've removed all the files
-        # without committing
-        self.run_command(git + ["checkout"], cwd=conversion_dir)
-        self.run_command(
-            'cp ' + os.path.join(dirs['abs_cvs_history_dir'], 'objects',
-                                 'pack', '*') + ' .',
-            cwd=os.path.join(git_conversion_dir, 'objects', 'pack')
-        )
-        self._check_initial_git_revisions(dirs['abs_cvs_history_dir'], 'e230b03',
-                                          '3ec464b55782fb94dbbb9b5784aac141f3e3ac01')
-        self._check_initial_git_revisions(conversion_dir, '4b3fd9',
-                                          '2514a423aca5d1273a842918589e44038d046a51')
-        self.write_to_file(grafts_file,
-                           '2514a423aca5d1273a842918589e44038d046a51 3ec464b55782fb94dbbb9b5784aac141f3e3ac01')
-        # This script is modified from git-filter-branch from git.
-        # https://people.mozilla.com/~hwine/tmp/vcs2vcs/notes.html#initial-conversion
-        # We may need to update this script if we update git.
-        # Currently, due to the way the script outputs (with \r but not \n),
-        # mozharness doesn't output anything for a number of ours.  This
-        # prevents using the output_timeout run_command() option (or, if we
-        # did, it would have to be many hours long).
-        env = deepcopy(self.config.get('env', {}))
-        git_filter_branch = os.path.join(
-            dirs['abs_repo_sync_tools_dir'],
-            'git-filter-branch-keep-rewrites'
-        )
-        self.run_command(
-            [git_filter_branch, '--',
-             '3ec464b55782fb94dbbb9b5784aac141f3e3ac01..HEAD'],
-            partial_env=env,
-            cwd=conversion_dir,
-            halt_on_failure=True
-        )
-        # The self.move() will break if this dir already exists.
-        # This rmtree() could move up to a preflight_prepend_cvs() method, or
-        # near the beginning, if desired.
-        self.rmtree(dirs['abs_git_rewrite_dir'])
-        self.move(os.path.join(conversion_dir, '.git-rewrite'),
-                  dirs['abs_git_rewrite_dir'],
-                  error_level=FATAL)
-        self.make_repo_bare(conversion_dir)
-        branch_list = self.get_output_from_command(
-            git + ['branch'],
-            cwd=git_conversion_dir,
-        )
-        for branch in branch_list.splitlines():
-            if branch.startswith('*'):
-                # specifically deal with |* master|
-                continue
-            branch = branch.strip()
-            self.run_command(
-                [git_filter_branch, '-f', '--',
-                 '3ec464b55782fb94dbbb9b5784aac141f3e3ac01..%s' % branch],
-                partial_env=env,
-                cwd=git_conversion_dir,
-                halt_on_failure=True
-            )
-            # tar backup after mid-prepend-cvs gd2 reboot in bug 894225.
-            if os.path.exists(map_dir):
-                if self.config.get("backup_dir"):
-                    self.mkdir_p(self.config['backup_dir'])
-                    self.run_command(
-                        ["tar", "cjvf",
-                         os.path.join(self.config["backup_dir"],
-                                      "prepend-cvs-%s.tar.bz2" % branch),
-                         map_dir],
-                    )
-                self.run_command(
-                    ['rsync', '-azv', os.path.join(map_dir, '.'),
-                     os.path.join(dirs['abs_git_rewrite_dir'], 'map', '.')],
-                    halt_on_failure=True
-                )
-                self.rmtree(os.path.join(git_conversion_dir, '.git-rewrite'),
-                            error_level=FATAL)
-        self.rmtree(grafts_file, error_level=FATAL)
-        self.munge_mapfile()
-
-    def fix_tags(self):
-        """ Fairly fast action that points each existing tag to the new
-            cvs-prepended sha.
-
-            Then we git gc to get rid of old shas.  This doesn't specifically
-            belong in this action, though it's the right spot in the workflow.
-            We have to gc to get rid of the <h<surkov email issue that
-            git-filter-branch-keep-rewrites gets rid of in the new shas.
-            """
-        dirs = self.query_abs_dirs()
-        git = self.query_exe("git", return_type="list")
-        conversion_dir = dirs['abs_conversion_dir']
-        self._fix_tags(
-            os.path.join(conversion_dir, '.git'),
-            dirs['abs_git_rewrite_dir']
-        )
-        self.run_command(
-            git + ['gc', '--aggressive'],
-            cwd=os.path.join(conversion_dir, '.git'),
-            error_list=GitErrorList,
-            halt_on_failure=True,
-        )
-
     def create_test_targets(self):
         """ This action creates local directories to do test pushes to.
             """
@@ -823,8 +659,8 @@ intree=1
             the git conversion repo.
             """
         hg = self.query_exe("hg", return_type="list")
+        git = self.query_exe("git", return_type="list")
         dirs = self.query_abs_dirs()
-        dest = dirs['abs_conversion_dir']
         repo_map = self._read_repo_update_json()
         timestamp = int(time.time())
         datetime = time.strftime('%Y-%m-%d %H:%M %Z')
@@ -833,6 +669,26 @@ intree=1
         for repo_config in self.query_all_repos():
             repo_name = repo_config['repo_name']
             source = os.path.join(dirs['abs_source_dir'], repo_name)
+            dest = self.query_abs_conversion_dir(repo_config)
+            if not dest:
+                self.fatal("No conversion_dir for %s!" % repo_name)
+            if not os.path.exists(dest):
+#                self.run_command(hg + ["init", dest], halt_on_failure=True)
+#                self.run_command(hg + ['pull', source],
+#                                 cwd=os.path.dirname(dest))
+                self.mkdir_p(os.path.dirname(dest))
+                self.run_command(hg + ['clone', '--noupdate', source],
+                                 error_list=HgErrorList,
+                                 halt_on_failure=True,
+                                 cwd=os.path.dirname(dest))
+                self.write_hggit_hgrc(dest)
+                self.init_git_repo('%s/.git' % dest, additional_args=['--bare'])
+                self.run_command(
+                    git + ['--git-dir', '%s/.git' % dest, 'config', 'gc.auto', '0'],
+                )
+            elif self.query_failure(repo_name):
+                self.info("Skipping %s." % repo_config['repo_name'])
+                continue
             # Build branch map.
             branch_map = self.query_branches(
                 repo_config.get('branch_config', {}),
@@ -849,10 +705,11 @@ intree=1
                     self.fatal("Branch %s doesn't exist in %s!" % (branch, repo_name))
                 timestamp = int(time.time())
                 datetime = time.strftime('%Y-%m-%d %H:%M %Z')
-                self.run_command(hg + ['pull', '-r', rev, source], cwd=dest)
+                self.run_command(hg + ['pull', '-r', rev, source], cwd=dest,
+                                 error_list=HgErrorList)
                 self.run_command(
                     hg + ['bookmark', '-f', '-r', rev, target_branch],
-                    cwd=dest
+                    cwd=dest, error_list=HgErrorList,
                 )
                 # This might get a little large.
                 repo_map.setdefault('repos', {}).setdefault(repo_name, {}).setdefault('branches', {})[branch] = {
@@ -862,31 +719,27 @@ intree=1
                     'pull_timestamp': timestamp,
                     'pull_datetime': datetime,
                 }
-        self.retry(
-            self.run_command,
-            args=(hg + ['-v', 'gexport'], ),
-            kwargs={
-                'output_timeout': 15 * 60,
-                'cwd': dest,
-                'error_list': HgErrorList,
-            },
-            error_level=FATAL,
-        )
-        generated_mapfile = os.path.join(dest, '.hg', 'git-mapfile')
-        for repo_config in self.query_all_repos():
-            repo_name = repo_config['repo_name']
-            source = os.path.join(dirs['abs_source_dir'], repo_name)
-            branch_map = self.query_branches(
-                repo_config.get('branch_config', {}),
-                source,
-                vcs='hg',
+            self.retry(
+                self.run_command,
+                args=(hg + ['-v', 'gexport'], ),
+                kwargs={
+                    'output_timeout': 15 * 60,
+                    'cwd': dest,
+                    'error_list': HgErrorList,
+                },
+                error_level=FATAL,
+            )
+            generated_mapfile = os.path.join(dest, '.hg', 'git-mapfile')
+            self.copy_to_upload_dir(
+                generated_mapfile,
+                dest=repo_config.get('mapfile_name', self.config.get('mapfile_name', "gecko-mapfile")),
+                log_level=INFO
             )
             for (branch, target_branch) in branch_map.items():
                 git_revision = self._query_mapped_revision(
                     revision=rev, mapfile=generated_mapfile)
                 repo_map['repos'][repo_name]['branches'][branch]['git_revision'] = git_revision
         self._write_repo_update_json(repo_map)
-        self.copy_to_upload_dir(generated_mapfile, dest="gecko-mapfile", log_level=INFO)
 
     def push(self):
         """ Push to all targets.  test_targets are local directory test repos;
@@ -900,14 +753,19 @@ intree=1
         repo_map['last_push_timestamp'] = timestamp
         repo_map['last_push_datetime'] = datetime
         for repo_config in self.query_all_repos():
+            if self.query_failure(repo_config['repo_name']):
+                self.info("Skipping %s." % repo_config['repo_name'])
+                continue
             timestamp = int(time.time())
             datetime = time.strftime('%Y-%m-%d %H:%M %Z')
             status = self._push_repo(repo_config)
             if not status:  # good
+                self.add_summary("Successfully pushed %s." % repo_config['repo_name'])
                 repo_name = repo_config['repo_name']
                 repo_map.setdefault('repos', {}).setdefault(repo_name, {})['push_timestamp'] = timestamp
                 repo_map['repos'][repo_name]['push_datetime'] = datetime
             else:
+                self.add_failure("Unable to push %s." % repo_config['repo_name'])
                 failure_msg += status + "\n"
         if not failure_msg:
             repo_map['last_successful_push_timestamp'] = repo_map['last_push_timestamp']
@@ -934,44 +792,6 @@ intree=1
         if failure_msg:
             self.fatal("Unable to upload to this location:\n%s" % failure_msg)
 
-    def notify(self, message=None, fatal=False):
-        """ Email people in the notify_config (depending on status and failure_only)
-            """
-        c = self.config
-        dirs = self.query_abs_dirs()
-        job_name = c.get('job_name', c.get('conversion_dir', os.getcwd()))
-        subject = "[vcs2vcs] Successful conversion for %s <EOM>" % job_name
-        text = ''
-        error_log = os.path.join(dirs['abs_log_dir'], self.log_obj.log_files[ERROR])
-        error_contents = self.read_from_file(error_log)
-        if fatal:
-            subject = "[vcs2vcs] Failed conversion for %s" % job_name
-            text = message + '\n\n'
-        elif error_contents:
-            text += 'Error log is non-zero!'
-        if error_contents:
-            text += '\n\n' + error_contents
-        for notify_config in c.get('notify_config', []):
-            if not fatal and notify_config.get('failure_only'):
-                continue
-            fromaddr = notify_config.get('from', c['default_notify_from'])
-            message = '\r\n'.join((
-                "From: %s" % fromaddr,
-                "To: %s" % notify_config['to'],
-                "CC: %s" % ','.join(notify_config.get('cc', [])),
-                "Subject: %s" % subject,
-                "",
-                text
-            ))
-            toaddrs = [notify_config['to']] + notify_config.get('cc', [])
-            # TODO allow for a different smtp server
-            # TODO deal with failures
-            server = smtplib.SMTP('localhost')
-            self.retry(
-                server.sendmail,
-                args=(fromaddr, toaddrs, message),
-            )
-            server.quit()
 
 # __main__ {{{1
 if __name__ == '__main__':

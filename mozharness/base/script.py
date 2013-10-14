@@ -648,6 +648,7 @@ class ScriptMixin(object):
             if output_timeout:
                 def processOutput(line):
                     parser.add_lines(line)
+
                 def onTimeout():
                     self.info("mozprocess timed out")
 
@@ -759,7 +760,6 @@ class ScriptMixin(object):
         shell = True
         if isinstance(command, list):
             shell = False
-            self.info("Copy/paste: %s" % subprocess.list2cmdline(command))
         p = subprocess.Popen(command, shell=shell, stdout=tmp_stdout,
                              cwd=cwd, stderr=tmp_stderr, env=env)
         #XXX: changed from self.debug to self.log due to this error:
@@ -813,7 +813,7 @@ class ScriptMixin(object):
 
     def unpack(self, filename, extract_to):
         '''
-        This method allows us to extract a file regardless of its extension 
+        This method allows us to extract a file regardless of its extension
         '''
         # XXX: Make sure that filename has a extension of one of our supported file formats
         m = re.search('\.tar\.(bz2|gz)$', filename)
@@ -827,6 +827,7 @@ class ScriptMixin(object):
         else:
             # XXX implement
             pass
+
 
 def PreScriptRun(func):
     """Decorator for methods that will be called before script execution.
@@ -1229,11 +1230,13 @@ class BaseScript(ScriptMixin, LogMixin, object):
         # Summaries need a lot more love.
         self.log(message, level=level)
 
-    def add_failure(self, key, message="%(key)s failed.", level=ERROR):
+    def add_failure(self, key, message="%(key)s failed.", level=ERROR,
+                    increment_return_code=True):
         if key not in self.failures:
             self.failures.append(key)
-            self.return_code += 1
             self.add_summary(message % {'key': key}, level=level)
+            if increment_return_code:
+                self.return_code += 1
 
     def query_failure(self, key):
         return key in self.failures
