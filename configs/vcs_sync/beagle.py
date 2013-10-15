@@ -296,6 +296,33 @@ config = {
             ],
         },
     }, {
+        "repo": "https://hg.mozilla.org/releases/mozilla-esr24",
+        "revision": "default",
+        "repo_name": "mozilla-esr24",
+        "targets": [{
+            "target_dest": "beagle/.git",
+            "vcs": "git",
+            "test_push": True,
+        }, {
+            "target_dest": "gitmo-beagle",
+            "vcs": "git",
+        }, {
+            "target_dest": "github-beagle",
+            "vcs": "git",
+        }],
+        "bare_checkout": True,
+        "vcs": "hg",
+        "branch_config": {
+            "branches": {
+                "default": "esr24",
+            },
+        },
+        "tag_config": {
+            "tag_regexes": [
+                "^B2G_",
+            ],
+        },
+    }, {
         "repo": "https://hg.mozilla.org/integration/mozilla-inbound",
         "revision": "default",
         "repo_name": "mozilla-inbound",
