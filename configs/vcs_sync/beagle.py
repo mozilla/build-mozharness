@@ -33,6 +33,9 @@ config = {
             "test_push": True,
             "force_push": True,
         }, {
+            "target_dest": "gitmo-beagle",
+            "vcs": "git",
+        }, {
             "target_dest": "github-beagle",
             "vcs": "git",
         }],
@@ -72,6 +75,9 @@ config = {
                 },
             },
         }, {
+            "target_dest": "gitmo-beagle",
+            "vcs": "git",
+        }, {
             "target_dest": "github-beagle",
             "vcs": "git",
             "tag_config": {
@@ -101,6 +107,9 @@ config = {
             "vcs": "git",
             "test_push": True,
         }, {
+            "target_dest": "gitmo-beagle",
+            "vcs": "git",
+        }, {
             "target_dest": "github-beagle",
             "vcs": "git",
         }],
@@ -124,6 +133,9 @@ config = {
             "target_dest": "beagle/.git",
             "vcs": "git",
             "test_push": True,
+        }, {
+            "target_dest": "gitmo-beagle",
+            "vcs": "git",
         }, {
             "target_dest": "github-beagle",
             "vcs": "git",
@@ -149,6 +161,9 @@ config = {
             "vcs": "git",
             "test_push": True,
         }, {
+            "target_dest": "gitmo-beagle",
+            "vcs": "git",
+        }, {
             "target_dest": "github-beagle",
             "vcs": "git",
         }],
@@ -173,6 +188,9 @@ config = {
             "vcs": "git",
             "test_push": True,
         }, {
+            "target_dest": "gitmo-beagle",
+            "vcs": "git",
+        }, {
             "target_dest": "github-beagle",
             "vcs": "git",
         }],
@@ -196,6 +214,9 @@ config = {
             "target_dest": "beagle/.git",
             "vcs": "git",
             "test_push": True,
+        }, {
+            "target_dest": "gitmo-beagle",
+            "vcs": "git",
         }, {
             "target_dest": "github-beagle",
             "vcs": "git",
@@ -225,6 +246,9 @@ config = {
             "vcs": "git",
             "test_push": True,
         }, {
+            "target_dest": "gitmo-beagle",
+            "vcs": "git",
+        }, {
             "target_dest": "github-beagle",
             "vcs": "git",
         }],
@@ -253,6 +277,9 @@ config = {
             "vcs": "git",
             "test_push": True,
         }, {
+            "target_dest": "gitmo-beagle",
+            "vcs": "git",
+        }, {
             "target_dest": "github-beagle",
             "vcs": "git",
         }],
@@ -277,6 +304,9 @@ config = {
             "vcs": "git",
             "test_push": True,
         }, {
+            "target_dest": "gitmo-beagle",
+            "vcs": "git",
+        }, {
             "target_dest": "github-beagle",
             "vcs": "git",
         }],
@@ -296,6 +326,9 @@ config = {
             "target_dest": "beagle/.git",
             "vcs": "git",
             "test_push": True,
+        }, {
+            "target_dest": "gitmo-beagle",
+            "vcs": "git",
         }, {
             "target_dest": "github-beagle",
             "vcs": "git",
@@ -317,6 +350,9 @@ config = {
             "vcs": "git",
             "test_push": True,
         }, {
+            "target_dest": "gitmo-beagle",
+            "vcs": "git",
+        }, {
             "target_dest": "github-beagle",
             "vcs": "git",
         }],
@@ -331,8 +367,13 @@ config = {
     }],
     "remote_targets": {
         "github-beagle": {
-            "repo": "git@github.com:escapewindow/test-beagle.git",
-            "ssh_key": "~/.ssh/escapewindow_github_rsa",
+            "repo": "git@github.com:mozilla/integration-gecko-dev.git",
+            "ssh_key": "~/.ssh/releng-github-id_rsa",
+            "vcs": "git",
+        },
+        "gitmo-beagle": {
+            "repo": "gitolite3@git.mozilla.org:integration/gecko-dev.git",
+            "ssh_key": "~/.ssh/vcs-sync_rsa",
             "vcs": "git",
         },
     },
@@ -365,16 +406,20 @@ config = {
     "pip_index": False,
 
     "upload_config": [{
-        "ssh_key": "~/.ssh/id_rsa",
-        "ssh_user": "vcs2vcs",
-        "remote_host": "10.132.49.52",
-        "remote_path": "/opt/vcs2vcs/beagle-upload",
+        "ssh_key": "~/.ssh/vcs-sync_rsa",
+        "ssh_user": "asasaki",
+        "remote_host": "people.mozilla.org",
+        "remote_path": "/home/asasaki/public_html/vcs2vcs/gecko-dev",
     }],
 
     "default_notify_from": "vcs2vcs@%s" % hostname,
     "notify_config": [{
         "to": "aki@mozilla.com",
         "failure_only": False,
+        "skip_empty_messages": False,
+    }, {
+        "to": "release+vcs2vcs@mozilla.com",
+        "failure_only": True,
         "skip_empty_messages": True,
     }],
 
