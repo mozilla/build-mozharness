@@ -1126,8 +1126,8 @@ class BaseScript(ScriptMixin, LogMixin, object):
 
             if not post_success:
                 self.fatal("Aborting due to failure in post-run listener.")
-
-        self.copy_logs_to_upload_dir()
+        if self.config.get("copy_logs_post_run", True):
+            self.copy_logs_to_upload_dir()
 
         return self.return_code
 

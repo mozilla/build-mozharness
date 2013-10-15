@@ -6,7 +6,6 @@ hostname = socket.gethostname()
 # If you need to add a different repo, add it to CONVERSION_REPOS.
 PROJECT_BRANCHES = [
     # twig projects
-    "ash",
     "alder",
     "ash",
     "birch",
@@ -67,8 +66,8 @@ config = {
     "conversion_repos": CONVERSION_REPOS,
     "remote_targets": {
         "github-project-branches": {
-            "repo": "git@github.com:escapewindow/test-project-branches.git",
-            "ssh_key": "~/.ssh/escapewindow_github_rsa",
+            "repo": "git@github.com:mozilla/integration-gecko-projects.git",
+            "ssh_key": "~/.ssh/releng-github-id_rsa",
             "vcs": "git",
         },
     },
@@ -101,16 +100,20 @@ config = {
     "pip_index": False,
 
     "upload_config": [{
-        "ssh_key": "~/.ssh/id_rsa",
+        "ssh_key": "~/.ssh/vcs-sync_rsa",
         "ssh_user": "asasaki",
-        "remote_host": "github-sync4",
-        "remote_path": "/home/asasaki/projects/project-branches-upload",
+        "remote_host": "people.mozilla.org",
+        "remote_path": "/home/asasaki/public_html/vcs2vcs/gecko-projects",
     }],
 
     "default_notify_from": "vcs2vcs@%s" % hostname,
     "notify_config": [{
         "to": "aki@mozilla.com",
         "failure_only": False,
+        "skip_empty_messages": False,
+    }, {
+        "to": "release+vcs2vcs@mozilla.com",
+        "failure_only": True,
         "skip_empty_messages": True,
     }],
 
