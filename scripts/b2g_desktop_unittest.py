@@ -163,7 +163,7 @@ class B2GDesktopTest(TestingMixin, TooltoolMixin, MercurialScript, BaseScript):
         # set default test manifest by suite if none specified
         if not self.test_manifest:
             if suite == 'mochitest':
-                self.test_manifest = 'b2g.json'
+                self.test_manifest = 'b2g-desktop.json'
 
         # set the gaia_profile
         self.gaia_profile = os.path.join(os.path.dirname(self.binary_path),
