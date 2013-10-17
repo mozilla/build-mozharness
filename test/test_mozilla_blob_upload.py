@@ -36,7 +36,8 @@ class BlobUploadScript(BlobUploadMixin, script.BaseScript):
     def query_python_path(self, binary="python"):
         if binary == "blobberc.py":
             return mock.Mock(return_value='/path/to/blobberc').return_value
-        return None
+        elif binary == "python":
+            return mock.Mock(return_value='/path/to/python').return_value
 
     def query_abs_dirs(self):
         if self.abs_dirs:
@@ -84,8 +85,9 @@ class TestBlobUploadMechanism(unittest.TestCase):
         self.s.write_to_file(file_name, content)
         self.s.upload_blobber_files()
 
-        expected_result = ['/path/to/blobberc', '-u', 'http://blob_server.me',
-                           '-a', os.path.abspath(__file__), '-b', 'test-branch', '-d']
+        expected_result = ['/path/to/python', '/path/to/blobberc', '-u',
+                           'http://blob_server.me', '-a',
+                           os.path.abspath(__file__), '-b', 'test-branch', '-d']
         expected_result.append(self.s.query_abs_dirs()['abs_blob_upload_dir'])
         self.assertEqual(expected_result, self.s.command)
 
