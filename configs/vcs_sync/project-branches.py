@@ -1,3 +1,6 @@
+# This is for gecko-projects, which is a low-SLA developer-oriented repo
+# with mozilla-central based project branches.
+
 import os
 import socket
 hostname = socket.gethostname()

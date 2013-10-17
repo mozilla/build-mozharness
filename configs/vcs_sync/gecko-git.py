@@ -1,3 +1,6 @@
+# This is for gecko.git, which is a partner-oriented repo with
+# B2G release branches + tags.
+
 import os
 import socket
 hostname = socket.gethostname()

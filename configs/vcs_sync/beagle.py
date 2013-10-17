@@ -1,3 +1,6 @@
+# This is for gecko-dev, which is a developer-oriented repo with
+# release-train and inbound branches.
+
 import os
 import socket
 hostname = socket.gethostname()
