@@ -42,7 +42,7 @@ class BlobUploadMixin(VirtualenvMixin):
                  self.config.get('blob_uploader_auth_file'):
 
             self.info("Blob upload gear active.")
-            upload = [self.query_python_path("blobberc.py")]
+            upload = [self.query_python_path(), self.query_python_path("blobberc.py")]
 
             dirs = self.query_abs_dirs()
             self.debug("Get the directory from which to upload the files.")
