@@ -21,6 +21,7 @@ from mozharness.base.errors import BaseErrorList
 from mozharness.base.log import INFO, ERROR, FATAL
 from mozharness.base.python import VirtualenvMixin
 from mozharness.base.vcs.vcsbase import MercurialScript
+from mozharness.mozilla.mozbase import MozbaseMixin
 from mozharness.mozilla.testing.mozpool import MozpoolMixin
 from mozharness.mozilla.testing.device import SUTDeviceMozdeviceMixin
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
@@ -29,7 +30,7 @@ from mozharness.mozilla.testing.unittest import DesktopUnittestOutputParser
 SUITE_CATEGORIES = ['mochitest', 'reftest', 'crashtest', 'jsreftest', 'robocop', 'xpcshell', 'jittest']
 
 
-class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, BuildbotMixin, SUTDeviceMozdeviceMixin):
+class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, BuildbotMixin, SUTDeviceMozdeviceMixin, MozbaseMixin):
     test_suites = SUITE_CATEGORIES
     config_options = [
         [["--mozpool-api-url"], {
@@ -130,8 +131,6 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
 
     virtualenv_modules = [
         'mozpoolclient',
-        'mozcrash',
-        {'name': 'mozdevice', 'url': os.path.join('tests', os.path.join('mozbase', 'mozdevice'))}
     ]
 
     def __init__(self, require_config_file=False):
