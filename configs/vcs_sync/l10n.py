@@ -79,6 +79,7 @@ config = {
         "hg": [os.path.join(os.getcwd(), "build", "venv", "bin", "hg"), "--config", "web.cacerts=/etc/pki/tls/certs/ca-bundle.crt"],
     },
     "conversion_type": "b2g-l10n",
+    "combined_mapfile": "l10n-mapfile",
     "l10n_config": {
         "gecko_config": GECKO_CONFIG,
         "gaia_config": {
@@ -181,7 +182,7 @@ config = {
         "skip_empty_messages": True,
     }],
 
-    # Disallow sharing.  We may need a better way of doing this.
+    # Disallow sharing, since we want pristine .hg and .git directories.
     "vcs_share_base": None,
     "hg_share_base": None,
 }

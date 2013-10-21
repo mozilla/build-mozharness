@@ -31,16 +31,9 @@ config = {
             "vcs": "git",
             "test_push": True,
         }, {
-            "target_dest": "m-c1/.git",
-            "vcs": "git",
-            "test_push": True,
-            "force_push": True,
-        }, {
             "target_dest": "gitmo-beagle",
-            "vcs": "git",
         }, {
             "target_dest": "github-beagle",
-            "vcs": "git",
         }],
         "bare_checkout": True,
         "vcs": "hg",
@@ -69,20 +62,9 @@ config = {
                 "tags": {'*': '*'},
             },
         }, {
-            "target_dest": "m-b2g18/.git",
-            "vcs": "git",
-            "test_push": True,
-            "branch_config": {
-                "branches": {
-                    "b2g18": "master",
-                },
-            },
-        }, {
             "target_dest": "gitmo-beagle",
-            "vcs": "git",
         }, {
             "target_dest": "github-beagle",
-            "vcs": "git",
             "tag_config": {
                 "tag_regexes": [
                     "^B2G_",
@@ -111,10 +93,8 @@ config = {
             "test_push": True,
         }, {
             "target_dest": "gitmo-beagle",
-            "vcs": "git",
         }, {
             "target_dest": "github-beagle",
-            "vcs": "git",
         }],
         "bare_checkout": True,
         "vcs": "hg",
@@ -138,10 +118,8 @@ config = {
             "test_push": True,
         }, {
             "target_dest": "gitmo-beagle",
-            "vcs": "git",
         }, {
             "target_dest": "github-beagle",
-            "vcs": "git",
         }],
         "bare_checkout": True,
         "vcs": "hg",
@@ -165,10 +143,8 @@ config = {
             "test_push": True,
         }, {
             "target_dest": "gitmo-beagle",
-            "vcs": "git",
         }, {
             "target_dest": "github-beagle",
-            "vcs": "git",
         }],
         "bare_checkout": True,
         "vcs": "hg",
@@ -192,10 +168,8 @@ config = {
             "test_push": True,
         }, {
             "target_dest": "gitmo-beagle",
-            "vcs": "git",
         }, {
             "target_dest": "github-beagle",
-            "vcs": "git",
         }],
         "bare_checkout": True,
         "vcs": "hg",
@@ -219,10 +193,8 @@ config = {
             "test_push": True,
         }, {
             "target_dest": "gitmo-beagle",
-            "vcs": "git",
         }, {
             "target_dest": "github-beagle",
-            "vcs": "git",
         }],
         "bare_checkout": True,
         "vcs": "hg",
@@ -250,10 +222,8 @@ config = {
             "test_push": True,
         }, {
             "target_dest": "gitmo-beagle",
-            "vcs": "git",
         }, {
             "target_dest": "github-beagle",
-            "vcs": "git",
         }],
         "bare_checkout": True,
         "vcs": "hg",
@@ -281,10 +251,8 @@ config = {
             "test_push": True,
         }, {
             "target_dest": "gitmo-beagle",
-            "vcs": "git",
         }, {
             "target_dest": "github-beagle",
-            "vcs": "git",
         }],
         "bare_checkout": True,
         "vcs": "hg",
@@ -308,10 +276,8 @@ config = {
             "test_push": True,
         }, {
             "target_dest": "gitmo-beagle",
-            "vcs": "git",
         }, {
             "target_dest": "github-beagle",
-            "vcs": "git",
         }],
         "bare_checkout": True,
         "vcs": "hg",
@@ -335,10 +301,8 @@ config = {
             "test_push": True,
         }, {
             "target_dest": "gitmo-beagle",
-            "vcs": "git",
         }, {
             "target_dest": "github-beagle",
-            "vcs": "git",
         }],
         "bare_checkout": True,
         "vcs": "hg",
@@ -358,10 +322,8 @@ config = {
             "test_push": True,
         }, {
             "target_dest": "gitmo-beagle",
-            "vcs": "git",
         }, {
             "target_dest": "github-beagle",
-            "vcs": "git",
         }],
         "bare_checkout": True,
         "vcs": "hg",
@@ -381,10 +343,8 @@ config = {
             "test_push": True,
         }, {
             "target_dest": "gitmo-beagle",
-            "vcs": "git",
         }, {
             "target_dest": "github-beagle",
-            "vcs": "git",
         }],
         "bare_checkout": True,
         "vcs": "hg",
@@ -453,7 +413,7 @@ config = {
         "skip_empty_messages": True,
     }],
 
-    # Disallow sharing.  We may need a better way of doing this.
+    # Disallow sharing, since we want pristine .hg and .git directories.
     "vcs_share_base": None,
     "hg_share_base": None,
 }

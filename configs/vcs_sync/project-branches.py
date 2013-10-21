@@ -38,7 +38,6 @@ CONVERSION_REPOS = [{
     "repo_name": "services-central",
     "targets": [{
         "target_dest": "github-project-branches",
-        "vcs": "git",
     }],
     "bare_checkout": True,
     "vcs": "hg",
@@ -72,6 +71,7 @@ config = {
             "repo": "git@github.com:mozilla/integration-gecko-projects.git",
             "ssh_key": "~/.ssh/releng-github-id_rsa",
             "vcs": "git",
+            "force_push": True,
         },
     },
 
@@ -102,6 +102,10 @@ config = {
     ],
     "pip_index": False,
 
+    "combined_mapfile": "combined_gecko_mapfile",
+    "external_mapfile_urls": [
+        "http://people.mozilla.org/~asasaki/vcs2vcs/gecko-dev/gecko-mapfile",
+    ],
     "upload_config": [{
         "ssh_key": "~/.ssh/vcs-sync_rsa",
         "ssh_user": "asasaki",
@@ -120,7 +124,7 @@ config = {
         "skip_empty_messages": True,
     }],
 
-    # Disallow sharing.  We may need a better way of doing this.
+    # Disallow sharing, since we want pristine .hg and .git directories.
     "vcs_share_base": None,
     "hg_share_base": None,
 }
