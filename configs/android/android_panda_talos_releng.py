@@ -17,6 +17,7 @@ config = {
     "install_app_path":  "/builds/sut_tools/installApp.py",
     "talos_from_code_url": "http://hg.mozilla.org/%s/raw-file/%s/testing/talos/talos_from_code.py",
     "talos_json_url": "http://hg.mozilla.org/%s/raw-file/%s/testing/talos/talos.json",
+    "use_talos_json": True,
     "datazilla_urls": ["https://datazilla.mozilla.org/talos"],
     "datazilla_authfile": os.path.join(os.getcwd(), "oauth.txt"),
     #remotePerfConfigurator.py options
@@ -40,18 +41,18 @@ config = {
         "local.yml"
     ],
     "all_talos_suites": {
-        "remote-troboprovider":  ["--activeTests=tprovider", "--noChrome", "--fennecIDs=../fennec_ids.txt"],
-        "remote-ts":  ["--activeTests=ts", "--mozAfterPaint", "--noChrome"],
+        "remote-troboprovider":  [],
+        "remote-ts":  [],
         #currently disabled
-        "remote-tsvgx":  ["--activeTests=tsvgx", "--noChrome"],
-        "remote-tcanvasmark":  ["--activeTests=tcanvasmark", "--noChrome"],
-        "remote-tsspider":  ["--activeTests=tsspider", "--noChrome"],
+        "remote-tsvgx":  [],
+        "remote-tcanvasmark":  [],
+        "remote-tsspider":  [],
         #end currently disabled
-        "remote-trobopan":  ["--activeTests=trobopan", "--noChrome", "--fennecIDs=../fennec_ids.txt"],
-        "remote-tsvg":  ["--activeTests=tsvg", "--noChrome"],
-        "remote-tp4m_nochrome":  ["--activeTests=tp4m", "--noChrome", "--rss"],
-        "remote-trobocheck2":  ["--activeTests=tcheck2", "--noChrome", "--fennecIDs=../fennec_ids.txt"],
-        "remote-tspaint": ["--activeTests=ts_paint", "--mozAfterPaint"],
+        "remote-trobopan":  [],
+        "remote-tsvg":  [],
+        "remote-tp4m_nochrome":  [],
+        "remote-trobocheck2":  [],
+        "remote-tspaint": []
     },
     "find_links": [
         "http://pypi.pvt.build.mozilla.org/pub",
@@ -64,6 +65,7 @@ config = {
         'clobber',
         'read-buildbot-config',
         'download-and-extract',
+        'clone-talos',
         'create-virtualenv',
         'request-device',
         'run-test',
