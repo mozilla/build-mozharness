@@ -320,7 +320,7 @@ intree=1
                 self.run_command,
                 args=(cmd, ),
                 kwargs={
-                    'output_timeout': 2 * 60,
+                    'output_timeout': 5 * 60,
                     'cwd': source_dest,
                     'error_list': HgErrorList,
                     'success_codes': [0, 1, 256],
