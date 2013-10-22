@@ -28,11 +28,13 @@ class GaiaIntegrationTest(GaiaTest):
         output_parser = TestSummaryOutputParserHelper(
           config=self.config, log_obj=self.log_obj, error_list=self.error_list)
 
-        # |MOCHA_REPORTER=mocha-tbpl-reporter make test-integration|
+        # `make test-integration \
+        #      MOCHA_REPORTER=mocha-tbpl-reporter \
+        #      NPM_REGISTRY=http://npm-mirror.pub.build.mozilla.org`
         cmd = self.query_exe('make test-integration', return_type='list')
         code = self.run_command(cmd, cwd=dirs['abs_gaia_dir'], env={
           'MOCHA_REPORTER': 'mocha-tbpl-reporter',
-          'NPM_REGISTRY': 'http://registry.npmjs.org'
+          'NPM_REGISTRY': self.config.get('npm_registry')
         }, output_parser=output_parser)
 
         output_parser.print_summary('gaia-integration-tests')
