@@ -27,7 +27,7 @@ from mozharness.mozilla.testing.device import SUTDeviceMozdeviceMixin
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
 from mozharness.mozilla.testing.unittest import DesktopUnittestOutputParser
 
-SUITE_CATEGORIES = ['mochitest', 'reftest', 'crashtest', 'jsreftest', 'robocop', 'xpcshell', 'jittest']
+SUITE_CATEGORIES = ['mochitest', 'reftest', 'crashtest', 'jsreftest', 'robocop', 'xpcshell', 'jittest', 'cppunittest']
 
 
 class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, BuildbotMixin, SUTDeviceMozdeviceMixin, MozbaseMixin):
@@ -115,6 +115,14 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
             "help": "Specify which jittest suite to run. "
                     "Suites are defined in the config file\n."
                     "Examples: 'jittest'"}
+         ],
+        [['--cppunittest-suite', ], {
+            "action": "extend",
+            "dest": "specified_cppunittest_suites",
+            "type": "string",
+            "help": "Specify which cpp unittest suite to run. "
+                    "Suites are defined in the config file\n."
+                    "Examples: 'cppunittest'"}
          ],
         [['--run-all-suites', ], {
             "action": "store_true",
@@ -346,6 +354,8 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
             dirs['abs_test_install_dir'], 'mochitest')
         dirs['abs_jittest_dir'] = os.path.join(dirs['abs_test_install_dir'], "jit-test", "jit-test")
         dirs['shutdown_dir'] = abs_dirs['abs_work_dir'].rsplit("/", 2)[0]
+        dirs['abs_cppunittest_dir'] = os.path.join(
+            dirs['abs_test_install_dir'], 'cppunittests')
         for key in dirs.keys():
             if key not in abs_dirs:
                 abs_dirs[key] = dirs[key]
@@ -394,7 +404,8 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
             'http_port': http_port,
             'ssl_port':  ssl_port,
             'app_name':  self.app_name,
-            'apk_name':  self.filename_apk
+            'apk_name':  self.filename_apk,
+            'apk_path':  self.apk_path
         }
         if self.config['%s_options' % suite_category]:
             for option in self.config['%s_options' % suite_category]:
