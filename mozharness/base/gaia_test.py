@@ -55,6 +55,12 @@ class GaiaTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin,
           "dest": "xre_url",
           "default": None,
           "help": "url of desktop xre archive"
+         }],
+        [["--npm-registry"],
+         {"action": "store",
+          "dest": "npm_registry",
+          "default": "http://npm-mirror.pub.build.mozilla.org",
+          "help": "where to go for node packages"
          }]] + copy.deepcopy(testing_config_options)
 
     error_list = [

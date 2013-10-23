@@ -98,7 +98,9 @@ class PurgeMixin(object):
             'explanation': 'Error contacting server for clobberer information.'
         }]
 
-        retval = self.run_command(cmd, cwd=os.path.dirname(self.buildbot_config['properties']['basedir']), error_list=error_list)
+        retval = self.retry(self.run_command, attempts=3, good_statuses=(0,), args=[cmd],
+                 kwargs={'cwd':os.path.dirname(self.buildbot_config['properties']['basedir']),
+                         'error_list':error_list})
         if retval != 0:
             self.fatal("failed to clobber build", exit_code=2)
 

@@ -15,6 +15,7 @@ import re
 import sys
 import copy
 import shutil
+import glob
 
 # load modules from parent dir
 sys.path.insert(1, os.path.dirname(sys.path[0]))
@@ -326,7 +327,8 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin):
         self._run_category_suites('reftest')
         self._run_category_suites('xpcshell',
                                   preflight_run_method=self.preflight_xpcshell)
-        self._run_category_suites('cppunittest')
+        self._run_category_suites('cppunittest',
+                                  preflight_run_method=self.preflight_cppunittest)
         self._run_category_suites('jittest')
 
     def preflight_xpcshell(self, suites):
@@ -349,6 +351,18 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin):
                           abs_app_plugins_dir,
                           overwrite='overwrite_if_exists')
 
+    def preflight_cppunittest(self, suites):
+        c = self.config
+        abs_app_dir = self.query_abs_app_dir()
+        dirs = self.query_abs_dirs()
+        abs_cppunittest_dir = dirs['abs_cppunittest_dir']
+
+        # move manifest and js fils to app dir, where tests expect them
+        files = glob.glob(os.path.join(abs_cppunittest_dir, '*.js'))
+        files.extend(glob.glob(os.path.join(abs_cppunittest_dir, '*.manifest')))
+        for f in files:
+            self.move(f, abs_app_dir)
+ 
     def _run_category_suites(self, suite_category, preflight_run_method=None):
         """run suite(s) to a specific category"""
         c = self.config

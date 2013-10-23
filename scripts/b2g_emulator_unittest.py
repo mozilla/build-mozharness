@@ -287,6 +287,9 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
         if not self.test_manifest:
             if suite == 'mochitest':
                 self.test_manifest = 'b2g.json'
+                if self.buildbot_config:
+                    if 'debug' in self.buildbot_config['properties']['buildername']:
+                        self.test_manifest = 'b2g-debug.json'
             elif suite == 'reftest':
                 self.test_manifest = os.path.join('tests', 'layout',
                                                   'reftests', 'reftest.list')
