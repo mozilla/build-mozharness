@@ -21,6 +21,7 @@ from mozharness.base.errors import BaseErrorList
 from mozharness.base.log import INFO, ERROR, FATAL
 from mozharness.base.python import VirtualenvMixin
 from mozharness.base.vcs.vcsbase import MercurialScript
+from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_options
 from mozharness.mozilla.mozbase import MozbaseMixin
 from mozharness.mozilla.testing.mozpool import MozpoolMixin
 from mozharness.mozilla.testing.device import SUTDeviceMozdeviceMixin
@@ -30,7 +31,7 @@ from mozharness.mozilla.testing.unittest import DesktopUnittestOutputParser
 SUITE_CATEGORIES = ['mochitest', 'reftest', 'crashtest', 'jsreftest', 'robocop', 'xpcshell', 'jittest', 'cppunittest']
 
 
-class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, BuildbotMixin, SUTDeviceMozdeviceMixin, MozbaseMixin):
+class PandaTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixin, BuildbotMixin, SUTDeviceMozdeviceMixin, MozbaseMixin):
     test_suites = SUITE_CATEGORIES
     config_options = [
         [["--mozpool-api-url"], {
@@ -132,7 +133,8 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
                     "in the config file. You do not need to specify "
                     "any other suites. Beware, this may take a while ;)"}
          ],
-    ] + copy.deepcopy(testing_config_options)
+    ] + copy.deepcopy(testing_config_options) + \
+        copy.deepcopy(blobupload_config_options)
 
     error_list = []
     mozpool_handler = None
@@ -234,8 +236,11 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
                 c = self.config
                 if c.get('minidump_stackwalk_path'):
                     env['MINIDUMP_STACKWALK'] = c['minidump_stackwalk_path']
-                if c.get('minidump_save_path'):
-                    env['MINIDUMP_SAVE_PATH'] = c['minidump_save_path']
+                env['MOZ_UPLOAD_DIR'] = self.query_abs_dirs()['abs_blob_upload_dir']
+                env['MINIDUMP_SAVE_PATH'] = self.query_abs_dirs()['abs_blob_upload_dir']
+                if not os.path.isdir(env['MOZ_UPLOAD_DIR']):
+                    self.mkdir_p(env['MOZ_UPLOAD_DIR'])
+
                 env = self.query_env(partial_env=env, log_level=INFO)
                 if env.has_key('PYTHONPATH'):
                     del env['PYTHONPATH']
@@ -352,6 +357,7 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
             abs_dirs['abs_work_dir'], 'hostutils')
         dirs['abs_robocop_dir'] = os.path.join(
             dirs['abs_test_install_dir'], 'mochitest')
+        dirs['abs_blob_upload_dir'] = os.path.join(abs_dirs['abs_work_dir'], 'blobber_upload_dir')
         dirs['abs_jittest_dir'] = os.path.join(dirs['abs_test_install_dir'], "jit-test", "jit-test")
         dirs['shutdown_dir'] = abs_dirs['abs_work_dir'].rsplit("/", 2)[0]
         dirs['abs_cppunittest_dir'] = os.path.join(
