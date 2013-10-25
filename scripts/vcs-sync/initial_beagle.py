@@ -48,6 +48,7 @@ class HgGitScript(VirtualenvMixin, TooltoolMixin, TransferMixin, VCSScript):
         """
 
     mapfile_binary_search = None
+    successful_repos = []  # Unused; for notify() capability with vcs_sync.py
 
     def __init__(self, require_config_file=True):
         super(HgGitScript, self).__init__(
