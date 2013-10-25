@@ -54,6 +54,7 @@ class HgGitScript(VirtualenvMixin, TooltoolMixin, TransferMixin, VCSSyncScript):
 
     mapfile_binary_search = None
     all_repos = None
+    successful_repos = []
     config_options = [[
         ["--no-check-incoming", ],
         {"action": "store_false",
@@ -822,8 +823,9 @@ intree=1
             datetime = time.strftime('%Y-%m-%d %H:%M %Z')
             status = self._push_repo(repo_config)
             if not status:  # good
-                self.add_summary("Successfully pushed %s." % repo_config['repo_name'])
                 repo_name = repo_config['repo_name']
+                if repo_name not in self.successful_repos:
+                    self.successful_repos.append(repo_name)
                 repo_map.setdefault('repos', {}).setdefault(repo_name, {})['push_timestamp'] = timestamp
                 repo_map['repos'][repo_name]['push_datetime'] = datetime
             else:

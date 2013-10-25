@@ -14,7 +14,7 @@ import time
 
 sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.dirname(sys.path[0]))))
 
-from mozharness.base.log import ERROR
+from mozharness.base.log import ERROR, INFO
 from mozharness.base.vcs.vcsbase import VCSScript
 
 
@@ -35,10 +35,18 @@ class VCSSyncScript(VCSScript):
         seconds = int(end_time - self.start_time)
         self.info("Job took %d seconds." % seconds)
         subject = "[vcs2vcs] Successful conversion for %s" % job_name
+        if self.successful_repos:
+            subject += ' (' + ','.join(self.successful_repos) + ')'
         subject += ' (%ds)' % seconds
         text = ''
+        error_contents = ''
         error_log = os.path.join(dirs['abs_log_dir'], self.log_obj.log_files[ERROR])
-        error_contents = self.read_from_file(error_log)
+        info_log = os.path.join(dirs['abs_log_dir'], self.log_obj.log_files[INFO])
+        if os.path.exists(error_log) and os.path.getsize(error_log) > 0:
+            error_contents = self.get_output_from_command(
+                ["egrep", "-C5", "^[0-9:]+ +(ERROR|CRITICAL|FATAL) -", info_log],
+                silent=True,
+            )
         if fatal:
             subject = "[vcs2vcs] Failed conversion for %s" % job_name
             text = message + '\n\n'

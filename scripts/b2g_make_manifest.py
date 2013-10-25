@@ -219,7 +219,6 @@ class MakeManifestScript(VCSScript):
         for p in manifest.getElementsByTagName('project'):
             if not p.hasAttribute('remote'):
                 p.setAttribute('remote', default.getAttribute('remote'))
-        default.parentNode.removeChild(default)
         repo_manifest.cleanup(manifest)
         c = self.config
         self.write_to_file(c['output'], manifest.toxml())
