@@ -152,6 +152,19 @@ class Talos(TestingMixin, MercurialScript):
         if 'run-tests' in self.actions:
             self.preflight_run_tests()
 
+    def query_abs_dirs(self):
+        c = self.config
+        if self.abs_dirs:
+            return self.abs_dirs
+        abs_dirs = super(Talos, self).query_abs_dirs()
+        if c.get('metro_harness_path_frmt'):
+            abs_dirs['abs_metro_path'] = c['metro_harness_path_frmt'] % {
+                "metro_base_path": os.path.join(abs_dirs['abs_work_dir'],
+                                                'talos_repo')
+            }
+        self.abs_dirs = abs_dirs
+        return self.abs_dirs
+
     def query_talos_json_url(self):
         """Hacky, but I haven't figured out a better way to get the
         talos json url before we install the build.
@@ -440,6 +453,12 @@ class Talos(TestingMixin, MercurialScript):
                 for addons_url in addons_urls:
                     self._download_unzip(addons_url, talos_webdir)
 
+    def _is_metro_mode(self):
+        c = self.config
+        talos_config = self.query_talos_json_config()
+        if talos_config:
+            return talos_config['suites'][c['suite']].get('metro_mode', False)
+        return False
 
     # Action methods. {{{1
     # clobber defined in BaseScript
@@ -498,6 +517,27 @@ class Talos(TestingMixin, MercurialScript):
         if not self.query_tests():
             self.fatal("No tests specified; please specify --tests")
 
+    def install(self):
+        """decorates TestingMixin.install() to handle win metro browser"""
+        dirs = self.query_abs_dirs()
+        super(Talos, self).install()
+        if self._is_metro_mode():
+            if not os.path.exists(dirs.get('abs_metro_path', '')):
+                unknown_path = 'None: is "metro_harness_path_frmt" in your cfg?'
+                self.fatal('Could not determine metrotestharness.exe path.'
+                           'Trying - %s' % (dirs.get('abs_metro_path',
+                                                     unknown_path)))
+            self.info("Triggering metro browser immersive mode")
+            # Move metrotestharness.exe to the installer directory.
+            # Overwrite self.binary_path (set from TestingMixin.install())
+            # by replacing it with metrotestharness.exe
+            abs_installer_dir = os.path.split(self.binary_path)[0]
+            metro_harness_exe = os.path.split(dirs['abs_metro_path'])[1]
+            abs_dest_metro_path = os.path.join(abs_installer_dir,
+                                               metro_harness_exe)
+            self.copyfile(dirs['abs_metro_path'], abs_dest_metro_path)
+            self.binary_path = abs_dest_metro_path
+
     def run_tests(self, args=None, **kw):
         """run Talos tests"""
 
@@ -513,6 +553,7 @@ class Talos(TestingMixin, MercurialScript):
         parser = TalosOutputParser(config=self.config, log_obj=self.log_obj,
                                    error_list=TalosErrorList)
         self.return_code = self.run_command(command, cwd=self.workdir,
+                                            output_timeout=1800,
                                             output_parser=parser)
         if parser.minidump_output:
             self.info("Looking at the minidump files for debugging purposes...")
