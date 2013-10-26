@@ -791,6 +791,8 @@ intree=1
             for repo_config in self.query_all_repos():
                 if repo_config.get("mapfile_name"):
                     mapfiles.append(repo_config['mapfile_name'])
+        else:
+            mapfiles.append(self.config.get('mapfile_name', 'gecko-mapfile'))
         if self.config.get('external_mapfile_urls'):
             for url in self.config['external_mapfile_urls']:
                 file_name = self.download_file(
