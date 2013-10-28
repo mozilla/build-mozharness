@@ -49,9 +49,9 @@ config = {
         "PATH": "%(PATH)s:/usr/libexec/git-core",
     },
     "conversion_repos": [{
-        "repo": "https://hg.mozilla.org/releases/mozilla-aurora",
+        "repo": "https://hg.mozilla.org/releases/mozilla-b2g26_v1_2",
         "revision": "default",
-        "repo_name": "mozilla-aurora",
+        "repo_name": "mozilla-b2g26_v1_2",
         "targets": [{
             "target_dest": "gecko-git/.git",
             "vcs": "git",
@@ -79,9 +79,6 @@ config = {
             "target_dest": "gecko-git/.git",
             "vcs": "git",
             "test_push": True,
-            "tag_config": {
-                "tags": {'*': '*'},
-            },
         }, {
             "target_dest": "github-gecko-git",
             "tag_config": {
