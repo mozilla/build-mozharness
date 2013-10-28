@@ -19,6 +19,7 @@ from mozharness.mozilla.buildbot import BuildbotMixin
 from mozharness.base.log import INFO, FATAL
 from mozharness.base.python import VirtualenvMixin
 from mozharness.base.vcs.vcsbase import MercurialScript
+from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_options
 from mozharness.mozilla.testing.mozpool import MozpoolMixin
 from mozharness.mozilla.testing.device import SUTDeviceMozdeviceMixin
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
@@ -27,7 +28,7 @@ from mozharness.mozilla.testing.talos import TalosOutputParser, TalosErrorList
 SUITE_CATEGORIES = ['talos', ]
 
 
-class PandaTalosTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, BuildbotMixin, SUTDeviceMozdeviceMixin):
+class PandaTalosTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixin, BuildbotMixin, SUTDeviceMozdeviceMixin):
     test_suites = SUITE_CATEGORIES
     config_options = [
         [["--mozpool-api-url"], {
@@ -78,7 +79,8 @@ class PandaTalosTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixi
                     "in the config file. You do not need to specify "
                     "any other suites. Beware, this may take a while ;)"}
          ],
-    ] + copy.deepcopy(testing_config_options)
+    ] + copy.deepcopy(testing_config_options) + \
+        copy.deepcopy(blobupload_config_options)
 
     error_list = []
     mozpool_handler = None
@@ -177,8 +179,10 @@ class PandaTalosTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixi
                 c = self.config
                 if c.get('minidump_stackwalk_path'):
                     env['MINIDUMP_STACKWALK'] = c['minidump_stackwalk_path']
-                if c.get('minidump_save_path'):
-                    env['MINIDUMP_SAVE_PATH'] = c['minidump_save_path']
+                env['MOZ_UPLOAD_DIR'] = self.query_abs_dirs()['abs_blob_upload_dir']
+                env['MINIDUMP_SAVE_PATH'] = self.query_abs_dirs()['abs_blob_upload_dir']
+                if not os.path.isdir(env['MOZ_UPLOAD_DIR']):
+                    self.mkdir_p(env['MOZ_UPLOAD_DIR'])
                 env = self.query_env(partial_env=env, log_level=INFO)
 
                 parser = TalosOutputParser(config=self.config, log_obj=self.log_obj,
@@ -253,6 +257,7 @@ class PandaTalosTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixi
             dirs['shutdown_dir'], 'talos-data/build')
         dirs['abs_talos_dir'] = dirs['abs_talosdatatalos_dir']
         dirs['abs_preflight_talos_dir'] = dirs['abs_talosdatatalos_dir']
+        dirs['abs_blob_upload_dir'] = os.path.join(abs_dirs['abs_work_dir'], 'blobber_upload_dir')
         for key in dirs.keys():
             if key not in abs_dirs:
                 abs_dirs[key] = dirs[key]

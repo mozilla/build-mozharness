@@ -69,4 +69,8 @@ config = {
         'run-test',
         'close-request',
     ],
+    "default_blob_upload_servers": [
+         "https://blobupload.elasticbeanstalk.com",
+    ],
+    "blob_uploader_auth_file" : os.path.join(os.getcwd(), "oauth.txt"),
 }
