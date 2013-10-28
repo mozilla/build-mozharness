@@ -58,9 +58,6 @@ config = {
             "target_dest": "beagle/.git",
             "vcs": "git",
             "test_push": True,
-            "tag_config": {
-                "tags": {'*': '*'},
-            },
         }, {
             "target_dest": "gitmo-beagle",
         }, {
@@ -76,6 +73,36 @@ config = {
         "branch_config": {
             "branches": {
                 "default": "b2g18",
+            },
+        },
+        "tag_config": {
+            "tag_regexes": [
+                "^B2G_",
+            ],
+        },
+    }, {
+        "repo": "https://hg.mozilla.org/releases/mozilla-b2g26_v1_2",
+        "revision": "default",
+        "repo_name": "mozilla-b2g26_v1_2",
+        "targets": [{
+            "target_dest": "beagle/.git",
+            "vcs": "git",
+            "test_push": True,
+        }, {
+            "target_dest": "gitmo-beagle",
+        }, {
+            "target_dest": "github-beagle",
+            "tag_config": {
+                "tag_regexes": [
+                    "^B2G_",
+                ],
+            },
+        }],
+        "bare_checkout": True,
+        "vcs": "hg",
+        "branch_config": {
+            "branches": {
+                "default": "b2g26_v1_2",
             },
         },
         "tag_config": {
