@@ -429,7 +429,16 @@ jobs = 2
                   'list of functions that can gc, and why'),
                  ('gcTypes.txt',
                   'gcTypes',
-                  'list of types containing unrooted gc pointers'))
+                  'list of types containing unrooted gc pointers'),
+                 ('unnecessary.txt',
+                  'extra',
+                  'list of extra roots (rooting with no GC function in scope)'),
+                 ('refs.txt',
+                  'refs',
+                  'list of unsafe references to unrooted pointers'),
+                 ('hazards.txt',
+                  'hazards',
+                  'list of just the hazards, together with gcFunction reason for each'))
         for f, short, long in files:
             self.copy_to_upload_dir(os.path.join(analysis_dir, f),
                                     short_desc=short,
