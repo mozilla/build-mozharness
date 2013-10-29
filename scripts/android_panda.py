@@ -31,7 +31,7 @@ from mozharness.mozilla.testing.unittest import DesktopUnittestOutputParser
 SUITE_CATEGORIES = ['mochitest', 'reftest', 'crashtest', 'jsreftest', 'robocop', 'xpcshell', 'jittest', 'cppunittest']
 
 
-class PandaTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixin, BuildbotMixin, SUTDeviceMozdeviceMixin, MozbaseMixin):
+class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, BuildbotMixin, SUTDeviceMozdeviceMixin, MozbaseMixin):
     test_suites = SUITE_CATEGORIES
     config_options = [
         [["--mozpool-api-url"], {
