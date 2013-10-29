@@ -95,7 +95,7 @@ class PandaTalosTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixi
         'mozinfo',
         'datazilla',
         'PyYAML',
-        'mozprocess', 
+        'mozprocess',
     ]
 
     def __init__(self, require_config_file=False):
