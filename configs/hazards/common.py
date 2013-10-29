@@ -1,8 +1,10 @@
 HG_SHARE_BASE_DIR = "/builds/hg-shared"
 
 PYTHON_DIR = "/tools/python27"
-GCC_DIR = "/tools/gcc-4.7.3-0moz1"
-GCC_RPM = "gcc473_0moz1"
+#GCC_DIR = "/tools/gcc-4.7.3-0moz1"
+GCC_DIR = "/tools/gcc-4.7.2-0moz1"
+#GCC_RPM = "gcc473_0moz1"
+GCC_RPM = "gcc472_0moz1"
 
 config = {
     "log_name": "spidermonkey",
@@ -43,6 +45,9 @@ config = {
         # For building the browser
         "dbus-devel", "dbus-glib-devel", "hal-devel",
         "libICE-devel", "libIDL-devel",
+
+        # For mach resource-usage
+        "python-psutil",
 
         'zip', 'git',
         'libstdc++-static', 'perl-Test-Simple', 'perl-Config-General',
