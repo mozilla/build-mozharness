@@ -408,11 +408,15 @@ jobs = 2
 
         build_command = self.config['build_command']
         build_command = os.path.abspath(os.path.join(analysis_dir, build_command))
-        rc = self.run_command([self.config['python'], os.path.join(analysis_scriptdir, 'analyze.py'),
-                               "--buildcommand=%s" % build_command],
-                              cwd=analysis_dir,
-                              env=self.env,
-                              error_list=MakefileErrorList)
+        rc = self.run_command(
+            [
+                self.config['python'], os.path.join(analysis_scriptdir, 'analyze.py'),
+                "--buildcommand=%s" % build_command,
+                "--expect-file=%s" % os.path.join(analysis_scriptdir, self.config['expect_file'])
+            ],
+            cwd=analysis_dir,
+            env=self.env,
+            error_list=MakefileErrorList)
         if rc != 0:
             self.fatal("analysis failed, can't continue.", exit_code=FAILURE)
 
