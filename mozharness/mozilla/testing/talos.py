@@ -10,11 +10,13 @@ run talos tests in a virtualenv
 
 import os
 import pprint
+import copy
 import re
 
 from mozharness.base.config import parse_config_file
 from mozharness.base.errors import PythonErrorList
-from mozharness.base.log import OutputParser, DEBUG, ERROR, CRITICAL, FATAL
+from mozharness.base.log import OutputParser, DEBUG, ERROR, CRITICAL, FATAL, INFO
+from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_options
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options, INSTALLER_SUFFIXES
 from mozharness.base.vcs.vcsbase import MercurialScript
 
@@ -63,7 +65,7 @@ talos_config_options = [
     ]
 
 
-class Talos(TestingMixin, MercurialScript):
+class Talos(TestingMixin, MercurialScript, BlobUploadMixin):
     """
     install and run Talos tests:
     https://wiki.mozilla.org/Buildbot/Talos
@@ -106,7 +108,8 @@ class Talos(TestingMixin, MercurialScript):
            "default": None,
            "help": "extra options to talos"
            }],
-        ] + talos_config_options + testing_config_options
+        ] + talos_config_options + testing_config_options + \
+            copy.deepcopy(blobupload_config_options)
 
     def __init__(self, **kwargs):
         kwargs.setdefault('config_options', self.config_options)
@@ -157,6 +160,7 @@ class Talos(TestingMixin, MercurialScript):
         if self.abs_dirs:
             return self.abs_dirs
         abs_dirs = super(Talos, self).query_abs_dirs()
+        abs_dirs['abs_blob_upload_dir'] = os.path.join(abs_dirs['abs_work_dir'], 'blobber_upload_dir')
         if c.get('metro_harness_path_frmt'):
             abs_dirs['abs_metro_path'] = c['metro_harness_path_frmt'] % {
                 "metro_base_path": os.path.join(abs_dirs['abs_work_dir'],
@@ -552,9 +556,15 @@ class Talos(TestingMixin, MercurialScript):
         command = [talos, '--noisy', '--debug'] + options
         parser = TalosOutputParser(config=self.config, log_obj=self.log_obj,
                                    error_list=TalosErrorList)
+        env = {}
+        env['MOZ_UPLOAD_DIR'] = self.query_abs_dirs()['abs_blob_upload_dir']
+        env['MINIDUMP_SAVE_PATH'] = self.query_abs_dirs()['abs_blob_upload_dir']
+        if not os.path.isdir(env['MOZ_UPLOAD_DIR']):
+            self.mkdir_p(env['MOZ_UPLOAD_DIR'])
+        env = self.query_env(partial_env=env, log_level=INFO)
         self.return_code = self.run_command(command, cwd=self.workdir,
-                                            output_timeout=1800,
-                                            output_parser=parser)
+                                            output_parser=parser,
+                                            env=env)
         if parser.minidump_output:
             self.info("Looking at the minidump files for debugging purposes...")
             for item in parser.minidump_output:
