@@ -85,6 +85,7 @@ config = {
     "jittest_options": [
         "bin/js",
         "--remote",
+        "-j", "1",
         "--deviceTransport=sut",
         "--deviceIP=%(device_ip)s",
         "--localLib=../tests/bin",
