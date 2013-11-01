@@ -39,7 +39,6 @@ CONVERSION_REPOS = [{
     "targets": [{
         "target_dest": "github-project-branches",
     }],
-    "bare_checkout": True,
     "vcs": "hg",
     "branch_config": {
         "branches": {

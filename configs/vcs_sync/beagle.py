@@ -35,7 +35,6 @@ config = {
         }, {
             "target_dest": "github-beagle",
         }],
-        "bare_checkout": True,
         "vcs": "hg",
         "branch_config": {
             "branches": {
@@ -68,7 +67,6 @@ config = {
                 ],
             },
         }],
-        "bare_checkout": True,
         "vcs": "hg",
         "branch_config": {
             "branches": {
@@ -98,7 +96,6 @@ config = {
                 ],
             },
         }],
-        "bare_checkout": True,
         "vcs": "hg",
         "branch_config": {
             "branches": {
@@ -123,7 +120,6 @@ config = {
         }, {
             "target_dest": "github-beagle",
         }],
-        "bare_checkout": True,
         "vcs": "hg",
         "branch_config": {
             "branches": {
@@ -148,7 +144,6 @@ config = {
         }, {
             "target_dest": "github-beagle",
         }],
-        "bare_checkout": True,
         "vcs": "hg",
         "branch_config": {
             "branches": {
@@ -173,7 +168,6 @@ config = {
         }, {
             "target_dest": "github-beagle",
         }],
-        "bare_checkout": True,
         "vcs": "hg",
         "branch_config": {
             "branches": {
@@ -198,7 +192,6 @@ config = {
         }, {
             "target_dest": "github-beagle",
         }],
-        "bare_checkout": True,
         "vcs": "hg",
         "branch_config": {
             "branches": {
@@ -223,7 +216,6 @@ config = {
         }, {
             "target_dest": "github-beagle",
         }],
-        "bare_checkout": True,
         "vcs": "hg",
         "branch_config": {
             "branches": {
@@ -252,7 +244,6 @@ config = {
         }, {
             "target_dest": "github-beagle",
         }],
-        "bare_checkout": True,
         "vcs": "hg",
         "branch_config": {
             "branches": {
@@ -281,7 +272,6 @@ config = {
         }, {
             "target_dest": "github-beagle",
         }],
-        "bare_checkout": True,
         "vcs": "hg",
         "branch_config": {
             "branches": {
@@ -306,7 +296,6 @@ config = {
         }, {
             "target_dest": "github-beagle",
         }],
-        "bare_checkout": True,
         "vcs": "hg",
         "branch_config": {
             "branches": {
@@ -331,7 +320,6 @@ config = {
         }, {
             "target_dest": "github-beagle",
         }],
-        "bare_checkout": True,
         "vcs": "hg",
         "branch_config": {
             "branches": {
@@ -352,7 +340,6 @@ config = {
         }, {
             "target_dest": "github-beagle",
         }],
-        "bare_checkout": True,
         "vcs": "hg",
         "branch_config": {
             "branches": {
@@ -373,7 +360,6 @@ config = {
         }, {
             "target_dest": "github-beagle",
         }],
-        "bare_checkout": True,
         "vcs": "hg",
         "branch_config": {
             "branches": {

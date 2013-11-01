@@ -117,7 +117,7 @@ class HgGitScript(VirtualenvMixin, TooltoolMixin, TransferMixin, VCSSyncScript):
         self.abs_dirs = abs_dirs
         return self.abs_dirs
 
-    def init_git_repo(self, path, additional_args=None):
+    def init_git_repo(self, path, additional_args=None, deny_deletes=False):
         """ Create a git repo, with retries.
 
             We call this with additional_args=['--bare'] to save disk +
@@ -129,12 +129,18 @@ class HgGitScript(VirtualenvMixin, TooltoolMixin, TransferMixin, VCSSyncScript):
         if additional_args:
             cmd.extend(additional_args)
         cmd.append(path)
-        return self.retry(
+        status = self.retry(
             self.run_command,
             args=(cmd, ),
             error_level=FATAL,
             error_message="Can't set up %s!" % path
         )
+        if deny_deletes:
+            status = self.run_command(
+                git + ['config', 'receive.denyDeletes', 'true'],
+                cwd=path
+            )
+        return status
 
     def write_hggit_hgrc(self, dest):
         # Update .hg/hgrc, if not already updated
@@ -179,7 +185,6 @@ intree=1
                         'vcs': 'git',
                         'test_push': True,
                     }],
-                    'bare_checkout': True,
                     'vcs': 'hg',
                     'branch_config': {
                         'branches': {
@@ -221,7 +226,6 @@ intree=1
                         'vcs': 'git',
                         'test_push': True,
                     }],
-                    'bare_checkout': True,
                     'vcs': 'hg',
                     'branch_config': {
                         'branches': {
@@ -254,7 +258,6 @@ intree=1
                 'targets': [{
                     'target_dest': 'github-project-branches',
                 }],
-                'bare_checkout': True,
                 'vcs': 'hg',
                 'branch_config': {
                     'branches': {
@@ -309,6 +312,8 @@ intree=1
                     return self._update_stage_repo(
                         repo_config, retry=False, clobber=True)
                 else:
+                    # Don't leave a failed clone behind
+                    self.rmtree(source_dest)
                     self.fatal("Can't clone %s!" % repo_config['repo'])
         elif self.config['check_incoming'] and repo_config.get("check_incoming", True):
             # Run |hg incoming| and skip all subsequent actions if there
@@ -411,9 +416,7 @@ intree=1
                 target_vcs = target_config.get("vcs")
             else:
                 target_name = target_config['target_dest']
-                remote_config = self.config.get('remote_targets', {}).get(target_name, {})
-                if not remote_config:
-                    self.fatal("Can't find %s in remote_targets!" % target_name)
+                remote_config = self.config.get('remote_targets', {}).get(target_name, target_config)
                 force_push = remote_config.get("force_push", target_config.get("force_push"))
                 target_vcs = remote_config.get("vcs", target_config.get("vcs"))
             if target_vcs == "git":
@@ -660,7 +663,8 @@ intree=1
                 if not os.path.exists(target_dest):
                     self.info("Creating local target repo %s." % target_dest)
                     if target_config.get("vcs", "git") == "git":
-                        self.init_git_repo(target_dest, additional_args=['--bare', '--shared=true'])
+                        self.init_git_repo(target_dest, additional_args=['--bare', '--shared=all'],
+                                           deny_deletes=True)
                     else:
                         self.fatal("Don't know how to deal with vcs %s!" % target_config['vcs'])
                 else:
