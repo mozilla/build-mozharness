@@ -1,7 +1,6 @@
 import os
-import sys
-from mozharness.base.python import VirtualenvMixin
 from mozharness.base.script import PreScriptAction
+
 
 class MozbaseMixin(object):
     """Automatically set virtualenv requirements to use mozbase
@@ -27,11 +26,14 @@ class MozbaseMixin(object):
         # XXX Bug 908356: This block can be removed as soon as the
         # in-tree requirements files propagate to all active trees.
         mozbase_dir = os.path.join('tests', 'mozbase')
-        self.register_virtualenv_module('manifestparser',
-            url=os.path.join(mozbase_dir, 'manifestdestiny'))
+        self.register_virtualenv_module(
+            'manifestparser',
+            url=os.path.join(mozbase_dir, 'manifestdestiny')
+        )
 
         for m in ('mozfile', 'mozlog', 'mozinfo', 'moznetwork', 'mozhttpd',
-        'mozcrash', 'mozinstall', 'mozdevice', 'mozprofile', 'mozprocess',
-        'mozrunner'):
-            self.register_virtualenv_module(m, url=os.path.join(mozbase_dir,
-                m))
+                  'mozcrash', 'mozinstall', 'mozdevice', 'mozprofile',
+                  'mozprocess', 'mozrunner'):
+            self.register_virtualenv_module(
+                m, url=os.path.join(mozbase_dir, m)
+            )
