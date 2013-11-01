@@ -17,7 +17,6 @@ sys.path.insert(1, os.path.dirname(sys.path[0]))
 
 from mozharness.mozilla.buildbot import BuildbotMixin
 from mozharness.base.log import INFO, FATAL
-from mozharness.base.python import VirtualenvMixin
 from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_options
 from mozharness.mozilla.testing.mozpool import MozpoolMixin
@@ -115,7 +114,7 @@ class PandaTalosTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixi
         self.test_url = self.config.get("test_url")
         self.mozpool_device = self.config.get("mozpool_device")
         self.talos_branch = self.config.get("talos_branch")
-        
+
     def postflight_read_buildbot_config(self):
         super(PandaTalosTest, self).postflight_read_buildbot_config()
         self.mozpool_device = self.config.get('mozpool_device', self.buildbot_config.get('properties')["slavename"])
@@ -325,7 +324,7 @@ class PandaTalosTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixi
         unzip = self.query_exe("unzip")
         unzip_cmd = [unzip, '-q', '-o',  talos_zip_path]
         self.run_command(unzip_cmd, cwd=dirs['abs_talosdata_dir'], halt_on_failure=True)
-        
+
     def _query_abs_base_cmd(self, suite_category):
         dirs = self.query_abs_dirs()
         options = []

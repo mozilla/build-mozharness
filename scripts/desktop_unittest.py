@@ -352,7 +352,6 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin):
                           overwrite='overwrite_if_exists')
 
     def preflight_cppunittest(self, suites):
-        c = self.config
         abs_app_dir = self.query_abs_app_dir()
         dirs = self.query_abs_dirs()
         abs_cppunittest_dir = dirs['abs_cppunittest_dir']
@@ -362,7 +361,7 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin):
         files.extend(glob.glob(os.path.join(abs_cppunittest_dir, '*.manifest')))
         for f in files:
             self.move(f, abs_app_dir)
- 
+
     def _run_category_suites(self, suite_category, preflight_run_method=None):
         """run suite(s) to a specific category"""
         c = self.config
