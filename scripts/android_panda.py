@@ -215,13 +215,18 @@ class PandaTest(TestingMixin, MercurialScript, VirtualenvMixin, MozpoolMixin, Bu
                 dirs = self.query_abs_dirs()
                 self._download_unzip_hostutils()
                 abs_base_cmd = self._query_abs_base_cmd(suite_category)
+
+                should_install_app = True
+                if 'cppunittest' in suite:
+                    should_install_app = False
                 if 'robocop' in suite:
                     self._download_robocop_apk()
-
                 if 'jittest' in suite:
+                    should_install_app = False
                     self._download_unzip(self.query_jsshell_url(), dirs['abs_test_bin_dir'])
 
-                self._install_app()
+                if should_install_app:
+                    self._install_app()
                 cmd = abs_base_cmd[:]
                 replace_dict = {}
                 for arg in suites[suite]:
