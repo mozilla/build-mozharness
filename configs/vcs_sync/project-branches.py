@@ -119,7 +119,7 @@ config = {
         "skip_empty_messages": False,
     }, {
         "to": "release+vcs2vcs@mozilla.com",
-        "failure_only": True,
+        "failure_only": False,
         "skip_empty_messages": True,
     }],
 
