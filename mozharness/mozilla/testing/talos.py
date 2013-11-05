@@ -562,7 +562,10 @@ class Talos(TestingMixin, MercurialScript, BlobUploadMixin):
         if not os.path.isdir(env['MOZ_UPLOAD_DIR']):
             self.mkdir_p(env['MOZ_UPLOAD_DIR'])
         env = self.query_env(partial_env=env, log_level=INFO)
+        # sets a timeout for how long talos should run without output
+        output_timeout = self.config.get('talos_output_timeout', 3600)
         self.return_code = self.run_command(command, cwd=self.workdir,
+                                            output_timeout=output_timeout,
                                             output_parser=parser,
                                             env=env)
         if parser.minidump_output:
