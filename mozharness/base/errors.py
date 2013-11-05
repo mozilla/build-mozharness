@@ -73,6 +73,7 @@ GitErrorList = BaseErrorList + [
     {'substr': r'''error: failed to push some refs to ''', 'level': ERROR},
     {'substr': r'''remote: error: denying non-fast-forward ''', 'level': ERROR},
     {'substr': r'''! [remote rejected] ''', 'level': ERROR},
+    {'regex': re.compile(r'''remote:.*No such file or directory'''), 'level': ERROR},
 ]
 
 PythonErrorList = BaseErrorList + [
