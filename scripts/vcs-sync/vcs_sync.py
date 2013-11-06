@@ -338,6 +338,7 @@ intree=1
                 else:
                     # Don't leave a failed clone behind
                     self.rmtree(source_dest)
+                    self._update_repo_previous_status(repo_name, successful_flag=False, write_update=True)
                     self.fatal("Can't clone %s!" % repo_config['repo'])
         elif self.config['check_incoming'] and repo_config.get("check_incoming", True):
             previous_status = self._query_repo_previous_status(repo_name)
