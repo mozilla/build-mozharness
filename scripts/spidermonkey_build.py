@@ -16,7 +16,7 @@ from mozharness.base.errors import MakefileErrorList
 from mozharness.base.script import BaseScript
 from mozharness.base.transfer import TransferMixin
 from mozharness.base.vcs.vcsbase import VCSMixin
-from mozharness.mozilla.buildbot import BuildbotMixin
+from mozharness.mozilla.buildbot import BuildbotMixin, TBPL_WARNING
 from mozharness.mozilla.mock import MockMixin
 from mozharness.mozilla.tooltool import TooltoolMixin
 
@@ -514,8 +514,9 @@ jobs = 2
         expect_hazards = data.get('expect-hazards')
         if expect_hazards is not None and expect_hazards != num_hazards:
             if expect_hazards < num_hazards:
-                self.fatal("%d more hazards than expected (expected %d, saw %d)" %
-                           (num_hazards - expect_hazards, expect_hazards, num_hazards))
+                self.warning("%d more hazards than expected (expected %d, saw %d)" %
+                             (num_hazards - expect_hazards, expect_hazards, num_hazards))
+                self.buildbot_status(TBPL_WARNING)
             else:
                 self.info("%d fewer hazards than expected! (expected %d, saw %d)" %
                           (expect_hazards - num_hazards, expect_hazards, num_hazards))
@@ -523,8 +524,9 @@ jobs = 2
         expect_refs = data.get('expect-refs')
         if expect_refs is not None and expect_refs != num_refs:
             if expect_refs < num_refs:
-                self.fatal("%d more unsafe refs than expected (expected %d, saw %d)" %
-                           (num_refs - expect_refs, expect_refs, num_refs))
+                self.warning("%d more unsafe refs than expected (expected %d, saw %d)" %
+                             (num_refs - expect_refs, expect_refs, num_refs))
+                self.buildbot_status(TBPL_WARNING)
             else:
                 self.info("%d fewer unsafe refs than expected! (expected %d, saw %d)" %
                           (expect_refs - num_refs, expect_refs, num_refs))
