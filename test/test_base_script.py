@@ -309,6 +309,17 @@ class TestHelperFunctions(unittest.TestCase):
         path = self.s.query_exe('foo')
         self.assertEqual(path, os.path.join('foo', 'bar', 'baz'))
 
+    def test_read_from_file(self):
+        self._create_temp_file()
+        self.s = script.BaseScript(initial_config_file='test/test.json')
+        contents = self.s.read_from_file(self.temp_file)
+        self.assertEqual(contents, test_string)
+
+    def test_read_from_nonexistent_file(self):
+        self.s = script.BaseScript(initial_config_file='test/test.json')
+        contents = self.s.read_from_file("nonexistent_file!!!")
+        self.assertEqual(contents, None)
+
 
 # TestScriptLogging {{{1
 class TestScriptLogging(unittest.TestCase):
@@ -621,10 +632,10 @@ class TestScriptDecorators(unittest.TestCase):
         self.assertEqual(self.s.post_action_1_args[1][0], ('build',))
         self.assertEqual(self.s.post_action_1_args[1][1], dict(success=True))
 
-        # post_action_3 should only get called for the action is is registered
+        # post_action_3 should only get called for the action it is registered
         # with.
         self.assertEqual(self.s.post_action_3_args[0], (('build',),
-            dict(success=True)))
+                         dict(success=True)))
 
         self.assertEqual(self.s.post_run_1_args[0], ((), {}))
 
