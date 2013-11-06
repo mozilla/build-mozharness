@@ -1,4 +1,5 @@
 # This is a template config file for marionette production on Windows.
+import os
 
 config = {
     # marionette options
@@ -29,4 +30,8 @@ config = {
         'install',
         'run-marionette',
     ],
+    "default_blob_upload_servers": [
+         "https://blobupload.elasticbeanstalk.com",
+    ],
+    "blob_uploader_auth_file" : os.path.join(os.getcwd(), "oauth.txt"),
 }

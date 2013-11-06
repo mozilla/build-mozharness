@@ -1,4 +1,5 @@
 # This is a template config file for marionette production.
+import os
 
 config = {
     # marionette options
@@ -31,4 +32,8 @@ config = {
     ],
     "download_symbols": "ondemand",
     "download_minidump_stackwalk": True,
+    "default_blob_upload_servers": [
+         "https://blobupload.elasticbeanstalk.com",
+    ],
+    "blob_uploader_auth_file" : os.path.join(os.getcwd(), "oauth.txt"),
 }
