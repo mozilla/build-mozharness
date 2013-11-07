@@ -67,6 +67,9 @@ config = {
         "plain5": ["--total-chunks=5", "--this-chunk=5", "--chunk-by-dir=4"],
         "chrome": ["--chrome"],
         "browser-chrome": ["--browser-chrome"],
+        "browser-chrome-1": ["--total-chunks=3", "--this-chunk=1"],
+        "browser-chrome-2": ["--total-chunks=3", "--this-chunk=2"],
+        "browser-chrome-3": ["--total-chunks=3", "--this-chunk=3"],
         "a11y": ["--a11y"],
         "plugins": ['--setpref=dom.ipc.plugins.enabled=false',
                     '--setpref=dom.ipc.plugins.enabled.x86_64=false',
@@ -84,7 +87,7 @@ config = {
     },
     "all_xpcshell_suites": {
         "xpcshell": ["--manifest=tests/xpcshell/tests/all-test-dirs.list",
-        "%(abs_app_dir)s/" + XPCSHELL_NAME]
+                     "%(abs_app_dir)s/" + XPCSHELL_NAME]
     },
     "all_cppunittest_suites": {
         "cppunittest": ['tests/cppunittests']

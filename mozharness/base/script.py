@@ -11,6 +11,7 @@ mozharness.
 """
 
 import codecs
+from contextlib import contextmanager
 import gzip
 import inspect
 import os
@@ -370,6 +371,32 @@ class ScriptMixin(object):
             self.log("%s can't be opened for writing!" % file_path,
                      level=error_level)
 
+    @contextmanager
+    def opened(self, file_path, verbose=True, open_mode='r',
+               error_level=ERROR):
+        """
+        Returns an open file, error pair, for use in a 'with' statement:
+
+            with self.opened("file.txt") as (fh, err):
+                if err:
+                    self.log("badness")
+                else:
+                    for line in fh: ...
+        """
+        # See opened_w_error in http://www.python.org/dev/peps/pep-0343/
+        self.info("Reading from file %s" % file_path)
+        try:
+            fh = open(file_path, open_mode)
+        except IOError, err:
+            self.log("unable to open %s: %s" % (file_path, err.strerror),
+                     level=error_level)
+            yield None, err
+        else:
+            try:
+                yield fh, None
+            finally:
+                fh.close()
+
     def read_from_file(self, file_path, verbose=True, open_mode='r',
                        error_level=ERROR):
         """
@@ -377,22 +404,15 @@ class ScriptMixin(object):
 
         Returns contents if successful, None if not.
         """
-        self.info("Reading from file %s" % file_path)
-        if not os.path.exists(file_path):
-            self.log("%s doesn't exist!" % file_path, level=error_level)
-            return
-        try:
-            fh = open(file_path, open_mode)
+        with self.opened(file_path, verbose, open_mode, error_level) as (fh, err):
+            if err:
+                return None
             contents = fh.read()
-            fh.close()
             if verbose:
                 self.info("Contents:")
                 for line in contents.splitlines():
                     self.info(" %s" % line)
             return contents
-        except IOError:
-            self.log("%s can't be opened for reading!" % file_path,
-                     level=error_level)
 
     def chdir(self, dir_name):
         self.log("Changing directory to %s." % dir_name)

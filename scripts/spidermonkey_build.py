@@ -7,6 +7,8 @@ import os
 import sys
 from datetime import datetime
 from functools import wraps
+import json
+import re
 
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
@@ -14,7 +16,7 @@ from mozharness.base.errors import MakefileErrorList
 from mozharness.base.script import BaseScript
 from mozharness.base.transfer import TransferMixin
 from mozharness.base.vcs.vcsbase import VCSMixin
-from mozharness.mozilla.buildbot import BuildbotMixin
+from mozharness.mozilla.buildbot import BuildbotMixin, TBPL_WARNING
 from mozharness.mozilla.mock import MockMixin
 from mozharness.mozilla.tooltool import TooltoolMixin
 
@@ -88,6 +90,7 @@ class SpidermonkeyBuild(MockMixin, BaseScript, VCSMixin, BuildbotMixin, Tooltool
                                 'run-analysis',
                                 'collect-analysis-output',
                                 'upload-analysis',
+                                'check-expectations',
                             ],
                             default_actions=[
                                 #'reuse-mock',
@@ -102,6 +105,7 @@ class SpidermonkeyBuild(MockMixin, BaseScript, VCSMixin, BuildbotMixin, Tooltool
                                 'run-analysis',
                                 'collect-analysis-output',
                                 'upload-analysis',
+                                'check-expectations',
                             ],
                             config={
                                 'default_vcs': 'hgtool',
@@ -412,7 +416,6 @@ jobs = 2
             [
                 self.config['python'], os.path.join(analysis_scriptdir, 'analyze.py'),
                 "--buildcommand=%s" % build_command,
-                "--expect-file=%s" % os.path.join(analysis_scriptdir, self.config['expect_file'])
             ],
             cwd=analysis_dir,
             env=self.env,
@@ -479,6 +482,54 @@ jobs = 2
             )
 
             self.info("Upload successful: %s" % upload_url)
+
+    def check_expectations(self):
+        if 'expect_file' not in self.config:
+            self.info('No expect_file given; skipping comparison with expected hazard count')
+            return
+
+        dirs = self.query_abs_dirs()
+        analysis_dir = dirs['abs_analysis_dir']
+        analysis_scriptdir = os.path.join(dirs['abs_work_dir'], 'source/js/src/devtools/rootAnalysis')
+        expect_file = os.path.join(analysis_scriptdir, self.config['expect_file'])
+        expect = self.read_from_file(expect_file)
+        if expect is None:
+            self.fatal("could not load expectation file")
+        data = json.loads(expect)
+
+        num_hazards = 0
+        num_refs = 0
+        with self.opened(os.path.join(analysis_dir, "rootingHazards.txt")) as (hazards_fh, err):
+            if err:
+                self.fatal("hazards file required")
+            for line in hazards_fh:
+                m = re.match(r"^Function.*has unrooted.*live across GC call", line)
+                if m:
+                    num_hazards += 1
+
+                m = re.match(r'^Function.*takes unsafe address of unrooted', line)
+                if m:
+                    num_refs += 1
+
+        expect_hazards = data.get('expect-hazards')
+        if expect_hazards is not None and expect_hazards != num_hazards:
+            if expect_hazards < num_hazards:
+                self.warning("%d more hazards than expected (expected %d, saw %d)" %
+                             (num_hazards - expect_hazards, expect_hazards, num_hazards))
+                self.buildbot_status(TBPL_WARNING)
+            else:
+                self.info("%d fewer hazards than expected! (expected %d, saw %d)" %
+                          (expect_hazards - num_hazards, expect_hazards, num_hazards))
+
+        expect_refs = data.get('expect-refs')
+        if expect_refs is not None and expect_refs != num_refs:
+            if expect_refs < num_refs:
+                self.warning("%d more unsafe refs than expected (expected %d, saw %d)" %
+                             (num_refs - expect_refs, expect_refs, num_refs))
+                self.buildbot_status(TBPL_WARNING)
+            else:
+                self.info("%d fewer unsafe refs than expected! (expected %d, saw %d)" %
+                          (expect_refs - num_refs, expect_refs, num_refs))
 
 # main {{{1
 if __name__ == '__main__':

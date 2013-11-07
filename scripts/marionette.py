@@ -18,6 +18,7 @@ from mozharness.base.log import INFO, ERROR, WARNING, FATAL
 from mozharness.base.script import PreScriptAction
 from mozharness.base.transfer import TransferMixin
 from mozharness.base.vcs.vcsbase import MercurialScript
+from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_options
 from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_WARNING, TBPL_FAILURE
 from mozharness.mozilla.gaia import GaiaMixin
 from mozharness.mozilla.testing.errors import LogcatErrorList
@@ -44,7 +45,7 @@ class MarionetteOutputParser(TestSummaryOutputParserHelper):
         super(MarionetteOutputParser, self).parse_single_line(line)
 
 class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin,
-                     MercurialScript, TransferMixin, GaiaMixin):
+                     MercurialScript, BlobUploadMixin, TransferMixin, GaiaMixin):
     config_options = [
         [["--gaia-dir"],
          {"action": "store",
@@ -115,7 +116,8 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin,
           "dest": "xre_url",
           "default": None,
           "help": "url of desktop xre archive"
-         }]] + copy.deepcopy(testing_config_options)
+         }]] + copy.deepcopy(testing_config_options) + \
+               copy.deepcopy(blobupload_config_options)
 
     error_list = [
         {'substr': 'FAILED (errors=', 'level': WARNING},
@@ -179,6 +181,7 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin,
         dirs['abs_gaia_dir'] = os.path.join(gaia_root_dir, 'gaia')
         dirs['abs_gaiatest_dir'] = os.path.join(
             dirs['abs_gaia_dir'], 'tests', 'python', 'gaia-ui-tests')
+        dirs['abs_blob_upload_dir'] = os.path.join(abs_dirs['abs_work_dir'], 'blobber_upload_dir')
 
         for key in dirs.keys():
             if key not in abs_dirs:
@@ -408,6 +411,10 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin,
         if self.config.get('gaiatest'):
             env['GAIATEST_ACKNOWLEDGED_RISKS'] = '1'
             env['GAIATEST_SKIP_WARNING'] = '1'
+        env['MOZ_UPLOAD_DIR'] = self.query_abs_dirs()['abs_blob_upload_dir']
+        env['MINIDUMP_SAVE_PATH'] = self.query_abs_dirs()['abs_blob_upload_dir']
+        if not os.path.isdir(env['MOZ_UPLOAD_DIR']):
+            self.mkdir_p(env['MOZ_UPLOAD_DIR'])
         env = self.query_env(partial_env=env)
 
         for i in range(0, 5):

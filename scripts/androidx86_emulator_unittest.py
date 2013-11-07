@@ -187,7 +187,9 @@ class Androidx86EmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixi
             "-port", str(emulator["emulator_port"]),
             "-kernel", self.emulator_components["kernel_path"],
             "-system", self.emulator_components["system_image_path"],
-            "-ramdisk", self.emulator_components["ramdisk_path"]
+            "-ramdisk", self.emulator_components["ramdisk_path"],
+            # Enable kvm; -qemu arguments must be at the end of the command
+            "-qemu", "-m", "1024", "-enable-kvm"
         ]
         self.info("Trying to start the emulator with this command: %s" % ' '.join(command))
         proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
