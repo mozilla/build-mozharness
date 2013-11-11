@@ -171,6 +171,8 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
     def preflight_package_multi(self):
         dirs = self.query_abs_dirs()
         self.run_command("rm -rfv dist/fennec*", cwd=dirs['abs_objdir'])
+        # bug 933290
+        self.run_command(["touch", "mobile/android/installer/Makefile"], cwd=dirs['abs_objdir'])
 
     def package_multi(self):
         self.package(package_type='multi')
