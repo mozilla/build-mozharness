@@ -50,14 +50,14 @@ class VCSSyncScript(VCSScript):
         if fatal:
             subject = "[vcs2vcs] Failed conversion for %s" % job_name
             text = message + '\n\n'
-        elif error_contents:
-            text += 'Error log is non-zero!'
-        if error_contents:
-            text += '\n\n' + error_contents + '\n\n'
         if self.summary_list:
             text += 'Summary is non-zero:\n\n'
             for item in self.summary_list:
                 text += '%s - %s\n' % (item['level'], item['message'])
+        if not fatal and error_contents and not self.summary_list:
+            text += 'Summary is empty; the below errors have probably been auto-corrected.\n\n'
+        if error_contents:
+            text += '\n\n' + error_contents + '\n\n'
         if not text:
             subject += " <EOM>"
         for notify_config in c.get('notify_config', []):
