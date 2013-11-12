@@ -28,12 +28,20 @@ class GaiaIntegrationTest(GaiaTest):
         output_parser = TestSummaryOutputParserHelper(
           config=self.config, log_obj=self.log_obj, error_list=self.error_list)
 
+        # Copy the b2g desktop we built to the gaia directory so that it
+        # gets used by the marionette-js-runner.
+        self.copytree(
+            os.path.join(dirs['abs_work_dir'], 'b2g'),
+            os.path.join(dirs['abs_gaia_dir'], 'b2g'),
+            overwrite='clobber'
+        )
+
         # `make test-integration \
         #      MOCHA_REPORTER=mocha-tbpl-reporter \
         #      NPM_REGISTRY=http://npm-mirror.pub.build.mozilla.org`
-        make = self.query_exe('make', return_type='string')
-        cmd = [make, 'test-integration']
-        code = self.run_command(cmd, cwd=dirs['abs_gaia_dir'], env={
+        make = self.query_exe('make', return_type='list')
+        make = make + ['test-integration']
+        code = self.run_command(make, cwd=dirs['abs_gaia_dir'], env={
           'MOCHA_REPORTER': 'mocha-tbpl-reporter',
           'NPM_REGISTRY': self.config.get('npm_registry')
         }, output_parser=output_parser)
