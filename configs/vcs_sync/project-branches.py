@@ -27,7 +27,6 @@ PROJECT_BRANCHES = [
     # Non-twig projects
     "build-system",
     "graphics",
-    "profiling",
     "ux",
 ]
 
