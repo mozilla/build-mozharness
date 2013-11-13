@@ -62,6 +62,7 @@ class GaiaMixin(object):
                          env={'DEBUG': '1' if debug else '0',
                               'NOFTU': '1',
                               'DESKTOP': '0',
+                              'DESKTOP_SHIMS': '1',
                               'USE_LOCAL_XULRUNNER_SDK': '1',
                               'XULRUNNER_DIRECTORY': xre_dir
                               },
