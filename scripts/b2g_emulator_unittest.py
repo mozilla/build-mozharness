@@ -20,13 +20,14 @@ from mozharness.base.script import (
     PreScriptAction,
 )
 from mozharness.base.vcs.vcsbase import VCSMixin
+from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_options
 from mozharness.mozilla.testing.errors import LogcatErrorList
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
 from mozharness.mozilla.testing.unittest import DesktopUnittestOutputParser, EmulatorMixin
 from mozharness.mozilla.tooltool import TooltoolMixin
 
 
-class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, BaseScript):
+class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, BaseScript, BlobUploadMixin):
     test_suites = ('jsreftest', 'reftest', 'mochitest', 'xpcshell', 'crashtest')
     config_options = [
         [["--type"],
@@ -93,7 +94,8 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
         {"action": "store",
          "dest": "this_chunk",
          "help": "Number of this chunk",
-        }]] + copy.deepcopy(testing_config_options)
+        }]] + copy.deepcopy(testing_config_options) \
+            + copy.deepcopy(blobupload_config_options)
 
     error_list = [
         {'substr': 'FAILED (errors=', 'level': ERROR},
@@ -147,6 +149,8 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
             abs_dirs['abs_work_dir'], 'xre')
         dirs['abs_emulator_dir'] = os.path.join(
             abs_dirs['abs_work_dir'], 'emulator')
+        dirs['abs_blob_upload_dir'] = os.path.join(
+            abs_dirs['abs_work_dir'], 'blobber_upload_dir')
         dirs['abs_b2g-distro_dir'] = os.path.join(
             dirs['abs_emulator_dir'], 'b2g-distro')
         dirs['abs_mochitest_dir'] = os.path.join(
@@ -348,6 +352,9 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
         env = {}
         if self.query_minidump_stackwalk():
             env['MINIDUMP_STACKWALK'] = self.minidump_stackwalk_path
+        env['MOZ_UPLOAD_DIR'] = dirs['abs_blob_upload_dir']
+        if not os.path.isdir(env['MOZ_UPLOAD_DIR']):
+            self.mkdir_p(env['MOZ_UPLOAD_DIR'])
         env = self.query_env(partial_env=env)
 
         parser = DesktopUnittestOutputParser(suite_category=suite_name,
