@@ -191,6 +191,8 @@ class Androidx86EmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixi
             # Enable kvm; -qemu arguments must be at the end of the command
             "-qemu", "-m", "1024", "-enable-kvm"
         ]
+        if "emulator_cpu" in self.config:
+            command += ["-qemu", "-cpu", self.config["emulator_cpu"] ]
         self.info("Trying to start the emulator with this command: %s" % ' '.join(command))
         proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
         self._redirectSUT(emulator["emulator_port"], emulator["sut_port1"], emulator["sut_port2"])
