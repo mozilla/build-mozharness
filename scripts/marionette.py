@@ -232,7 +232,10 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin,
             requirements = os.path.join(self.query_abs_dirs()['abs_gaiatest_dir'],
                                     'tbpl_requirements.txt')
             self.register_virtualenv_module('gaia-ui-tests',
-                url=self.query_abs_dirs()['abs_gaiatest_dir'], method='pip', requirements=[requirements])
+                url=self.query_abs_dirs()['abs_gaiatest_dir'],
+                method='pip',
+                requirements=[requirements],
+                editable=True)
 
     def pull(self, **kwargs):
         if self.config.get('gaiatest'):
