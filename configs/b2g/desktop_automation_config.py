@@ -29,6 +29,10 @@ config = {
     ],
     "download_symbols": "ondemand",
     "download_minidump_stackwalk": True,
+    "default_blob_upload_servers": [
+        "https://blobupload.elasticbeanstalk.com",
+    ],
+    "blob_uploader_auth_file": os.path.join(os.getcwd(), "oauth.txt"),
 
     # test harness options
     "run_file_names": {

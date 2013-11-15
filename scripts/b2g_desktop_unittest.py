@@ -18,6 +18,7 @@ from mozharness.base.script import (
     PreScriptAction,
 )
 from mozharness.base.vcs.vcsbase import MercurialScript
+from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_options
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
 from mozharness.mozilla.testing.unittest import DesktopUnittestOutputParser
 from mozharness.mozilla.tooltool import TooltoolMixin
@@ -54,7 +55,8 @@ class B2GDesktopTest(TestingMixin, TooltoolMixin, MercurialScript, BaseScript):
         {"action": "store",
          "dest": "this_chunk",
          "help": "Number of this chunk",
-        }]] + copy.deepcopy(testing_config_options)
+        }]] + copy.deepcopy(testing_config_options) \
+            + copy.deepcopy(blobupload_config_options)
 
     error_list = [
         {'substr': 'FAILED (errors=', 'level': ERROR},
@@ -97,6 +99,8 @@ class B2GDesktopTest(TestingMixin, TooltoolMixin, MercurialScript, BaseScript):
             return self.abs_dirs
         abs_dirs = super(B2GDesktopTest, self).query_abs_dirs()
         dirs = {}
+        dirs['abs_blob_upload_dir'] = os.path.join(
+                abs_dirs['abs_work_dir'], 'blobber_upload_dir')
         dirs['abs_tests_dir'] = os.path.join(abs_dirs['abs_work_dir'], 'tests')
         for d in ('mochitest', 'config', 'certs'):
             dirs['abs_%s_dir' % d] = os.path.join(
@@ -205,6 +209,9 @@ class B2GDesktopTest(TestingMixin, TooltoolMixin, MercurialScript, BaseScript):
         env = {}
         if self.query_minidump_stackwalk():
             env['MINIDUMP_STACKWALK'] = self.minidump_stackwalk_path
+        env['MOZ_UPLOAD_DIR'] = dirs['abs_blob_upload_dir']
+        if not os.path.isdir(env['MOZ_UPLOAD_DIR']):
+            self.mkdir_p(env['MOZ_UPLOAD_DIR'])
         env = self.query_env(partial_env=env)
 
         parser = DesktopUnittestOutputParser(suite_category=suite_name,
