@@ -17,6 +17,7 @@ from mozharness.base.script import BaseScript
 from mozharness.base.transfer import TransferMixin
 from mozharness.base.vcs.vcsbase import VCSMixin
 from mozharness.mozilla.buildbot import BuildbotMixin, TBPL_WARNING
+from mozharness.mozilla.purge import PurgeMixin
 from mozharness.mozilla.mock import MockMixin
 from mozharness.mozilla.tooltool import TooltoolMixin
 
@@ -38,7 +39,9 @@ def requires(*queries):
 nuisance_env_vars = ['TERMCAP', 'LS_COLORS', 'PWD', '_']
 
 
-class SpidermonkeyBuild(MockMixin, BaseScript, VCSMixin, BuildbotMixin, TooltoolMixin, TransferMixin):
+class SpidermonkeyBuild(MockMixin,
+                        PurgeMixin, BaseScript,
+                        VCSMixin, BuildbotMixin, TooltoolMixin, TransferMixin):
     config_options = [
         [["--repo"], {
             "dest": "repo",
@@ -71,6 +74,7 @@ class SpidermonkeyBuild(MockMixin, BaseScript, VCSMixin, BuildbotMixin, Tooltool
                                 'setup-mock',
                                 'reuse-mock',
                                 'checkout-tools',
+                                'purge',
 
                                 # First, build an optimized JS shell for running the analysis
                                 'checkout-source',
@@ -96,6 +100,7 @@ class SpidermonkeyBuild(MockMixin, BaseScript, VCSMixin, BuildbotMixin, Tooltool
                                 #'reuse-mock',
                                 'setup-mock',
                                 'checkout-tools',
+                                'purge',
                                 'checkout-source',
                                 'clobber-shell',
                                 'configure-shell',
@@ -134,15 +139,23 @@ class SpidermonkeyBuild(MockMixin, BaseScript, VCSMixin, BuildbotMixin, Tooltool
             self.read_buildbot_config()
 
         if self.buildbot_config:
-            bb_props = [('mock_target', 'mock_target'),
-                        ('base_bundle_urls', 'hgtool_base_bundle_urls'),
-                        ('base_mirror_urls', 'hgtool_base_mirror_urls'),
-                        ('hgurl', 'hgurl'),
+            bb_props = [('mock_target', 'mock_target', None),
+                        ('base_bundle_urls', 'hgtool_base_bundle_urls', None),
+                        ('base_mirror_urls', 'hgtool_base_mirror_urls', None),
+                        ('hgurl', 'hgurl', None),
+                        ('clobberer_url', 'clobberer_url', 'http://clobberer.pvt.build.mozilla.org/index.php'),
+                        ('purge_minsize', 'purge_minsize', 15),
+                        ('purge_maxage', 'purge_maxage', None),
+                        ('purge_skip', 'purge_skip', None),
+                        ('force_clobber', 'force_clobber', None),
                         ]
             buildbot_props = self.buildbot_config.get('properties', {})
-            for bb_prop, cfg_prop in bb_props:
-                if not self.config.get(cfg_prop) and buildbot_props.get(bb_prop):
-                    self.config[cfg_prop] = buildbot_props[bb_prop]
+            for bb_prop, cfg_prop, default in bb_props:
+                if not self.config.get(cfg_prop) and buildbot_props.get(bb_prop, default):
+                    self.config[cfg_prop] = buildbot_props.get(bb_prop, default)
+            self.config['is_automation'] = True
+        else:
+            self.config['is_automation'] = False
 
         self.mock_env = self.query_env(replace_dict=self.config['mock_env_replacements'],
                                        partial_env=self.config['mock_env'],
@@ -306,6 +319,15 @@ class SpidermonkeyBuild(MockMixin, BaseScript, VCSMixin, BuildbotMixin, Tooltool
             clean=False,
         )
         self.set_buildbot_property("tools_revision", rev, write_to_file=True)
+
+    def purge(self):
+        dirs = self.query_abs_dirs()
+        PurgeMixin.clobber(
+            self,
+            always_clobber_dirs=[
+                dirs['abs_upload_dir'],
+            ],
+        )
 
     @requires(query_repo)
     def checkout_source(self):
