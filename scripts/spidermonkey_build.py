@@ -502,8 +502,7 @@ jobs = 2
                 baseuri=self.query_upload_remote_baseuri(),
                 upload_path=upload_path,
             )
-
-            self.info("Upload successful: %s" % upload_url)
+            self.info("TinderboxPrint: uploaded to %s" % upload_url)
 
     def check_expectations(self):
         if 'expect_file' not in self.config:
@@ -534,6 +533,12 @@ jobs = 2
                     num_refs += 1
 
         expect_hazards = data.get('expect-hazards')
+        status = []
+        if expect_hazards is None:
+            status.append("%d hazards" % num_hazards)
+        else:
+            status.append("%d/%d hazards" % (num_hazards, expect_hazards))
+
         if expect_hazards is not None and expect_hazards != num_hazards:
             if expect_hazards < num_hazards:
                 self.warning("%d more hazards than expected (expected %d, saw %d)" %
@@ -544,6 +549,11 @@ jobs = 2
                           (expect_hazards - num_hazards, expect_hazards, num_hazards))
 
         expect_refs = data.get('expect-refs')
+        if expect_refs is None:
+            status.append("%d unsafe refs" % num_refs)
+        else:
+            status.append("%d/%d unsafe refs" % (num_refs, expect_refs))
+
         if expect_refs is not None and expect_refs != num_refs:
             if expect_refs < num_refs:
                 self.warning("%d more unsafe refs than expected (expected %d, saw %d)" %
@@ -552,6 +562,8 @@ jobs = 2
             else:
                 self.info("%d fewer unsafe refs than expected! (expected %d, saw %d)" %
                           (expect_refs - num_refs, expect_refs, num_refs))
+
+        self.info("TinderboxPrint: " + ", ".join(status))
 
 # main {{{1
 if __name__ == '__main__':
