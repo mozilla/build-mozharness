@@ -862,8 +862,8 @@ intree=1
             timestamp = int(time.time())
             datetime = time.strftime('%Y-%m-%d %H:%M %Z')
             status = self._push_repo(repo_config)
+            repo_name = repo_config['repo_name']
             if not status:  # good
-                repo_name = repo_config['repo_name']
                 if repo_name not in self.successful_repos:
                     self.successful_repos.append(repo_name)
                 repo_map.setdefault('repos', {}).setdefault(repo_name, {})['push_timestamp'] = timestamp
@@ -876,8 +876,8 @@ intree=1
                 self._update_repo_previous_status(repo_name, successful_flag=True, repo_map=repo_map, write_update=True)
             else:
                 self.add_failure(
-                    repo_config['repo_name'],
-                    message="Unable to push %s." % repo_config['repo_name'],
+                    repo_name,
+                    message="Unable to push %s." % repo_name,
                     level=ERROR,
                 )
                 failure_msg += status + "\n"
