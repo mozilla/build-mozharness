@@ -1,4 +1,5 @@
 # This is a template config file for b2g desktop unittest production.
+import os
 
 config = {
     # mozharness options
