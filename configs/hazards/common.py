@@ -18,7 +18,7 @@ config = {
 
     "exes": { 'hgtool.py': 'tools/buildfarm/utils/hgtool.py' },
 
-    "purge_minsize": 10,
+    "purge_minsize": 15,
     "force_clobber": True,
     'vcs_share_base': HG_SHARE_BASE_DIR,
 
