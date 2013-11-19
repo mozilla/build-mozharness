@@ -16,12 +16,12 @@ from mozharness.base.errors import MakefileErrorList
 from mozharness.base.script import BaseScript
 from mozharness.base.transfer import TransferMixin
 from mozharness.base.vcs.vcsbase import VCSMixin
-from mozharness.mozilla.buildbot import BuildbotMixin, TBPL_WARNING
+from mozharness.mozilla.buildbot import BuildbotMixin
 from mozharness.mozilla.purge import PurgeMixin
 from mozharness.mozilla.mock import MockMixin
 from mozharness.mozilla.tooltool import TooltoolMixin
 
-SUCCESS, WARNINGS, FAILURE, EXCEPTION = xrange(4)
+SUCCESS, WARNINGS, FAILURE, EXCEPTION, RETRY = xrange(5)
 
 
 def requires(*queries):
@@ -329,8 +329,7 @@ class SpidermonkeyBuild(MockMixin,
             ],
         )
 
-    @requires(query_repo)
-    def checkout_source(self):
+    def do_checkout_source(self):
         dirs = self.query_abs_dirs()
         dest = os.path.join(dirs['abs_work_dir'], 'source')
 
@@ -346,6 +345,13 @@ class SpidermonkeyBuild(MockMixin,
             clean=True,
         )
         self.set_buildbot_property('source_revision', rev, write_to_file=True)
+
+    @requires(query_repo)
+    def checkout_source(self):
+        try:
+            self.do_checkout_source()
+        except Exception as e:
+            self.fatal("checkout failed: " + str(e), exit_code=RETRY)
 
     def clobber_shell(self):
         dirs = self.query_abs_dirs()
@@ -496,7 +502,7 @@ jobs = 2
 
         if retval is not None:
             self.error("failed to upload")
-            self.return_code = 2
+            self.return_code = WARNINGS
         else:
             upload_url = "{baseuri}{upload_path}".format(
                 baseuri=self.query_upload_remote_baseuri(),
@@ -538,7 +544,7 @@ jobs = 2
             if expect_hazards < num_hazards:
                 self.warning("%d more hazards than expected (expected %d, saw %d)" %
                              (num_hazards - expect_hazards, expect_hazards, num_hazards))
-                self.buildbot_status(TBPL_WARNING)
+                self.buildbot_status(WARNINGS)
             else:
                 self.info("%d fewer hazards than expected! (expected %d, saw %d)" %
                           (expect_hazards - num_hazards, expect_hazards, num_hazards))
@@ -548,7 +554,7 @@ jobs = 2
             if expect_refs < num_refs:
                 self.warning("%d more unsafe refs than expected (expected %d, saw %d)" %
                              (num_refs - expect_refs, expect_refs, num_refs))
-                self.buildbot_status(TBPL_WARNING)
+                self.buildbot_status(WARNINGS)
             else:
                 self.info("%d fewer unsafe refs than expected! (expected %d, saw %d)" %
                           (expect_refs - num_refs, expect_refs, num_refs))
