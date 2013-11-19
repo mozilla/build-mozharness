@@ -35,9 +35,6 @@ class VCSSyncScript(VCSScript):
         seconds = int(end_time - self.start_time)
         self.info("Job took %d seconds." % seconds)
         subject = "[vcs2vcs] Successful conversion for %s" % job_name
-        if self.successful_repos:
-            subject += ' (' + ','.join(self.successful_repos) + ')'
-        subject += ' (%ds)' % seconds
         text = ''
         error_contents = ''
         error_log = os.path.join(dirs['abs_log_dir'], self.log_obj.log_files[ERROR])
@@ -50,6 +47,16 @@ class VCSSyncScript(VCSScript):
         if fatal:
             subject = "[vcs2vcs] Failed conversion for %s" % job_name
             text = message + '\n\n'
+        if not self.successful_repos:
+            subject = "[vcs2vcs] Successful no-op conversion for %s" % job_name
+        if error_contents and not fatal:
+            subject += " with warnings"
+        if self.successful_repos:
+            if len(self.successful_repos) <= 5:
+                subject += ' (' + ','.join(self.successful_repos) + ')'
+            else:
+                text += "Successful repos: %s\n\n" % ', '.join(self.successful_repos)
+        subject += ' (%ds)' % seconds
         if self.summary_list:
             text += 'Summary is non-zero:\n\n'
             for item in self.summary_list:
@@ -57,7 +64,7 @@ class VCSSyncScript(VCSScript):
         if not fatal and error_contents and not self.summary_list:
             text += 'Summary is empty; the below errors have probably been auto-corrected.\n\n'
         if error_contents:
-            text += '\n\n' + error_contents + '\n\n'
+            text += '\n%s\n\n' % error_contents
         if not text:
             subject += " <EOM>"
         for notify_config in c.get('notify_config', []):
