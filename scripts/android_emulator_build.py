@@ -5,7 +5,7 @@
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 # ***** END LICENSE BLOCK *****
 
-import sys, os, psutil, re, multiprocessing
+import sys, os, re, multiprocessing
 import subprocess, pprint, time, datetime, getpass, platform
 from ftplib import FTP
 
@@ -618,13 +618,20 @@ class EmulatorBuild(BaseScript, PurgeMixin):
         self.adb_e(["shell", "am", "start", "-W", "com.mozilla.SUTAgentAndroid/.SUTAgentAndroid"])
 
         self.info("copying customized emulator system image from /tmp/")
+
         sys_image = None
-        for f in psutil.Process(p.pid).get_open_files():
-            if re.match("/tmp/android-.*/emulator-.*", f.path):
+        d = "/proc/%d/fd" % p.pid
+        for i in os.listdir(d):
+            path = os.readlink(os.path.join(d, i))
+            if re.match("/tmp/android-.*/emulator-.*", path):
                 if sys_image != None:
                     self.exception("multiple plausible emulator system images, "
                                    "kill emulators and try again", level=ERROR)
-                sys_image = f.path
+                sys_image = path
+
+        if sys_image == None:
+            self.exception("unable to find running emulator's system image", level=ERROR)
+
         tmp = os.path.join(self.workdir, "system.img")
         self.copyfile(sys_image, tmp)
         self.info("terminating emulator")
