@@ -370,7 +370,7 @@ config = {
     }],
     "remote_targets": {
         "github-beagle": {
-            "repo": "git@github.com:mozilla/integration-gecko-dev.git",
+            "repo": "git@github.com:mozilla/gecko-dev.git",
             "ssh_key": "~/.ssh/releng-github-id_rsa",
             "vcs": "git",
         },

@@ -66,7 +66,7 @@ config = {
     "conversion_repos": CONVERSION_REPOS,
     "remote_targets": {
         "github-project-branches": {
-            "repo": "git@github.com:mozilla/integration-gecko-projects.git",
+            "repo": "git@github.com:mozilla/gecko-projects.git",
             "ssh_key": "~/.ssh/releng-github-id_rsa",
             "vcs": "git",
             "force_push": True,
