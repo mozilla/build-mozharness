@@ -71,10 +71,10 @@ class SpidermonkeyBuild(MockMixin,
                             config_options=self.config_options,
                             # other stuff
                             all_actions=[
+                                'purge',
                                 'setup-mock',
                                 'reuse-mock',
                                 'checkout-tools',
-                                'purge',
 
                                 # First, build an optimized JS shell for running the analysis
                                 'checkout-source',
@@ -97,10 +97,10 @@ class SpidermonkeyBuild(MockMixin,
                                 'check-expectations',
                             ],
                             default_actions=[
+                                'purge',
                                 #'reuse-mock',
                                 'setup-mock',
                                 'checkout-tools',
-                                'purge',
                                 'checkout-source',
                                 'clobber-shell',
                                 'configure-shell',
@@ -312,14 +312,6 @@ class SpidermonkeyBuild(MockMixin,
         self.enable_mock()
         self.done_mock_setup = True
 
-    def checkout_tools(self):
-        rev = self.vcs_checkout(
-            vcs='hg',  # Don't have hgtool.py yet
-            repo=self.config['tools_repo'],
-            clean=False,
-        )
-        self.set_buildbot_property("tools_revision", rev, write_to_file=True)
-
     def purge(self):
         dirs = self.query_abs_dirs()
         PurgeMixin.clobber(
@@ -328,6 +320,14 @@ class SpidermonkeyBuild(MockMixin,
                 dirs['abs_upload_dir'],
             ],
         )
+
+    def checkout_tools(self):
+        rev = self.vcs_checkout(
+            vcs='hg',  # Don't have hgtool.py yet
+            repo=self.config['tools_repo'],
+            clean=False,
+        )
+        self.set_buildbot_property("tools_revision", rev, write_to_file=True)
 
     def do_checkout_source(self):
         dirs = self.query_abs_dirs()
