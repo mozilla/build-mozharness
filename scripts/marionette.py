@@ -346,7 +346,8 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin,
             # make the gaia profile
             self.make_gaia(dirs['abs_gaia_dir'],
                            self.config.get('xre_path'),
-                           debug=False)
+                           debug=False,
+                           noftu=False)
 
         # build the marionette command arguments
         python = self.query_python_path('python')
