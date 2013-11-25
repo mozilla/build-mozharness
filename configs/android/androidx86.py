@@ -7,8 +7,14 @@ config = {
     "device_ip": "127.0.0.1",
     "default_sut_port1": "20701",
     "default_sut_port2": "20700", # does not prompt for commands
-    "avds_path": "/home/cltbld/avds/test-x86.tar.gz",
-    ".avds_dir": "/home/cltbld/.android/avd",
+    "tooltool_url": "http://tooltool.pvt.build.mozilla.org/build/sha512",
+    "tooltool_cache_path": "/builds/slave/talos-slave/cached",
+    "tooltool_cacheable_artifacts": {
+        "avd_tar_ball": ("AVDs-x86-android-4.2_r1-build-2013-11-13-ubuntu.tar.gz",
+            "3b2d18eb0194d82c70c5ee17487ccbac309f9b2e9839fe7ca4a27a9a06f6338bb24394476da78559685d99151fccc85fdde03297aa73ee2f7fb3183e11925c4d"),
+    },
+    ".avds_dir": "/home/cltbld/.android",
+    "emulator_process_name": "emulator64-x86",
     "exes": {
         'adb': '/tools/android-sdk18/platform-tools/adb',
         'python': '/tools/buildbot/bin/python',
@@ -23,6 +29,7 @@ config = {
     "default_actions": [
         'clobber',
         'read-buildbot-config',
+        'download-cacheable-artifacts',
         'setup-avds',
         'start-emulators',
         'download-and-extract',
@@ -33,7 +40,7 @@ config = {
     ],
     "emulators": [
         {
-            "name": "test-x86-1",
+            "name": "test-1",
             "device_id": "emulator-5554",
             "http_port": "8854", # starting http port to use for the mochitest server
             "ssl_port": "4454", # starting ssl port to use for the server
@@ -42,7 +49,7 @@ config = {
             "sut_port2": 20700
         },
         {
-            "name": "test-x86-2",
+            "name": "test-2",
             "device_id": "emulator-5556",
             "http_port": "8856", # starting http port to use for the mochitest server
             "ssl_port": "4456", # starting ssl port to use for the server
@@ -51,7 +58,7 @@ config = {
             "sut_port2": 20702
         },
         {
-            "name": "test-x86-3",
+            "name": "test-3",
             "device_id": "emulator-5558",
             "http_port": "8858", # starting http port to use for the mochitest server
             "ssl_port": "4458", # starting ssl port to use for the server
@@ -60,7 +67,7 @@ config = {
             "sut_port2": 20704
         },
         {
-            "name": "test-x86-4",
+            "name": "test-4",
             "device_id": "emulator-5560",
             "http_port": "8860", # starting http port to use for the mochitest server
             "ssl_port": "4460", # starting ssl port to use for the server
@@ -69,11 +76,6 @@ config = {
             "sut_port2": 20706
         }
     ],
-    "emulator_components": {
-        "kernel_path": "/home/cltbld/.android/avd/kernel-qemu",
-        "system_image_path": "/home/cltbld/.android/avd/system.img",
-        "ramdisk_path": "/home/cltbld/.android/avd/ramdisk.img"
-    },
     "test_suite_definitions": {
         "jsreftest": {
             "category": "reftest",
