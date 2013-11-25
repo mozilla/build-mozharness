@@ -101,7 +101,7 @@ class ServoBuild(MockMixin, BaseScript, VCSMixin, BuildbotMixin):
         dirs = self.query_abs_dirs()
 
         if self.config.get('backup_rust') and os.path.exists(os.path.join(dirs['objdir'], 'Makefile')):
-            self.run_command(['make', 'backup-rust'], cwd=dirs['objdir'],
+            self.run_command(['make', '-f', 'Makefile.backup', 'backup-rust'], cwd=dirs['objdir'],
                              halt_on_failure=True)
         self.rmtree(dirs['objdir'])
 
@@ -120,7 +120,7 @@ class ServoBuild(MockMixin, BaseScript, VCSMixin, BuildbotMixin):
         # If rust was backed up, we need to restore it before building,
         # otherwise it will get rebuilt from scratch.
         if self.config.get('backup_rust'):
-            self.run_command(['make', 'restore-rust'], cwd=dirs['objdir'])
+            self.run_command(['make', '-f', 'Makefile.backup', 'restore-rust'], cwd=dirs['objdir'])
 
         rc = self.run_command(['make', '-j', str(self.config['concurrency'])], cwd=dirs['objdir'])
         if rc != 0:
