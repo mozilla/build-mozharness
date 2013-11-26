@@ -89,7 +89,8 @@ config = {
         "--deviceTransport=sut",
         "--deviceIP=%(device_ip)s",
         "--localLib=../tests/bin",
-        "--tinderbox"
+        "--tinderbox",
+        "--tbpl"
      ],
      "cppunittest_options": [
         "--symbols-path=%(symbols_path)s",

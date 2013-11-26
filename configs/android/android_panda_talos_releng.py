@@ -43,7 +43,7 @@ config = {
         "remote-troboprovider":  ["--activeTests=tprovider", "--noChrome", "--fennecIDs=../fennec_ids.txt"],
         "remote-ts":  ["--activeTests=ts", "--mozAfterPaint", "--noChrome"],
         #currently disabled
-        "remote-tsvgx":  ["--activeTests=tsvgx", "--noChrome"],
+        "remote-tsvgx":  ["--activeTests=tsvgx", "--noChrome", '--tppagecycles', '10'],
         "remote-tcanvasmark":  ["--activeTests=tcanvasmark", "--noChrome"],
         "remote-tsspider":  ["--activeTests=tsspider", "--noChrome"],
         #end currently disabled
