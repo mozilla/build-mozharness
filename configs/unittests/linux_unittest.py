@@ -65,7 +65,8 @@ config = {
     ],
     "jittest_options": [
         "tests/bin/js",
-        "--tinderbox"
+        "--tinderbox",
+        "--tbpl"
     ],
     #local mochi suites
     "all_mochitest_suites": {
