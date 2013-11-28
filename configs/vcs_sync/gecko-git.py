@@ -70,6 +70,28 @@ config = {
             ],
         },
     }, {
+        "repo": "https://hg.mozilla.org/releases/mozilla-b2g26_v1_2f",
+        "revision": "default",
+        "repo_name": "mozilla-b2g26_v1_2f",
+        "targets": [{
+            "target_dest": "gecko-git/.git",
+            "vcs": "git",
+            "test_push": True,
+        }, {
+            "target_dest": "github-gecko-git",
+        }],
+        "vcs": "hg",
+        "branch_config": {
+            "branches": {
+                "default": "v1.2f",
+            },
+        },
+        "tag_config": {
+            "tag_regexes": [
+                "^B2G_",
+            ],
+        },
+    }, {
         "repo": "https://hg.mozilla.org/releases/mozilla-b2g18",
         "revision": "default",
         "repo_name": "mozilla-b2g18",
