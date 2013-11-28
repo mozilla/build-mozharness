@@ -58,6 +58,7 @@ config = {
             'mozilla-b2g18': '1.1.0',
             'mozilla-b2g18_v1_1_0_hd': '1.1.1',
             'mozilla-b2g26_v1_2': '1.2.0',
+            'mozilla-b2g26_v1_2f': '1.2.1',
             'mozilla-central': '1.3.0',
         },
         'target_suffix': '-eng',

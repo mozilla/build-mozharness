@@ -435,9 +435,8 @@ class AndroidEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, 
                     p["tmp_stdout"].close()
                     # Let's read the file that now has the output
                     output = self.read_from_file(p["tmp_file"].name, verbose=False)
-                    # Let's output all the log
-                    self.info(output)
-                    # Let's parse the output and determine what the results should be
+                    # Let's parse the output (which also prints it)
+                    # and determine what the results should be
                     parser = DesktopUnittestOutputParser(
                                  suite_category=self.test_suite_definitions[p["suite_name"]]["category"],
                                  config=self.config,
