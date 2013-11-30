@@ -10,6 +10,7 @@
 import os
 from urlparse import urljoin
 import sys
+from copy import deepcopy
 
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
@@ -163,7 +164,7 @@ class LocalesMixin(ChunkingMixin):
         if c.get("l10n_repos"):
             if c.get("user_repo_override"):
                 replace_dict['user_repo_override'] = c['user_repo_override']
-                for repo_dict in c['l10n_repos']:
+                for repo_dict in deepcopy(c['l10n_repos']):
                     repo_dict['repo'] = repo_dict['repo'] % replace_dict
                     repos.append(repo_dict)
             else:
