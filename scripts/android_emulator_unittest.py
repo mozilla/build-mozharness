@@ -184,19 +184,26 @@ class AndroidEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, 
         env = self.query_env()
         command = [
             "emulator", "-avd", emulator["name"],
-            "-debug", "all",
+            "-debug", "init,console,gles,memcheck,adbserver,adbclient,adb,avd_config",
             "-port", str(emulator["emulator_port"]),
             # Enable kvm; -qemu arguments must be at the end of the command
             "-qemu", "-m", "1024", "-enable-kvm"
         ]
         if "emulator_cpu" in self.config:
             command += ["-qemu", "-cpu", self.config["emulator_cpu"] ]
+        tmp_file = tempfile.NamedTemporaryFile(mode='w')
+        tmp_stdout = open(tmp_file.name, 'w')
+        self.info("Created temp file %s." % tmp_file.name)
         self.info("Trying to start the emulator with this command: %s" % ' '.join(command))
-        proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
+        proc = subprocess.Popen(command, stdout=tmp_stdout, stderr=tmp_stdout, env=env)
         self._redirectSUT(emulator["emulator_port"], emulator["sut_port1"], emulator["sut_port2"])
         self.info("%s: %s; sut port: %s/%s" % \
                 (emulator["name"], emulator["emulator_port"], emulator["sut_port1"], emulator["sut_port2"]))
-        return proc
+        return {
+            "process": proc,
+            "tmp_file": tmp_file,
+            "tmp_stdout": tmp_stdout
+            }
 
     def _kill_processes(self, process_name):
         p = subprocess.Popen(['ps', '-A'], stdout=subprocess.PIPE)
@@ -309,7 +316,8 @@ class AndroidEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, 
             "process": subprocess.Popen(cmd, cwd=cwd, stdout=tmp_stdout, stderr=tmp_stdout, env=env),
             "tmp_file": tmp_file,
             "tmp_stdout": tmp_stdout,
-            "suite_name": suite_name
+            "suite_name": suite_name,
+            "emulator_index": emulator_index
             }
 
     ##########################################
@@ -352,14 +360,14 @@ class AndroidEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, 
             "We can't run more tests that the number of emulators we start"
         # We kill compiz because it sometimes prevents us from starting the emulators
         self._kill_processes("compiz")
-        self.procs = []
+        self.emulator_procs = []
         emulator_index = 0
         for test in self.test_suites:
             emulator = self.emulators[emulator_index]
             emulator_index+=1
 
-            proc = self._launch_emulator(emulator)
-            self.procs.append(proc)
+            emulator_proc = self._launch_emulator(emulator)
+            self.emulator_procs.append(emulator_proc)
 
     def download_and_extract(self):
         # This will download and extract the fennec.apk and tests.zip
@@ -425,6 +433,7 @@ class AndroidEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, 
         start_time = int(time.time())
         while True:
             for p in procs:
+                emulator_index = p["emulator_index"]
                 return_code = p["process"].poll()
                 if return_code!=None:
                     suite_name = p["suite_name"]
@@ -453,6 +462,11 @@ class AndroidEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, 
                     joint_log_level = self.worst_level(log_level, joint_log_level)
 
                     self.info("##### %s log ends" % p["suite_name"])
+                    self.info("##### %s emulator log begins" % p["suite_name"])
+                    output = self.read_from_file(self.emulator_procs[emulator_index]["tmp_file"].name, verbose=False)
+                    if output:
+                        self.info(output)
+                    self.info("##### %s emulator log ends" % p["suite_name"])
                     procs.remove(p)
             if procs == []:
                 break
