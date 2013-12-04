@@ -28,7 +28,7 @@ class BlobUploadMixin(VirtualenvMixin):
     #TODO: documentation about the Blobber Server on wiki
     def __init__(self, *args, **kwargs):
         requirements = [
-            'blobuploader==1.0.1b',
+            'blobuploader==1.0.2b',
         ]
         super(BlobUploadMixin, self).__init__(*args, **kwargs)
         for req in requirements:
