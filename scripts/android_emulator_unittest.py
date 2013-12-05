@@ -249,7 +249,7 @@ class AndroidEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, 
         if not contacted_sut:
             self.warning('Unable to communicate with SUT agent on port %d' % emulator["sut_port1"])
 
-        ps_cmd = ['adb', '-s', emulator["device_id"], 'shell', 'ps']
+        ps_cmd = [self.adb_path, '-s', emulator["device_id"], 'shell', 'ps']
         p = subprocess.Popen(ps_cmd, stdout=subprocess.PIPE)
         out, err = p.communicate()
         self.info('%s:\n%s\n%s' % (ps_cmd, out, err))
