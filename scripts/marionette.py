@@ -356,7 +356,13 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin,
             testvars = os.path.join(dirs['abs_gaiatest_dir'],
                                     'gaiatest', 'testvars.json')
             with open(testvars, 'w') as f:
-                f.write('{"acknowledged_risks": true, "skip_warning": true}')
+                f.write("""{"acknowledged_risks": true,
+                            "skip_warning": true,
+                            "settings": {
+                              "time.timezone": "America/Los_Angeles",
+                              "time.timezone.user-selected": "America/Los_Angeles"
+                            }}
+                        """)
 
             # gaia-ui-tests on B2G desktop builds
             cmd = [python, '-u', os.path.join(dirs['abs_gaiatest_dir'],
