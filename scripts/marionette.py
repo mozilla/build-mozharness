@@ -47,6 +47,12 @@ class MarionetteOutputParser(TestSummaryOutputParserHelper):
 class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin,
                      MercurialScript, BlobUploadMixin, TransferMixin, GaiaMixin):
     config_options = [
+        [["--application"],
+         {"action": "store",
+          "dest": "application",
+          "default": None,
+          "help": "application name of binary"
+         }],
         [["--gaia-dir"],
          {"action": "store",
           "dest": "gaia_dir",
@@ -327,14 +333,6 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin,
     def install(self):
         if self.config.get('emulator'):
             self.info("Emulator tests; skipping.")
-        elif self.config.get('gaiatest'):
-            # mozinstall doesn't work with B2G desktop builds, but we don't need it
-            tar = self.query_exe('tar', return_type='list')
-            dirs = self.query_abs_dirs()
-            self.run_command(tar + ['jxf', self.installer_path],
-                             cwd=dirs['abs_work_dir'],
-                             error_list=TarErrorList,
-                             halt_on_failure=True)
         else:
             super(MarionetteTest, self).install()
 
@@ -358,7 +356,13 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin,
             testvars = os.path.join(dirs['abs_gaiatest_dir'],
                                     'gaiatest', 'testvars.json')
             with open(testvars, 'w') as f:
-                f.write('{"acknowledged_risks": true, "skip_warning": true}')
+                f.write("""{"acknowledged_risks": true,
+                            "skip_warning": true,
+                            "settings": {
+                              "time.timezone": "America/Los_Angeles",
+                              "time.timezone.user-selected": "America/Los_Angeles"
+                            }}
+                        """)
 
             # gaia-ui-tests on B2G desktop builds
             cmd = [python, '-u', os.path.join(dirs['abs_gaiatest_dir'],
@@ -366,7 +370,7 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin,
                                               'cli.py')]
 
             # support desktop builds with and without a built-in profile
-            binary_path = os.path.join(dirs['abs_work_dir'], 'b2g')
+            binary_path = os.path.dirname(self.binary_path)
             binary = os.path.join(binary_path, 'b2g-bin')
             if not os.access(binary, os.F_OK):
                 binary = os.path.join(binary_path, 'b2g')

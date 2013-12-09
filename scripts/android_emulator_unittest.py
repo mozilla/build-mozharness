@@ -177,7 +177,7 @@ class AndroidEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, 
             if res.find('OK') == -1:
                 self.critical('error adding redirect:'+str(res))
         else:
-            self.fatal('We have not been able to establish a telnet' + \
+            self.fatal('We have not been able to establish a telnet ' + \
                        'connection with the emulator')
 
     def _launch_emulator(self, emulator):
@@ -204,6 +204,55 @@ class AndroidEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, 
             "tmp_file": tmp_file,
             "tmp_stdout": tmp_stdout
             }
+
+    def _check_emulator(self, emulator):
+        self.info('Checking emulator %s' % emulator["name"])
+
+        attempts = 0
+        tn = None
+        contacted_sut = False
+        while attempts < 4:
+            if attempts != 0:
+               self.info("Sleeping 30 seconds")
+               time.sleep(30)
+            attempts += 1
+            self.info("  Attempt #%d to connect to SUT on port %d" % \
+                    (attempts, emulator["sut_port1"]))
+            try:
+                tn = telnetlib.Telnet('localhost', emulator["sut_port1"], 10)
+                if tn != None:
+                    self.info('Connected to port %d' % emulator["sut_port1"])
+                    res = tn.read_until('$>', 10)
+                    tn.write('quit\n')
+                    if res.find('$>') == -1:
+                        self.warning('Unexpected SUT response: %s' % res)
+                    else:
+                        self.info('SUT response: %s' % res)
+                    tn.read_all()
+                    tn.close()
+                    contacted_sut = True
+                    break
+                else:
+                    self.warning('Unable to connect to the SUT agent on port %d' % emulator["sut_port1"])
+            except socket.error, e:
+                self.info('Trying again after socket error: %s' % str(e))
+                pass
+            except EOFError:
+                self.info('Trying again after EOF')
+                pass
+            except:
+                self.info('Trying again after unexpected exception')
+                pass
+            finally:
+                if tn != None:
+                    tn.close()
+        if not contacted_sut:
+            self.warning('Unable to communicate with SUT agent on port %d' % emulator["sut_port1"])
+
+        ps_cmd = [self.adb_path, '-s', emulator["device_id"], 'shell', 'ps']
+        p = subprocess.Popen(ps_cmd, stdout=subprocess.PIPE)
+        out, err = p.communicate()
+        self.info('%s:\n%s\n%s' % (ps_cmd, out, err))
 
     def _kill_processes(self, process_name):
         p = subprocess.Popen(['ps', '-A'], stdout=subprocess.PIPE)
@@ -368,6 +417,12 @@ class AndroidEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, 
 
             emulator_proc = self._launch_emulator(emulator)
             self.emulator_procs.append(emulator_proc)
+        # Verify that we can communicate with each emulator
+        emulator_index = 0
+        for test in self.test_suites:
+            emulator = self.emulators[emulator_index]
+            emulator_index+=1
+            self._check_emulator(emulator)
 
     def download_and_extract(self):
         # This will download and extract the fennec.apk and tests.zip
@@ -482,8 +537,13 @@ class AndroidEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, 
 
     def stop_emulators(self):
         '''
-        Let's make sure that every emulator has been stopped
+        Report emulator health, then make sure that every emulator has been stopped
         '''
+        emulator_index = 0
+        for test in self.test_suites:
+            emulator = self.emulators[emulator_index]
+            emulator_index+=1
+            self._check_emulator(emulator)
         self._kill_processes(self.config["emulator_process_name"])
 
 if __name__ == '__main__':
