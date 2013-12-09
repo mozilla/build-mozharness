@@ -274,16 +274,6 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
                os.path.join(self.query_abs_dirs()['abs_b2g-distro_dir'],
                             'out', 'host', 'linux-x86', 'bin', 'adb')
 
-    def _dump_logcat(self, parser):
-        if parser.fail_count != 0 or parser.crashed or parser.leaked:
-            dirs = self.query_abs_dirs()
-            logcat = os.path.join(dirs['abs_work_dir'], 'emulator-5554.log')
-            if os.access(logcat, os.F_OK):
-                self.info('dumping logcat')
-                self.run_command(['cat', logcat], error_list=LogcatErrorList)
-            else:
-                self.info('no logcat file found')
-
     def preflight_run_tests(self):
         super(B2GEmulatorTest, self).preflight_run_tests()
         suite = self.config['test_suite']
@@ -365,7 +355,17 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
                                        output_timeout=1000,
                                        output_parser=parser,
                                        success_codes=success_codes)
-        self._dump_logcat(parser)
+
+        logcat = os.path.join(dirs['abs_work_dir'], 'emulator-5554.log')
+        if os.path.isfile(logcat):
+            if parser.fail_count != 0 or parser.crashed or parser.leaked:
+                self.info('dumping logcat')
+                self.run_command(['cat', logcat], error_list=LogcatErrorList)
+
+            # upload logcat to blobber
+            self.copyfile(logcat, env['MOZ_UPLOAD_DIR'])
+        else:
+            self.info('no logcat file found')
 
         tbpl_status, log_level = parser.evaluate_parser(return_code)
         parser.append_tinderboxprint_line(suite_name)
