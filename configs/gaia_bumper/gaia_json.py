@@ -39,5 +39,14 @@ config = {
         "target_pull_url": "https://hg.mozilla.org/releases/mozilla-b2g26_v1_2f",
         "target_tag": "default",
         "target_repo_name": "mozilla-b2g26_v1_2f",
+    }, {
+        "polling_url": "https://hg.mozilla.org/integration/gaia-1_3/json-pushes?full=1",
+        "branch": "default",
+        "repo_url": "https://hg.mozilla.org/integration/gaia-1_3",
+        "repo_name": "gaia-1_3",
+        "target_push_url": "ssh://hg.mozilla.org/releases/mozilla-aurora",
+        "target_pull_url": "https://hg.mozilla.org/releases/mozilla-aurora",
+        "target_tag": "default",
+        "target_repo_name": "mozilla-aurora",
     }],
 }
