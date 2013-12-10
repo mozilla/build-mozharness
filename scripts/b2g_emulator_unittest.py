@@ -363,7 +363,8 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
                 self.run_command(['cat', logcat], error_list=LogcatErrorList)
 
             # upload logcat to blobber
-            self.copyfile(logcat, env['MOZ_UPLOAD_DIR'])
+            self.copyfile(logcat, os.path.join(env['MOZ_UPLOAD_DIR'],
+                                               os.path.basename(logcat)))
         else:
             self.info('no logcat file found')
 
