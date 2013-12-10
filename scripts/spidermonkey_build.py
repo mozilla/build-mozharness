@@ -16,7 +16,7 @@ from mozharness.base.errors import MakefileErrorList
 from mozharness.base.script import BaseScript
 from mozharness.base.transfer import TransferMixin
 from mozharness.base.vcs.vcsbase import VCSMixin
-from mozharness.mozilla.buildbot import BuildbotMixin
+from mozharness.mozilla.buildbot import BuildbotMixin, TBPL_WARNING
 from mozharness.mozilla.purge import PurgeMixin
 from mozharness.mozilla.mock import MockMixin
 from mozharness.mozilla.tooltool import TooltoolMixin
@@ -249,11 +249,12 @@ class SpidermonkeyBuild(MockMixin,
             )
 
     def query_upload_remote_baseuri(self):
+        baseuri = self.config.get('upload_remote_baseuri')
         if self.buildbot_config and 'properties' in self.buildbot_config:
             buildprops = self.buildbot_config['properties']
             if 'upload_remote_baseuri' in buildprops:
-                return buildprops['upload_remote_baseuri']
-        return self.config.get('upload_remote_baseuri')
+                baseuri = buildprops['upload_remote_baseuri']
+        return baseuri.strip("/") if baseuri else None
 
     def query_target(self):
         if self.buildbot_config and 'properties' in self.buildbot_config:
@@ -508,7 +509,7 @@ jobs = 2
                 baseuri=self.query_upload_remote_baseuri(),
                 upload_path=upload_path,
             )
-            self.info("TinderboxPrint: uploaded to %s" % upload_url)
+            self.info("TinderboxPrint: upload <a title='hazards_results' href='%s'>results</a>: complete" % upload_url)
 
     def check_expectations(self):
         if 'expect_file' not in self.config:
@@ -543,13 +544,13 @@ jobs = 2
         if expect_hazards is None:
             status.append("%d hazards" % num_hazards)
         else:
-            status.append("%d/%d hazards" % (num_hazards, expect_hazards))
+            status.append("%d/%d hazards allowed" % (num_hazards, expect_hazards))
 
         if expect_hazards is not None and expect_hazards != num_hazards:
             if expect_hazards < num_hazards:
                 self.warning("%d more hazards than expected (expected %d, saw %d)" %
                              (num_hazards - expect_hazards, expect_hazards, num_hazards))
-                self.buildbot_status(WARNINGS)
+                self.buildbot_status(TBPL_WARNING)
             else:
                 self.info("%d fewer hazards than expected! (expected %d, saw %d)" %
                           (expect_hazards - num_hazards, expect_hazards, num_hazards))
@@ -558,13 +559,13 @@ jobs = 2
         if expect_refs is None:
             status.append("%d unsafe refs" % num_refs)
         else:
-            status.append("%d/%d unsafe refs" % (num_refs, expect_refs))
+            status.append("%d/%d unsafe refs allowed" % (num_refs, expect_refs))
 
         if expect_refs is not None and expect_refs != num_refs:
             if expect_refs < num_refs:
                 self.warning("%d more unsafe refs than expected (expected %d, saw %d)" %
                              (num_refs - expect_refs, expect_refs, num_refs))
-                self.buildbot_status(WARNINGS)
+                self.buildbot_status(TBPL_WARNING)
             else:
                 self.info("%d fewer unsafe refs than expected! (expected %d, saw %d)" %
                           (expect_refs - num_refs, expect_refs, num_refs))
