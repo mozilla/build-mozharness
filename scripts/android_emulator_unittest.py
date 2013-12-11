@@ -184,7 +184,7 @@ class AndroidEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, 
         env = self.query_env()
         command = [
             "emulator", "-avd", emulator["name"],
-            "-debug", "init,console,gles,memcheck,adbserver,adbclient,adb,avd_config",
+            "-debug", "init,console,gles,memcheck,adbserver,adbclient,adb,avd_config,socket",
             "-port", str(emulator["emulator_port"]),
             # Enable kvm; -qemu arguments must be at the end of the command
             "-qemu", "-m", "1024", "-enable-kvm"
