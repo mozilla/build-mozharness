@@ -184,7 +184,7 @@ class AndroidEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, 
         env = self.query_env()
         command = [
             "emulator", "-avd", emulator["name"],
-            "-debug", "init,console,gles,memcheck,adbserver,adbclient,adb,avd_config",
+            "-debug", "init,console,gles,memcheck,adbserver,adbclient,adb,avd_config,socket",
             "-port", str(emulator["emulator_port"]),
             # Enable kvm; -qemu arguments must be at the end of the command
             "-qemu", "-m", "1024", "-enable-kvm"
@@ -248,6 +248,53 @@ class AndroidEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, 
                     tn.close()
         if not contacted_sut:
             self.warning('Unable to communicate with SUT agent on port %d' % emulator["sut_port1"])
+
+        attempts = 0
+        tn = None
+        contacted_emu = False
+        while attempts < 4:
+            if attempts != 0:
+               self.info("Sleeping 30 seconds")
+               time.sleep(30)
+            attempts += 1
+            self.info("  Attempt #%d to connect to emulator on port %d" % \
+                    (attempts, emulator["emulator_port"]))
+            try:
+                tn = telnetlib.Telnet('localhost', emulator["emulator_port"], 10)
+                if tn != None:
+                    self.info('Connected to port %d' % emulator["emulator_port"])
+                    res = tn.read_until('OK', 10)
+                    self.info(res)
+                    tn.write('avd status\n')
+                    res = tn.read_until('OK', 10)
+                    self.info('avd status: %s' % res)
+                    tn.write('redir list\n')
+                    res = tn.read_until('OK', 10)
+                    self.info('redir list: %s' % res)
+                    tn.write('network status\n')
+                    res = tn.read_until('OK', 10)
+                    self.info('network status: %s' % res)
+                    tn.write('quit\n')
+                    tn.read_all()
+                    tn.close()
+                    contacted_emu = True
+                    break
+                else:
+                    self.warning('Unable to connect to the emulator on port %d' % emulator["emulator_port"])
+            except socket.error, e:
+                self.info('Trying again after socket error: %s' % str(e))
+                pass
+            except EOFError:
+                self.info('Trying again after EOF')
+                pass
+            except:
+                self.info('Trying again after unexpected exception')
+                pass
+            finally:
+                if tn != None:
+                    tn.close()
+        if not contacted_emu:
+            self.warning('Unable to communicate with emulator on port %d' % emulator["emulator_port"])
 
         ps_cmd = [self.adb_path, '-s', emulator["device_id"], 'shell', 'ps']
         p = subprocess.Popen(ps_cmd, stdout=subprocess.PIPE)

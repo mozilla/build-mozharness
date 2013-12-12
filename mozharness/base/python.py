@@ -75,7 +75,7 @@ class VirtualenvMixin(object):
 
     def register_virtualenv_module(self, name=None, url=None, method=None,
                                    requirements=None, optional=False,
-                                   two_pass=False):
+                                   two_pass=False, editable=False):
         """Register a module to be installed with the virtualenv.
 
         This method can be called up until create_virtualenv() to register
@@ -85,7 +85,7 @@ class VirtualenvMixin(object):
         applied.
         """
         self._virtualenv_modules.append((name, url, method, requirements,
-                                         optional, two_pass))
+                                         optional, two_pass, editable))
 
     def query_virtualenv_path(self):
         c = self.config
@@ -169,7 +169,7 @@ class VirtualenvMixin(object):
 
     def install_module(self, module=None, module_url=None, install_method=None,
                        requirements=(), optional=False, global_options=[],
-                       no_deps=False):
+                       no_deps=False, editable=False):
         """
         Install module via pip.
 
@@ -237,6 +237,11 @@ class VirtualenvMixin(object):
 
         # module_url can be None if only specifying requirements files
         if module_url:
+            if editable:
+                if install_method in (None, 'pip'):
+                    command += ['-e']
+                else:
+                    self.fatal("editable installs not supported for install_method %s" % install_method)
             command += [module_url]
 
         # Prevents a return code of 1 being marked as an ERROR in the log
@@ -378,18 +383,18 @@ class VirtualenvMixin(object):
                                 requirements=requirements,
                                 global_options=global_options)
 
-        for module, url, method, requirements, optional, two_pass in \
+        for module, url, method, requirements, optional, two_pass, editable in \
                 self._virtualenv_modules:
             if two_pass:
                 self.install_module(
                     module=module, module_url=url,
                     install_method=method, requirements=requirements or (),
-                    optional=optional, no_deps=True
+                    optional=optional, no_deps=True, editable=editable
                 )
             self.install_module(
                 module=module, module_url=url,
                 install_method=method, requirements=requirements or (),
-                optional=optional
+                optional=optional, editable=editable
             )
 
         self.info("Done creating virtualenv %s." % venv_path)
