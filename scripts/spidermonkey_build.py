@@ -548,7 +548,7 @@ jobs = 2
 
         if expect_hazards is not None and expect_hazards != num_hazards:
             if expect_hazards < num_hazards:
-                self.warning("%d more hazards than expected (expected %d, saw %d)" %
+                self.warning("TEST-UNEXPECTED-FAIL %d more hazards than expected (expected %d, saw %d)" %
                              (num_hazards - expect_hazards, expect_hazards, num_hazards))
                 self.buildbot_status(TBPL_WARNING)
             else:
@@ -563,7 +563,7 @@ jobs = 2
 
         if expect_refs is not None and expect_refs != num_refs:
             if expect_refs < num_refs:
-                self.warning("%d more unsafe refs than expected (expected %d, saw %d)" %
+                self.warning("TEST-UNEXPECTED-FAIL %d more unsafe refs than expected (expected %d, saw %d)" %
                              (num_refs - expect_refs, expect_refs, num_refs))
                 self.buildbot_status(TBPL_WARNING)
             else:

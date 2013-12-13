@@ -18,13 +18,13 @@ AndroidSignatureVerificationErrorList = BaseErrorList + [{
     "regex": re.compile(r'''^Invalid$'''),
     "level": FATAL,
     "explanation": "Signature is invalid!"
-},{
+}, {
     "substr": "filename not matched",
     "level": ERROR,
-},{
+}, {
     "substr": "ERROR: Could not unzip",
     "level": ERROR,
-},{
+}, {
     "regex": re.compile(r'''Are you sure this is a (nightly|release) package'''),
     "level": FATAL,
     "explanation": "Not signed!"
@@ -127,11 +127,13 @@ class SigningMixin(BaseSigningMixin):
             '-t', token,
             '-n', nonce,
             '-c', host_cert,
-            '-f', formats,
         ]
+        if formats:
+            cmd += ['-f', formats]
         for h in os.environ['MOZ_SIGNING_SERVERS'].split(","):
             cmd += ['-H', h]
         return cmd
+
 
 # MobileSigningMixin {{{1
 class MobileSigningMixin(AndroidSigningMixin, SigningMixin):
