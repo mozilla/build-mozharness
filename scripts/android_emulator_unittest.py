@@ -144,11 +144,15 @@ class AndroidEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, 
             return []
         return [str(option), str(value)]
 
-    def _redirectSUT(self, emuport, sutport1, sutport2):
+    def _redirectSUT(self, emulator_index):
         '''
         This redirects the default SUT ports for a given emulator.
         This is needed if more than one emulator is started.
         '''
+        emulator = self.emulators[emulator_index]
+        emuport = emulator["emulator_port"]
+        sutport1 = emulator["sut_port1"]
+        sutport2 = emulator["sut_port2"]
         attempts = 0
         tn = None
         while attempts < 5:
@@ -175,12 +179,15 @@ class AndroidEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, 
             tn.write('quit\n')
             res = tn.read_all()
             if res.find('OK') == -1:
+                self._dump_emulator_log(emulator_index)
                 self.critical('error adding redirect:'+str(res))
         else:
+            self._dump_emulator_log(emulator_index)
             self.fatal('We have not been able to establish a telnet ' + \
                        'connection with the emulator')
 
-    def _launch_emulator(self, emulator):
+    def _launch_emulator(self, emulator_index):
+        emulator = self.emulators[emulator_index]
         env = self.query_env()
         command = [
             "emulator", "-avd", emulator["name"],
@@ -196,7 +203,7 @@ class AndroidEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, 
         self.info("Created temp file %s." % tmp_file.name)
         self.info("Trying to start the emulator with this command: %s" % ' '.join(command))
         proc = subprocess.Popen(command, stdout=tmp_stdout, stderr=tmp_stdout, env=env)
-        self._redirectSUT(emulator["emulator_port"], emulator["sut_port1"], emulator["sut_port2"])
+        self._redirectSUT(emulator_index)
         self.info("%s: %s; sut port: %s/%s" % \
                 (emulator["name"], emulator["emulator_port"], emulator["sut_port1"], emulator["sut_port2"]))
         return {
@@ -300,6 +307,14 @@ class AndroidEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, 
         p = subprocess.Popen(ps_cmd, stdout=subprocess.PIPE)
         out, err = p.communicate()
         self.info('%s:\n%s\n%s' % (ps_cmd, out, err))
+
+    def _dump_emulator_log(self, emulator_index):
+        emulator = self.emulators[emulator_index]
+        self.info("##### %s emulator log begins" % emulator["name"])
+        output = self.read_from_file(self.emulator_procs[emulator_index]["tmp_file"].name, verbose=False)
+        if output:
+            self.info(output)
+        self.info("##### %s emulator log ends" % emulator["name"])
 
     def _kill_processes(self, process_name):
         p = subprocess.Popen(['ps', '-A'], stdout=subprocess.PIPE)
@@ -459,11 +474,9 @@ class AndroidEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, 
         self.emulator_procs = []
         emulator_index = 0
         for test in self.test_suites:
-            emulator = self.emulators[emulator_index]
-            emulator_index+=1
-
-            emulator_proc = self._launch_emulator(emulator)
+            emulator_proc = self._launch_emulator(emulator_index)
             self.emulator_procs.append(emulator_proc)
+            emulator_index+=1
         # Verify that we can communicate with each emulator
         emulator_index = 0
         for test in self.test_suites:
@@ -564,11 +577,7 @@ class AndroidEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, 
                     joint_log_level = self.worst_level(log_level, joint_log_level)
 
                     self.info("##### %s log ends" % p["suite_name"])
-                    self.info("##### %s emulator log begins" % p["suite_name"])
-                    output = self.read_from_file(self.emulator_procs[emulator_index]["tmp_file"].name, verbose=False)
-                    if output:
-                        self.info(output)
-                    self.info("##### %s emulator log ends" % p["suite_name"])
+                    self._dump_emulator_log(emulator_index)
                     procs.remove(p)
             if procs == []:
                 break
