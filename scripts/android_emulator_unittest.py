@@ -203,9 +203,6 @@ class AndroidEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, 
         self.info("Created temp file %s." % tmp_file.name)
         self.info("Trying to start the emulator with this command: %s" % ' '.join(command))
         proc = subprocess.Popen(command, stdout=tmp_stdout, stderr=tmp_stdout, env=env)
-        self._redirectSUT(emulator_index)
-        self.info("%s: %s; sut port: %s/%s" % \
-                (emulator["name"], emulator["emulator_port"], emulator["sut_port1"], emulator["sut_port2"]))
         return {
             "process": proc,
             "tmp_file": tmp_file,
@@ -476,6 +473,10 @@ class AndroidEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, 
         for test in self.test_suites:
             emulator_proc = self._launch_emulator(emulator_index)
             self.emulator_procs.append(emulator_proc)
+            self._redirectSUT(emulator_index)
+            emulator = self.emulators[emulator_index]
+            self.info("%s: %s; sut port: %s/%s" % \
+                (emulator["name"], emulator["emulator_port"], emulator["sut_port1"], emulator["sut_port2"]))
             emulator_index+=1
         # Verify that we can communicate with each emulator
         emulator_index = 0
