@@ -25,7 +25,8 @@ from mozharness.mozilla.tooltool import TooltoolMixin
 
 
 class B2GDesktopTest(TestingMixin, TooltoolMixin, MercurialScript, BaseScript):
-    test_suites = ('mochitest',)
+    test_suites = ('mochitest',
+                   'reftest',)
     config_options = [
         [["--type"],
         {"action": "store",
@@ -102,7 +103,7 @@ class B2GDesktopTest(TestingMixin, TooltoolMixin, MercurialScript, BaseScript):
         dirs['abs_blob_upload_dir'] = os.path.join(
                 abs_dirs['abs_work_dir'], 'blobber_upload_dir')
         dirs['abs_tests_dir'] = os.path.join(abs_dirs['abs_work_dir'], 'tests')
-        for d in ('mochitest', 'config', 'certs'):
+        for d in self.test_suites + ('config', 'certs'):
             dirs['abs_%s_dir' % d] = os.path.join(
                     dirs['abs_tests_dir'], d)
 
@@ -168,6 +169,9 @@ class B2GDesktopTest(TestingMixin, TooltoolMixin, MercurialScript, BaseScript):
         if not self.test_manifest:
             if suite == 'mochitest':
                 self.test_manifest = 'b2g-desktop.json'
+            elif suite == 'reftest':
+                self.test_manifest = os.path.join('tests', 'layout',
+                                                  'reftests', 'reftest.list')
 
         # set the gaia_profile
         self.gaia_profile = os.path.join(os.path.dirname(self.binary_path),
