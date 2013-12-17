@@ -36,6 +36,34 @@ class GaiaIntegrationTest(GaiaTest):
             overwrite='clobber'
         )
 
+        self.info('Bug 935576 - Add more logging to debug failing tests')
+        cmd_to_result = {}
+        cmd_to_result['find'] = self.run_command(
+            self.query_exe('find', return_type='list') + ['.'],
+            cwd=dirs['abs_gaia_dir']
+        )
+        cmd_to_result['ls'] = self.run_command(
+            self.query_exe('ls', return_type='string'),
+            cwd=dirs['abs_gaia_dir']
+        )
+        cmd_to_result['printenv'] = self.run_command(
+            self.query_exe('printenv', return_type='string'),
+            cwd=dirs['abs_gaia_dir']
+        )
+        cmd_to_result['pwd'] = self.run_command(
+            self.query_exe('pwd', return_type='string'),
+            cwd=dirs['abs_gaia_dir']
+        )
+        cmd_to_result['whoami'] = self.run_command(
+            self.query_exe('whoami', return_type='string'),
+            cwd=dirs['abs_gaia_dir']
+        )
+        for cmd, result in cmd_to_result.iteritems():
+            self.info('=================')
+            self.info('%s output' % cmd)
+            self.info('=================')
+            self.info(result)
+
         # `make test-integration \
         #      MOCHA_REPORTER=mocha-tbpl-reporter \
         #      NPM_REGISTRY=http://npm-mirror.pub.build.mozilla.org`
@@ -43,7 +71,9 @@ class GaiaIntegrationTest(GaiaTest):
         make = make + ['test-integration']
         code = self.run_command(make, cwd=dirs['abs_gaia_dir'], env={
           'NPM_REGISTRY': self.config.get('npm_registry'),
-          'REPORTER': 'mocha-tbpl-reporter'
+          'REPORTER': 'mocha-tbpl-reporter',
+          'USE_LOCAL_XULRUNNER_SDK': '1',
+          'XULRUNNER_DIRECTORY': self.config.get('xre_dir')
         }, output_parser=output_parser)
 
         output_parser.print_summary('gaia-integration-tests')
