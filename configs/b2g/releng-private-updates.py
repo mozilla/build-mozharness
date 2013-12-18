@@ -21,7 +21,7 @@ config = {
     "upload_remote_host": "pvtbuilds.pvt.build.mozilla.org",
     "upload_remote_basepath": "/pvt/mozilla.org/b2gotoro/tinderbox-builds",
     "upload_remote_nightly_basepath": "/pvt/mozilla.org/b2gotoro/nightly",
-    "upload_dep_target_exclusions": ["unagi", "otoro", "inari", "leo", "hamachi", "helix"],
+    "upload_dep_target_exclusions": ["inari", "leo", "hamachi", "helix"],
     "tooltool_servers": ["http://runtime-binaries.pvt.build.mozilla.org/tooltool/"],
     "gittool_share_base": "/builds/git-shared/git",
     "gittool_base_mirror_urls": [],
