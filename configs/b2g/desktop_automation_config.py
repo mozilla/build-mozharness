@@ -38,6 +38,7 @@ config = {
     # test harness options
     "run_file_names": {
         "mochitest": "runtestsb2g.py",
+        "reftest": "runreftestb2g.py",
     },
 
     "mochitest_options": [
@@ -47,4 +48,9 @@ config = {
         "--utility-path=%(utility_path)s", "--certificate-path=%(cert_path)s",
         "--symbols-path=%(symbols_path)s",
     ],
+
+    "reftest_options": [
+        "--desktop", "--profile=%(gaia_profile)s", "--appname=%(application)s",
+        "--symbols-path=%(symbols_path)s", "%(test_manifest)s",
+    ]
 }
