@@ -39,12 +39,12 @@ class GaiaIntegrationTest(GaiaTest):
         # `make test-integration \
         #      MOCHA_REPORTER=mocha-tbpl-reporter \
         #      NPM_REGISTRY=http://npm-mirror.pub.build.mozilla.org`
-        make = self.query_exe('make', return_type='list')
-        make = make + ['test-integration']
-        code = self.run_command(make, cwd=dirs['abs_gaia_dir'], env={
-          'NPM_REGISTRY': self.config.get('npm_registry'),
-          'REPORTER': 'mocha-tbpl-reporter'
-        }, output_parser=output_parser)
+        code = self.run_command([
+            'make',
+            'test-integration',
+            'NPM_REGISTRY=' + self.config.get('npm_registry'),
+            'REPORTER=mocha-tbpl-reporter'
+        ], cwd=dirs['abs_gaia_dir'], output_parser=output_parser)
 
         output_parser.print_summary('gaia-integration-tests')
         self.publish(code)
