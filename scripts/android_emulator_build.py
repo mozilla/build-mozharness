@@ -12,10 +12,9 @@ from ftplib import FTP
 # load modules from parent dir
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
-from mozharness.base.config import parse_config_file
 from mozharness.base.script import BaseScript
 from mozharness.mozilla.purge import PurgeMixin
-from mozharness.base.log import WARNING, ERROR, INFO, FATAL
+from mozharness.base.log import ERROR
 
 
 CONFIG_INI = {
@@ -574,7 +573,7 @@ class EmulatorBuild(BaseScript, PurgeMixin):
 
         # unknown reason, on AWS the 64bit emulators don't seem to enjoy working;
         # for now we punt to 32bit any time we might hit a 64bit one by accident.
-        if (os.path.exists(os.path.join(self.aosphostbindir, "emulator64-arm")) or 
+        if (os.path.exists(os.path.join(self.aosphostbindir, "emulator64-arm")) or
             os.path.exists(os.path.join(self.aosphostbindir, "emulator64-x86"))):
             args += ["-force-32bit"]
 
