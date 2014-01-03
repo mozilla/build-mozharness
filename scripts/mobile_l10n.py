@@ -32,6 +32,7 @@ from mozharness.mozilla.buildbot import BuildbotMixin
 from mozharness.mozilla.purge import PurgeMixin
 from mozharness.mozilla.release import ReleaseMixin
 from mozharness.mozilla.signing import MobileSigningMixin
+from mozharness.mozilla.tooltool import TooltoolMixin
 from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.l10n.locales import LocalesMixin
 from mozharness.mozilla.mock import MockMixin
@@ -39,7 +40,7 @@ from mozharness.mozilla.mock import MockMixin
 
 # MobileSingleLocale {{{1
 class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
-                         MobileSigningMixin, TransferMixin,
+                         MobileSigningMixin, TransferMixin, TooltoolMixin,
                          BuildbotMixin, PurgeMixin, MercurialScript):
     config_options = [[
         ['--locale', ],
@@ -345,6 +346,12 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
         make = self.query_exe("make")
         self.run_command_m([cat, mozconfig_path])
         env = self.query_repack_env()
+        if self.config.get("tooltool_config"):
+            self.tooltool_fetch(
+                self.config['tooltool_config']['manifest'],
+                bootstrap_cmd=self.config['tooltool_config']['bootstrap_cmd'],
+                output_dir=self.config['tooltool_config']['output_dir'] % self.query_abs_dirs(),
+            )
         self._setup_configure()
         self.run_command_m([make, "wget-en-US"],
                            cwd=dirs['abs_locales_dir'],

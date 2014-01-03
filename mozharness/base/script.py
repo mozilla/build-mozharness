@@ -651,10 +651,10 @@ class ScriptMixin(object):
             self.info("Running command: %s in %s" % (command, cwd))
         else:
             self.info("Running command: %s" % command)
-        if isinstance(command, list):
+        if isinstance(command, list) or isinstance(command, tuple):
             self.info("Copy/paste: %s" % subprocess.list2cmdline(command))
         shell = True
-        if isinstance(command, list):
+        if isinstance(command, list) or isinstance(command, tuple):
             shell = False
         if env is None:
             if partial_env:

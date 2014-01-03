@@ -22,6 +22,15 @@ config = {
     "locales_dir": "mobile/android/locales",
     "locales_platform": "android",
     "ignore_locales": ["en-US"],
+    "tooltool_config": {
+        "manifest": "mobile/android/config/tooltool-manifests/android/releng.manifest",
+        "output_dir": "%(abs_work_dir)s/" + MOZILLA_DIR,
+        "bootstrap_cmd": ["bash", "-xe", "setup.sh"],
+    },
+    "exes": {
+        'tooltool.py': '/tools/tooltool.py',
+    },
+    "tooltool_servers": ["http://runtime-binaries.pvt.build.mozilla.org/tooltool/"],
     "repos": [{
         "repo": "http://hg.mozilla.org/releases/mozilla-release",
         "revision": "default",
@@ -47,6 +56,8 @@ config = {
     "repack_env": {
         "JAVA_HOME": JAVA_HOME,
         "PATH": JAVA_HOME + "/bin:%(PATH)s",
+        # so ugly, bug 951238
+        "LD_LIBRARY_PATH": "/lib:/tools/gcc-4.7.2-0moz1/lib:/tools/gcc-4.7.2-0moz1/lib64",
         "MOZ_PKG_VERSION": "%(version)s",
         "MOZ_OBJDIR": OBJDIR,
         "LOCALE_MERGEDIR": "%(abs_merge_dir)s/",
@@ -79,13 +90,27 @@ config = {
         "summary",
     ],
     # Mock
-    "mock_target": "mozilla-centos6-i386",
-    "mock_packages": [
-        "autoconf213", "mozilla-python27-mercurial", "ccache",
-        "android-sdk15", "android-sdk16", "android-ndk5", "android-ndk8",
-        "zip", "java-1.6.0-openjdk-devel", "zlib-devel", "glibc-static",
-        "openssh-clients", "mpfr", "wget", "gcc472_0moz1",
-    ],
+    "mock_target": "mozilla-centos6-x86_64",
+    "mock_packages": ['autoconf213', 'python', 'zip', 'mozilla-python27-mercurial', 'git', 'ccache',
+                      'glibc-static', 'libstdc++-static', 'perl-Test-Simple', 'perl-Config-General',
+                      'gtk2-devel', 'libnotify-devel', 'yasm',
+                      'alsa-lib-devel', 'libcurl-devel',
+                      'wireless-tools-devel', 'libX11-devel',
+                      'libXt-devel', 'mesa-libGL-devel',
+                      'gnome-vfs2-devel', 'GConf2-devel', 'wget',
+                      'mpfr',  # required for system compiler
+                      'xorg-x11-font*',  # fonts required for PGO
+                      'imake',  # required for makedepend!?!
+                      'gcc45_0moz3', 'gcc454_0moz1', 'gcc472_0moz1', 'gcc473_0moz1', 'yasm', 'ccache',  # <-- from releng repo
+                      'valgrind', 'dbus-x11',
+                      'pulseaudio-libs-devel',
+                      'gstreamer-devel', 'gstreamer-plugins-base-devel',
+                      'freetype-2.3.11-6.el6_1.8.x86_64',
+                      'freetype-devel-2.3.11-6.el6_1.8.x86_64',
+                      'java-1.6.0-openjdk-devel',
+                      'openssh-clients',
+                      'zlib-devel-1.2.3-27.el6.i686',
+                      ],
     "mock_files": [
         ("/home/cltbld/.ssh", "/home/mock_mozilla/.ssh"),
     ],
