@@ -215,7 +215,7 @@ class AndroidEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, 
         attempts = 0
         tn = None
         contacted_sut = False
-        while attempts < 4:
+        while attempts < 4 and not contacted_sut:
             if attempts != 0:
                self.info("Sleeping 30 seconds")
                time.sleep(30)
@@ -232,10 +232,8 @@ class AndroidEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, 
                         self.warning('Unexpected SUT response: %s' % res)
                     else:
                         self.info('SUT response: %s' % res)
+                        contacted_sut = True
                     tn.read_all()
-                    tn.close()
-                    contacted_sut = True
-                    break
                 else:
                     self.warning('Unable to connect to the SUT agent on port %d' % emulator["sut_port1"])
             except socket.error, e:
