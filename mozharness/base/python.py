@@ -261,10 +261,10 @@ class VirtualenvMixin(object):
                             success_codes=success_codes,
                             cwd=cwd) != 0:
             if optional:
-                self.warning("Unable to install optional package %s." %
-                             module_url)
+                self.warning("Error running install of optional package, %s." %
+                             ' '.join(command))
             else:
-                self.fatal("Unable to install %s!" % module_url)
+                self.fatal("Error running install of package, %s!" % ' '.join(command))
 
     def create_virtualenv(self, modules=(), requirements=()):
         """
