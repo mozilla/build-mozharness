@@ -24,19 +24,20 @@ from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_WORST_LEVEL_TUPLE
 from mozharness.mozilla.buildbot import TBPL_RETRY, TBPL_FAILURE
 
 TalosErrorList = PythonErrorList + [
- {'regex': re.compile(r'''run-as: Package '.*' is unknown'''), 'level': DEBUG},
- {'substr': r'''FAIL: Graph server unreachable''', 'level': CRITICAL},
- {'substr': r'''FAIL: Busted:''', 'level': CRITICAL},
- {'substr': r'''FAIL: failed to cleanup''', 'level': ERROR},
- {'substr': r'''erfConfigurator.py: Unknown error''', 'level': CRITICAL},
- {'substr': r'''talosError''', 'level': CRITICAL},
- {'regex': re.compile(r'''No machine_name called '.*' can be found'''), 'level': CRITICAL},
- {'substr': r"""No such file or directory: 'browser_output.txt'""",
-  'level': CRITICAL,
-  'explanation': r"""Most likely the browser failed to launch, or the test was otherwise unsuccessful in even starting."""},
+    {'regex': re.compile(r'''run-as: Package '.*' is unknown'''), 'level': DEBUG},
+    {'substr': r'''FAIL: Graph server unreachable''', 'level': CRITICAL},
+    {'substr': r'''FAIL: Busted:''', 'level': CRITICAL},
+    {'substr': r'''FAIL: failed to cleanup''', 'level': ERROR},
+    {'substr': r'''erfConfigurator.py: Unknown error''', 'level': CRITICAL},
+    {'substr': r'''talosError''', 'level': CRITICAL},
+    {'regex': re.compile(r'''No machine_name called '.*' can be found'''), 'level': CRITICAL},
+    {'substr': r"""No such file or directory: 'browser_output.txt'""",
+     'level': CRITICAL,
+     'explanation': r"""Most likely the browser failed to launch, or the test was otherwise unsuccessful in even starting."""},
 ]
 
 # TODO: check for running processes on script invocation
+
 
 class TalosOutputParser(OutputParser):
     minidump_regex = re.compile(r'''talosError: "error executing: '(\S+) (\S+) (\S+)'"''')
@@ -79,7 +80,7 @@ talos_config_options = [
       'default': None,
       'help': "URL to send results to"
       }],
-    ]
+]
 
 
 class Talos(TestingMixin, MercurialScript, BlobUploadMixin):
@@ -96,37 +97,37 @@ class Talos(TestingMixin, MercurialScript, BlobUploadMixin):
           "help": "Specify the talos package url"
           }],
         [["--use-talos-json"],
-          {"action": "store_true",
-           "dest": "use_talos_json",
-           "default": False,
-           "help": "Use talos config from talos.json"
-           }],
+         {"action": "store_true",
+          "dest": "use_talos_json",
+          "default": False,
+          "help": "Use talos config from talos.json"
+          }],
         [["--suite"],
-          {"action": "store",
-           "dest": "suite",
-           "help": "Talos suite to run (from talos json)"
-           }],
+         {"action": "store",
+          "dest": "suite",
+          "help": "Talos suite to run (from talos json)"
+          }],
         [["--branch-name"],
-          {"action": "store",
-           "dest": "branch",
-           "help": "Graphserver branch to report to"
-           }],
+         {"action": "store",
+          "dest": "branch",
+          "help": "Graphserver branch to report to"
+          }],
         [["--system-bits"],
-          {"action": "store",
-           "dest": "system_bits",
-           "type": "choice",
-           "default": "32",
-           "choices": ['32', '64'],
-           "help": "Testing 32 or 64 (for talos json plugins)"
-           }],
+         {"action": "store",
+          "dest": "system_bits",
+          "type": "choice",
+          "default": "32",
+          "choices": ['32', '64'],
+          "help": "Testing 32 or 64 (for talos json plugins)"
+          }],
         [["--add-option"],
-          {"action": "extend",
-           "dest": "talos_extra_options",
-           "default": None,
-           "help": "extra options to talos"
-           }],
-        ] + talos_config_options + testing_config_options + \
-            copy.deepcopy(blobupload_config_options)
+         {"action": "extend",
+          "dest": "talos_extra_options",
+          "default": None,
+          "help": "extra options to talos"
+          }],
+    ] + talos_config_options + testing_config_options + \
+        copy.deepcopy(blobupload_config_options)
 
     def __init__(self, **kwargs):
         kwargs.setdefault('config_options', self.config_options)
@@ -137,19 +138,19 @@ class Talos(TestingMixin, MercurialScript, BlobUploadMixin):
                                           'create-virtualenv',
                                           'install',
                                           'run-tests',
-                                         ])
+                                          ])
         kwargs.setdefault('default_actions', ['clobber',
                                               'download-and-extract',
                                               'clone-talos',
                                               'create-virtualenv',
                                               'install',
                                               'run-tests',
-                                             ])
+                                              ])
         kwargs.setdefault('config', {})
         kwargs['config'].setdefault('virtualenv_modules', ["talos", "mozinstall"])
         super(Talos, self).__init__(**kwargs)
 
-        self.workdir = self.query_abs_dirs()['abs_work_dir'] # convenience
+        self.workdir = self.query_abs_dirs()['abs_work_dir']  # convenience
 
         # results output
         self.results_url = self.config.get('results_url')
@@ -377,13 +378,13 @@ class Talos(TestingMixin, MercurialScript, BlobUploadMixin):
             self.fatal("Talos requires a path to the binary.  You can specify binary_path or add download-and-extract to your action list.")
 
         # talos options
-        options = ['-v',] # hardcoded options (for now)
+        options = ['-v', ]  # hardcoded options (for now)
         if self.config.get('python_webserver', True):
             options.append('--develop')
         # talos can't gather data if the process name ends with '.exe'
         if binary_path.endswith('.exe'):
             binary_path = binary_path[:-4]
-        kw_options = {'output': 'talos.yml', # options overwritten from **kw
+        kw_options = {'output': 'talos.yml',  # options overwritten from **kw
                       'executablePath': binary_path,
                       'results_url': self.results_url}
         kw_options['activeTests'] = self.query_tests()
@@ -397,7 +398,7 @@ class Talos(TestingMixin, MercurialScript, BlobUploadMixin):
         # talos expects tests to be in the format (e.g.) 'ts:tp5:tsvg'
         tests = kw_options.get('activeTests')
         if tests and not isinstance(tests, basestring):
-            tests = ':'.join(tests) # Talos expects this format
+            tests = ':'.join(tests)  # Talos expects this format
             kw_options['activeTests'] = tests
         for key, value in kw_options.items():
             options.extend(['--%s' % key, value])
@@ -438,8 +439,9 @@ class Talos(TestingMixin, MercurialScript, BlobUploadMixin):
             'repo': talos_repo,
             'vcs': 'hg',
             'dest': self.talos_path,
-            'revision': talos_revision
-            }
+            'revision': talos_revision,
+            'output_timeout': 1200,
+        }
         self.vcs_checkout(**repo)
         self.has_cloned_talos = True
 
@@ -489,6 +491,8 @@ class Talos(TestingMixin, MercurialScript, BlobUploadMixin):
     def clone_talos(self):
         c = self.config
         if not c.get('python_webserver', True) and c.get('populate_webroot'):
+            virtualenv_modules = ['mozprocess']
+            super(Talos, self).create_virtualenv(modules=virtualenv_modules)
             self._populate_webroot()
 
     def create_virtualenv(self, **kwargs):
@@ -527,7 +531,7 @@ class Talos(TestingMixin, MercurialScript, BlobUploadMixin):
         """
         c = self.config
         if not c.get('python_webserver', True) and c.get('populate_webroot') \
-          and self.query_pagesets_url():
+                and self.query_pagesets_url():
             pagesets_path = self.query_pagesets_manifest_path()
             manifest_source = os.path.join(c['webroot'], pagesets_path)
             manifest_target = os.path.join(self.query_python_site_packages_path(), pagesets_path)
