@@ -15,13 +15,14 @@ import re
 
 from mozharness.base.config import parse_config_file
 from mozharness.base.errors import PythonErrorList
-from mozharness.base.log import OutputParser, DEBUG, ERROR, CRITICAL, FATAL, INFO
+from mozharness.base.log import OutputParser, DEBUG, ERROR, CRITICAL, FATAL
+from mozharness.base.log import INFO, WARNING
 from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_options
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options, INSTALLER_SUFFIXES
 from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.testing.errors import TinderBoxPrintRe
 from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_WORST_LEVEL_TUPLE
-from mozharness.mozilla.buildbot import TBPL_RETRY, TBPL_FAILURE
+from mozharness.mozilla.buildbot import TBPL_RETRY, TBPL_FAILURE, TBPL_WARNING
 
 TalosErrorList = PythonErrorList + [
     {'regex': re.compile(r'''run-as: Package '.*' is unknown'''), 'level': DEBUG},
@@ -593,12 +594,19 @@ class Talos(TestingMixin, MercurialScript, BlobUploadMixin):
             self.info("Looking at the minidump files for debugging purposes...")
             for item in parser.minidump_output:
                 self.run_command(["ls", "-l", item])
-        if self.return_code not in [0, 1]:
+        if self.return_code not in [0]:
             # update the worst log level and tbpl status
-            parser.worst_log_level = parser.worst_level(ERROR,
-                                                        parser.worst_log_level)
+            log_level = ERROR
+            tbpl_level = TBPL_FAILURE
+            if self.return_code == 1:
+                log_level = WARNING
+                tbpl_level = TBPL_WARNING
+
+            parser.worst_log_level = parser.worst_level(
+                log_level, parser.worst_log_level
+            )
             parser.worst_tbpl_status = parser.worst_level(
-                TBPL_FAILURE, parser.worst_tbpl_status,
+                tbpl_level, parser.worst_tbpl_status,
                 levels=TBPL_WORST_LEVEL_TUPLE
             )
         self.buildbot_status(parser.worst_tbpl_status,
