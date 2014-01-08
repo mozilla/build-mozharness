@@ -175,18 +175,21 @@ class ScriptMixin(object):
         """ Helper script for download_file()
             """
         try:
+            f_length = None
             f = urllib2.urlopen(url, timeout=30)
-            f_length = int(f.info()['content-length'])
-            got_length = 0
+            if f.info().get('content-length') is not None:
+                f_length = int(f.info()['content-length'])
+                got_length = 0
             local_file = open(file_name, 'wb')
             while True:
                 block = f.read(1024 ** 2)
                 if not block:
-                    if got_length != f_length:
+                    if f_length is not None and got_length != f_length:
                         raise urllib2.URLError("Download incomplete; content-length was %d, but only received %d" % (f_length, got_length))
                     break
                 local_file.write(block)
-                got_length += len(block)
+                if f_length is not None:
+                    got_length += len(block)
             local_file.close()
             return file_name
         except urllib2.HTTPError, e:

@@ -76,7 +76,7 @@ class MercurialVCS(ScriptMixin, LogMixin, object):
         #  ssh_username: ssh_username,
         #  ssh_key: ssh_key,
         # }
-        self.vcs_config = vcs_config
+        self.vcs_config = vcs_config or {}
         self.hg = self.query_exe("hg", return_type="list") + HG_OPTIONS
 
     def _make_absolute(self, repo):
@@ -197,7 +197,8 @@ class MercurialVCS(ScriptMixin, LogMixin, object):
                 cmd.extend(['-b', branch])
 
         cmd.extend([repo, dest])
-        output_timeout = self.config.get("vcs_output_timeout", None)
+        output_timeout = self.config.get("vcs_output_timeout",
+                                         self.vcs_config.get("output_timeout"))
         if self.run_command(cmd, error_list=HgErrorList,
                             output_timeout=output_timeout) != 0:
             raise VCSException("Unable to clone %s to %s!" % (repo, dest))

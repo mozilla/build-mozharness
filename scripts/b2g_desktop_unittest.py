@@ -13,10 +13,7 @@ sys.path.insert(1, os.path.dirname(sys.path[0]))
 
 from mozharness.base.errors import BaseErrorList
 from mozharness.base.log import ERROR
-from mozharness.base.script import (
-    BaseScript,
-    PreScriptAction,
-)
+from mozharness.base.script import PreScriptAction
 from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_options
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
@@ -24,7 +21,7 @@ from mozharness.mozilla.testing.unittest import DesktopUnittestOutputParser
 from mozharness.mozilla.tooltool import TooltoolMixin
 
 
-class B2GDesktopTest(TestingMixin, TooltoolMixin, MercurialScript, BaseScript):
+class B2GDesktopTest(BlobUploadMixin, TestingMixin, TooltoolMixin, MercurialScript):
     test_suites = ('mochitest',
                    'reftest',)
     config_options = [

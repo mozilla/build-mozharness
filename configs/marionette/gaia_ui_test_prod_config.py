@@ -37,6 +37,8 @@ config = {
         'install',
         'run-marionette',
     ],
+    "download_symbols": "ondemand",
+    "download_minidump_stackwalk": True,
     "default_blob_upload_servers": [
          "https://blobupload.elasticbeanstalk.com",
     ],
