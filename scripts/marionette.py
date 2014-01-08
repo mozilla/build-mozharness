@@ -385,6 +385,7 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin,
             cmd.extend(self._build_arg('--testvars', testvars))
             cmd.extend(self._build_arg('--profile', os.path.join(dirs['abs_gaia_dir'],
                                                                  'profile')))
+            cmd.extend(self._build_arg('--symbols-path', self.symbols_path))
             cmd.extend(self._build_arg('--xml-output',
                                        os.path.join(dirs['abs_work_dir'], 'output.xml')))
             cmd.extend(self._build_arg('--html-output',
