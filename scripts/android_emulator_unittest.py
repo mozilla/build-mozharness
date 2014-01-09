@@ -360,6 +360,7 @@ class AndroidEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, 
         suite_category = self.test_suite_definitions[suite_name]["category"]
         cmd = [
             self.query_python_path('python'),
+            '-u',
             os.path.join(
                 dirs["abs_%s_dir" % suite_category],
                 c["suite_definitions"][suite_category]["run_filename"]
