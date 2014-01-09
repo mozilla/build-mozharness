@@ -405,7 +405,7 @@ class SpidermonkeyBuild(MockMixin,
         if not os.path.exists(analysis_dir):
             self.mkdir_p(analysis_dir)
 
-        values = {'js': os.path.join(dirs['shell_objdir'], 'js'),
+        values = {'js': os.path.join(dirs['shell_objdir'], 'dist', 'bin', 'js'),
                   'analysis_scriptdir': os.path.join(dirs['abs_work_dir'], 'source/js/src/devtools/rootAnalysis'),
                   'source_objdir': dirs['abs_analyzed_objdir'],
                   'source': os.path.join(dirs['abs_work_dir'], 'source'),
