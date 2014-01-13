@@ -36,6 +36,8 @@ class GaiaIntegrationTest(GaiaTest):
             overwrite='clobber'
         )
 
+        self.run_command(['npm', 'cache', 'clean'])
+
         # `make test-integration \
         #      MOCHA_REPORTER=mocha-tbpl-reporter \
         #      NPM_REGISTRY=http://npm-mirror.pub.build.mozilla.org`
