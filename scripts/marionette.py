@@ -389,7 +389,7 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin,
             cmd.extend(self._build_arg('--xml-output',
                                        os.path.join(dirs['abs_work_dir'], 'output.xml')))
             cmd.extend(self._build_arg('--html-output',
-                                       os.path.join(dirs['abs_work_dir'], 'output.html')))
+                                       os.path.join(dirs['abs_blob_upload_dir'], 'output.html')))
             manifest = os.path.join(dirs['abs_gaiatest_dir'], 'gaiatest', 'tests',
                                     'tbpl-manifest.ini')
             cmd.append(manifest)

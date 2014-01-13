@@ -174,7 +174,8 @@ def cleanup(manifest, depth=0):
     Remove any empty text nodes
     """
     for n in manifest.childNodes[:]:
-        n.normalize()
+        if n.childNodes:
+            n.normalize()
         if n.nodeType == n.TEXT_NODE and not n.data.strip():
             if not n.nextSibling:
                 depth -= 2
