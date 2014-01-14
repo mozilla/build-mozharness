@@ -372,6 +372,7 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
                            env=env,
                            error_list=BaseErrorList,
                            halt_on_failure=True)
+        self.set_buildbot_property('revision', revision, write_to_file=True)
         # Configure again since the hg update may have invalidated it.
         buildid = self.query_buildid()
         self._setup_configure(buildid=buildid)
