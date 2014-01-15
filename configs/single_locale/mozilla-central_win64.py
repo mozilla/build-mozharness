@@ -16,13 +16,11 @@ AUS_SSH_KEY = "~/.ssh/ffxbld_dsa"
 AUS_UPLOAD_BASE_DIR = "/opt/aus2/incoming/2/Firefox"
 AUS_BASE_DIR = BRANCH + "/%(build_target)s/%(buildid)s/%(locale)s"
 CANDIDATES_URL = "https://ftp.mozilla.org/pub/mozilla.org/firefox/%s" % MOZ_UPDATE_CHANNEL
-PLATFORM = "win64-x86_64"
 config = {
     "mozilla_dir": MOZILLA_DIR,
     "snippet_base_url": "http://example.com",  # fix it
     "mozconfig": "%s/browser/config/mozconfigs/win32/l10n-mozconfig" % MOZILLA_DIR,
     #"src_xulrunner_mozconfig": "xulrunner/config/mozconfigs/macosx64/xulrunner",
-    "platform": PLATFORM,
     "binary_url": EN_US_BINARY_URL,
     "repos": [{
         "vcs": "hg",
@@ -92,11 +90,8 @@ config = {
     "candidates_base_url": CANDIDATES_URL,
     "partials_url": "%(base_url)s/latest-mozilla-central/",
     "mar_tools_url": "https://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/latest-mozilla-central/mar-tools/win32/",
-    "complete_mar": "firefox-%(version)s.en-US.%(platform)s.complete.mar",
     "localized_mar": "firefox-%(version)s.%(locale)s.win32.complete.mar",
     "partial_mar": "firefox-%(version)s.%(locale)s.partial.%(from_buildid)s-%(to_buildid)s.mar",
-
-
 
     # AUS
     "build_target": "Linux_x86-gcc3",

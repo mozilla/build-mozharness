@@ -15,12 +15,10 @@ AUS_SSH_KEY = "~/.ssh/ffxbld_dsa"
 AUS_UPLOAD_BASE_DIR = "/opt/aus2/incoming/2/Firefox"
 AUS_BASE_DIR = BRANCH + "/%(build_target)s/%(buildid)s/%(locale)s"
 CANDIDATES_URL = "https://ftp.mozilla.org/pub/mozilla.org/firefox/%s" % MOZ_UPDATE_CHANNEL
-PLATFORM = "linux64"
 config = {
     "mozilla_dir": MOZILLA_DIR,
     "snippet_base_url": "http://example.com",
     "mozconfig": "%s/browser/config/mozconfigs/linux64/l10n-mozconfig" % MOZILLA_DIR,
-    "platform": PLATFORM,
     "binary_url": EN_US_BINARY_URL,
     "repos": [{
         "vcs": "hg",
@@ -42,15 +40,6 @@ config = {
         "EN_US_BINARY_URL": EN_US_BINARY_URL,
         "LOCALE_MERGEDIR": "%(abs_merge_dir)s/",
         "MOZ_UPDATE_CHANNEL": MOZ_UPDATE_CHANNEL,
-        "IS_NIGHTLY": "yes",
-    },
-    "update_env": {
-        # just a copy of repack env
-        "MOZ_OBJDIR": OBJDIR,
-        "EN_US_BINARY_URL": EN_US_BINARY_URL,
-        "LOCALE_MERGEDIR": "%(abs_merge_dir)s/",
-        "MOZ_UPDATE_CHANNEL": MOZ_UPDATE_CHANNEL,
-        "CANDIDATES_URL": CANDIDATES_URL,
         "IS_NIGHTLY": "yes",
     },
     "log_name": "single_locale",
@@ -101,8 +90,6 @@ config = {
     "complete_mar": "firefox-%(version)s.en-US.linux-x86_64.complete.mar",
     "localized_mar": "firefox-%(version)s.%(locale)s.linux-x86_64.complete.mar",
     "partial_mar": "firefox-%(version)s.%(locale)s.partial.%(from_buildid)s-%(to_buildid)s.mar",
-
-
 
     # AUS
     "build_target": "Linux_x86-gcc3",

@@ -15,13 +15,11 @@ AUS_SSH_KEY = "~/.ssh/ffxbld_dsa"
 AUS_UPLOAD_BASE_DIR = "/opt/aus2/incoming/2/Firefox"
 AUS_BASE_DIR = BRANCH + "/%(build_target)s/%(buildid)s/%(locale)s"
 CANDIDATES_URL = "https://ftp.mozilla.org/pub/mozilla.org/firefox/%s" % MOZ_UPDATE_CHANNEL
-PLATFORM = "mac"
 config = {
     "mozilla_dir": MOZILLA_DIR,
     "snippet_base_url": "http://example.com",  # fix it
     "mozconfig": "%s/browser/config/mozconfigs/macosx-universal/l10n-mozconfig" % MOZILLA_DIR,
     "src_xulrunner_mozconfig": "xulrunner/config/mozconfigs/macosx64/xulrunner",
-    "platform": PLATFORM,
     "binary_url": EN_US_BINARY_URL,
     "repos": [{
         "vcs": "hg",
@@ -50,7 +48,6 @@ config = {
     },
     "log_name": "single_locale",
     "objdir": OBJDIR,
-    "js_src_dir": "js/src",
     "make_dirs": ['config'],
     "vcs_share_base": HG_SHARE_BASE_DIR,
 
@@ -96,9 +93,6 @@ config = {
     "mar_tools_url": "https://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/latest-mozilla-central/mar-tools/macosx64/",
     "complete_mar": "firefox-%(version)s.en-US.mac.complete.mar",
     "localized_mar": "firefox-%(version)s.%(locale)s.mac.complete.mar",
-    #../update/mac64/de/nightly-27.0a1.complete.mar
-    #"partial_mar": "%(platform)s/%(locale)s/firefox-%(version)s.partial.mar",
-    #firefox-27.0a1.en-US.mac.partial.20130917030214-20130918030202.mar"
     "partial_mar": "firefox-%(version)s.%(locale)s.partial.%(from_buildid)s-%(to_buildid)s.mar",
 
     # AUS

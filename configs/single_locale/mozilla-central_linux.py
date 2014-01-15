@@ -15,12 +15,10 @@ AUS_SSH_KEY = "~/.ssh/ffxbld_dsa"
 AUS_UPLOAD_BASE_DIR = "/opt/aus2/incoming/2/Firefox"
 AUS_BASE_DIR = BRANCH + "/%(build_target)s/%(buildid)s/%(locale)s"
 CANDIDATES_URL = "https://ftp.mozilla.org/pub/mozilla.org/firefox/%s" % MOZ_UPDATE_CHANNEL
-PLATFORM = "linux64"
 config = {
     "mozilla_dir": MOZILLA_DIR,
     "snippet_base_url": "http://example.com",
     "mozconfig": "%s/browser/config/mozconfigs/linux64/l10n-mozconfig" % MOZILLA_DIR,
-    "platform": PLATFORM,
     "binary_url": EN_US_BINARY_URL,
     "repos": [{
         "vcs": "hg",
@@ -117,12 +115,10 @@ config = {
      'mpfr',  # required for system compiler
      'xorg-x11-font*',  # fonts required for PGO
      'imake',  # required for makedepend!?!
-     'gcc45_0moz3', 'gcc454_0moz1', 'gcc472_0moz1', 'yasm', 'ccache',  # <-- from releng repo
+     'gcc45_0moz3', 'gcc454_0moz1', 'gcc472_0moz1', 'yasm', 'ccache',
      'gcc473_0moz1', 'valgrind',
      'pulseaudio-libs-devel',
-     'gstreamer-devel', 'gstreamer-plugins-base-devel',
-     'freetype-2.3.11-6.el6_1.8.x86_64',
-     'freetype-devel-2.3.11-6.el6_1.8.x86_64', ],
+     'gstreamer-devel', 'gstreamer-plugins-base-devel', ],
     'mock_files': [
         ('/home/cltbld/.ssh', '/home/mock_mozilla/.ssh'),
         ('/home/cltbld/.hgrc', '/builds/.hgrc'),
