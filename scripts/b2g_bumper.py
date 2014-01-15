@@ -402,7 +402,7 @@ class B2GBumper(VCSScript):
             manifest_path = self.query_manifest_path(device)
             self.hg_add(repo_path, manifest_path)
 
-        message = "Bumping manifests"
+        message = "Bumping manifests a=b2g-bump"
         return self.hg_commit(repo_path, message)
 
     def bump_gaia(self):

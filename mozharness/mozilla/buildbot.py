@@ -150,7 +150,7 @@ class BuildbotMixin(object):
             if self.buildbot_config['sourcestamp']['changes'][0].get('who'):
                 sendchange += ['--username', self.buildbot_config['sourcestamp']['changes'][0]['who']]
             if self.buildbot_config['sourcestamp']['changes'][0].get('comments'):
-                sendchange += ['--comments', self.buildbot_config['sourcestamp']['changes'][0]['comments']]
+                sendchange += ['--comments', self.buildbot_config['sourcestamp']['changes'][0]['comments'].encode('ascii', 'ignore')]
         if self.buildbot_config["properties"].get("builduid"):
             sendchange += ['--property', "builduid:%s" % self.buildbot_config["properties"]["builduid"]]
         sendchange += [
