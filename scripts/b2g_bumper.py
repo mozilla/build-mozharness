@@ -34,9 +34,10 @@ from mozharness.base.errors import HgErrorList
 from mozharness.base.vcs.vcsbase import VCSScript
 from mozharness.mozilla import repo_manifest
 from mozharness.base.log import ERROR
+from mozharness.mozilla.mapper import MapperMixin
 
 
-class B2GBumper(VCSScript):
+class B2GBumper(VCSScript, MapperMixin):
 
     def __init__(self, require_config_file=True):
         super(B2GBumper, self).__init__(
@@ -64,6 +65,10 @@ class B2GBumper(VCSScript):
 
         # Have we missed some gaia revisions?
         self.truncated_revisions = False
+
+        # What's the latest gaia revsion we have for hg
+        self.gaia_hg_revision = None
+        self.gaia_git_rev = None
 
     # Helper methods {{{1
     def query_abs_dirs(self):
@@ -148,6 +153,19 @@ class B2GBumper(VCSScript):
             if repo_manifest.is_commitid(revision):
                 self.debug("%s is already locked to %s; skipping" %
                            (name, revision))
+                continue
+
+            # gaia is special - make sure we're using the same revision we used
+            # for gaia.json
+            if self.gaia_hg_revision and p.getAttribute('path') == 'gaia' and revision == self.config['gaia_git_branch']:
+                if not self.gaia_git_rev:
+                    self.gaia_git_rev = self.query_mapper_git_revision(
+                        self.config['mapper_url'],
+                        self.config['gaia_mapper_project'],
+                        self.gaia_hg_revision,
+                    )
+                self.info("Using %s for gaia to match %s in gaia.json" % (self.gaia_git_rev, self.gaia_hg_revision))
+                p.setAttribute('revision', self.gaia_git_rev)
                 continue
 
             # Check to see if we've looked up this revision on this remote
@@ -415,6 +433,7 @@ class B2GBumper(VCSScript):
         # Get the list of changes
         if contents:
             prev_revision = contents.get('revision')
+            self.gaia_hg_revision = prev_revision
         else:
             prev_revision = None
 
@@ -434,6 +453,7 @@ class B2GBumper(VCSScript):
         gaia_repo_path = urlparse(self.config['gaia_repo_url']).path
         revision = revision_list[-1]['changesets'][-1]['node']
         self.update_gaia_json(gaia_json_path, revision, gaia_repo_path)
+        self.gaia_hg_revision = revision
 
         # Commit
         message = self.build_commit_message(revision_list, 'gaia',
