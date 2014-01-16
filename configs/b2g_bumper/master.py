@@ -22,6 +22,10 @@ config = {
     'gaia_repo_url': 'https://hg.mozilla.org/integration/gaia-central',
     'gaia_revision_file': 'b2g/config/gaia.json',
     'gaia_max_revisions': 5,
+    # Which git branch this hg repo corresponds to
+    'gaia_git_branch': 'master',
+    'gaia_mapper_project': 'gaia',
+    'mapper_url': 'http://cruncher.build.mozilla.org/mapper/{project}/{vcs}/{rev}',
 
     'devices': {
         'emulator-jb': {

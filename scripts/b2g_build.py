@@ -1,5 +1,9 @@
 #!/usr/bin/env python
-# Mozilla licence shtuff
+# ***** BEGIN LICENSE BLOCK *****
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this file,
+# You can obtain one at http://mozilla.org/MPL/2.0/.
+# ***** END LICENSE BLOCK *****
 
 import sys
 import os
@@ -7,9 +11,7 @@ import glob
 import re
 import tempfile
 from datetime import datetime
-import urllib2
 import urlparse
-import time
 import xml.dom.minidom
 import functools
 
@@ -38,6 +40,7 @@ from mozharness.mozilla.signing import SigningMixin
 from mozharness.mozilla.repo_manifest import (load_manifest, rewrite_remotes,
                                               remove_project, get_project,
                                               get_remote, map_remote)
+from mozharness.mozilla.mapper import MapperMixin
 
 # B2G builds complain about java...but it doesn't seem to be a problem
 # Let's turn those into WARNINGS instead
@@ -49,7 +52,7 @@ B2GMakefileErrorList.insert(0, {'substr': r'/bin/bash: java: command not found',
 
 class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
                TooltoolMixin, TransferMixin, BuildbotMixin, GaiaLocalesMixin,
-               SigningMixin):
+               SigningMixin, MapperMixin):
     config_options = [
         [["--repo"], {
             "dest": "repo",
@@ -320,35 +323,6 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
             return self.buildbot_config['sourcestamp']['revision']
 
         return None
-
-    def query_translated_revision(self, url, project, rev, attempts=30, sleeptime=30,
-                                  project_name=None):
-        if project_name is None:
-            project_name = project
-        url = '%s/%s/git/%s' % (url, project, rev)
-        self.info('Mapping %s revision from hg to git using %s' % (project_name, url))
-        n = 1
-        while n <= attempts:
-            try:
-                r = urllib2.urlopen(url, timeout=10)
-                j = json.loads(r.readline())
-                if j['git_rev'] is None:
-                    # allow for user repos in staging
-                    if self.config.get("require_git_rev", True):
-                        raise Exception("Mapper returned a git revision of None; maybe it needs more time.")
-                    else:
-                        self.warning("Mapper returned a git revision of None.  Accepting because require_git_rev is False.")
-                return j['git_rev']
-            except Exception, err:
-                self.warning('Error: %s' % str(err))
-                if n == attempts:
-                    self.fatal('Giving up on %s git revision for %s.' % (project_name, rev))
-                if sleeptime > 0:
-                    self.info('Sleeping %i seconds before retrying' % sleeptime)
-                    time.sleep(sleeptime)
-                continue
-            finally:
-                n += 1
 
     def get_hg_commit_time(self, repo_dir, rev):
         """Returns the commit time for given `rev` in unix epoch time"""
@@ -788,7 +762,8 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
 
     def _generate_git_locale_manifest(self, locale, url, git_repo,
                                       revision, git_base_url, local_path):
-        l10n_git_sha = self.query_translated_revision(url, 'l10n', revision, project_name="l10n %s" % locale)
+        l10n_git_sha = self.query_mapper_git_revision(url, 'l10n', revision, project_name="l10n %s" % locale,
+                                                      require_answer=self.config.get('require_git_rev', True))
         return '  <project name="%s" path="%s" remote="mozillaorg" revision="%s"/>' % (git_repo.replace(git_base_url, ''), local_path, l10n_git_sha)
 
     def _generate_locale_manifest(self, git_base_url="https://git.mozilla.org/release/"):
@@ -876,14 +851,16 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
 
                 if self.query_do_translate_hg_to_git():
                     url = manifest_config['translate_base_url']
-                    gecko_git = self.query_translated_revision(url, 'gecko', self.buildbot_properties['gecko_revision'])
+                    gecko_git = self.query_mapper_git_revision(url, 'gecko', self.buildbot_properties['gecko_revision'],
+                                                               require_answer=self.config.get('require_git_rev', True))
                     new_sources.append('  <project name="%s" path="gecko" remote="mozillaorg" revision="%s"/>' % ("https://git.mozilla.org/releases/gecko.git".replace(git_base_url, ''), gecko_git))
                     # We don't need to use mapper for gaia after config version
                     # 2, since that's when we switched to pulling gaia directly
                     # from git
                     if gecko_config.get('config_version', 0) < 2:
                         if 'gaia_revision' in self.buildbot_properties:
-                            gaia_git = self.query_translated_revision(url, 'gaia', self.buildbot_properties['gaia_revision'])
+                            gaia_git = self.query_mapper_git_revision(url, 'gaia', self.buildbot_properties['gaia_revision'],
+                                                                      require_answer=self.config.get('require_git_rev', True))
                             new_sources.append('  <project name="%s" path="gaia" remote="mozillaorg" revision="%s"/>' %
                                                ("https://git.mozilla.org/releases/gaia.git".replace(git_base_url, ''), gaia_git))
 
