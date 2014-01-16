@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 config = {
+    "exes": {
+        # Get around the https warnings
+        "hg": ['/usr/local/bin/hg', "--config", "web.cacerts=/etc/pki/tls/certs/ca-bundle.crt"],
+        "hgtool.py": ["/usr/local/bin/hgtool.py"],
+        "gittool.py": ["/usr/local/bin/gittool.py"],
+    },
     'gecko_pull_url': 'https://hg.mozilla.org/integration/b2g-inbound',
     'gecko_push_url': 'ssh://hg.mozilla.org/integration/b2g-inbound',
     'gecko_local_dir': 'b2g-inbound',
@@ -52,6 +58,10 @@ config = {
             'manifest_file': 'nexus-4.xml',
         },
         'inari': {
+            'ignore_projects': ['gecko'],
+            'filter_groups': ['darwin'],
+        },
+        'wasabi': {
             'ignore_projects': ['gecko'],
             'filter_groups': ['darwin'],
         },
