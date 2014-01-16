@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 config = {
-    'gecko_pull_url': 'https://hg.mozilla.org/projects/cedar',
-    'gecko_push_url': 'ssh://hg.mozilla.org/projects/cedar',
-    'gecko_local_dir': 'cedar',
+    'gecko_pull_url': 'https://hg.mozilla.org/integration/b2g-inbound',
+    'gecko_push_url': 'ssh://hg.mozilla.org/integration/b2g-inbound',
+    'gecko_local_dir': 'b2g-inbound',
 
     'manifests_repo': 'https://git.mozilla.org/b2g/b2g-manifest.git',
     'manifests_revision': 'origin/master',
@@ -23,6 +23,13 @@ config = {
             'filter_groups': ['darwin'],
         },
         'emulator-ics': {
+            'ignore_projects': ['gecko'],
+            'filter_groups': ['darwin'],
+            'manifest_file': 'emulator.xml',
+        },
+        # Equivalent to emulator-ics - see bug 916134
+        # Remove once the above bug resolved
+        'emulator': {
             'ignore_projects': ['gecko'],
             'filter_groups': ['darwin'],
             'manifest_file': 'emulator.xml',
