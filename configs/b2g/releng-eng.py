@@ -64,7 +64,7 @@ config = {
         },
         'target_suffix': '-eng',
         "translate_hg_to_git": True,
-        "translate_base_url": "http://cruncher.build.mozilla.org/mapper",
+        "translate_base_url": "http://cruncher.build.mozilla.org/mapper/{project}/{vcs}/{rev}",
     },
     "purge_minsize": 15,
     "clobberer_url": "http://clobberer.pvt.build.mozilla.org/index.php",
