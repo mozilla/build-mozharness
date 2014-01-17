@@ -45,7 +45,8 @@ class GaiaIntegrationTest(GaiaTest):
             'make',
             'test-integration',
             'NPM_REGISTRY=' + self.config.get('npm_registry'),
-            'REPORTER=mocha-tbpl-reporter'
+            'REPORTER=mocha-tbpl-reporter',
+            'TEST_MANIFEST=./shared/test/integration/tbpl-manifest.json'
         ], cwd=dirs['abs_gaia_dir'],
            output_parser=output_parser,
            output_timeout=330)
