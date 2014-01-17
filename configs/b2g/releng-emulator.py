@@ -48,7 +48,7 @@ config = {
             'mozilla-central': '1.4.0',
         },
         "translate_hg_to_git": True,
-        "translate_base_url": "http://cruncher.build.mozilla.org/mapper",
+        "translate_base_url": "http://cruncher.build.mozilla.org/mapper/{project}/{vcs}/{rev}",
     },
     "env": {
         "CCACHE_DIR": "/builds/ccache",
