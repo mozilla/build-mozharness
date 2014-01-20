@@ -14,8 +14,6 @@ sys.path.insert(1, os.path.dirname(sys.path[0]))
 
 from mozharness.base.script import BaseScript
 from mozharness.mozilla.purge import PurgeMixin
-from mozharness.base.log import ERROR
-
 
 CONFIG_INI = {
     "avd.ini.encoding": "ISO-8859-1",
@@ -169,6 +167,10 @@ class EmulatorBuild(BaseScript, PurgeMixin):
             "dest": "android_tag",
             "help": "android tag to check out (eg. android-2.3.7_r1; default inferred from --android-version)",
         }],
+        [["--patch"], {
+            "dest": "patch",
+            "help": "'dir=url' of patch to apply to AOSP before building (eg. development=http://foo.com/bar.patch; default inferred)",
+        }],
         [["--android-apilevel"], {
             "dest": "android_apilevel",
             "help": "android API-level to build AVD for (eg. 10, 14, 18; default inferred from --android-version)",
@@ -239,6 +241,7 @@ class EmulatorBuild(BaseScript, PurgeMixin):
                                 'target_arch': 'armv7a',
                                 'android_version': 'gingerbread',
                                 'android_tag': 'inferred',
+                                'patch': 'inferred',
                                 'android_apilevel': 'inferred',
                                 'work_dir': 'android_emulator_build',
                                 'android_url': 'https://android.googlesource.com/platform/manifest',
@@ -249,17 +252,23 @@ class EmulatorBuild(BaseScript, PurgeMixin):
                             })
 
         if platform.system() != "Linux":
-            self.exception("this script only works on (ubuntu) linux")
+            self.fatal("this script only works on (ubuntu) linux")
 
         if platform.dist() != ('Ubuntu', '12.04', 'precise'):
-            self.exception("this script only works on ubuntu 12.04 precise")
+            self.fatal("this script only works on ubuntu 12.04 precise")
 
         if not (platform.machine() in ['i386', 'i486', 'i586', 'i686', 'x86_64']):
-            self.exception("this script only works on x86 and x86_64")
+            self.fatal("this script only works on x86 and x86_64")
 
         self.tag = self.config['android_tag']
         if self.tag == 'inferred':
             self.tag = self.select_android_tag(self.config['android_version'])
+
+        self.patch = self.config['patch']
+        if self.patch == 'inferred':
+            self.patch = self.select_patch(self.tag)
+        else:
+            self.patch = self.patch.split('=')
 
         self.apilevel = self.config['android_apilevel']
         if self.apilevel == 'inferred':
@@ -326,7 +335,7 @@ class EmulatorBuild(BaseScript, PurgeMixin):
                          cwd=self.aospdir,
                          halt_on_failure=True)
 
-        # Note: AOSP upstream tagged a version of the emulator with gingerbread that will not
+        # Note: AOSP upstream tagged a version of the emulator with 2.3.x that will not
         # actually boot gingerbread images. Quoting their explanation for posterity here, from
         # http://source.android.com/source/known-issues.html:
         #
@@ -338,12 +347,23 @@ class EmulatorBuild(BaseScript, PurgeMixin):
         #
         #     Fix: Use version R12 of the emulator, and a newer kernel that matches those tools. No
         #     need to do a clean build.
-
+        #
         if self.tag.startswith("android-2.3"):
             self.info("updating QEMU sub-repository to R12")
-            self.info("to compensate for known gingerbread-incompatible R7 in-tree")
+            self.info("to compensate for known 2.3.x-incompatible R7 in-tree")
             self.run_command([repo, "forall", "platform/external/qemu",
                               "-c", "git", "checkout", "aosp/tools_r12"],
+                             cwd=self.aospdir,
+                             halt_on_failure=True)
+
+        # For 2.3.x you _probably_ want to use the symbolic tag 'gingerbread' because it is a
+        # post-release development branch on which they have backported the GL emulation that
+        # fennec relies on. In order to support that, we need to update qemu to R17.
+        if self.tag == 'gingerbread':
+            self.info("updating QEMU sub-repository to R17")
+            self.info("to acquire machinery needed for GL emulation backport")
+            self.run_command([repo, "forall", "platform/external/qemu",
+                              "-c", "git", "checkout", "aosp/tools_r17"],
                              cwd=self.aospdir,
                              halt_on_failure=True)
 
@@ -385,7 +405,7 @@ class EmulatorBuild(BaseScript, PurgeMixin):
                     zipname = line
                     break
             if zipname == None:
-                self.exception("unable to find *tests.zip at ftp://%s/%s" % (host,path), level=ERROR)
+                self.fatal("unable to find *tests.zip at ftp://%s/%s" % (host,path))
             url = "ftp://%s/%s/%s" % (host,path,zipname)
             self.download_file(url, file_name=zipname, parent_dir=self.workdir)
             self.run_command(["unzip", zipname,
@@ -403,7 +423,24 @@ class EmulatorBuild(BaseScript, PurgeMixin):
                          halt_on_failure=True)
 
 
+    def patch_aosp(self):
+        if self.patch != None:
+            projectdir = self.patch[0]
+            url = self.patch[1]
+            patchdir = os.path.join(self.aospdir, projectdir)
+            self.info("downloading and applying AOSP patch %s to %s" % (url, patchdir))
+            self.download_file(url,
+                               file_name='aosp.patch',
+                               parent_dir=self.workdir)
+            self.run_command(['patch', '-p1',
+                              '-i', os.path.join(self.workdir, 'aosp.patch')],
+                             cwd=patchdir,
+                             halt_on_failure=True)
+
     def build_aosp(self):
+
+        self.patch_aosp()
+
         arch = None
         variant = None
         abi = None
@@ -425,6 +462,9 @@ class EmulatorBuild(BaseScript, PurgeMixin):
         if abi2 != "":
             abi2 = " TARGET_CPU_ABI2=" + abi2
 
+        env = { "BUILD_EMULATOR_OPENGL": "true",
+                "BUILD_EMULATOR_OPENGL_DRIVER": "true" }
+
         self.run_command(["/bin/bash", "-c",
                           ". build/envsetup.sh "
                           "&& lunch full-eng "
@@ -435,7 +475,8 @@ class EmulatorBuild(BaseScript, PurgeMixin):
                           abi2 +
                           " CC=gcc-4.4 CXX=g++-4.4"],
                          cwd=self.aospdir,
-                         halt_on_failure=True)
+                         halt_on_failure=True,
+                         partial_env=env)
 
         self.run_command(["/bin/bash", "-c",
                           ". build/envsetup.sh "
@@ -569,7 +610,7 @@ class EmulatorBuild(BaseScript, PurgeMixin):
     def customize_avd(self):
 
         self.info("starting emulator for customization run")
-        args = [self.emu, "-avd", "test-1", "-no-window", "-partition-size", "1024"]
+        args = [self.emu, "-avd", "test-1", "-no-window", "-gpu", "off", "-partition-size", "1024"]
 
         # unknown reason, on AWS the 64bit emulators don't seem to enjoy working;
         # for now we punt to 32bit any time we might hit a 64bit one by accident.
@@ -624,12 +665,12 @@ class EmulatorBuild(BaseScript, PurgeMixin):
             path = os.readlink(os.path.join(d, i))
             if re.match("/tmp/android-.*/emulator-.*", path):
                 if sys_image != None:
-                    self.exception("multiple plausible emulator system images, "
-                                   "kill emulators and try again", level=ERROR)
+                    self.fatal("multiple plausible emulator system images, "
+                               "kill emulators and try again")
                 sys_image = path
 
         if sys_image == None:
-            self.exception("unable to find running emulator's system image", level=ERROR)
+            self.fatal("unable to find running emulator's system image")
 
         tmp = os.path.join(self.workdir, "system.img")
         self.copyfile(sys_image, tmp)
@@ -742,7 +783,7 @@ class EmulatorBuild(BaseScript, PurgeMixin):
             if os.path.exists(p):
                 return p
             apilevel = int(apilevel) - 1
-        self.exception("no NDK sysroot for API level %s or less" % self.apilevel, level=ERROR)
+        self.fatal("no NDK sysroot for API level %s or less" % self.apilevel)
 
 
     def ndk_cross_prefix(self):
@@ -764,6 +805,7 @@ class EmulatorBuild(BaseScript, PurgeMixin):
                  ("2.2", "8"),
                  ("2.3", "9"),
                  ("2.3.3", "10"),
+                 ("gingerbread", "10"),
                  ("3.0", "11"),
                  ("3.1", "12"),
                  ("3.2", "13"),
@@ -773,10 +815,10 @@ class EmulatorBuild(BaseScript, PurgeMixin):
                  ("4.2", "17"),
                  ("4.3", "18")]
         for (vers, api) in pairs:
-            if tag.startswith("android-" + vers):
+            if tag == vers or tag.startswith("android-" + vers):
                 self.info("android tag '%s', vers %s, uses API level %s" % (tag, vers, api))
                 return api
-        self.exception("android tag '%s' doesn't map to a known API level" % tag, level=ERROR)
+        self.fatal("android tag '%s' doesn't map to a known API level" % tag)
 
     def select_android_tag(self, vers):
         tags = [
@@ -860,14 +902,42 @@ class EmulatorBuild(BaseScript, PurgeMixin):
             "gingerbread": "2.3",
             "froyo": "2.2",
         }
+
+        # NB: Gingerbread is special: we don't infer to the last release branch, we infer
+        # to the _development_ branch 'gingerbread' because it's where the GL emulator
+        # was backported to.
+        if vers == 'gingerbread':
+            self.info("selecting development-branch 'gingerbread' for version '2.3'")
+            return 'gingerbread'
+
+        if vers.startswith('2.3'):
+            self.info("android version 2.3.x specified, when dev branch 'gingerbread' is most likely")
+            self.info("required to get a working fennec build; pass --android-tag if you are certain")
+            self.info("you want a non-'gingerbread' 2.3.x version")
+            self.fatal("passed 2.3.x for --android-version, failing conservatively")
+
         if vers in codenames:
             self.info("using android version '%s' for requested codename '%s'" % (codenames[vers], vers))
             vers = codenames[vers]
+
         for tag in reversed(tags):
             if tag.startswith(vers) or tag.startswith("android-" + vers):
                 self.info("selecting tag '%s' for version '%s'" % (tag, vers))
                 return tag
-        self.exception("requested android version '%s' doesn't match any tag" % vers, level=ERROR)
+        self.fatal("requested android version '%s' doesn't match any tag" % vers)
+
+    def select_patch(self, tag):
+        if tag == 'gingerbread':
+            # FIXME: perhaps put this patch someplace more stable than bugzilla?
+            return ('development',
+                    'https://bug910092.bugzilla.mozilla.org/attachment.cgi?id=8361456')
+        return None
+
+    def _post_fatal(self, message=None, exit_code=None):
+        for i in ['emulator', 'emulator-arm', 'emulator-x86',
+                  'emulator64', 'emulator64-arm', 'emulator64-x86']:
+            self._kill_processes(i)
+
 
 # main
 if __name__ == '__main__':
