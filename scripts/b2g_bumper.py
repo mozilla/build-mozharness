@@ -203,14 +203,6 @@ class B2GBumper(VCSScript, MapperMixin):
             self._git_ref_cache[remote_url, revision] = abs_revision
             p.setAttribute('revision', abs_revision)
 
-    def cleanup_manifest(self, manifest):
-        repo_manifest.cleanup(manifest)
-        # Also fill out the remote for projects that are using the default
-        default = repo_manifest.get_default(manifest)
-        for p in manifest.getElementsByTagName('project'):
-            if not p.hasAttribute('remote'):
-                p.setAttribute('remote', default.getAttribute('remote'))
-
     def query_manifest_path(self, device):
         dirs = self.query_abs_dirs()
         device_config = self.config['devices'][device]
@@ -411,7 +403,10 @@ class B2GBumper(VCSScript, MapperMixin):
             self.device_manifests[device] = manifest
 
             manifest_path = self.query_manifest_path(device)
-            self.write_to_file(manifest_path, manifest.toxml())
+            manifest_xml = manifest.toxml()
+            if not manifest_xml.endswith("\n"):
+                manifest_xml += "\n"
+            self.write_to_file(manifest_path, manifest_xml)
 
     def commit_manifests(self):
         dirs = self.query_abs_dirs()
