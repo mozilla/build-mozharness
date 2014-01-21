@@ -344,6 +344,8 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin,
         Run the Marionette tests
         """
         dirs = self.query_abs_dirs()
+        binary = self.binary_path
+        manifest = None
 
         if self.config.get('gaiatest'):
             # make the gaia profile
@@ -372,15 +374,14 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin,
                                               'gaiatest',
                                               'cli.py')]
 
-            # support desktop builds with and without a built-in profile
-            binary_path = os.path.dirname(self.binary_path)
-            binary = os.path.join(binary_path, 'b2g-bin')
-            if not os.access(binary, os.F_OK):
-                binary = os.path.join(binary_path, 'b2g')
-            cmd.extend(self._build_arg('--binary', binary))
+            if not self.config.get('emulator'):
+                # support desktop builds with and without a built-in profile
+                binary_path = os.path.dirname(self.binary_path)
+                binary = os.path.join(binary_path, 'b2g-bin')
+                if not os.access(binary, os.F_OK):
+                    binary = os.path.join(binary_path, 'b2g')
 
             cmd.append('--restart')
-            cmd.extend(self._build_arg('--address', self.config['marionette_address']))
             cmd.extend(self._build_arg('--type', self.config['test_type']))
             cmd.extend(self._build_arg('--testvars', testvars))
             cmd.extend(self._build_arg('--profile', os.path.join(dirs['abs_gaia_dir'],
@@ -392,7 +393,6 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin,
                                        os.path.join(dirs['abs_blob_upload_dir'], 'output.html')))
             manifest = os.path.join(dirs['abs_gaiatest_dir'], 'gaiatest', 'tests',
                                     'tbpl-manifest.ini')
-            cmd.append(manifest)
         else:
             # Marionette or Marionette-webapi tests
             cmd = [python, '-u', os.path.join(dirs['abs_marionette_dir'],
@@ -400,25 +400,29 @@ class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin,
 
             if self.config.get('emulator'):
                 # emulator Marionette-webapi tests
-                cmd.extend(self._build_arg('--logcat-dir', dirs['abs_work_dir']))
-                cmd.extend(self._build_arg('--emulator', self.config['emulator']))
                 if self.config.get('update_files'):
                     cmd.extend(self._build_arg('--gecko-path',
                                                os.path.join(dirs['abs_gecko_dir'],
                                                             'b2g')))
-                cmd.extend(self._build_arg('--homedir',
-                                           os.path.join(dirs['abs_emulator_dir'],
-                                                        'b2g-distro')))
                 cmd.extend(self._build_arg('--symbols-path', self.symbols_path))
-            else:
-                # desktop Marionette tests
-                cmd.extend(self._build_arg('--binary', self.binary_path))
-                cmd.extend(self._build_arg('--address', self.config['marionette_address']))
 
             cmd.extend(self._build_arg('--type', self.config['test_type']))
             manifest = os.path.join(dirs['abs_marionette_tests_dir'],
                                     self.config['test_manifest'])
-            cmd.append(manifest)
+
+        if self.config.get('emulator'):
+            cmd.extend(self._build_arg('--logcat-dir', dirs['abs_work_dir']))
+            cmd.extend(self._build_arg('--emulator', self.config['emulator']))
+            cmd.extend(self._build_arg('--homedir',
+                                       os.path.join(dirs['abs_emulator_dir'],
+                                                    'b2g-distro')))
+        else:
+            # tests for Firefox or b2g desktop
+            cmd.extend(self._build_arg('--binary', binary))
+            cmd.extend(self._build_arg('--address',
+                                       self.config['marionette_address']))
+
+        cmd.append(manifest)
 
         env = {}
         if self.query_minidump_stackwalk():

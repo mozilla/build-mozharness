@@ -30,44 +30,44 @@ config = {
     'devices': {
         'emulator-jb': {
             'ignore_projects': ['gecko'],
-            'filter_groups': ['darwin'],
+            'ignore_groups': ['darwin'],
         },
         'emulator-ics': {
             'ignore_projects': ['gecko'],
-            'filter_groups': ['darwin'],
+            'ignore_groups': ['darwin'],
             'manifest_file': 'emulator.xml',
         },
         # Equivalent to emulator-ics - see bug 916134
         # Remove once the above bug resolved
         'emulator': {
             'ignore_projects': ['gecko'],
-            'filter_groups': ['darwin'],
+            'ignore_groups': ['darwin'],
             'manifest_file': 'emulator.xml',
         },
         'hamachi': {
             'ignore_projects': ['gecko'],
-            'filter_groups': ['darwin'],
+            'ignore_groups': ['darwin'],
         },
         'helix': {
             'ignore_projects': ['gecko'],
-            'filter_groups': ['darwin'],
+            'ignore_groups': ['darwin'],
         },
         'leo': {
             'ignore_projects': ['gecko'],
-            'filter_groups': ['darwin'],
+            'ignore_groups': ['darwin'],
         },
         'mako': {
             'ignore_projects': ['gecko'],
-            'filter_groups': ['darwin'],
+            'ignore_groups': ['darwin'],
             'manifest_file': 'nexus-4.xml',
         },
         'inari': {
             'ignore_projects': ['gecko'],
-            'filter_groups': ['darwin'],
+            'ignore_groups': ['darwin'],
         },
         'wasabi': {
             'ignore_projects': ['gecko'],
-            'filter_groups': ['darwin'],
+            'ignore_groups': ['darwin'],
         },
     },
     'repo_remote_mappings': {
