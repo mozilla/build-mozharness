@@ -21,6 +21,7 @@ sys.path.insert(1, os.path.dirname(sys.path[0]))
 from mozharness.base.log import FATAL
 from mozharness.base.script import BaseScript
 from mozharness.base.vcs.vcsbase import VCSMixin
+from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_options
 from mozharness.mozilla.buildbot import TBPL_WORST_LEVEL_TUPLE
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
 from mozharness.mozilla.testing.unittest import DesktopUnittestOutputParser, EmulatorMixin
@@ -28,7 +29,7 @@ from mozharness.mozilla.tooltool import TooltoolMixin
 
 from mozharness.mozilla.testing.device import ADBDeviceHandler
 
-class AndroidEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, BaseScript):
+class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, BaseScript):
     config_options = [
         [["--robocop-url"],
         {"action": "store",
@@ -51,7 +52,9 @@ class AndroidEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, 
          "dest": "adb_path",
          "default": None,
          "help": "Path to adb",
-        }]] + copy.deepcopy(testing_config_options)
+        }],
+    ] + copy.deepcopy(testing_config_options) + \
+        copy.deepcopy(blobupload_config_options)
 
     error_list = [
     ]
@@ -130,6 +133,8 @@ class AndroidEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, 
             dirs['abs_test_install_dir'], 'reftest')
         dirs['abs_xpcshell_dir'] = os.path.join(
             dirs['abs_test_install_dir'], 'xpcshell')
+        dirs['abs_blob_upload_dir'] = os.path.join(
+            abs_dirs['abs_work_dir'], 'blobber_upload_dir')
         for key in dirs.keys():
             if key not in abs_dirs:
                 abs_dirs[key] = dirs[key]
@@ -384,7 +389,7 @@ class AndroidEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, 
             'installer_path': self.installer_path,
         }
         for option in c["suite_definitions"][suite_category]["options"]:
-           cmd.extend([option % str_format_values])
+            cmd.extend([option % str_format_values])
         cmd.extend(self.test_suite_definitions[suite_name]["extra_args"])
 
         return cmd
@@ -417,6 +422,10 @@ class AndroidEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, 
 
         env = self.query_env()
         self.query_minidump_stackwalk()
+        env['MOZ_UPLOAD_DIR'] = self.query_abs_dirs()['abs_blob_upload_dir']
+        env['MINIDUMP_SAVE_PATH'] = self.query_abs_dirs()['abs_blob_upload_dir']
+        if not os.path.isdir(env['MOZ_UPLOAD_DIR']):
+            self.mkdir_p(env['MOZ_UPLOAD_DIR'])
 
         self.info("Running on %s the command %s" % (self.emulators[emulator_index]["name"], subprocess.list2cmdline(cmd)))
         tmp_file = tempfile.NamedTemporaryFile(mode='w')
