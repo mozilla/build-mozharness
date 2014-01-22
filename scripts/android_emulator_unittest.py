@@ -424,8 +424,6 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
         self.query_minidump_stackwalk()
         env['MOZ_UPLOAD_DIR'] = self.query_abs_dirs()['abs_blob_upload_dir']
         env['MINIDUMP_SAVE_PATH'] = self.query_abs_dirs()['abs_blob_upload_dir']
-        if not os.path.isdir(env['MOZ_UPLOAD_DIR']):
-            self.mkdir_p(env['MOZ_UPLOAD_DIR'])
 
         self.info("Running on %s the command %s" % (self.emulators[emulator_index]["name"], subprocess.list2cmdline(cmd)))
         tmp_file = tempfile.NamedTemporaryFile(mode='w')
@@ -520,6 +518,21 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
             emulator = self.emulators[emulator_index]
             emulator_index+=1
             self._check_emulator(emulator)
+        # Start logcat for each emulator. Each adb process runs until the
+        # corresponding emulator is killed. Output is written directly to
+        # the blobber upload directory so that it is uploaded automatically
+        # at the end of the job.
+        self.mkdir_p(self.abs_dirs['abs_blob_upload_dir'])
+        emulator_index = 0
+        for test in self.test_suites:
+            emulator = self.emulators[emulator_index]
+            emulator_index+=1
+            logcat_filename = 'logcat-%s.log' % emulator["device_id"]
+            logcat_path = os.path.join(self.abs_dirs['abs_blob_upload_dir'], logcat_filename)
+            logcat_cmd = '%s -s %s logcat -v time Trace:S StrictMode:S ExchangeService:S > %s &' % \
+                (self.adb_path, emulator["device_id"], logcat_path)
+            self.info(logcat_cmd)
+            os.system(logcat_cmd)
 
     def download_and_extract(self):
         # This will download and extract the fennec.apk and tests.zip
