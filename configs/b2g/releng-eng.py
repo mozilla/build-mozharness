@@ -21,7 +21,7 @@ config = {
             "ssh_user": "b2gbld",
             "upload_remote_host": "pvtbuilds2.dmz.scl3.mozilla.com",
             "upload_remote_path": "/pub/mozilla.org/b2g/tinderbox-builds/%(branch)s-%(target)s/%(buildid)s",
-            "upload_remote_symlink": "/pub/mozilla.org/b2g/tinderbox-builds/%(basepath)s/%(branch)s-%(target)s/latest",
+            "upload_remote_symlink": "/pub/mozilla.org/b2g/tinderbox-builds/%(branch)s-%(target)s/latest",
             "upload_remote_nightly_path": "/pub/mozilla.org/b2g/nightly/%(branch)s-%(target)s/%(year)04i/%(month)02i/%(year)04i-%(month)02i-%(day)02i-%(hour)02i-%(minute)02i-%(second)02i",
             "upload_remote_nightly_symlink": "/pub/mozilla.org/b2g/nightly/%(branch)s-%(target)s/latest",
             "upload_dep_target_exclusions": [],
