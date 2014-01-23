@@ -91,7 +91,7 @@ config = {
         },
         "mochitest-gl": {
             "category": "mochitest",
-            "extra_args": ["--test-path", "content/canvas/test/webgl"],
+            "extra_args": ["--test-manifest", "gl.json"],
         },
         "reftest-1": {
             "category": "reftest",
