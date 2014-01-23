@@ -16,7 +16,7 @@ config = {
             "ssh_key": os.path.expanduser("~/.ssh/b2gtry_dsa"),
             "ssh_user": "b2gtry",
             "upload_remote_host": "pvtbuilds2.dmz.scl3.mozilla.com",
-            "upload_remote_path": "/pub/mozilla.org/b2g/try-builds/%(user)s-%(rev)s/%(branch)s-%(target)s",
+            "upload_remote_path": "/pub/mozilla.org/b2g/try-builds/%(user)s-%(revision)s/%(branch)s-%(target)s",
             "upload_dep_target_exclusions": [],
         },
         "public": {
