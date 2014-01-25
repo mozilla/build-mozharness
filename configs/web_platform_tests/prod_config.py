@@ -4,6 +4,8 @@
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 # ***** END LICENSE BLOCK *****
 
+import os
+
 config = {
     "options": [
         "--metadata-root=%(test_path)s/metadata"
