@@ -1199,6 +1199,10 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
             self.error("Failed to upload %s to %s@%s:%s!" % (upload_dir, ssh_user, remote_host, remote_path))
             self.return_code = 2
         else:  # post_upload.py
+            upload_url = "http://%(remote_host)s/%(remote_path)s" % dict(
+                remote_host=remote_host,
+                remote_path=remote_path,
+            )
             # build filelist
             filelist = []
             for dirpath, dirname, filenames in os.walk(upload_dir):
@@ -1220,7 +1224,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
                 self.error("failed to run %s!" % postupload_cmd)
                 self.return_code = 2
             else:
-                self.info("Upload successful.")
+                self.info("Upload successful: %s" % upload_url)
         # cleanup, whether we ran postupload or not
         cmd = [ssh,
                '-l', ssh_user,
