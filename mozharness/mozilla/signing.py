@@ -45,7 +45,7 @@ extv=%(version)s
 
 UPDATE_XML_TEMPLATE = """<?xml version="1.0"?>
 <updates>
-  <update type="minor" displayVersion="%(version)s" appVersion="%(version)s" platformVersion="%(version)s" buildID="%(buildid)s"%(extra_update_attrs)s>
+  <update type="minor" displayVersion="%(version)s" appVersion="%(version)s" platformVersion="%(version)s" buildID="%(buildid)s">
       <patch type="complete" URL="%(url)s?build_id=%(buildid)s&amp;version=%(version)s" hashFunction="SHA512" hashValue="%(sha512_hash)s" size="%(size)d"/>
   </update>
 </updates>
@@ -60,7 +60,6 @@ class SigningMixin(BaseSigningMixin):
     def create_complete_snippet(self, binary_path, version, buildid,
                                 url, snippet_dir, snippet_file="complete.txt",
                                 size=None, sha512_hash=None,
-                                extra_update_attrs='',
                                 snippet_template=SNIPPET_TEMPLATE,
                                 error_level=ERROR):
         """Creates a complete snippet, and writes to file.
@@ -86,10 +85,6 @@ class SigningMixin(BaseSigningMixin):
             replace_dict['sha512_hash'] = sha512_hash
         else:
             replace_dict['sha512_hash'] = self.query_sha512sum(binary_path)
-        if extra_update_attrs:
-            replace_dict['extra_update_attrs'] = ' %s' % extra_update_attrs
-        else:
-            replace_dict['extra_update_attrs'] = ''
         contents = snippet_template % replace_dict
         self.mkdir_p(snippet_dir)
         snippet_path = os.path.join(snippet_dir, snippet_file)
@@ -102,7 +97,6 @@ class SigningMixin(BaseSigningMixin):
 
     def create_update_xml(self, binary_path, version, buildid,
                           url, snippet_dir, snippet_file="update.xml",
-                          extra_update_attrs='',
                           size=None, sha512_hash=None,
                           snippet_template=UPDATE_XML_TEMPLATE,
                           error_level=ERROR):
@@ -113,7 +107,6 @@ class SigningMixin(BaseSigningMixin):
             binary_path=binary_path, version=version, buildid=buildid,
             url=url, snippet_dir=snippet_dir, snippet_file=snippet_file,
             size=size, sha512_hash=sha512_hash,
-            extra_update_attrs=extra_update_attrs,
             snippet_template=snippet_template, error_level=error_level
         )
 

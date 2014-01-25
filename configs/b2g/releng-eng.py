@@ -45,7 +45,6 @@ config = {
         "B2G_UPDATER": "1",
         "B2G_SYSTEM_APPS": "1",
         "WGET_OPTS": "-c -q",
-        "PATH": "/tools/python27/bin:%(PATH)s",
     },
     "manifest": {
         "upload_remote_host": "stage.mozilla.org",

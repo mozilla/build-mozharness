@@ -34,7 +34,6 @@ config = {
         "CCACHE_UMASK": "002",
         "GAIA_OPTIMIZE": "1",
         "WGET_OPTS": "-c -q",
-        "PATH": "/tools/python27/bin:%(PATH)s",
     },
     "purge_minsize": 20,
     #"clobberer_url": "http://clobberer-stage.pvt.build.mozilla.org/index.php",

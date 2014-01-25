@@ -63,7 +63,6 @@ config = {
         "B2G_UPDATER": "1",
         "B2G_SYSTEM_APPS": "1",
         "WGET_OPTS": "-c -q",
-        "PATH": "/tools/python27/bin:%(PATH)s",
     },
     "purge_minsize": 15,
     "clobberer_url": "http://clobberer.pvt.build.mozilla.org/index.php",
