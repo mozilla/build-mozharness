@@ -72,6 +72,7 @@ config = {
         "SYMBOL_SERVER_PATH": "/mnt/netapp/breakpad/symbols_b2g/",
         "POST_SYMBOL_UPLOAD_CMD": "/usr/local/bin/post-symbol-upload.py",
         "WGET_OPTS": "-c -q",
+        "PATH": "/tools/python27/bin:%(PATH)s",
     },
     "purge_minsize": 15,
     "clobberer_url": "http://clobberer.pvt.build.mozilla.org/index.php",
