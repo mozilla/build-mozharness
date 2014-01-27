@@ -51,6 +51,12 @@ class GaiaIntegrationTest(GaiaTest):
            output_parser=output_parser,
            output_timeout=330)
 
+        # Dump npm-debug.log, if it exists
+        npm_debug = os.path.join(dirs['abs_gaia_dir'], 'npm-debug.log')
+        if os.access(npm_debug, os.F_OK):
+            self.info('dumping npm-debug.log')
+            self.run_command(['cat', npm_debug])
+
         output_parser.print_summary('gaia-integration-tests')
         self.publish(code)
 
