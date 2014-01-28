@@ -198,7 +198,14 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
 
         dirs = self.query_abs_dirs()
         self.objdir = os.path.join(dirs['work_dir'], 'objdir-gecko')
-        self.marfile = "%s/dist/b2g-update/b2g-gecko-update.mar" % self.objdir
+        if self.config.get("update_type", "ota") == "fota":
+            self.marfile = "%s/out/target/product/%s/fota-update.mar" % (dirs['abs_work_dir'], self.config['target'])
+            self.make_updates_cmd = ['./build.sh', 'gecko-update-fota']
+            self.extra_update_attrs = 'isOsUpdate="true"'
+        else:
+            self.marfile = "%s/dist/b2g-update/b2g-gecko-update.mar" % self.objdir
+            self.make_updates_cmd = ['./build.sh', 'gecko-update-full']
+            self.extra_update_attrs = None
         self.application_ini = os.path.join(
             dirs['work_dir'], 'out', 'target', 'product',
             self.config['target'], 'system', 'b2g', 'application.ini')
@@ -887,7 +894,8 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
         if self.config.get('locales_file'):
             env['L10NBASEDIR'] = dirs['abs_l10n_dir']
             env['MOZ_CHROME_MULTILOCALE'] = " ".join(self.locales)
-            env['PATH'] = os.environ.get('PATH')
+            if 'PATH' not in env:
+                env['PATH'] = os.environ.get('PATH')
             env['PATH'] += ':%s' % os.path.join(dirs['compare_locales_dir'], 'scripts')
             env['PYTHONPATH'] = os.environ.get('PYTHONPATH', '')
             env['PYTHONPATH'] += ':%s' % os.path.join(dirs['compare_locales_dir'], 'lib')
@@ -956,7 +964,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
             return
         dirs = self.query_abs_dirs()
         gecko_config = self.load_gecko_config()
-        cmd = ['./build.sh', 'gecko-update-full']
+        cmd = self.make_updates_cmd[:]
         env = self.query_build_env()
 
         self.write_b2g_config()
@@ -1407,7 +1415,8 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
         if not self.create_update_xml(self.marfile, self.query_version(),
                                       self.query_buildid(),
                                       mar_url,
-                                      upload_dir):
+                                      upload_dir,
+                                      extra_update_attrs=self.extra_update_attrs):
             self.fatal("Failed to generate update.xml")
 
         self.copy_to_upload_dir(
