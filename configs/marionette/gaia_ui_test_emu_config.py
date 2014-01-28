@@ -2,6 +2,6 @@
 # with the primary gaia-ui-test config file.
 
 config = {
-    'tooltool_servers': ['http://runtime-binaries.pvt.build.mozilla.org/tooltool/'],
+    'no_update': True,
     'emulator': 'arm',
 }
