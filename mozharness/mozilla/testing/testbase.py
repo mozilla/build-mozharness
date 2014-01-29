@@ -266,6 +266,17 @@ You can set this by:
         """
         download and extract test zip / download installer
         """
+        # Swap plain http for https when we're downloading from ftp
+        # See bug 957502 and friends
+        from_ = "http://ftp.mozilla.org"
+        to_ = "https://ftp-ssl.mozilla.org"
+        for attr in 'test_url', 'symbols_url', 'installer_url':
+            url = getattr(self, attr)
+            if url and url.startswith(from_):
+                new_url = url.replace(from_, to_)
+                self.info("Replacing url %s -> %s" % (url, new_url))
+                setattr(self, attr, new_url)
+
         if self.test_url:
             self._download_test_zip()
             self._extract_test_zip(target_unzip_dirs=target_unzip_dirs)

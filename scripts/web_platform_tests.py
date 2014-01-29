@@ -81,13 +81,9 @@ class WebPlatformTest(TestingMixin, MercurialScript, BlobUploadMixin):
     def _pre_create_virtualenv(self, action):
         dirs = self.query_abs_dirs()
 
-        self.register_virtualenv_module('marionette',
-                                        os.path.join(dirs['abs_test_install_dir'],
-                                                     'marionette'))
-
         requirements = os.path.join(dirs['abs_test_install_dir'],
                                     'config',
-                                    'mozbase_requirements.txt')
+                                    'marionette_requirements.txt')
         if os.path.isfile(requirements):
             self.register_virtualenv_module(requirements=[requirements],
                                             two_pass=True)
@@ -106,6 +102,9 @@ class WebPlatformTest(TestingMixin, MercurialScript, BlobUploadMixin):
                   'mozrunner'):
             self.register_virtualenv_module(m, url=os.path.join(mozbase_dir,
                                                                 m))
+
+            self.register_virtualenv_module('marionette', os.path.join('tests',
+                                                                       'marionette'))
 
     def _query_cmd(self):
         if not self.binary_path:
