@@ -12,10 +12,17 @@ import sys
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
 from mozharness.base.gaia_test import GaiaTest
+from mozharness.base.log import ERROR
+from mozharness.base.errors import BaseErrorList
 from mozharness.mozilla.testing.unittest import TestSummaryOutputParserHelper
 
 
 class GaiaIntegrationTest(GaiaTest):
+
+    npm_error_list = BaseErrorList + [
+        {'substr': r'''npm ERR! Error:''', 'level': ERROR}
+    ]
+
     def __init__(self, require_config_file=False):
       GaiaTest.__init__(self, require_config_file)
 
@@ -24,9 +31,6 @@ class GaiaIntegrationTest(GaiaTest):
         Run the integration test suite.
         """
         dirs = self.query_abs_dirs()
-
-        output_parser = TestSummaryOutputParserHelper(
-          config=self.config, log_obj=self.log_obj, error_list=self.error_list)
 
         # Copy the b2g desktop we built to the gaia directory so that it
         # gets used by the marionette-js-runner.
@@ -37,6 +41,34 @@ class GaiaIntegrationTest(GaiaTest):
         )
 
         self.run_command(['npm', 'cache', 'clean'])
+
+        # run 'npm install' first, so we can separately handle
+        # errors that occur here
+        cmd = [
+            'npm',
+            'install',
+            '--registry',
+            self.config.get('npm_registry')
+        ]
+        kwargs = {
+            'cwd': dirs['abs_gaia_dir'],
+            'output_timeout': 300,
+            'error_list': self.npm_error_list
+        }
+        code = self.retry(self.run_command, attempts=3, good_statuses=(0,),
+                          args=[cmd], kwargs=kwargs)
+        if code:
+            # Dump npm-debug.log, if it exists
+            npm_debug = os.path.join(dirs['abs_gaia_dir'], 'npm-debug.log')
+            if os.access(npm_debug, os.F_OK):
+                self.info('dumping npm-debug.log')
+                self.run_command(['cat', npm_debug])
+            else:
+                self.info('npm-debug.log doesn\'t exist, not dumping')
+            self.fatal('Errors during \'npm install\'', exit_code=code)
+
+        output_parser = TestSummaryOutputParserHelper(
+          config=self.config, log_obj=self.log_obj, error_list=self.error_list)
 
         # `make test-integration \
         #      MOCHA_REPORTER=mocha-tbpl-reporter \
@@ -50,12 +82,6 @@ class GaiaIntegrationTest(GaiaTest):
         ], cwd=dirs['abs_gaia_dir'],
            output_parser=output_parser,
            output_timeout=330)
-
-        # Dump npm-debug.log, if it exists
-        npm_debug = os.path.join(dirs['abs_gaia_dir'], 'npm-debug.log')
-        if os.access(npm_debug, os.F_OK):
-            self.info('dumping npm-debug.log')
-            self.run_command(['cat', npm_debug])
 
         output_parser.print_summary('gaia-integration-tests')
         self.publish(code)
