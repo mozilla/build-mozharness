@@ -2,6 +2,6 @@
 # with the primary gaia-ui-test config file.
 
 config = {
-    'no_update': True,
+    'update_files': False,
     'emulator': 'arm',
 }
