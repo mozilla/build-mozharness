@@ -197,15 +197,23 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
     def _launch_emulator(self, emulator_index):
         emulator = self.emulators[emulator_index]
         env = self.query_env()
+
+        # Set $LD_LIBRARY_PATH to self.dirs['abs_work_dir'] so that
+        # the emulator picks up the symlink to libGL.so.1 that we
+        # constructed in start_emulators.
+        env['LD_LIBRARY_PATH'] = self.abs_dirs['abs_work_dir']
+
         command = [
             "emulator", "-avd", emulator["name"],
             "-debug", "init,console,gles,memcheck,adbserver,adbclient,adb,avd_config,socket",
             "-port", str(emulator["emulator_port"]),
             # Enable kvm; -qemu arguments must be at the end of the command
-            "-qemu", "-m", "1024", "-enable-kvm"
+            "-qemu", "-m", "1024"
         ]
         if "emulator_cpu" in self.config:
-            command += ["-qemu", "-cpu", self.config["emulator_cpu"] ]
+            command += ["-cpu", self.config["emulator_cpu"] ]
+        else:
+            command += ["-enable-kvm"]
         tmp_file = tempfile.NamedTemporaryFile(mode='w')
         tmp_stdout = open(tmp_file.name, 'w')
         self.info("Created temp file %s." % tmp_file.name)
@@ -477,6 +485,25 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
             "We can't run more tests that the number of emulators we start"
         # We kill compiz because it sometimes prevents us from starting the emulators
         self._kill_processes("compiz")
+
+        # We add a symlink for libGL.so because the emulator dlopen()s it by that name
+        # even though the installed library on most systems without dev packages is
+        # libGL.so.1
+        linkfile = os.path.join(self.abs_dirs['abs_work_dir'], "libGL.so")
+        self.info("Attempting to establish symlink for %s" % linkfile)
+        try:
+            os.unlink(linkfile)
+        except OSError:
+            pass
+        for libdir in [ "/usr/lib/x86_64-linux-gnu/mesa",
+                        "/usr/lib/i386-linux-gnu/mesa",
+                        "/usr/lib/mesa" ]:
+            libfile = os.path.join(libdir, "libGL.so.1");
+            if os.path.exists(libfile):
+                self.info("Symlinking %s -> %s" % (linkfile, libfile))
+                self.mkdir_p(self.abs_dirs['abs_work_dir'])
+                os.symlink(libfile, linkfile)
+                break
 
         attempts = 0
         redirect_failed = True
