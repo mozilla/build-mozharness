@@ -15,7 +15,6 @@ import re
 import subprocess
 from urlparse import urlsplit
 
-# TODO delete
 import sys
 sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.dirname(sys.path[0]))))
 
@@ -424,9 +423,6 @@ class MercurialVCS(ScriptMixin, LogMixin, object):
         return self.update(dest, branch=branch, revision=revision)
 
     # End hg share methods 2}}}
-
-    def query_python_site_packages_path(self):
-        return self.script_obj.query_python_site_packages_path()
 
     def ensure_repo_and_revision(self):
         """Makes sure that `dest` is has `revision` or `branch` checked out
