@@ -492,8 +492,6 @@ class Talos(TestingMixin, MercurialScript, BlobUploadMixin):
     def clone_talos(self):
         c = self.config
         if not c.get('python_webserver', True) and c.get('populate_webroot'):
-            virtualenv_modules = ['mozprocess']
-            super(Talos, self).create_virtualenv(modules=virtualenv_modules)
             self._populate_webroot()
 
     def create_virtualenv(self, **kwargs):

@@ -40,6 +40,7 @@ try:
 except ImportError:
     import json
 
+from mozprocess import ProcessHandler
 from mozharness.base.config import BaseConfig
 from mozharness.base.log import SimpleFileLogger, MultiFileLogger, \
     LogMixin, OutputParser, DEBUG, INFO, ERROR, FATAL
@@ -621,26 +622,6 @@ class ScriptMixin(object):
         ]
         (context_lines isn't written yet)
         """
-        if output_timeout:
-            site_packages_path = self.query_python_site_packages_path()
-            sys_path = ''.join(sys.path)
-            if 'mozprocess' not in sys_path:
-                if site_packages_path not in sys_path:
-                    # check for mozprocess
-                    mozprocess_path = os.path.join(site_packages_path, 'mozprocess')
-                    if not os.access(mozprocess_path, os.F_OK):
-                        self.fatal('mozprocess required for output_timeout, but not present at %s' % mozprocess_path)
-                    # Assume if mozprocess is installed, all it's pre-req's
-                    # are present also, and add the top-level site-packages
-                    # dir to sys.path.
-                    sys.path.append(site_packages_path)
-
-            try:
-                from mozprocess import ProcessHandler
-            except ImportError:
-                self.exception("There was an error importing mozprocess!",
-                               level=FATAL)
-
         if success_codes is None:
             success_codes = [0]
         if cwd is not None:
