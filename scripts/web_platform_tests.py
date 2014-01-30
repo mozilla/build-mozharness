@@ -251,14 +251,14 @@ class StructuredOutputParser(OutputParser):
             self.parsing_failed = True
             return
 
-        if "action" not in line:
+        if "action" not in data:
             self.error(line)
             return
 
         action = data["action"]
         if action == "log":
             level = getattr(log, data["level"])
-        elif action in ["test_end", "test_status"] and "expected" in action:
+        elif action in ["test_end", "test_status"] and "expected" in data:
             self.unexpected_count += 1
             level = WARNING
             tbpl_level = TBPL_WARNING
