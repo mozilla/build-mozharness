@@ -191,6 +191,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
                                 'compare_locales_rev': 'RELEASE_AUTOMATION',
                                 'compare_locales_vcs': 'hgtool',
                                 'repo_repo': "https://git.mozilla.org/external/google/gerrit/git-repo.git",
+                                'repo_branch': "v1.12.9",  # bug 965608
                                 'repo_remote_mappings': {},
                                 'update_channel': 'default',
                             },
@@ -536,6 +537,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
                 # Bug 922750 - use --no-repo-verify to work around busted
                 # upstream tagging
                 "--no-repo-verify",
+                "--repo-branch", self.config['repo_branch'],
                 "-q", "-u", manifest_dir,
                 "-m", self.config['target'] + '.xml',
                 '-b', b2g_manifest_branch],
