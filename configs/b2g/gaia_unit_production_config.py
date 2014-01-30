@@ -1,4 +1,5 @@
 # This is a template config file for b2g emulator unittest testing
+HG_SHARE_BASE_DIR = "/builds/hg-shared"
 
 config = {
     # mozharness script options
@@ -7,6 +8,7 @@ config = {
     # mozharness configuration
     "tooltool_servers": ["http://runtime-binaries.pvt.build.mozilla.org/tooltool/"],
 
+    "vcs_share_base": HG_SHARE_BASE_DIR,
     "exes": {
         'python': '/tools/buildbot/bin/python',
         'virtualenv': ['/tools/buildbot/bin/python', '/tools/misc-python/virtualenv.py'],
