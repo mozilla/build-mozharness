@@ -23,11 +23,11 @@ from mozharness.base.vcs.vcsbase import VCSMixin
 from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_options
 from mozharness.mozilla.testing.errors import LogcatErrorList
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
-from mozharness.mozilla.testing.unittest import DesktopUnittestOutputParser, EmulatorMixin
+from mozharness.mozilla.testing.unittest import DesktopUnittestOutputParser
 from mozharness.mozilla.tooltool import TooltoolMixin
 
 
-class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, BaseScript, BlobUploadMixin):
+class B2GEmulatorTest(TestingMixin, TooltoolMixin, VCSMixin, BaseScript, BlobUploadMixin):
     test_suites = ('jsreftest', 'reftest', 'mochitest', 'xpcshell', 'crashtest')
     config_options = [
         [["--type"],
@@ -175,15 +175,12 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
         super(B2GEmulatorTest, self).download_and_extract()
         dirs = self.query_abs_dirs()
 
-        if self.config.get('update_files'):
-            self.install_emulator()
-        else:
-            self.mkdir_p(dirs['abs_emulator_dir'])
-            tar = self.query_exe('tar', return_type='list')
-            self.run_command(tar + ['zxf', self.installer_path],
-                             cwd=dirs['abs_emulator_dir'],
-                             error_list=TarErrorList,
-                             halt_on_failure=True)
+        self.mkdir_p(dirs['abs_emulator_dir'])
+        tar = self.query_exe('tar', return_type='list')
+        self.run_command(tar + ['zxf', self.installer_path],
+                         cwd=dirs['abs_emulator_dir'],
+                         error_list=TarErrorList,
+                         halt_on_failure=True)
 
         if self.config.get('download_minidump_stackwalk'):
             self.install_minidump_stackwalk()
@@ -241,9 +238,6 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
         cmd = [self.query_python_path('python')]
         cmd.append(self.config['run_file_names'][suite])
 
-        if self.config.get('update_files'):
-            cmd.append('--gecko-path=%s' %  os.path.dirname(self.binary_path))
-
         str_format_values = {
             'adbpath': self.adb_path,
             'b2gpath': dirs['abs_b2g-distro_dir'],
@@ -300,11 +294,10 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, Base
             self.fatal("The adb binary '%s' is not a valid file!" % self.adb_path)
 
     def install(self):
-        if self.config.get('update_files'):
-            # For non-update runs, the emulator was already extracted during
-            # the download-and-extract phase, and we don't have a separate
-            # b2g package to extract.
-            super(B2GEmulatorTest, self).install()
+        # The emulator was extracted during the download_and_extract step;
+        # there's no separate binary to install.  We call pass to prevent
+        # the base implementation from running here.
+        pass
 
     def run_tests(self):
         """
