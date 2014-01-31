@@ -62,7 +62,7 @@ config = {
     },
     "conversion_type": "project-branches",
     "project_branches": PROJECT_BRANCHES,
-    "project_branch_repo_url": "http://hg.mozilla.org/projects/%(project)s",
+    "project_branch_repo_url": "https://hg.mozilla.org/projects/%(project)s",
     "conversion_repos": CONVERSION_REPOS,
     "remote_targets": {
         "github-project-branches": {

@@ -118,7 +118,7 @@ class SpidermonkeyBuild(MockMixin,
                                 'ccache': True,
                                 'buildbot_json_path': os.environ.get('PROPERTIES_FILE'),
                                 'tooltool_servers': None,
-                                'tools_repo': 'http://hg.mozilla.org/build/tools',
+                                'tools_repo': 'https://hg.mozilla.org/build/tools',
 
                                 'upload_ssh_server': None,
                                 'upload_remote_basepath': None,

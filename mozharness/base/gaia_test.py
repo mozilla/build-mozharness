@@ -35,7 +35,7 @@ class GaiaTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin,
         [["--gaia-repo"],
          {"action": "store",
           "dest": "gaia_repo",
-          "default": "http://hg.mozilla.org/integration/gaia-central",
+          "default": "https://hg.mozilla.org/integration/gaia-central",
           "help": "url of gaia repo to clone"
          }],
         [["--gaia-branch"],

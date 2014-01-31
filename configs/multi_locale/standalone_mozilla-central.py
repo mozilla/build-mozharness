@@ -1,10 +1,10 @@
 import os
 # The name of the directory we'll pull our source into.
 BUILD_DIR = "mozilla-central"
-# This is everything that comes after http://hg.mozilla.org/
+# This is everything that comes after https://hg.mozilla.org/
 # e.g. "releases/mozilla-aurora"
 REPO_PATH = "mozilla-central"
-# This is where the l10n repos are (everything after http://hg.mozilla.org/)
+# This is where the l10n repos are (everything after https://hg.mozilla.org/)
 # for mozilla-central, that's "l10n-central".
 # For mozilla-aurora, that's "releases/l10n/mozilla-aurora"
 L10N_REPO_PATH = "l10n-central"
@@ -24,15 +24,15 @@ config = {
     "locales_dir": "%s/locales" % ANDROID_DIR,
     "ignore_locales": ["en-US", "multi"],
     "repos": [{
-        "repo": "http://hg.mozilla.org/%s" % REPO_PATH,
+        "repo": "https://hg.mozilla.org/%s" % REPO_PATH,
         "tag": "default",
         "dest": BUILD_DIR,
     }],
     "l10n_repos": [{
-        "repo": "http://hg.mozilla.org/build/compare-locales",
+        "repo": "https://hg.mozilla.org/build/compare-locales",
         "tag": "RELEASE_AUTOMATION"
     }],
-    "hg_l10n_base": "http://hg.mozilla.org/%s" % L10N_REPO_PATH,
+    "hg_l10n_base": "https://hg.mozilla.org/%s" % L10N_REPO_PATH,
     "hg_l10n_tag": "default",
     "l10n_dir": "l10n",
     "merge_locales": True,

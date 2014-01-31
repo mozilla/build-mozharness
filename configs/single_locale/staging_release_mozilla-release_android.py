@@ -31,22 +31,22 @@ config = {
     },
     "tooltool_servers": ["http://runtime-binaries.pvt.build.mozilla.org/tooltool/"],
     "repos": [{
-        "repo": "http://hg.mozilla.org/%(user_repo_override)s/mozilla-release",
+        "repo": "https://hg.mozilla.org/%(user_repo_override)s/mozilla-release",
         "revision": "default",
         "dest": MOZILLA_DIR,
     }, {
-        "repo": "http://hg.mozilla.org/%(user_repo_override)s/buildbot-configs",
+        "repo": "https://hg.mozilla.org/%(user_repo_override)s/buildbot-configs",
         "revision": "default",
         "dest": "buildbot-configs"
     }, {
-        "repo": "http://hg.mozilla.org/%(user_repo_override)s/tools",
+        "repo": "https://hg.mozilla.org/%(user_repo_override)s/tools",
         "revision": "default",
         "dest": "tools"
     }, {
-        "repo": "http://hg.mozilla.org/%(user_repo_override)s/compare-locales",
+        "repo": "https://hg.mozilla.org/%(user_repo_override)s/compare-locales",
         "revision": "RELEASE_AUTOMATION"
     }],
-    "hg_l10n_base": "http://hg.mozilla.org/%(user_repo_override)s/",
+    "hg_l10n_base": "https://hg.mozilla.org/%(user_repo_override)s/",
     "hg_l10n_tag": "default",
     'vcs_share_base': HG_SHARE_BASE_DIR,
     "l10n_dir": MOZILLA_DIR,

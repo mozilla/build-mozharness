@@ -179,7 +179,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
                                 'upload_remote_host': None,
                                 'upload_remote_basepath': None,
                                 'enable_try_uploads': False,
-                                'tools_repo': 'http://hg.mozilla.org/build/tools',
+                                'tools_repo': 'https://hg.mozilla.org/build/tools',
                                 'locales_dir': 'gecko/b2g/locales',
                                 'l10n_dir': 'gecko-l10n',
                                 'ignore_locales': ['en-US', 'multi'],
@@ -187,7 +187,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
                                 'mozilla_dir': 'build/gecko',
                                 'objdir': 'build/objdir-gecko',
                                 'merge_locales': True,
-                                'compare_locales_repo': 'http://hg.mozilla.org/build/compare-locales',
+                                'compare_locales_repo': 'https://hg.mozilla.org/build/compare-locales',
                                 'compare_locales_rev': 'RELEASE_AUTOMATION',
                                 'compare_locales_vcs': 'hgtool',
                                 'repo_repo': "https://git.mozilla.org/external/google/gerrit/git-repo.git",
@@ -277,7 +277,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
 
     def query_repo(self):
         if self.buildbot_config and 'properties' in self.buildbot_config:
-            return 'http://hg.mozilla.org/%s' % self.buildbot_config['properties']['repo_path']
+            return 'https://hg.mozilla.org/%s' % self.buildbot_config['properties']['repo_path']
         else:
             return self.config['repo']
 
@@ -786,7 +786,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
                 repo = self.gaia_locale_revisions[locale]['repo']
                 revision = self.gaia_locale_revisions[locale]['revision']
                 locale_manifest.append('  <!-- Mercurial-Information: <project name="%s" path="gaia-l10n/%s" remote="hgmozillaorg" revision="%s"/> -->' %
-                                       (repo.replace('http://hg.mozilla.org/', ''), locale, revision))
+                                       (repo.replace('https://hg.mozilla.org/', ''), locale, revision))
                 if gaia_l10n_git_root:
                     locale_manifest.append(
                         self._generate_git_locale_manifest(
@@ -806,7 +806,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
                 repo = self.gecko_locale_revisions[locale]['repo']
                 revision = self.gecko_locale_revisions[locale]['revision']
                 locale_manifest.append('  <!-- Mercurial-Information: <project name="%s" path="gecko-l10n/%s" remote="hgmozillaorg" revision="%s"/> -->' %
-                                       (repo.replace('http://hg.mozilla.org/', ''), locale, revision))
+                                       (repo.replace('https://hg.mozilla.org/', ''), locale, revision))
                 if gecko_l10n_git_root:
                     locale_manifest.append(
                         self._generate_git_locale_manifest(
@@ -849,12 +849,12 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
             # XXX Bug here. We shouldn't look for a specific comment, and
             # instead put these new nodes at the beginning / end.
             if 'Gonk specific things' in line:
-                new_sources.append('  <!-- Mercurial-Information: <remote fetch="http://hg.mozilla.org/" name="hgmozillaorg"> -->')
+                new_sources.append('  <!-- Mercurial-Information: <remote fetch="https://hg.mozilla.org/" name="hgmozillaorg"> -->')
                 new_sources.append('  <!-- Mercurial-Information: <project name="%s" path="gecko" remote="hgmozillaorg" revision="%s"/> -->' %
                                    (self.buildbot_config['properties']['repo_path'], self.buildbot_properties['gecko_revision']))
                 if gecko_config.get('config_version', 0) < 2 and 'gaia_revision' in self.buildbot_properties:
                     new_sources.append('  <!-- Mercurial-Information: <project name="%s" path="gaia" remote="hgmozillaorg" revision="%s"/> -->' %
-                                       (gaia_config['repo'].replace('http://hg.mozilla.org/', ''), self.buildbot_properties['gaia_revision']))
+                                       (gaia_config['repo'].replace('https://hg.mozilla.org/', ''), self.buildbot_properties['gaia_revision']))
 
                 if self.query_do_translate_hg_to_git():
                     url = manifest_config['translate_base_url']

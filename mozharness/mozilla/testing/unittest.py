@@ -190,7 +190,7 @@ class EmulatorMixin(object):
             self.install_emulator_from_tooltool(manifest_path)
         elif self.buildbot_config:
             props = self.buildbot_config.get('properties')
-            url = 'http://hg.mozilla.org/%s/raw-file/%s/b2g/test/emulator.manifest' % (
+            url = 'https://hg.mozilla.org/%s/raw-file/%s/b2g/test/emulator.manifest' % (
                 props['repo_path'], props['revision'])
             manifest_path = self.download_file(url,
                                                file_name='tooltool.tt',

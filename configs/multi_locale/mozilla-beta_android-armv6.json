@@ -6,22 +6,22 @@
     "locales_dir": "mobile/android/locales",
     "ignore_locales": ["en-US", "multi"],
     "repos": [{
-        "repo": "http://hg.mozilla.org/releases/mozilla-beta",
+        "repo": "https://hg.mozilla.org/releases/mozilla-beta",
         "tag": "default",
         "dest": "build"
     },{
-        "repo": "http://hg.mozilla.org/build/buildbot-configs",
+        "repo": "https://hg.mozilla.org/build/buildbot-configs",
         "tag": "default",
         "dest": "build/configs"
     },{
-        "repo": "http://hg.mozilla.org/build/tools",
+        "repo": "https://hg.mozilla.org/build/tools",
         "tag": "default",
         "dest": "tools"
     },{
-        "repo": "http://hg.mozilla.org/build/compare-locales",
+        "repo": "https://hg.mozilla.org/build/compare-locales",
         "tag": "RELEASE_AUTOMATION"
     }],
-    "hg_l10n_base": "http://hg.mozilla.org/releases/l10n/mozilla-beta",
+    "hg_l10n_base": "https://hg.mozilla.org/releases/l10n/mozilla-beta",
     "hg_l10n_tag": "default",
     "l10n_dir": "mozilla-beta",
     "env": {

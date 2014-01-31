@@ -15,8 +15,8 @@ config = {
     "retry_url":  "http://talos-bundles.pvt.build.mozilla.org/zips/retry.zip",
     "verify_path":  "/builds/sut_tools/verify.py",
     "install_app_path":  "/builds/sut_tools/installApp.py",
-    "talos_from_code_url": "http://hg.mozilla.org/%s/raw-file/%s/testing/talos/talos_from_code.py",
-    "talos_json_url": "http://hg.mozilla.org/%s/raw-file/%s/testing/talos/talos.json",
+    "talos_from_code_url": "https://hg.mozilla.org/%s/raw-file/%s/testing/talos/talos_from_code.py",
+    "talos_json_url": "https://hg.mozilla.org/%s/raw-file/%s/testing/talos/talos.json",
     "datazilla_urls": ["https://datazilla.mozilla.org/talos"],
     "datazilla_authfile": os.path.join(os.getcwd(), "oauth.txt"),
     #remotePerfConfigurator.py options

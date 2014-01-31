@@ -11,8 +11,8 @@ GECKO_BRANCHES = {
 
 GECKO_CONFIG_TEMPLATE = {
     'mozilla-release': {
-        'locales_file_url': 'http://hg.mozilla.org/releases/mozilla-release/raw-file/default/b2g/locales/all-locales',
-        'hg_url': 'http://hg.mozilla.org/releases/l10n/mozilla-release/%(locale)s',
+        'locales_file_url': 'https://hg.mozilla.org/releases/mozilla-release/raw-file/default/b2g/locales/all-locales',
+        'hg_url': 'https://hg.mozilla.org/releases/l10n/mozilla-release/%(locale)s',
         'targets': [{
             "target_dest": "gitmo-gecko-l10n",
         }],
@@ -23,8 +23,8 @@ GECKO_CONFIG_TEMPLATE = {
         },
     },
     'mozilla-beta': {
-        'locales_file_url': 'http://hg.mozilla.org/releases/mozilla-beta/raw-file/default/b2g/locales/all-locales',
-        'hg_url': 'http://hg.mozilla.org/releases/l10n/mozilla-beta/%(locale)s',
+        'locales_file_url': 'https://hg.mozilla.org/releases/mozilla-beta/raw-file/default/b2g/locales/all-locales',
+        'hg_url': 'https://hg.mozilla.org/releases/l10n/mozilla-beta/%(locale)s',
         'targets': [{
             "target_dest": "gitmo-gecko-l10n",
         }],
@@ -35,8 +35,8 @@ GECKO_CONFIG_TEMPLATE = {
         },
     },
     'mozilla-aurora': {
-        'locales_file_url': 'http://hg.mozilla.org/releases/mozilla-aurora/raw-file/default/b2g/locales/all-locales',
-        'hg_url': 'http://hg.mozilla.org/releases/l10n/mozilla-aurora/%(locale)s',
+        'locales_file_url': 'https://hg.mozilla.org/releases/mozilla-aurora/raw-file/default/b2g/locales/all-locales',
+        'hg_url': 'https://hg.mozilla.org/releases/l10n/mozilla-aurora/%(locale)s',
         'targets': [{
             "target_dest": "gitmo-gecko-l10n",
         }],
@@ -47,8 +47,8 @@ GECKO_CONFIG_TEMPLATE = {
         },
     },
     'mozilla-central': {
-        'locales_file_url': 'http://hg.mozilla.org/mozilla-central/raw-file/default/b2g/locales/all-locales',
-        'hg_url': 'http://hg.mozilla.org/l10n-central/%(locale)s',
+        'locales_file_url': 'https://hg.mozilla.org/mozilla-central/raw-file/default/b2g/locales/all-locales',
+        'hg_url': 'https://hg.mozilla.org/l10n-central/%(locale)s',
         'targets': [{
             "target_dest": "gitmo-gecko-l10n",
         }],

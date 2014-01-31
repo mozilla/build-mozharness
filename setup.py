@@ -23,7 +23,7 @@ setup(name='mozharness',
       classifiers=[],  # Get strings from http://www.python.org/pypi?%3Aaction=list_classifiers
       author='Aki Sasaki',
       author_email='aki@mozilla.com',
-      url='http://hg.mozilla.org/build/mozharness/',
+      url='https://hg.mozilla.org/build/mozharness/',
       license='MPL',
       packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
       include_package_data=True,

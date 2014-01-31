@@ -3,7 +3,7 @@ MOZ_UPDATE_CHANNEL = "release"
 MOZILLA_DIR = BRANCH
 JAVA_HOME = "/tools/jdk6"
 OBJDIR = "obj-l10n"
-EN_US_BINARY_URL = "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/%(version)s-candidates/build%(buildnum)d/android/en-US"
+EN_US_BINARY_URL = "https://ftp-ssl.mozilla.org/pub/mozilla.org/mobile/candidates/%(version)s-candidates/build%(buildnum)d/android/en-US"
 #STAGE_SERVER = "dev-stage01.srv.releng.scl3.mozilla.com"
 STAGE_SERVER = "stage.mozilla.org"
 STAGE_USER = "ffxbld"
@@ -32,22 +32,22 @@ config = {
     },
     "tooltool_servers": ["http://runtime-binaries.pvt.build.mozilla.org/tooltool/"],
     "repos": [{
-        "repo": "http://hg.mozilla.org/releases/mozilla-release",
+        "repo": "https://hg.mozilla.org/releases/mozilla-release",
         "revision": "default",
         "dest": MOZILLA_DIR,
     }, {
-        "repo": "http://hg.mozilla.org/build/buildbot-configs",
+        "repo": "https://hg.mozilla.org/build/buildbot-configs",
         "revision": "default",
         "dest": "buildbot-configs"
     }, {
-        "repo": "http://hg.mozilla.org/build/tools",
+        "repo": "https://hg.mozilla.org/build/tools",
         "revision": "default",
         "dest": "tools"
     }, {
-        "repo": "http://hg.mozilla.org/build/compare-locales",
+        "repo": "https://hg.mozilla.org/build/compare-locales",
         "revision": "RELEASE_AUTOMATION"
     }],
-    "hg_l10n_base": "http://hg.mozilla.org/releases/l10n/%s" % BRANCH,
+    "hg_l10n_base": "https://hg.mozilla.org/releases/l10n/%s" % BRANCH,
     "hg_l10n_tag": "default",
     'vcs_share_base': HG_SHARE_BASE_DIR,
     "l10n_dir": MOZILLA_DIR,

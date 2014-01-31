@@ -17,7 +17,7 @@ config = {
     "ssh_key": "~/.ssh/ffxbld_dsa",
     "ssh_user": "ffxbld",
 
-    'hgtool_base_bundle_urls': ['http://ftp.mozilla.org/pub/mozilla.org/firefox/bundles'],
+    'hgtool_base_bundle_urls': ['https://ftp-ssl.mozilla.org/pub/mozilla.org/firefox/bundles'],
 
     'gaia_repo_url': 'https://hg.mozilla.org/integration/gaia-central',
     'gaia_revision_file': 'b2g/config/gaia.json',

@@ -1,7 +1,7 @@
 BRANCH = "mozilla-central"
 MOZILLA_DIR = BRANCH
 HG_SHARE_BASE_DIR = "/builds/hg-shared"
-EN_US_BINARY_URL = "http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/latest-mozilla-central"
+EN_US_BINARY_URL = "https://ftp-ssl.mozilla.org/pub/mozilla.org/firefox/nightly/latest-mozilla-central"
 OBJDIR = "obj-l10n"
 MOZ_UPDATE_CHANNEL = "nightly"
 STAGE_SERVER = "dev-stage01.build.sjc1.mozilla.com"
@@ -30,15 +30,15 @@ config = {
     #"src_mozconfig": "browser/config/mozconfigs/linux64/nightly",
     "src_xulrunner_mozconfig": "xulrunner/config/mozconfigs/linux64/xulrunner",
     "repos": [{
-        "repo": "http://hg.mozilla.org/mozilla-central",
+        "repo": "https://hg.mozilla.org/mozilla-central",
         "revision": "default",
         "dest": MOZILLA_DIR,
     },{
-        "repo": "http://hg.mozilla.org/build/buildbot-configs",
+        "repo": "https://hg.mozilla.org/build/buildbot-configs",
         "revision": "default",
         "dest": "buildbot-configs"
     },{
-        "repo": "http://hg.mozilla.org/build/compare-locales",
+        "repo": "https://hg.mozilla.org/build/compare-locales",
         "revision": "RELEASE_AUTOMATION"
     }],
     "repack_env": {
@@ -66,7 +66,7 @@ config = {
     "l10n_dir": "l10n-central",
     "locales_file": "%s/browser/locales/all-locales" % MOZILLA_DIR,
     "locales_dir": "browser/locales",
-    "hg_l10n_base": "http://hg.mozilla.org/l10n-central",
+    "hg_l10n_base": "https://hg.mozilla.org/l10n-central",
     "hg_l10n_tag": "default",
     "merge_locales": True,
 

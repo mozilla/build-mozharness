@@ -23,12 +23,12 @@ config = {
     'vcs_share_base': HG_SHARE_BASE_DIR,
 
     "repos": [{
-        "repo": "http://hg.mozilla.org/build/tools",
+        "repo": "https://hg.mozilla.org/build/tools",
         "revision": "default",
         "dest": "tools"
     }],
 
-    "upload_remote_baseuri": 'http://ftp.mozilla.org/',
+    "upload_remote_baseuri": 'https://ftp-ssl.mozilla.org/',
 
     # Mock.
     "mock_packages": [

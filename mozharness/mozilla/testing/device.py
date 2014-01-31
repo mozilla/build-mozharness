@@ -7,7 +7,7 @@
 '''Interact with a device via ADB or SUT.
 
 This code is largely from
-http://hg.mozilla.org/build/tools/file/default/sut_tools
+https://hg.mozilla.org/build/tools/file/default/sut_tools
 '''
 
 import datetime

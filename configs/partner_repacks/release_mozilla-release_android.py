@@ -14,7 +14,7 @@ config = {
     "additional_locales": ['en-US'],
     "platforms": ["android"],
     "repos": [{
-        "repo": "http://hg.mozilla.org/build/buildbot-configs",
+        "repo": "https://hg.mozilla.org/build/buildbot-configs",
         "revision": "default",
     }],
     'vcs_share_base': HG_SHARE_BASE_DIR,
