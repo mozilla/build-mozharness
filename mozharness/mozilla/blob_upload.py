@@ -25,10 +25,9 @@ class BlobUploadMixin(VirtualenvMixin):
     options the <blob-upload-branch> and <blob-upload-server>
 
     """
-    #TODO: documentation about the Blobber Server on wiki
     def __init__(self, *args, **kwargs):
         requirements = [
-            'blobuploader==1.0.2b',
+            'blobuploader==1.1',
         ]
         super(BlobUploadMixin, self).__init__(*args, **kwargs)
         for req in requirements:
