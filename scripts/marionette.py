@@ -23,7 +23,7 @@ from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_WARNING, TBPL_FAILURE
 from mozharness.mozilla.gaia import GaiaMixin
 from mozharness.mozilla.testing.errors import LogcatErrorList
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
-from mozharness.mozilla.testing.unittest import TestSummaryOutputParserHelper
+from mozharness.mozilla.testing.unittest import EmulatorMixin, TestSummaryOutputParserHelper
 from mozharness.mozilla.tooltool import TooltoolMixin
 
 
@@ -44,7 +44,7 @@ class MarionetteOutputParser(TestSummaryOutputParserHelper):
             self.install_gecko_failed = True
         super(MarionetteOutputParser, self).parse_single_line(line)
 
-class MarionetteTest(TestingMixin, TooltoolMixin,
+class MarionetteTest(TestingMixin, TooltoolMixin, EmulatorMixin,
                      MercurialScript, BlobUploadMixin, TransferMixin, GaiaMixin):
     config_options = [
         [["--application"],
@@ -314,14 +314,22 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
 
         if self.config.get('emulator'):
             dirs = self.query_abs_dirs()
-
-            self.mkdir_p(dirs['abs_emulator_dir'])
-            tar = self.query_exe('tar', return_type='list')
-            self.run_command(tar + ['zxf', self.installer_path],
-                             cwd=dirs['abs_emulator_dir'],
-                             error_list=TarErrorList,
-                             halt_on_failure=True)
-
+            if self.config.get('update_files'):
+                self.workdir = dirs['abs_work_dir']
+                self.install_emulator()
+                self.mkdir_p(dirs['abs_gecko_dir'])
+                tar = self.query_exe('tar', return_type='list')
+                self.run_command(tar + ['zxf', self.installer_path],
+                                 cwd=dirs['abs_gecko_dir'],
+                                 error_list=TarErrorList,
+                                 halt_on_failure=True)
+            else:
+                self.mkdir_p(dirs['abs_emulator_dir'])
+                tar = self.query_exe('tar', return_type='list')
+                self.run_command(tar + ['zxf', self.installer_path],
+                                 cwd=dirs['abs_emulator_dir'],
+                                 error_list=TarErrorList,
+                                 halt_on_failure=True)
             if self.config.get('download_minidump_stackwalk'):
                 self.install_minidump_stackwalk()
 
@@ -392,6 +400,10 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
 
             if self.config.get('emulator'):
                 # emulator Marionette-webapi tests
+                if self.config.get('update_files'):
+                    cmd.extend(self._build_arg('--gecko-path',
+                                               os.path.join(dirs['abs_gecko_dir'],
+                                                            'b2g')))
                 cmd.extend(self._build_arg('--symbols-path', self.symbols_path))
 
             cmd.extend(self._build_arg('--type', self.config['test_type']))
