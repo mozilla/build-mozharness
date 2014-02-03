@@ -37,22 +37,22 @@ config = {
     },
     "tooltool_servers": ["http://runtime-binaries.pvt.build.mozilla.org/tooltool/"],
     "repos": [{
-        "repo": "http://hg.mozilla.org/releases/mozilla-aurora",
+        "repo": "https://hg.mozilla.org/releases/mozilla-aurora",
         "revision": "default",
         "dest": MOZILLA_DIR,
     }, {
-        "repo": "http://hg.mozilla.org/build/buildbot-configs",
+        "repo": "https://hg.mozilla.org/build/buildbot-configs",
         "revision": "default",
         "dest": "buildbot-configs"
     }, {
-        "repo": "http://hg.mozilla.org/build/tools",
+        "repo": "https://hg.mozilla.org/build/tools",
         "revision": "default",
         "dest": "tools"
     }, {
-        "repo": "http://hg.mozilla.org/build/compare-locales",
+        "repo": "https://hg.mozilla.org/build/compare-locales",
         "revision": "RELEASE_AUTOMATION"
     }],
-    "hg_l10n_base": "http://hg.mozilla.org/releases/l10n/%s" % BRANCH,
+    "hg_l10n_base": "https://hg.mozilla.org/releases/l10n/%s" % BRANCH,
     "hg_l10n_tag": "default",
     'vcs_share_base': HG_SHARE_BASE_DIR,
 

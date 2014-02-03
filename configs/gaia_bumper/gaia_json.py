@@ -35,9 +35,9 @@ config = {
         "branch": "default",
         "repo_url": "https://hg.mozilla.org/integration/gaia-1_3",
         "repo_name": "gaia-1_3",
-        "target_push_url": "ssh://hg.mozilla.org/releases/mozilla-aurora",
-        "target_pull_url": "https://hg.mozilla.org/releases/mozilla-aurora",
+        "target_push_url": "ssh://hg.mozilla.org/releases/mozilla-b2g28_v1_3",
+        "target_pull_url": "https://hg.mozilla.org/releases/mozilla-b2g28_v1_3",
         "target_tag": "default",
-        "target_repo_name": "mozilla-aurora",
+        "target_repo_name": "mozilla-b2g28_v1_3",
     }],
 }

@@ -73,7 +73,7 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin):
     symbols_path = None
     jsshell_url = None
     minidump_stackwalk_path = None
-    default_tools_repo = 'http://hg.mozilla.org/build/tools'
+    default_tools_repo = 'https://hg.mozilla.org/build/tools'
 
     def query_jsshell_url(self):
         """

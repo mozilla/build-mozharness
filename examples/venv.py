@@ -19,7 +19,7 @@ class VirtualenvExample(VirtualenvMixin, BaseScript):
      ["--talos-url"],
      {"action": "store",
       "dest": "talos_url",
-      "default": "http://hg.mozilla.org/build/talos/archive/tip.tar.gz",
+      "default": "https://hg.mozilla.org/build/talos/archive/tip.tar.gz",
       "help": "Specify the talos pip url"
      }
     ]] + virtualenv_config_options

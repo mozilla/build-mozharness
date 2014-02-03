@@ -4,9 +4,9 @@ config = {
     # mozharness script options
     "application": "b2g",
     "test_suite": "mochitest",                               # reftest, mochitest or xpcshell
-    "gaia_repo": "http://hg.mozilla.org/integration/gaia-central",
+    "gaia_repo": "https://hg.mozilla.org/integration/gaia-central",
 
-    "installer_url": "http://ftp.mozilla.org/pub/mozilla.org/b2g/tinderbox-builds/mozilla-central-linux64_gecko/1380197683/en-US/b2g-27.0a1.en-US.linux-x86_64.tar.bz2",
+    "installer_url": "https://ftp-ssl.mozilla.org/pub/mozilla.org/b2g/tinderbox-builds/mozilla-central-linux64_gecko/1380197683/en-US/b2g-27.0a1.en-US.linux-x86_64.tar.bz2",
     "xre_url": "http://localhost/xre.zip",
     "xre_path": "xulrunner-sdk",
     "test_url": "http://localhost/tests.zip",

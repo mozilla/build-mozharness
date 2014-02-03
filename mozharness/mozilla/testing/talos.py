@@ -94,7 +94,7 @@ class Talos(TestingMixin, MercurialScript, BlobUploadMixin):
         [["--talos-url"],
          {"action": "store",
           "dest": "talos_url",
-          "default": "http://hg.mozilla.org/build/talos/archive/tip.tar.gz",
+          "default": "https://hg.mozilla.org/build/talos/archive/tip.tar.gz",
           "help": "Specify the talos package url"
           }],
         [["--use-talos-json"],
@@ -290,7 +290,7 @@ class Talos(TestingMixin, MercurialScript, BlobUploadMixin):
         """Where do we install the talos python package from?
         This needs to be overrideable by the talos json.
         """
-        default_repo = "http://hg.mozilla.org/build/talos"
+        default_repo = "https://hg.mozilla.org/build/talos"
         if self.query_talos_json_config():
             return self.talos_json_config.get('global', {}).get('talos_repo', default_repo)
         else:

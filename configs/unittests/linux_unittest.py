@@ -130,14 +130,14 @@ config = {
                 # for windows.
                 "python", "../scripts/external_tools/mouse_and_screen_resolution.py",
                 "--configuration-url",
-                "http://hg.mozilla.org/%(branch)s/raw-file/%(revision)s/" +
+                "https://hg.mozilla.org/%(branch)s/raw-file/%(revision)s/" +
                     "testing/machine-configuration.json"],
             "architectures": ["32bit"],
             "halt_on_failure": True,
             "enabled": ADJUST_MOUSE_AND_SCREEN
         },
     ],
-    "repos": [{"repo": "http://hg.mozilla.org/build/tools"}],
+    "repos": [{"repo": "https://hg.mozilla.org/build/tools"}],
     "vcs_output_timeout": 1000,
     "minidump_stackwalk_path": MINIDUMP_STACKWALK_PATH,
     "minidump_save_path": "%(abs_work_dir)s/../minidumps",

@@ -81,7 +81,7 @@ class LogMixin(object):
                 return l
 
     # Copying Bear's dumpException():
-    # http://hg.mozilla.org/build/tools/annotate/1485f23c38e0/sut_tools/sut_lib.py#l23
+    # https://hg.mozilla.org/build/tools/annotate/1485f23c38e0/sut_tools/sut_lib.py#l23
     def exception(self, message=None, level=ERROR):
         tb_type, tb_value, tb_traceback = sys.exc_info()
         if message is None:

@@ -420,32 +420,35 @@ class TestHg(unittest.TestCase):
             '//build/tools/',
             revision='FIREFOX_3_6_12_RELEASE',
             filename="/lib/python/util/hg.py",
+            protocol='https',
         )
-        expected_url = "http://hg.mozilla.org/build/tools/raw-file/FIREFOX_3_6_12_RELEASE/lib/python/util/hg.py"
+        expected_url = "https://hg.mozilla.org/build/tools/raw-file/FIREFOX_3_6_12_RELEASE/lib/python/util/hg.py"
         self.assertEquals(file_url, expected_url)
 
     def test_make_hg_url_no_filename(self):
         file_url = mercurial.make_hg_url(
             "hg.mozilla.org",
             "/build/tools",
-            revision="default"
+            revision="default",
+            protocol='https',
         )
-        expected_url = "http://hg.mozilla.org/build/tools/rev/default"
+        expected_url = "https://hg.mozilla.org/build/tools/rev/default"
         self.assertEquals(file_url, expected_url)
 
     def test_make_hg_url_no_revision_no_filename(self):
         repo_url = mercurial.make_hg_url(
             "hg.mozilla.org",
-            "/build/tools"
+            "/build/tools",
+            protocol='https',
         )
-        expected_url = "http://hg.mozilla.org/build/tools"
+        expected_url = "https://hg.mozilla.org/build/tools"
         self.assertEquals(repo_url, expected_url)
 
     def test_make_hg_url_different_protocol(self):
         repo_url = mercurial.make_hg_url(
             "hg.mozilla.org",
             "/build/tools",
-            protocol='ssh'
+            protocol='ssh',
         )
         expected_url = "ssh://hg.mozilla.org/build/tools"
         self.assertEquals(repo_url, expected_url)

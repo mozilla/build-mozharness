@@ -305,7 +305,6 @@ class EmulatorBuild(BaseScript, PurgeMixin):
         self.apt_update()
         self.apt_get(["python-software-properties"])
         for pkgset in [[jdk],
-                       ["openjdk-6-jdk"],
                        ["libglw1-mesa"],
                        ["git", "gnupg", "flex", "bison", "gperf", "zip", "curl"],
                        ["mingw32", "tofrodos"],

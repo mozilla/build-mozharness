@@ -6,9 +6,9 @@ HOME = "/home/sfink"
 REPO = HOME + "/src/MI-GC"
 
 config = {
-    "hgurl": "http://hg.mozilla.org/",
+    "hgurl": "https://hg.mozilla.org/",
     "hgtool_base_bundle_urls": [
-        "http://ftp.mozilla.org/pub/mozilla.org/firefox/bundles"
+        "https://ftp-ssl.mozilla.org/pub/mozilla.org/firefox/bundles"
     ],
 
     "python": "python",
@@ -21,7 +21,7 @@ config = {
         "revision": "default",
         "dest": BRANCH,
     }, {
-        "repo": "http://hg.mozilla.org/build/tools",
+        "repo": "https://hg.mozilla.org/build/tools",
         "revision": "default",
         "dest": "tools"
     }],

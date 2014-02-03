@@ -2,7 +2,7 @@ import sys
 BRANCH = "mozilla-central"
 MOZILLA_DIR = BRANCH
 HG_SHARE_BASE_DIR = "e:/builds/hg-shared"
-EN_US_BINARY_URL = "http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/latest-mozilla-central"
+EN_US_BINARY_URL = "https://ftp-ssl.mozilla.org/pub/mozilla.org/firefox/nightly/latest-mozilla-central"
 OBJDIR = "obj-l10n"
 MOZ_UPDATE_CHANNEL = "nightly"
 STAGE_SERVER = "dev-stage01.build.sjc1.mozilla.com"
@@ -15,7 +15,7 @@ AUS_USER = "ffxbld"
 AUS_SSH_KEY = "~/.ssh/ffxbld_dsa"
 AUS_UPLOAD_BASE_DIR = "/opt/aus2/incoming/2/Firefox"
 AUS_BASE_DIR = BRANCH + "/%(build_target)s/%(buildid)s/%(locale)s"
-CANDIDATES_URL = "https://ftp.mozilla.org/pub/mozilla.org/firefox/%s" % MOZ_UPDATE_CHANNEL
+CANDIDATES_URL = "https://ftp-ssl.mozilla.org/pub/mozilla.org/firefox/%s" % MOZ_UPDATE_CHANNEL
 PLATFORM = "win32"
 config = {
     "mozilla_dir": MOZILLA_DIR,
@@ -25,17 +25,17 @@ config = {
     "binary_url": EN_US_BINARY_URL,
     "repos": [{
         "vcs": "hg",
-        "repo": "http://hg.mozilla.org/mozilla-central",
+        "repo": "https://hg.mozilla.org/mozilla-central",
         "revision": "default",
         "dest": MOZILLA_DIR,
     }, {
         "vcs": "hg",
-        "repo": "http://hg.mozilla.org/build/tools",
+        "repo": "https://hg.mozilla.org/build/tools",
         "revision": "default",
         "dest": "tools",
     }, {
         "vcs": "hg",
-        "repo": "http://hg.mozilla.org/build/compare-locales",
+        "repo": "https://hg.mozilla.org/build/compare-locales",
         "revision": "RELEASE_AUTOMATION"
     }],
     "repack_env": {
@@ -66,13 +66,13 @@ config = {
     "l10n_stage_dir": "dist/firefox/l10n-stage",
     "locales_file": "%s/browser/locales/all-locales" % MOZILLA_DIR,
     "locales_dir": "browser/locales",
-    "hg_l10n_base": "http://hg.mozilla.org/l10n-central",
+    "hg_l10n_base": "https://hg.mozilla.org/l10n-central",
     "hg_l10n_tag": "default",
     "merge_locales": True,
     "clobber_file": 'CLOBBER',
 
     #MAR
-    'previous_mar_url': 'https://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/latest-mozilla-central-l10n',
+    'previous_mar_url': 'https://ftp-ssl.mozilla.org/pub/mozilla.org/firefox/nightly/latest-mozilla-central-l10n',
     "previous_mar_dir": "previous",
     "current_mar_dir": "current",
     "update_mar_dir": "dist\\update",  # sure?
@@ -90,7 +90,7 @@ config = {
     "mbsdiff": "mbsdiff.exe",
     "candidates_base_url": CANDIDATES_URL,
     "partials_url": "%(base_url)s/latest-mozilla-central/",
-    "mar_tools_url": "https://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/latest-mozilla-central/mar-tools/win32/",
+    "mar_tools_url": "https://ftp-ssl.mozilla.org/pub/mozilla.org/firefox/nightly/latest-mozilla-central/mar-tools/win32/",
     "complete_mar": "firefox-%(version)s.en-US.win32.complete.mar",
     "localized_mar": "firefox-%(version)s.%(locale)s.win32.complete.mar",
     "partial_mar": "firefox-%(version)s.%(locale)s.partial.%(from_buildid)s-%(to_buildid)s.mar",

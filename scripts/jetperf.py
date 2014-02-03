@@ -56,11 +56,11 @@ class JetPerf(Talos):
                        ]
 
     default_repos = [{
-            "repo": 'http://hg.mozilla.org/projects/addon-sdk',
+            "repo": 'https://hg.mozilla.org/projects/addon-sdk',
             "revision": "default",
             "dest": "addon-sdk"
             },{
-            "repo": 'http://hg.mozilla.org/projects/addon-sdk-jetperf-tests/',
+            "repo": 'https://hg.mozilla.org/projects/addon-sdk-jetperf-tests/',
             "revision": "default",
             "dest": "addons_clone"
             }]

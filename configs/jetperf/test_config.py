@@ -19,7 +19,7 @@ config = {
 
 # need to specify pywin32 location for windows
 # https://bugzilla.mozilla.org/show_bug.cgi?id=786885
-# logic from http://hg.mozilla.org/build/talos/file/1c5976f92643/setup.py
+# logic from https://hg.mozilla.org/build/talos/file/1c5976f92643/setup.py
 if os.name == 'nt':
     base_link = "http://superb-sea2.dl.sourceforge.net/project/pywin32/pywin32/Build216/pywin32-216.%s-py%s.exe"
     python_version = '%d.%d' % sys.version_info[0:2]

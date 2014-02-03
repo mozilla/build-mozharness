@@ -127,14 +127,14 @@ config = {
                 sys.executable,
                 "../scripts/external_tools/mouse_and_screen_resolution.py",
                 "--configuration-url",
-                "http://hg.mozilla.org/%(repo_path)s/raw-file/%(revision)s/" +
+                "https://hg.mozilla.org/%(repo_path)s/raw-file/%(revision)s/" +
                     "testing/machine-configuration.json"],
             "architectures": ["32bit"],
             "halt_on_failure": True,
             "enabled": ADJUST_MOUSE_AND_SCREEN
         },
     ],
-    "repos": [{"repo": "http://hg.mozilla.org/build/tools"}],
+    "repos": [{"repo": "https://hg.mozilla.org/build/tools"}],
     "vcs_output_timeout": 1000,
     "minidump_stackwalk_path": "%(abs_work_dir)s/tools/breakpad/win32/minidump_stackwalk.exe",
     "minidump_save_path": "%(abs_work_dir)s/../minidumps",
