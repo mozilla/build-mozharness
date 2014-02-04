@@ -1,7 +1,7 @@
 BRANCH = "mozilla-central"
 MOZILLA_DIR = BRANCH
 HG_SHARE_BASE_DIR = "/builds/hg-shared"
-EN_US_BINARY_URL = "http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/latest-mozilla-central"
+EN_US_BINARY_URL = "https://ftp-ssl.mozilla.org/pub/mozilla.org/firefox/nightly/latest-mozilla-central"
 OBJDIR = "obj-l10n"
 MOZ_UPDATE_CHANNEL = "nightly"
 STAGE_SERVER = "dev-stage01.build.sjc1.mozilla.com"
