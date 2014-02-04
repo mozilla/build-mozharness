@@ -67,9 +67,7 @@ class GaiaTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin,
         {'substr': 'FAILED (errors=', 'level': WARNING},
     ]
 
-    virtualenv_modules = [
-        'mozinstall',
-    ]
+    virtualenv_modules = []
 
     repos = []
 
@@ -133,6 +131,9 @@ class GaiaTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin,
         dirs['abs_gaia_dir'] = os.path.join(gaia_root_dir, 'gaia')
         dirs['abs_runner_dir'] = os.path.join(dirs['abs_gaia_dir'],
                                               'tests', 'python', 'gaia-unit-tests')
+        dirs['abs_test_install_dir'] = os.path.join(
+            abs_dirs['abs_work_dir'], 'tests')
+
         for key in dirs.keys():
             if key not in abs_dirs:
                 abs_dirs[key] = dirs[key]
@@ -141,8 +142,19 @@ class GaiaTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin,
 
     @PreScriptAction('create-virtualenv')
     def _pre_create_virtualenv(self, action):
+
+        dirs = self.query_abs_dirs()
+        requirements = os.path.join(dirs['abs_test_install_dir'],
+                                    'config',
+                                    'mozbase_requirements.txt')
+        if os.access(requirements, os.F_OK):
+            self.register_virtualenv_module(requirements=[requirements],
+                                            two_pass=True)
+        else:
+            self.fatal('mozbase_requirements.txt not found!')
+
         self.register_virtualenv_module('gaia-unit-tests',
-            url=self.query_abs_dirs()['abs_runner_dir'])
+            url=dirs['abs_runner_dir'])
 
     def _build_arg(self, option, value):
         """
