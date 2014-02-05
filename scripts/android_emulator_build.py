@@ -209,6 +209,7 @@ class EmulatorBuild(BaseScript, PurgeMixin):
                                 'download-ndk',
                                 'download-test-binaries',
                                 'checkout-orangutan',
+                                'patch-aosp',
                                 'build-aosp',
                                 'build-kernel',
                                 'build-orangutan-su',
@@ -225,6 +226,7 @@ class EmulatorBuild(BaseScript, PurgeMixin):
                                 'download-ndk',
                                 'download-test-binaries',
                                 'checkout-orangutan',
+                                'patch-aosp',
                                 'build-aosp',
                                 'build-kernel',
                                 'build-orangutan-su',
@@ -439,8 +441,6 @@ class EmulatorBuild(BaseScript, PurgeMixin):
 
     def build_aosp(self):
 
-        self.patch_aosp()
-
         arch = None
         variant = None
         abi = None
@@ -469,23 +469,16 @@ class EmulatorBuild(BaseScript, PurgeMixin):
                           ". build/envsetup.sh "
                           "&& lunch sdk-eng "
                           "&& make -j " + str(self.ncores) +
-                          " sdk"
+                          " sdk" +
                           " TARGET_ARCH=" + arch +
                           " TARGET_ARCH_VARIANT=" + variant +
                           " TARGET_CPU_ABI=" + abi +
                           abi2 +
-                          " CC=gcc-4.4 CXX=g++-4.4"],
+                          " CC=gcc-4.4 CXX=g++-4.4" +
+                          " && make out/host/linux-x86/bin/mksdcard"],
                          cwd=self.aospdir,
                          halt_on_failure=True,
                          partial_env=env)
-
-        self.run_command(["/bin/bash", "-c",
-                          ". build/envsetup.sh "
-                          "&& lunch full-eng "
-                          "&& make out/host/linux-x86/bin/mksdcard"],
-                         cwd=self.aospdir,
-                         halt_on_failure=True)
-
 
     def build_kernel(self):
         env = {}
