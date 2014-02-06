@@ -1,10 +1,7 @@
 HG_SHARE_BASE_DIR = "/builds/hg-shared"
 
 PYTHON_DIR = "/tools/python27"
-#GCC_DIR = "/tools/gcc-4.7.3-0moz1"
-GCC_DIR = "/tools/gcc-4.7.2-0moz1"
-#GCC_RPM = "gcc473_0moz1"
-GCC_RPM = "gcc472_0moz1"
+GCC_DIR = "/tools/gcc"
 
 config = {
     "log_name": "spidermonkey",
@@ -12,11 +9,13 @@ config = {
     "analysis-dir": "analysis",
     "source-objdir": "obj-analyzed",
 
-    "sixgill": "/usr/libexec/sixgill",
-    "sixgill_bin": "/usr/bin",
+    "sixgill": "/tools/sixgill/usr/libexec/sixgill",
+    "sixgill_bin": "/tools/sixgill/usr/bin",
     "python": PYTHON_DIR + "/bin/python2.7",
 
-    "exes": { 'hgtool.py': 'tools/buildfarm/utils/hgtool.py' },
+    "exes": { 'hgtool.py': 'tools/buildfarm/utils/hgtool.py',
+              'tooltool.py': '/tools/tooltool.py',
+              },
 
     "purge_minsize": 15,
     "force_clobber": True,
@@ -30,17 +29,20 @@ config = {
 
     "upload_remote_baseuri": 'https://ftp-ssl.mozilla.org/',
 
+    'tools_dir': "/tools",
+    'compiler_manifest': "%(rootAnalysisDir)s/build/gcc.manifest",
+    'compiler_setup': "setup.sh.gcc",
+    'sixgill_manifest': "%(rootAnalysisDir)s/build/sixgill.manifest",
+    'sixgill_setup': "setup.sh.sixgill",
+
     # Mock.
     "mock_packages": [
         "autoconf213", "mozilla-python27-mercurial", "ccache",
         "zip", "zlib-devel", "glibc-static",
         "openssh-clients", "mpfr", "wget", "rsync",
 
-        # For the analysis
-        GCC_RPM,
-
         # For building the JS shell
-        "gmp-devel", "nspr", "nspr-devel", "sixgill",
+        "gmp-devel", "nspr", "nspr-devel",
 
         # For building the browser
         "dbus-devel", "dbus-glib-devel", "hal-devel",
@@ -66,12 +68,14 @@ config = {
     ],
     "mock_files": [
         ("/home/cltbld/.ssh", "/home/mock_mozilla/.ssh"),
+        ("/tools/tooltool.py", "/tools/tooltool.py"),
     ],
-    "mock_env_replacements": {
+    "env_replacements": {
         "pythondir": PYTHON_DIR,
         "gccdir": GCC_DIR,
     },
-    "mock_env": {
+    "partial_env": {
         "PATH": "%(pythondir)s/bin:%(gccdir)s/bin:%(PATH)s",
+        "LD_LIBRARY_PATH": "/tools/sixgill/usr/lib64",
     },
 }

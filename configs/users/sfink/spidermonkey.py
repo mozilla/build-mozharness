@@ -26,6 +26,9 @@ config = {
         "dest": "tools"
     }],
 
+    "tools_dir": "/tools",
+    "tooltool_servers": [ "http://localhost/tooltool" ],
+
     "mock_target": "mozilla-centos6-x86_64",
 
     "upload_remote_basepath": "/tmp/upload-base",
