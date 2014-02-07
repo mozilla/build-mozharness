@@ -89,6 +89,8 @@ config = {
         "--deviceTransport=sut",
         "--deviceIP=%(device_ip)s",
         "--localLib=../tests/bin",
+        "--no-slow",
+        "--no-progress",
         "--tinderbox",
         "--tbpl"
      ],

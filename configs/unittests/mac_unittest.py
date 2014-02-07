@@ -56,6 +56,8 @@ config = {
     ],
     "jittest_options": [
         "tests/bin/js",
+        "--no-slow",
+        "--no-progress",
         "--tinderbox",
         "--tbpl"
     ],
