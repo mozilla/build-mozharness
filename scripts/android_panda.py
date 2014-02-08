@@ -9,6 +9,8 @@ import copy
 import getpass
 import os
 import re
+import signal
+import subprocess
 import sys
 import time
 import socket
@@ -242,8 +244,6 @@ class PandaTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixin, Bu
                     env['MINIDUMP_STACKWALK'] = c['minidump_stackwalk_path']
                 env['MOZ_UPLOAD_DIR'] = self.query_abs_dirs()['abs_blob_upload_dir']
                 env['MINIDUMP_SAVE_PATH'] = self.query_abs_dirs()['abs_blob_upload_dir']
-                if not os.path.isdir(env['MOZ_UPLOAD_DIR']):
-                    self.mkdir_p(env['MOZ_UPLOAD_DIR'])
 
                 env = self.query_env(partial_env=env, log_level=INFO)
                 if env.has_key('PYTHONPATH'):
@@ -307,10 +307,35 @@ class PandaTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixin, Bu
         env = self.query_env()
         env["DM_TRANS"] = "sut"
         env["TEST_DEVICE"] = self.mozpool_device
+        self.mkdir_p(self.abs_dirs['abs_blob_upload_dir'])
+
+        self._start_logcat()
+
         self.info("Running tests...")
 
         for category in SUITE_CATEGORIES:
             self._run_category_suites(category)
+
+        self._stop_logcat()
+
+    def _start_logcat(self):
+        # Start logcat.py as a separate process continuously pulling logcat from 
+        # the device and writing to a file. Output is written directly to
+        # the blobber upload directory so that it is uploaded automatically
+        # at the end of the job.
+        device_ip = socket.gethostbyname(self.mozpool_device)
+        logcat_path = os.path.join(self.abs_dirs['abs_blob_upload_dir'], 'logcat.log')
+        logcat_cmd = ['python', '-u', self.config.get("logcat_path"), \
+            device_ip, logcat_path, '-v time']
+        self.info('Starting logcat: %s' % str(logcat_cmd))
+        self.logcat_proc = subprocess.Popen(logcat_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    def _stop_logcat(self):
+        # Signal logcat.py so that it can cleanup (kill the device logcat process)
+        self.logcat_proc.send_signal(signal.SIGINT)
+        self.logcat_proc.kill()
+        out, err = self.logcat_proc.communicate()
+        self.info("logcat.py output:\n%s\n%s\n" % (out, err))
 
     def _download_unzip_hostutils(self):
         c = self.config
