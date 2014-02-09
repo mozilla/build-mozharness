@@ -41,7 +41,7 @@ testing_config_options = [
      "help": "Path to installed binary.  This is set automatically if run with --install.",
       }],
     [["--test-url"],
-     {"action":"store",
+     {"action": "store",
      "dest": "test_url",
      "default": None,
      "help": "URL to the zip file containing the actual tests",

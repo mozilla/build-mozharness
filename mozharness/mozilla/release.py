@@ -13,7 +13,6 @@ import os
 from mozharness.base.config import parse_config_file
 
 
-
 # SignAndroid {{{1
 class ReleaseMixin():
     release_config = {}
