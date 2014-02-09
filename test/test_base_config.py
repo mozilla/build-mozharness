@@ -4,6 +4,7 @@ import unittest
 JSON_TYPE = None
 try:
     import simplejson as json
+    assert json
 except ImportError:
     import json
     JSON_TYPE = 'json'
@@ -98,6 +99,7 @@ class TestParseConfigFile(unittest.TestCase):
         c.parse_args(['--cfg', 'test/test_override.py,test/test_override2.py',
                       '--opt-cfg', 'test/test_optional.py'])
         self.assertEqual(c._config['keep_string'], "don't change me")
+
 
 class TestReadOnlyDict(unittest.TestCase):
     control_dict = {
@@ -220,21 +222,21 @@ class TestReadOnlyDict(unittest.TestCase):
         with self.assertRaises(AttributeError):
             r['e'][2]['turtles'].append('turtle2')
 
-    def test_locked_second_level_dict_pop(self):
+    def test_locked_second_level_dict_pop2(self):
         r = self.get_locked_ROD()
         self.assertRaises(AssertionError, r['c'].update, {})
 
-    def test_locked_second_level_list_pop(self):
+    def test_locked_second_level_list_pop2(self):
         r = self.get_locked_ROD()
         with self.assertRaises(AttributeError):
             r['e'].pop()
 
-    def test_locked_third_level_mutate(self):
+    def test_locked_third_level_mutate2(self):
         r = self.get_locked_ROD()
         with self.assertRaises(AttributeError):
             r['d']['turtles'].append('turtle2')
 
-    def test_locked_object_in_tuple_mutate(self):
+    def test_locked_object_in_tuple_mutate2(self):
         r = self.get_locked_ROD()
         with self.assertRaises(AttributeError):
             r['e'][2]['turtles'].append('turtle2')
@@ -244,6 +246,7 @@ class TestReadOnlyDict(unittest.TestCase):
         c = deepcopy(r)
         c['e'] = 'hey'
         self.assertEqual(c['e'], 'hey', "can't set var in ROD after deepcopy")
+
 
 class TestActions(unittest.TestCase):
     all_actions = ['a', 'b', 'c', 'd', 'e']
