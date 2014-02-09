@@ -88,4 +88,5 @@ config = {
         "--testing-modules-dir=%(modules_dir)s", "--symbols-path=%(symbols_path)s",
         "--busybox=%(busybox)s", "--total-chunks=%(total_chunks)s", "--this-chunk=%(this_chunk)s",
     ],
+    "vcs_output_timeout": 1760,
 }

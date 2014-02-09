@@ -32,4 +32,5 @@ config = {
         'install',
         'run-tests',
     ],
+    "vcs_output_timeout": 1760,
 }
