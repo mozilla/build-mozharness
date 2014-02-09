@@ -81,7 +81,7 @@ class VCSMixin(object):
         return self.retry(
             self._get_revision,
             error_level=error_level,
-            error_message="Can't checkout %s!" % kwargs['repo'],
+            error_message="Automation Error: Can't checkout %s!" % kwargs['repo'],
             args=(vcs_obj, kwargs['dest']),
         )
 
