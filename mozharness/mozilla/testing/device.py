@@ -22,7 +22,6 @@ from mozharness.base.log import LogMixin, DEBUG
 from mozharness.base.script import ScriptMixin
 
 
-
 # Device flags
 DEVICE_UNREACHABLE = 0x01
 DEVICE_NOT_CONNECTED = 0x02
@@ -35,10 +34,8 @@ DEVICE_CANT_REMOVE_ETC_HOSTS = 0x07
 DEVICE_CANT_SET_TIME = 0x08
 
 
-
 class DeviceException(Exception):
     pass
-
 
 
 # BaseDeviceHandler {{{1
@@ -47,6 +44,7 @@ class BaseDeviceHandler(ScriptMixin, LogMixin):
     device_root = None
     default_port = None
     device_flags = []
+
     def __init__(self, log_obj=None, config=None, script_obj=None):
         super(BaseDeviceHandler, self).__init__()
         self.config = config
@@ -93,7 +91,6 @@ class BaseDeviceHandler(ScriptMixin, LogMixin):
 
     def install_app(self, file_path):
         pass
-
 
 
 # ADBDeviceHandler {{{1
@@ -252,7 +249,7 @@ class ADBDeviceHandler(BaseDeviceHandler):
             killall = self.query_device_exe('killall')
             self.run_command([adb, "-s", device_id, "shell",
                               killall, c["device_package_name"]],
-                              error_list=ADBErrorList)
+                             error_list=ADBErrorList)
             self.uninstall_app(c['device_package_name'])
         if reboot:
             self.reboot_device()
@@ -290,7 +287,7 @@ class ADBDeviceHandler(BaseDeviceHandler):
             if self.ping_device(auto_connect=True, silent=True):
                 return self.ping_device()
             time.sleep(interval)
-        raise DeviceException, "Remote Device Error: waiting for device timed out."
+        raise DeviceException("Remote Device Error: waiting for device timed out.")
 
     def query_device_time(self):
         device_id = self.query_device_id()
@@ -381,7 +378,7 @@ class ADBDeviceHandler(BaseDeviceHandler):
         else:
             output = self.get_output_from_command([adb, "-s", device_id,
                                                    "shell",
-                                                   "ls -d /data/data/%s" % \
+                                                   "ls -d /data/data/%s" %
                                                    c['device_package_name']])
             if output is not None and "No such file" not in output:
                 self.run_command([adb, "-s", device_id, "uninstall",
@@ -429,7 +426,6 @@ class ADBDeviceHandler(BaseDeviceHandler):
                 self.fatal("Unable to remove %s!" % hosts_file)
         else:
             self.debug("%s file doesn't exist; skipping." % hosts_file)
-
 
 
 # SUTDeviceHandler {{{1
@@ -521,7 +517,7 @@ class SUTDeviceHandler(BaseDeviceHandler):
         if strict and c.get('enable_automation'):
             if not str(dev_root).startswith("/mnt/sdcard"):
                 self.add_device_flag(DEVICE_MISSING_SDCARD)
-                self.fatal("dev_root from devicemanager [%s] is not correct!" % \
+                self.fatal("dev_root from devicemanager [%s] is not correct!" %
                            str(dev_root))
         if not dev_root or dev_root == "/tests":
             return None
@@ -529,7 +525,7 @@ class SUTDeviceHandler(BaseDeviceHandler):
 
     def query_device_time(self):
         dm = self.query_devicemanager()
-        timestamp = int(dm.getCurrentTime()) #epoch time in milliseconds
+        timestamp = int(dm.getCurrentTime())  # epoch time in milliseconds
         dt = datetime.datetime.utcfromtimestamp(timestamp / 1000)
         self.info("Current device time is %s" % dt.strftime('%Y/%m/%d %H:%M:%S'))
         return dt
@@ -572,7 +568,7 @@ class SUTDeviceHandler(BaseDeviceHandler):
         # TODO do something with status?
         try:
             dm.installApp(target)
-            self.info('-'*42)
+            self.info('-' * 42)
             self.info("Sleeping for 90 seconds...")
             time.sleep(90)
             self.info('installApp(%s) done - gathering debug info' % target)
@@ -586,7 +582,6 @@ class SUTDeviceHandler(BaseDeviceHandler):
                 self.fatal("Remote Device Error: can't run logcat")
         except self.DMError:
             self.fatal("Remote Device Error: installApp() call failed - exiting")
-
 
     def reboot_device(self):
         dm = self.query_devicemanager()
@@ -657,8 +652,8 @@ class SUTDeviceMozdeviceMixin(SUTDeviceHandler):
 
     def set_device_epoch_time(self, timestamp=int(time.time())):
         dm = self.query_devicemanager()
-        dm._runCmds([{ 'cmd': 'setutime %s' % timestamp}])
-        return dm._runCmds([{ 'cmd': 'clok'}])
+        dm._runCmds([{'cmd': 'setutime %s' % timestamp}])
+        return dm._runCmds([{'cmd': 'clok'}])
 
     def get_logcat(self):
         dm = self.query_devicemanager()
@@ -672,49 +667,50 @@ DEVICE_PROTOCOL_DICT = {
 }
 
 device_config_options = [[
- ["--device-ip"],
- {"action": "store",
-  "dest": "device_ip",
-  "help": "Specify the IP address of the device."
- }
-],[
- ["--device-port"],
- {"action": "store",
-  "dest": "device_port",
-  "help": "Specify the IP port of the device."
- }
-],[
- ["--device-heartbeat-port"],
- {"action": "store",
-  "dest": "device_heartbeat_port",
-  "help": "Specify the heartbeat port of the SUT device."
- }
-],[
- ["--device-protocol"],
- {"action": "store",
-  "type": "choice",
-  "dest": "device_protocol",
-  "choices": DEVICE_PROTOCOL_DICT.keys(),
-  "help": "Specify the device communication protocol."
- }
-],[
- ["--device-type"],
- # A bit useless atm, but we can add new device types as we add support
- # for them.
- {"action": "store",
-  "type": "choice",
-  "choices": ["non-tegra", "tegra250"],
-  "default": "non-tegra",
-  "dest": "device_type",
-  "help": "Specify the device type."
- }
-],[
- ["--devicemanager-path"],
- {"action": "store",
-  "dest": "devicemanager_path",
-  "help": "Specify the parent dir of devicemanagerSUT.py."
- }
+    ["--device-ip"],
+    {"action": "store",
+     "dest": "device_ip",
+     "help": "Specify the IP address of the device."
+     }
+], [
+    ["--device-port"],
+    {"action": "store",
+     "dest": "device_port",
+     "help": "Specify the IP port of the device."
+     }
+], [
+    ["--device-heartbeat-port"],
+    {"action": "store",
+     "dest": "device_heartbeat_port",
+     "help": "Specify the heartbeat port of the SUT device."
+     }
+], [
+    ["--device-protocol"],
+    {"action": "store",
+     "type": "choice",
+     "dest": "device_protocol",
+     "choices": DEVICE_PROTOCOL_DICT.keys(),
+     "help": "Specify the device communication protocol."
+     }
+], [
+    ["--device-type"],
+    # A bit useless atm, but we can add new device types as we add support
+    # for them.
+    {"action": "store",
+     "type": "choice",
+     "choices": ["non-tegra", "tegra250"],
+     "default": "non-tegra",
+     "dest": "device_type",
+     "help": "Specify the device type."
+     }
+], [
+    ["--devicemanager-path"],
+    {"action": "store",
+     "dest": "devicemanager_path",
+     "help": "Specify the parent dir of devicemanagerSUT.py."
+     }
 ]]
+
 
 class DeviceMixin(object):
     '''BaseScript mixin, designed to interface with the device.
@@ -732,9 +728,9 @@ class DeviceMixin(object):
         if not device_class:
             self.fatal("Unknown device_protocol %s; set via --device-protocol!" % str(device_protocol))
         self.device_handler = device_class(
-         log_obj=self.log_obj,
-         config=self.config,
-         script_obj=self,
+            log_obj=self.log_obj,
+            config=self.config,
+            script_obj=self,
         )
         return self.device_handler
 

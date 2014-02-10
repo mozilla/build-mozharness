@@ -29,73 +29,84 @@ from mozharness.mozilla.tooltool import TooltoolMixin
 
 class B2GEmulatorTest(TestingMixin, TooltoolMixin, VCSMixin, BaseScript, BlobUploadMixin):
     test_suites = ('jsreftest', 'reftest', 'mochitest', 'xpcshell', 'crashtest')
-    config_options = [
-        [["--type"],
+    config_options = [[
+        ["--type"],
         {"action": "store",
          "dest": "test_type",
          "default": "browser",
          "help": "The type of tests to run",
-        }],
-        [["--no-update"],
+         }
+    ], [
+        ["--no-update"],
         {"action": "store_false",
          "dest": "update_files",
          "default": True,
          "help": "Don't update emulator and gecko before running tests"
-        }],
-        [["--busybox-url"],
+         }
+    ], [
+        ["--busybox-url"],
         {"action": "store",
          "dest": "busybox_url",
          "default": None,
          "help": "URL to the busybox binary",
-        }],
-        [["--emulator-url"],
+         }
+    ], [
+        ["--emulator-url"],
         {"action": "store",
          "dest": "emulator_url",
          "default": None,
          "help": "URL to the emulator zip",
-        }],
-        [["--xre-url"],
+         }
+    ], [
+        ["--xre-url"],
         {"action": "store",
          "dest": "xre_url",
          "default": None,
          "help": "URL to the desktop xre zip",
-        }],
-        [["--gecko-url"],
+         }
+    ], [
+        ["--gecko-url"],
         {"action": "store",
          "dest": "gecko_url",
          "default": None,
          "help": "URL to the gecko build injected into the emulator",
-        }],
-        [["--test-manifest"],
+         }
+    ], [
+        ["--test-manifest"],
         {"action": "store",
          "dest": "test_manifest",
          "default": None,
          "help": "Path to test manifest to run",
-        }],
-        [["--test-suite"],
+         }
+    ], [
+        ["--test-suite"],
         {"action": "store",
          "dest": "test_suite",
          "type": "choice",
          "choices": test_suites,
          "help": "Which test suite to run",
-        }],
-        [["--adb-path"],
+         }
+    ], [
+        ["--adb-path"],
         {"action": "store",
          "dest": "adb_path",
          "default": None,
          "help": "Path to adb",
-        }],
-        [["--total-chunks"],
+         }
+    ], [
+        ["--total-chunks"],
         {"action": "store",
          "dest": "total_chunks",
          "help": "Number of total chunks",
-        }],
-        [["--this-chunk"],
+         }
+    ], [
+        ["--this-chunk"],
         {"action": "store",
          "dest": "this_chunk",
          "help": "Number of this chunk",
-        }]] + copy.deepcopy(testing_config_options) \
-            + copy.deepcopy(blobupload_config_options)
+         }
+    ]] + copy.deepcopy(testing_config_options) \
+       + copy.deepcopy(blobupload_config_options)
 
     error_list = [
         {'substr': 'FAILED (errors=', 'level': ERROR},
@@ -199,12 +210,17 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, VCSMixin, BaseScript, BlobUpl
     def _pre_create_virtualenv(self, action):
         if self.tree_config.get('use_puppetagain_packages'):
             requirements = [os.path.join('tests', 'b2g',
-                'b2g-unittest-requirements.txt')]
+                            'b2g-unittest-requirements.txt')]
 
-            self.register_virtualenv_module('mozinstall',
-                requirements=requirements)
-            self.register_virtualenv_module('marionette',
-                url=os.path.join('tests', 'marionette'), requirements=requirements)
+            self.register_virtualenv_module(
+                'mozinstall',
+                requirements=requirements
+            )
+            self.register_virtualenv_module(
+                'marionette',
+                url=os.path.join('tests', 'marionette'),
+                requirements=requirements
+            )
             return
 
         dirs = self.query_abs_dirs()
@@ -221,17 +237,19 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, VCSMixin, BaseScript, BlobUpl
         # XXX Bug 908356: This block can be removed as soon as the
         # in-tree requirements files propagate to all active trees.
         mozbase_dir = os.path.join('tests', 'mozbase')
-        self.register_virtualenv_module('manifestparser',
-            url=os.path.join(mozbase_dir, 'manifestdestiny'))
+        self.register_virtualenv_module(
+            'manifestparser',
+            url=os.path.join(mozbase_dir, 'manifestdestiny')
+        )
 
         for m in ('mozfile', 'mozlog', 'mozinfo', 'moznetwork', 'mozhttpd',
-        'mozcrash', 'mozinstall', 'mozdevice', 'mozprofile', 'mozprocess',
-        'mozrunner'):
-            self.register_virtualenv_module(m, url=os.path.join(mozbase_dir,
-                m))
+                  'mozcrash', 'mozinstall', 'mozdevice', 'mozprofile', 'mozprocess',
+                  'mozrunner'):
+            self.register_virtualenv_module(
+                m, url=os.path.join(mozbase_dir, m))
 
-        self.register_virtualenv_module('marionette', url=os.path.join('tests',
-            'marionette'))
+        self.register_virtualenv_module(
+            'marionette', url=os.path.join('tests', 'marionette'))
 
     def _query_abs_base_cmd(self, suite):
         dirs = self.query_abs_dirs()
@@ -264,9 +282,9 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, VCSMixin, BaseScript, BlobUpl
 
     def _query_adb(self):
         return self.which('adb') or \
-               os.getenv('ADB_PATH') or \
-               os.path.join(self.query_abs_dirs()['abs_b2g-distro_dir'],
-                            'out', 'host', 'linux-x86', 'bin', 'adb')
+            os.getenv('ADB_PATH') or \
+            os.path.join(self.query_abs_dirs()['abs_b2g-distro_dir'],
+                         'out', 'host', 'linux-x86', 'bin', 'adb')
 
     def preflight_run_tests(self):
         super(B2GEmulatorTest, self).preflight_run_tests()

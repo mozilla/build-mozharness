@@ -44,86 +44,99 @@ class MarionetteOutputParser(TestSummaryOutputParserHelper):
             self.install_gecko_failed = True
         super(MarionetteOutputParser, self).parse_single_line(line)
 
+
 class MarionetteTest(TestingMixin, TooltoolMixin,
                      MercurialScript, BlobUploadMixin, TransferMixin, GaiaMixin):
-    config_options = [
-        [["--application"],
-         {"action": "store",
-          "dest": "application",
-          "default": None,
-          "help": "application name of binary"
-         }],
-        [["--gaia-dir"],
-         {"action": "store",
-          "dest": "gaia_dir",
-          "default": None,
-          "help": "directory where gaia repo should be cloned"
-         }],
-        [["--gaia-repo"],
-         {"action": "store",
-          "dest": "gaia_repo",
-          "default": "https://hg.mozilla.org/integration/gaia-central",
-          "help": "url of gaia repo to clone"
-         }],
-        [["--gaia-branch"],
-         {"action": "store",
-          "dest": "gaia_branch",
-          "default": "default",
-          "help": "branch of gaia repo to clone"
-         }],
-        [["--test-type"],
+    config_options = [[
+        ["--application"],
+        {"action": "store",
+         "dest": "application",
+         "default": None,
+         "help": "application name of binary"
+         }
+    ], [
+        ["--gaia-dir"],
+        {"action": "store",
+         "dest": "gaia_dir",
+         "default": None,
+         "help": "directory where gaia repo should be cloned"
+         }
+    ], [
+        ["--gaia-repo"],
+        {"action": "store",
+         "dest": "gaia_repo",
+         "default": "https://hg.mozilla.org/integration/gaia-central",
+         "help": "url of gaia repo to clone"
+         }
+    ], [
+        ["--gaia-branch"],
+        {"action": "store",
+         "dest": "gaia_branch",
+         "default": "default",
+         "help": "branch of gaia repo to clone"
+         }
+    ], [
+        ["--test-type"],
         {"action": "store",
          "dest": "test_type",
          "default": "browser",
          "help": "The type of tests to run",
-        }],
-        [["--marionette-address"],
+         }
+    ], [
+        ["--marionette-address"],
         {"action": "store",
          "dest": "marionette_address",
          "default": None,
          "help": "The host:port of the Marionette server running inside Gecko.  Unused for emulator testing",
-        }],
-        [["--emulator"],
+         }
+    ], [
+        ["--emulator"],
         {"action": "store",
          "type": "choice",
          "choices": ['arm'],
          "dest": "emulator",
          "default": None,
          "help": "Use an emulator for testing",
-        }],
-        [["--gaiatest"],
+         }
+    ], [
+        ["--gaiatest"],
         {"action": "store_true",
          "dest": "gaiatest",
          "default": False,
          "help": "Runs gaia-ui-tests by pulling down the test repo and invoking "
                  "gaiatest's runtests.py rather than Marionette's."
-        }],
-        [["--no-update"],
+         }
+    ], [
+        ["--no-update"],
         {"action": "store_false",
          "dest": "update_files",
          "default": True,
          "help": "Don't update emulator and gecko before running tests"
-        }],
-        [["--test-manifest"],
+         }
+    ], [
+        ["--test-manifest"],
         {"action": "store",
          "dest": "test_manifest",
          "default": "unit-tests.ini",
          "help": "Path to test manifest to run relative to the Marionette "
                  "tests directory",
-         }],
-        [["--xre-path"],
-         {"action": "store",
-          "dest": "xre_path",
-          "default": "xulrunner-sdk",
-          "help": "directory (relative to gaia repo) of xulrunner-sdk"
-         }],
-        [["--xre-url"],
-         {"action": "store",
-          "dest": "xre_url",
-          "default": None,
-          "help": "url of desktop xre archive"
-         }]] + copy.deepcopy(testing_config_options) + \
-               copy.deepcopy(blobupload_config_options)
+         }
+    ], [
+        ["--xre-path"],
+        {"action": "store",
+         "dest": "xre_path",
+         "default": "xulrunner-sdk",
+         "help": "directory (relative to gaia repo) of xulrunner-sdk"
+         }
+    ], [
+        ["--xre-url"],
+        {"action": "store",
+         "dest": "xre_url",
+         "default": None,
+         "help": "url of desktop xre archive"
+         }
+    ]] + copy.deepcopy(testing_config_options) \
+       + copy.deepcopy(blobupload_config_options)
 
     error_list = [
         {'substr': 'FAILED (errors=', 'level': WARNING},
@@ -151,7 +164,7 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
                              'install',
                              'run-marionette'],
             require_config_file=require_config_file,
-            config={'require_test_zip': True,})
+            config={'require_test_zip': True})
 
         # these are necessary since self.config is read only
         c = self.config
@@ -199,8 +212,8 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
     def _configure_marionette_virtualenv(self, action):
         if self.tree_config.get('use_puppetagain_packages'):
             self.register_virtualenv_module('mozinstall')
-            self.register_virtualenv_module('marionette', os.path.join('tests',
-                'marionette'))
+            self.register_virtualenv_module(
+                'marionette', os.path.join('tests', 'marionette'))
 
             return
 
@@ -217,21 +230,22 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
             # XXX Bug 908356: This block can be removed as soon as the
             # in-tree requirements files propagate to all active trees.
             mozbase_dir = os.path.join('tests', 'mozbase')
-            self.register_virtualenv_module('manifestparser',
-                    os.path.join(mozbase_dir, 'manifestdestiny'))
+            self.register_virtualenv_module(
+                'manifestparser', os.path.join(mozbase_dir, 'manifestdestiny'))
             for m in ('mozfile', 'mozlog', 'mozinfo', 'moznetwork', 'mozhttpd',
-                    'mozcrash', 'mozinstall', 'mozdevice', 'mozprofile',
-                    'mozprocess', 'mozrunner'):
-                self.register_virtualenv_module(m, os.path.join(mozbase_dir,
-                    m))
+                      'mozcrash', 'mozinstall', 'mozdevice', 'mozprofile',
+                      'mozprocess', 'mozrunner'):
+                self.register_virtualenv_module(
+                    m, os.path.join(mozbase_dir, m))
 
-            self.register_virtualenv_module('marionette', os.path.join('tests',
-                'marionette'))
+            self.register_virtualenv_module(
+                'marionette', os.path.join('tests', 'marionette'))
 
         if self.config.get('gaiatest'):
             requirements = os.path.join(self.query_abs_dirs()['abs_gaiatest_dir'],
-                                    'tbpl_requirements.txt')
-            self.register_virtualenv_module('gaia-ui-tests',
+                                        'tbpl_requirements.txt')
+            self.register_virtualenv_module(
+                'gaia-ui-tests',
                 url=self.query_abs_dirs()['abs_gaiatest_dir'],
                 method='pip',
                 requirements=[requirements],
@@ -244,16 +258,16 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
             dest = dirs['abs_gaia_dir']
 
             repo = {
-              'repo_path': self.config.get('gaia_repo'),
-              'revision': 'default',
-              'branch': self.config.get('gaia_branch')
+                'repo_path': self.config.get('gaia_repo'),
+                'revision': 'default',
+                'branch': self.config.get('gaia_branch')
             }
 
             if self.buildbot_config is not None:
                 # get gaia commit via hgweb
                 repo.update({
-                  'revision': self.buildbot_config['properties']['revision'],
-                  'repo_path': 'https://hg.mozilla.org/%s' % self.buildbot_config['properties']['repo_path']
+                    'revision': self.buildbot_config['properties']['revision'],
+                    'repo_path': 'https://hg.mozilla.org/%s' % self.buildbot_config['properties']['repo_path']
                 })
 
             self.clone_gaia(dest, repo,
