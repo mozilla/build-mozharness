@@ -20,7 +20,7 @@ UnsignApkErrorList = [{
     'regex': re.compile(r'''zip warning: name not matched: '?META-INF/'''),
     'level': INFO,
     'explanation': r'''This apk is already unsigned.''',
-},{
+}, {
     'substr': r'''zip error: Nothing to do!''',
     'level': IGNORE,
 }] + ZipErrorList
@@ -29,7 +29,6 @@ TestJarsignerErrorList = [{
     "substr": "jarsigner: unable to open jar file:",
     "level": IGNORE,
 }] + JarsignerErrorList
-
 
 
 # BaseSigningMixin {{{1
@@ -52,7 +51,6 @@ class BaseSigningMixin(object):
         sha512 = m.hexdigest()
         self.info(" %s" % sha512)
         return sha512
-
 
 
 # AndroidSigningMixin {{{1

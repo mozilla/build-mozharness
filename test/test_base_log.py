@@ -8,14 +8,17 @@ import mozharness.base.log as log
 tmp_dir = "test_log_dir"
 log_name = "test"
 
+
 def clean_log_dir():
     if os.path.exists(tmp_dir):
         shutil.rmtree(tmp_dir)
+
 
 def get_log_file_path(level=None):
     if level:
         return os.path.join(tmp_dir, "%s_%s.log" % (log_name, level))
     return os.path.join(tmp_dir, "%s.log" % log_name)
+
 
 class TestLog(unittest.TestCase):
     def setUp(self):

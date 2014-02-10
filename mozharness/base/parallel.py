@@ -7,8 +7,8 @@
 """Generic ways to parallelize jobs.
 """
 
-# ChunkingMixin {{{1
 
+# ChunkingMixin {{{1
 class ChunkingMixin(object):
     """Generic signing helper methods.
     """

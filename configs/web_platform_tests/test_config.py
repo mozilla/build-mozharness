@@ -24,4 +24,3 @@ config = {
 
     "pip_index": False,
 }
-

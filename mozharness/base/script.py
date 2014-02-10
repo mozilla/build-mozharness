@@ -659,7 +659,7 @@ class ScriptMixin(object):
                     parser.add_lines(line)
 
                 def onTimeout():
-                    self.info("mozprocess timed out")
+                    self.info("Automation Error: mozprocess timed out after %s seconds running %s" % (str(output_timeout), str(command)))
 
                 p = ProcessHandler(command,
                                    env=env,

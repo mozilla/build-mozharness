@@ -21,7 +21,6 @@ from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.l10n.locales import LocalesMixin
 
 
-
 # MultiLocaleBuild {{{1
 class MultiLocaleBuild(LocalesMixin, MercurialScript):
     """ This class targets Fennec multilocale builds.
@@ -29,69 +28,69 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
         Now that we have a different approach for B2G multilocale,
         it's most likely misnamed. """
     config_options = [[
-     ["--locale",],
-     {"action": "extend",
-      "dest": "locales",
-      "type": "string",
-      "help": "Specify the locale(s) to repack"
-     }
-    ],[
-     ["--merge-locales",],
-     {"action": "store_true",
-      "dest": "merge_locales",
-      "default": False,
-      "help": "Use default [en-US] if there are missing strings"
-     }
-    ],[
-     ["--no-merge-locales",],
-     {"action": "store_false",
-      "dest": "merge_locales",
-      "help": "Do not allow missing strings"
-     }
-    ],[
-     ["--objdir",],
-     {"action": "store",
-      "dest": "objdir",
-      "type": "string",
-      "default": "objdir",
-      "help": "Specify the objdir"
-     }
-    ],[
-     ["--l10n-base",],
-     {"action": "store",
-      "dest": "hg_l10n_base",
-      "type": "string",
-      "help": "Specify the L10n repo base directory"
-     }
-    ],[
-     ["--l10n-tag",],
-     {"action": "store",
-      "dest": "hg_l10n_tag",
-      "type": "string",
-      "help": "Specify the L10n tag"
-     }
-    ],[
-     ["--tag-override",],
-     {"action": "store",
-      "dest": "tag_override",
-      "type": "string",
-      "help": "Override the tags set for all repos"
-     }
-    ],[
-     ["--user-repo-override",],
-     {"action": "store",
-      "dest": "user_repo_override",
-      "type": "string",
-      "help": "Override the user repo path for all repos"
-     }
-    ],[
-     ["--l10n-dir",],
-     {"action": "store",
-      "dest": "l10n_dir",
-      "type": "string",
-      "default": "l10n",
-      "help": "Specify the l10n dir name"
-     }
+        ["--locale"],
+        {"action": "extend",
+         "dest": "locales",
+         "type": "string",
+         "help": "Specify the locale(s) to repack"
+         }
+    ], [
+        ["--merge-locales"],
+        {"action": "store_true",
+         "dest": "merge_locales",
+         "default": False,
+         "help": "Use default [en-US] if there are missing strings"
+         }
+    ], [
+        ["--no-merge-locales"],
+        {"action": "store_false",
+         "dest": "merge_locales",
+         "help": "Do not allow missing strings"
+         }
+    ], [
+        ["--objdir"],
+        {"action": "store",
+         "dest": "objdir",
+         "type": "string",
+         "default": "objdir",
+         "help": "Specify the objdir"
+         }
+    ], [
+        ["--l10n-base"],
+        {"action": "store",
+         "dest": "hg_l10n_base",
+         "type": "string",
+         "help": "Specify the L10n repo base directory"
+         }
+    ], [
+        ["--l10n-tag"],
+        {"action": "store",
+         "dest": "hg_l10n_tag",
+         "type": "string",
+         "help": "Specify the L10n tag"
+         }
+    ], [
+        ["--tag-override"],
+        {"action": "store",
+         "dest": "tag_override",
+         "type": "string",
+         "help": "Override the tags set for all repos"
+         }
+    ], [
+        ["--user-repo-override"],
+        {"action": "store",
+         "dest": "user_repo_override",
+         "type": "string",
+         "help": "Override the user repo path for all repos"
+         }
+    ], [
+        ["--l10n-dir"],
+        {"action": "store",
+         "dest": "l10n_dir",
+         "type": "string",
+         "default": "l10n",
+         "help": "Specify the l10n dir name"
+         }
     ]]
 
     def __init__(self, require_config_file=True):

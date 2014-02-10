@@ -4,9 +4,8 @@ import socket
 hostname = socket.gethostname()
 
 GECKO_BRANCHES = {
-    'v1.1': 'mozilla-beta',
-    'v1.2': 'mozilla-aurora',
-    'v1.3': 'mozilla-central',
+    'v1.3': 'mozilla-beta',
+    'v1.4': 'mozilla-central',
 }
 
 GECKO_CONFIG_TEMPLATE = {
@@ -83,6 +82,19 @@ config = {
     "l10n_config": {
         "gecko_config": GECKO_CONFIG,
         "gaia_config": {
+            'v1_3': {
+                'locales_file_url': 'https://raw.github.com/mozilla-b2g/gaia/v1.3/locales/languages_dev.json',
+                'hg_url': 'https://hg.mozilla.org/releases/gaia-l10n/v1_3/%(locale)s',
+                'git_branch_name': 'v1.3',
+                'targets': [{
+                    "target_dest": "gitmo-gaia-l10n",
+                }],
+                'tag_config': {
+                    'tag_regexes': [
+                        '^B2G_',
+                    ],
+                },
+            },
             'v1_2': {
                 'locales_file_url': 'https://raw.github.com/mozilla-b2g/gaia/v1.2/locales/languages_dev.json',
                 'hg_url': 'https://hg.mozilla.org/releases/gaia-l10n/v1_2/%(locale)s',

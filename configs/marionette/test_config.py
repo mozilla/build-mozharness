@@ -18,4 +18,3 @@ config = {
         'run-marionette',
     ],
 }
-

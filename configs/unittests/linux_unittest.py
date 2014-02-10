@@ -65,6 +65,8 @@ config = {
     ],
     "jittest_options": [
         "tests/bin/js",
+        "--no-slow",
+        "--no-progress",
         "--tinderbox",
         "--tbpl"
     ],
@@ -93,6 +95,7 @@ config = {
         "reftest-ipc": {'env': {'MOZ_OMTC_ENABLED': '1',
                                 'MOZ_DISABLE_CONTEXT_SHARING_GLX': '1'},
                         'options': ['--setpref=browser.tabs.remote=true',
+                                    '--setpref=browser.tabs.remote.autostart=true',
                                     '--setpref=layers.offmainthreadcomposition.testing.enabled=true',
                                     'tests/reftest/tests/layout/reftests/reftest-sanity/reftest.list']},
         "reftest-no-accel": ['--setpref=layers.acceleration.force-enabled=disabled',
@@ -100,6 +103,7 @@ config = {
         "crashtest-ipc": {'env': {'MOZ_OMTC_ENABLED': '1',
                                   'MOZ_DISABLE_CONTEXT_SHARING_GLX': '1'},
                           'options': ['--setpref=browser.tabs.remote=true',
+                                      '--setpref=browser.tabs.remote.autostart=true',
                                       '--setpref=layers.offmainthreadcomposition.testing.enabled=true',
                                       'tests/reftest/tests/testing/crashtest/crashtests.list']},
     },
@@ -143,7 +147,7 @@ config = {
     "minidump_save_path": "%(abs_work_dir)s/../minidumps",
     "buildbot_max_log_size": 52428800,
     "default_blob_upload_servers": [
-         "https://blobupload.elasticbeanstalk.com",
+        "https://blobupload.elasticbeanstalk.com",
     ],
-    "blob_uploader_auth_file" : os.path.join(os.getcwd(), "oauth.txt"),
+    "blob_uploader_auth_file": os.path.join(os.getcwd(), "oauth.txt"),
 }

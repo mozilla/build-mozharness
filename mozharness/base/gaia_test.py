@@ -24,44 +24,50 @@ from mozharness.mozilla.tooltool import TooltoolMixin
 
 
 class GaiaTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin,
-    GaiaMixin):
-    config_options = [
-        [["--gaia-dir"],
-         {"action": "store",
-          "dest": "gaia_dir",
-          "default": None,
-          "help": "directory where gaia repo should be cloned"
-         }],
-        [["--gaia-repo"],
-         {"action": "store",
-          "dest": "gaia_repo",
-          "default": "https://hg.mozilla.org/integration/gaia-central",
-          "help": "url of gaia repo to clone"
-         }],
-        [["--gaia-branch"],
-         {"action": "store",
-          "dest": "gaia_branch",
-          "default": "default",
-          "help": "branch of gaia repo to clone"
-         }],
-        [["--xre-path"],
-         {"action": "store",
-          "dest": "xre_path",
-          "default": "xulrunner-sdk",
-          "help": "directory (relative to gaia repo) of xulrunner-sdk"
-         }],
-        [["--xre-url"],
-         {"action": "store",
-          "dest": "xre_url",
-          "default": None,
-          "help": "url of desktop xre archive"
-         }],
-        [["--npm-registry"],
-         {"action": "store",
-          "dest": "npm_registry",
-          "default": "http://npm-mirror.pub.build.mozilla.org",
-          "help": "where to go for node packages"
-         }]] + copy.deepcopy(testing_config_options)
+               GaiaMixin):
+    config_options = [[
+        ["--gaia-dir"],
+        {"action": "store",
+         "dest": "gaia_dir",
+         "default": None,
+         "help": "directory where gaia repo should be cloned"
+         }
+    ], [
+        ["--gaia-repo"],
+        {"action": "store",
+         "dest": "gaia_repo",
+         "default": "https://hg.mozilla.org/integration/gaia-central",
+         "help": "url of gaia repo to clone"
+         }
+    ], [
+        ["--gaia-branch"],
+        {"action": "store",
+         "dest": "gaia_branch",
+         "default": "default",
+         "help": "branch of gaia repo to clone"
+         }
+    ], [
+        ["--xre-path"],
+        {"action": "store",
+         "dest": "xre_path",
+         "default": "xulrunner-sdk",
+         "help": "directory (relative to gaia repo) of xulrunner-sdk"
+         }
+    ], [
+        ["--xre-url"],
+        {"action": "store",
+         "dest": "xre_url",
+         "default": None,
+         "help": "url of desktop xre archive"
+         }
+    ], [
+        ["--npm-registry"],
+        {"action": "store",
+         "dest": "npm_registry",
+         "default": "http://npm-mirror.pub.build.mozilla.org",
+         "help": "where to go for node packages"
+         }
+    ]] + copy.deepcopy(testing_config_options)
 
     error_list = [
         {'substr': 'FAILED (errors=', 'level': WARNING},
@@ -103,16 +109,16 @@ class GaiaTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin,
         dest = dirs['abs_gaia_dir']
 
         repo = {
-          'repo_path': self.config.get('gaia_repo'),
-          'revision': 'default',
-          'branch': self.config.get('gaia_branch')
+            'repo_path': self.config.get('gaia_repo'),
+            'revision': 'default',
+            'branch': self.config.get('gaia_branch')
         }
 
         if self.buildbot_config is not None:
             # get gaia commit via hgweb
             repo.update({
-              'revision': self.buildbot_config['properties']['revision'],
-              'repo_path': 'https://hg.mozilla.org/%s' % self.buildbot_config['properties']['repo_path']
+                'revision': self.buildbot_config['properties']['revision'],
+                'repo_path': 'https://hg.mozilla.org/%s' % self.buildbot_config['properties']['repo_path']
             })
 
         self.clone_gaia(dest, repo,
@@ -153,8 +159,8 @@ class GaiaTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin,
         else:
             self.fatal('mozbase_requirements.txt not found!')
 
-        self.register_virtualenv_module('gaia-unit-tests',
-            url=dirs['abs_runner_dir'])
+        self.register_virtualenv_module(
+            'gaia-unit-tests', url=dirs['abs_runner_dir'])
 
     def _build_arg(self, option, value):
         """
@@ -226,18 +232,18 @@ class GaiaTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin,
         Publish the results of the test suite.
         """
         if code == 0:
-          level = INFO
-          status = 'success'
-          tbpl_status = TBPL_SUCCESS
+            level = INFO
+            status = 'success'
+            tbpl_status = TBPL_SUCCESS
         elif code == 10:
-          level = INFO
-          status = 'test failures'
-          tbpl_status = TBPL_WARNING
+            level = INFO
+            status = 'test failures'
+            tbpl_status = TBPL_WARNING
         else:
-          level = ERROR
-          status = 'harness failures'
-          tbpl_status = TBPL_FAILURE
+            level = ERROR
+            status = 'harness failures'
+            tbpl_status = TBPL_FAILURE
 
         self.log('Tests exited with return code %s: %s' % (code, status),
-            level=level)
+                 level=level)
         self.buildbot_status(tbpl_status)

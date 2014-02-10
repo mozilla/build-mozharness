@@ -5,6 +5,7 @@ import mozharness.base.python as python
 
 here = os.path.dirname(os.path.abspath(__file__))
 
+
 class TestVirtualenvMixin(unittest.TestCase):
     def test_package_versions(self):
         example = os.path.join(here, 'pip-freeze.example.txt')

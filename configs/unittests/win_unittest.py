@@ -65,6 +65,8 @@ config = {
     ],
     "jittest_options": [
         "tests/bin/js",
+        "--no-slow",
+        "--no-progress",
         "--tinderbox",
         "--tbpl"
     ],
@@ -93,10 +95,12 @@ config = {
         "crashtest": ["tests/reftest/tests/testing/crashtest/crashtests.list"],
         "jsreftest": ["--extra-profile-file=tests/jsreftest/tests/user.js", "tests/jsreftest/tests/jstests.list"],
         "reftest-ipc": ['--setpref=browser.tabs.remote=true',
+                        '--setpref=browser.tabs.remote.autostart=true',
                         'tests/reftest/tests/layout/reftests/reftest-sanity/reftest.list'],
         "reftest-no-accel": ["--setpref=gfx.direct2d.disabled=true", "--setpref=layers.acceleration.disabled=true",
                              "tests/reftest/tests/layout/reftests/reftest.list"],
         "crashtest-ipc": ['--setpref=browser.tabs.remote=true',
+                          '--setpref=browser.tabs.remote.autostart=true',
                           'tests/reftest/tests/testing/crashtest/crashtests.list'],
     },
     "all_xpcshell_suites": {
@@ -140,7 +144,7 @@ config = {
     "minidump_save_path": "%(abs_work_dir)s/../minidumps",
     "buildbot_max_log_size": 52428800,
     "default_blob_upload_servers": [
-         "https://blobupload.elasticbeanstalk.com",
+        "https://blobupload.elasticbeanstalk.com",
     ],
-    "blob_uploader_auth_file" : os.path.join(os.getcwd(), "oauth.txt"),
+    "blob_uploader_auth_file": os.path.join(os.getcwd(), "oauth.txt"),
 }

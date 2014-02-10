@@ -15,6 +15,7 @@ from mozharness.mozilla.buildbot import BuildbotMixin
 
 SUCCESS, WARNINGS, FAILURE, EXCEPTION = xrange(4)
 
+
 class ServoBuild(MockMixin, BaseScript, VCSMixin, BuildbotMixin):
     config_options = [
         [["--repo"], {
@@ -41,6 +42,7 @@ class ServoBuild(MockMixin, BaseScript, VCSMixin, BuildbotMixin):
             "type": int,
         }],
     ]
+
     def __init__(self):
         BaseScript.__init__(self,
                             config_options=self.config_options,

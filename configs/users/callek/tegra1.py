@@ -10,8 +10,8 @@ config = {
     "device_package_name": "org.mozilla.fennec",
     "talos_device_name": "tegra-224",
     "virtualenv_modules": ["pywin32", "talos"],
-    "exes": { "easy_install": ['d:\\Sources\\mozharness\\build\\venv\\Scripts\\python.exe',
-                               'd:\\Sources\\mozharness\\build\\venv\\scripts\\easy_install-2.6-script.py'], },
+    "exes": {"easy_install": ['d:\\Sources\\mozharness\\build\\venv\\Scripts\\python.exe',
+                              'd:\\Sources\\mozharness\\build\\venv\\scripts\\easy_install-2.6-script.py'], },
 
     # set graph_server to a real graph server if you want to publish your
     # results (the device needs to be in the database already or you'll

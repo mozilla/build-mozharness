@@ -28,7 +28,7 @@ from mozharness.base.vcs.mercurial import MercurialVCS
 # To avoid needing to specify --vcs VCS, softlink sourcetool.py to
 # VCStool.py (where VCS is the VCS you want to use, and is a member of
 # VCS_CHOICES).
-VCS_CHOICES = ['hg',]
+VCS_CHOICES = ['hg', ]
 VCS_DEFAULT = None
 VCS_REQUIRED_OPTION = "--vcs VCS "
 VCS_NAME = os.path.basename(sys.argv[0]).replace('tool.py', '')
@@ -42,6 +42,7 @@ SOURCE_TOOL_USAGE = """Usage:
 
     %%prog [-h|--help]""" % (VCS_REQUIRED_OPTION, VCS_REQUIRED_OPTION)
 
+
 # SourceTool {{{1
 class SourceTool(BaseScript):
     # These options were chosen with an eye towards backwards
@@ -49,91 +50,90 @@ class SourceTool(BaseScript):
     #
     # TODO: get rid of env options, or at least remove HG from the names.
     config_options = [[
-     ["--rev", "-r"],
-     {"action": "store",
-      "dest": "vcs_revision",
-      "default": os.environ.get('HG_REV'),
-      "help": "Specify which revision to update to."
-     }
-    ],[
-     ["--branch", "-b"],
-     {"action": "store",
-      "dest": "vcs_branch",
-      "default": os.environ.get('HG_BRANCH', 'default'),
-      "help": "Specify which branch to update to."
-     }
-    ],[
-     # Comment this out til we have more options.
-     ["--vcs",],
-     {"action": "store",
-      "type": "choice",
-      "dest": "vcs",
-      "default": VCS_DEFAULT,
-      "choices": VCS_CHOICES,
-      "help": "Specify which VCS to use."
-     }
-    ],[
-     ["--props-file", "-p"],
-     {"action": "store",
-      "dest": "vcs_propsfile",
-      "default": os.environ.get('PROPERTIES_FILE'),
-      "help": "build json file containing revision information"
-     }
-    ],[
-     # TODO --tbox and --no-tbox should DIAF once we fix bug 630538.
-     ["--tbox",],
-     {"action": "store_true",
-      "dest": "tbox_output",
-      "default": bool(os.environ.get('PROPERTIES_FILE')),
-      "help": "Output TinderboxPrint messages."
-     }
-    ],[
-     ["--no-tbox",],
-     {"action": "store_false",
-      "dest": "tbox_output",
-      "help": "Don't output TinderboxPrint messages."
-     }
-    ],[
-     ["--repo",],
-     {"action": "store",
-      "dest": "vcs_repo",
-      "help": "Specify the VCS repo."
-     }
-    ],[
-     ["--dest",],
-     {"action": "store",
-      "dest": "vcs_dest",
-      "help": "Specify the destination directory (optional)"
-     }
-    ],[
-     # TODO Are the shared options HG-specific?
-     # I think there are, or we can create, similar behavior in other
-     # VCSs.
-     ["--shared-dir", '-s'],
-     {"action": "store",
-      "dest": "vcs_shared_dir",
-      "default": os.environ.get('HG_SHARE_BASE_DIR'),
-      "help": "clone to a shared directory"
-     }
-    ],[
-     ["--allow-unshared-local-clones",],
-     {"action": "store_true",
-      "dest": "vcs_allow_unshared_local_clones",
-      "default": False,
-      "help": "Allow unshared checkouts if --shared-dir is specified"
-     }
-    ],[
-     ["--check-outgoing",],
-     {"action": "store_true",
-      "dest": "vcs_strip_outgoing",
-      "default": False,
-      "help": "check for and clobber outgoing changesets"
-     }
+        ["--rev", "-r"],
+        {"action": "store",
+         "dest": "vcs_revision",
+         "default": os.environ.get('HG_REV'),
+         "help": "Specify which revision to update to."
+         }
+    ], [
+        ["--branch", "-b"],
+        {"action": "store",
+         "dest": "vcs_branch",
+         "default": os.environ.get('HG_BRANCH', 'default'),
+         "help": "Specify which branch to update to."
+         }
+    ], [
+        ["--vcs", ],
+        {"action": "store",
+         "type": "choice",
+         "dest": "vcs",
+         "default": VCS_DEFAULT,
+         "choices": VCS_CHOICES,
+         "help": "Specify which VCS to use."
+         }
+    ], [
+        ["--props-file", "-p"],
+        {"action": "store",
+         "dest": "vcs_propsfile",
+         "default": os.environ.get('PROPERTIES_FILE'),
+         "help": "build json file containing revision information"
+         }
+    ], [
+        # TODO --tbox and --no-tbox should DIAF once we fix bug 630538.
+        ["--tbox", ],
+        {"action": "store_true",
+         "dest": "tbox_output",
+         "default": bool(os.environ.get('PROPERTIES_FILE')),
+         "help": "Output TinderboxPrint messages."
+         }
+    ], [
+        ["--no-tbox", ],
+        {"action": "store_false",
+         "dest": "tbox_output",
+         "help": "Don't output TinderboxPrint messages."
+         }
+    ], [
+        ["--repo", ],
+        {"action": "store",
+         "dest": "vcs_repo",
+         "help": "Specify the VCS repo."
+         }
+    ], [
+        ["--dest", ],
+        {"action": "store",
+         "dest": "vcs_dest",
+         "help": "Specify the destination directory (optional)"
+         }
+    ], [
+        # TODO Are the shared options HG-specific?
+        # I think there are, or we can create, similar behavior in other
+        # VCSs.
+        ["--shared-dir", '-s'],
+        {"action": "store",
+         "dest": "vcs_shared_dir",
+         "default": os.environ.get('HG_SHARE_BASE_DIR'),
+         "help": "clone to a shared directory"
+         }
+    ], [
+        ["--allow-unshared-local-clones", ],
+        {"action": "store_true",
+         "dest": "vcs_allow_unshared_local_clones",
+         "default": False,
+         "help": "Allow unshared checkouts if --shared-dir is specified"
+         }
+    ], [
+        ["--check-outgoing", ],
+        {"action": "store_true",
+         "dest": "vcs_strip_outgoing",
+         "default": False,
+         "help": "check for and clobber outgoing changesets"
+         }
     ]]
 
     def __init__(self, require_config_file=False):
         BaseScript.__init__(self, config_options=self.config_options,
-                            all_actions=['source',],
+                            all_actions=['source', ],
                             usage=SOURCE_TOOL_USAGE,
                             require_config_file=require_config_file)
 
@@ -153,7 +153,7 @@ class SourceTool(BaseScript):
         args = rw_config.args
         c = self.config
         if c.get('vcs') is None:
-            self.fatal("Must specify --vcs!\n\n%s" % \
+            self.fatal("Must specify --vcs!\n\n%s" %
                        rw_config.config_parser.format_help())
         if c.get('vcs_repo') is None:
             if len(args) not in (1, 2):
@@ -179,24 +179,24 @@ You need to either specify --repo or specify it after the options:
         vcs_obj = None
         if self.config['vcs'] == 'hg':
             vcs_obj = MercurialVCS(
-             log_obj=self.log_obj,
-             #
-             # Torn between creating a smaller, more flexible config per
-             # helper object, or passing the read-only master config as
-             # vcs_obj.config and creating a smaller vcs_obj.vcs_config.
-             #
-             # Deciding on the latter for now, while reserving the right
-             # to change my mind later.
-             config=self.config,
-             vcs_config={
-              'repo': self.config['vcs_repo'],
-              'dest': self.config['vcs_dest'],
-              'branch': self.config.get('vcs_branch'),
-              'revision': self.config.get('vcs_revision'),
-              'vcs_share_base': self.config.get('vcs_shared_dir'),
-              'allow_unshared_local_clones': self.config.get('vcs_allow_unshared_local_clones'),
-              'halt_on_failure': self.config.get('halt_on_failure', True),
-             }
+                log_obj=self.log_obj,
+                #
+                # Torn between creating a smaller, more flexible config per
+                # helper object, or passing the read-only master config as
+                # vcs_obj.config and creating a smaller vcs_obj.vcs_config.
+                #
+                # Deciding on the latter for now, while reserving the right
+                # to change my mind later.
+                config=self.config,
+                vcs_config={
+                    'repo': self.config['vcs_repo'],
+                    'dest': self.config['vcs_dest'],
+                    'branch': self.config.get('vcs_branch'),
+                    'revision': self.config.get('vcs_revision'),
+                    'vcs_share_base': self.config.get('vcs_shared_dir'),
+                    'allow_unshared_local_clones': self.config.get('vcs_allow_unshared_local_clones'),
+                    'halt_on_failure': self.config.get('halt_on_failure', True),
+                }
             )
         else:
             self.fatal("I don't know how to handle vcs '%s'!" % self.config['vcs'])
