@@ -39,6 +39,7 @@ class GaiaUnitTest(GaiaTest):
                                                             'b2g', 'b2g-bin')))
         cmd.extend(self._build_arg('--profile', os.path.join(dirs['abs_gaia_dir'],
                                                              'profile-debug')))
+        cmd.extend(self._build_arg('--symbols-path', self.symbols_path))
 
         output_parser = TestSummaryOutputParserHelper(config=self.config,
                                                       log_obj=self.log_obj,
