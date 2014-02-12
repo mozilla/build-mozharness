@@ -160,7 +160,12 @@ class BumpGaiaJson(MercurialScript):
                 return 0
         contents = {
             "repo_path": repo_path,
-            "revision": revision
+            "revision": revision,
+            "git": {
+                "remote": "",
+                "branch": "",
+                "revision": ""
+            }
         }
         if self.write_to_file(path, json.dumps(contents, indent=4) + "\n") != path:
             self.add_summary(

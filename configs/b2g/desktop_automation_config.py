@@ -46,7 +46,7 @@ config = {
         "--total-chunks=%(total_chunks)s", "--this-chunk=%(this_chunk)s",
         "--profile=%(gaia_profile)s", "--app=%(application)s", "--desktop",
         "--utility-path=%(utility_path)s", "--certificate-path=%(cert_path)s",
-        "--symbols-path=%(symbols_path)s", "--hide-subtests",
+        "--symbols-path=%(symbols_path)s",
     ],
 
     "reftest_options": [
