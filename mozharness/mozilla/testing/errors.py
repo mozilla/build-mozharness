@@ -67,6 +67,14 @@ TinderBoxPrintRe = {
         'fail_group': "Failed",
         'known_fail_group': None,
     },
+    "mozbase_summary": {
+        'regex': re.compile(r'''(OK)|(FAILED) \(errors=(\d+)'''),
+        'pass_group': "OK",
+        'fail_group': "FAILED",
+        'known_fail_group': None,
+    },
+
+
     "harness_error": {
         'full_regex': re.compile(r"(?:TEST-UNEXPECTED-FAIL|PROCESS-CRASH) \| .* \| (application crashed|missing output line for total leaks!|negative leaks caught!|\d+ bytes leaked)"),
         'minimum_regex': re.compile(r'''(TEST-UNEXPECTED|PROCESS-CRASH)'''),

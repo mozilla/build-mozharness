@@ -25,14 +25,15 @@ from mozharness.base.log import INFO, ERROR
 from mozharness.base.script import PreScriptAction
 from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_options
+from mozharness.mozilla.mozbase import MozbaseMixin
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
 from mozharness.mozilla.testing.unittest import DesktopUnittestOutputParser
 
-SUITE_CATEGORIES = ['cppunittest', 'jittest', 'mochitest', 'reftest', 'xpcshell']
+SUITE_CATEGORIES = ['cppunittest', 'jittest', 'mochitest', 'reftest', 'xpcshell', 'mozbase']
 
 
 # DesktopUnittest {{{1
-class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin):
+class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMixin):
     config_options = [
         [['--mochitest-suite', ], {
             "action": "extend",
@@ -73,6 +74,14 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin):
             "help": "Specify which jit-test suite to run. "
                     "Suites are defined in the config file\n."
                     "Examples: 'jittest'"}
+         ],
+        [['--mozbase-suite', ], {
+            "action": "extend",
+            "dest": "specified_mozbase_suites",
+            "type": "string",
+            "help": "Specify which mozbase suite to run. "
+                    "Suites are defined in the config file\n."
+                    "Examples: 'mozbase'"}
          ],
         [['--run-all-suites', ], {
             "action": "store_true",
@@ -148,6 +157,7 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin):
         dirs['abs_cppunittest_dir'] = os.path.join(dirs['abs_test_install_dir'], "cppunittests")
         dirs['abs_blob_upload_dir'] = os.path.join(abs_dirs['abs_work_dir'], 'blobber_upload_dir')
         dirs['abs_jittest_dir'] = os.path.join(dirs['abs_test_install_dir'], "jit-test", "jit-test")
+        dirs['abs_mozbase_dir'] = os.path.join(dirs['abs_test_install_dir'], "mozbase")
 
         if os.path.isabs(c['virtualenv_path']):
             dirs['abs_virtualenv_dir'] = c['virtualenv_path']
@@ -173,6 +183,7 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin):
     @PreScriptAction('create-virtualenv')
     def _pre_create_virtualenv(self, action):
         dirs = self.query_abs_dirs()
+        self.register_virtualenv_module(name='mock')
         self.register_virtualenv_module(name='simplejson')
 
         requirements = os.path.join(dirs['abs_test_install_dir'],
@@ -182,20 +193,6 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin):
             self.register_virtualenv_module(requirements=[requirements],
                                             two_pass=True)
             return
-
-        # XXX Bug 879765: Dependent modules need to be listed before parent
-        # modules, otherwise they will get installed from the pypi server.
-        # XXX Bug 908356: This block can be removed as soon as the
-        # in-tree requirements files propagate to all active trees.
-        mozbase_dir = os.path.join('tests', 'mozbase')
-        self.register_virtualenv_module('manifestparser',
-            url=os.path.join(mozbase_dir, 'manifestdestiny'))
-
-        for m in ('mozfile', 'mozlog', 'mozinfo', 'moznetwork', 'mozhttpd',
-        'mozcrash', 'mozinstall', 'mozdevice', 'mozprofile', 'mozprocess',
-        'mozrunner'):
-            self.register_virtualenv_module(m, url=os.path.join(mozbase_dir,
-                m))
 
     def _query_symbols_url(self):
         """query the full symbols URL based upon binary URL"""
@@ -254,6 +251,7 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin):
                              "please make sure they are specified in your "
                              "config under %s_options" %
                              (suite_category, suite_category))
+                return base_cmd
         else:
             self.fatal("'binary_path' could not be determined.\n This should"
                        "be like '/path/build/application/firefox/firefox'"
@@ -330,6 +328,7 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin):
         self._run_category_suites('cppunittest',
                                   preflight_run_method=self.preflight_cppunittest)
         self._run_category_suites('jittest')
+        self._run_category_suites('mozbase')
 
     def preflight_xpcshell(self, suites):
         c = self.config

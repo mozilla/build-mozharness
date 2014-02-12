@@ -86,7 +86,14 @@ class DesktopUnittestOutputParser(OutputParser):
                                       if group is not None]
                 r = summary_match_list[0]
                 if self.summary_suite_re['pass_group'] in r:
-                    self.pass_count = int(summary_match_list[-1])
+                    if len(summary_match_list) > 1:
+                        self.pass_count = int(summary_match_list[-1])
+                    else:
+                        # This handles suites that either pass or report
+                        # number of failures. We need to set both
+                        # pass and fail count in the pass case.
+                        self.pass_count = 1 
+                        self.fail_count = 0
                 elif self.summary_suite_re['fail_group'] in r:
                     self.fail_count = int(summary_match_list[-1])
                     if self.fail_count > 0:
