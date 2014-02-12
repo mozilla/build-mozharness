@@ -602,7 +602,7 @@ class ScriptMixin(object):
                     halt_on_failure=False, success_codes=None,
                     env=None, partial_env=None, return_type='status',
                     throw_exception=False, output_parser=None,
-                    output_timeout=None, **kwargs):
+                    output_timeout=None):
         """Run a command, with logging and error parsing.
 
         output_timeout is the number of seconds without output before the process

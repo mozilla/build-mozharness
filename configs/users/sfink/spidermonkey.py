@@ -26,16 +26,14 @@ config = {
         "dest": "tools"
     }],
 
-    "tools_dir": "/tools",
-    "tooltool_servers": [ "http://localhost/tooltool" ],
-
     "mock_target": "mozilla-centos6-x86_64",
+    "build_command": "build.shell",
 
     "upload_remote_basepath": "/tmp/upload-base",
     "upload_ssh_server": "localhost",
     "upload_ssh_key": "/home/sfink/.ssh/id_rsa",
     "upload_ssh_user": "sfink",
-    "target": "linux64-br-haz",
+    "target": "linux64-haz",
 
     # For testing tryserver uploads (directory structure is different)
     #"branch": "try",
