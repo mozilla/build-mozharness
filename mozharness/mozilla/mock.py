@@ -67,9 +67,7 @@ class MockMixin(object):
         if cwd:
             cmd += ['--cwd', cwd]
 
-        if not kwargs.get('privileged'):
-            cmd += ['--unpriv']
-        cmd += ['--shell']
+        cmd += ['--unpriv', '--shell']
 
         if not isinstance(command, basestring):
             command = subprocess.list2cmdline(command)

@@ -13,7 +13,7 @@ class TooltoolMixin(object):
     Requires self.config['tooltool_servers'] to be a list of base urls
     """
     def tooltool_fetch(self, manifest, bootstrap_cmd=None,
-                       output_dir=None, privileged=False):
+                       output_dir=None):
         """docstring for tooltool_fetch"""
         tooltool = self.query_exe('tooltool.py', return_type='list')
         cmd = tooltool
@@ -23,10 +23,7 @@ class TooltoolMixin(object):
         self.retry(
             self.run_command,
             args=(cmd, ),
-            kwargs={'cwd': output_dir,
-                    'error_list': TooltoolErrorList,
-                    'privileged': privileged,
-                    },
+            kwargs={'cwd': output_dir, 'error_list': TooltoolErrorList},
             good_statuses=(0, ),
             error_message="Tooltool %s fetch failed!" % manifest,
             error_level=FATAL,
@@ -35,10 +32,7 @@ class TooltoolMixin(object):
             self.retry(
                 self.run_command,
                 args=(bootstrap_cmd, ),
-                kwargs={'cwd': output_dir,
-                        'error_list': TooltoolErrorList,
-                        'privileged': privileged,
-                        },
+                kwargs={'cwd': output_dir, 'error_list': TooltoolErrorList},
                 good_statuses=(0, ),
                 error_message="Tooltool bootstrap %s failed!" % str(bootstrap_cmd),
                 error_level=FATAL,
