@@ -376,8 +376,16 @@ class SpidermonkeyBuild(MockMixin,
     def checkout_tooltool(self):
         self.tooltool_fetch(self.query_compiler_manifest(), "sh " + self.config['compiler_setup'],
                             self.config['tools_dir'], privileged=True)
+
+        # Temporary fix: unpack gcc into two different locations, one for the
+        # shell build and one for the full tree build (which expects gcc to be
+        # unpacked within the source tree (?!)).
         self.tooltool_fetch(self.query_sixgill_manifest(), "sh " + self.config['sixgill_setup'],
                             self.config['tools_dir'], privileged=True)
+        dirs = self.query_abs_dirs()
+        source_dir = os.path.join(dirs['abs_work_dir'], 'source')
+        self.tooltool_fetch(self.query_sixgill_manifest(), "sh " + self.config['sixgill_setup'],
+                            source_dir)
 
     def clobber_shell(self):
         dirs = self.query_abs_dirs()
