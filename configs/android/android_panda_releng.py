@@ -23,6 +23,7 @@ config = {
     "hostutils_url":  "http://bm-remote.build.mozilla.org/tegra/tegra-host-utils.Linux.742597.zip",
     "verify_path":  "/builds/sut_tools/verify.py",
     "install_app_path":  "/builds/sut_tools/installApp.py",
+    "logcat_path":  "/builds/sut_tools/logcat.py",
     "mochitest_options": [
         "--deviceIP=%(device_ip)s",
         "--xre-path=../hostutils/xre",
