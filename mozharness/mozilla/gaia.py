@@ -24,6 +24,7 @@ class GaiaMixin(object):
         repo_path = repo.get('repo_path')
         revision = repo.get('revision')
         branch = repo.get('branch')
+        git = False
 
         print 'dest', dest
 
@@ -32,28 +33,77 @@ class GaiaMixin(object):
                   repo_path=repo_path,
                   revision=revision)
             contents = self.retry(self.load_json_from_url, args=(url,))
-            if contents.get('repo_path') and contents.get('revision'):
+            if contents.get('git') and contents['git'].get('remote'):
+                git = True
+                remote = contents['git']['remote']
+                branch = contents['git'].get('branch')
+                revision = contents['git'].get('revision')
+                if not (branch or revision):
+                    self.fatal('Must specify branch or revision for git repo')
+            elif contents.get('repo_path') and contents.get('revision'):
                 repo_path = 'https://hg.mozilla.org/%s' % contents['repo_path']
                 revision = contents['revision']
                 branch = None
 
-        # purge the repo if it already exists
-        if os.access(dest, os.F_OK):
-            cmd = [self.query_exe('hg'),
-                   '--config',
-                   'extensions.purge=',
-                   'purge']
-            if self.run_command(cmd, cwd=dest, error_list=HgErrorList):
-                self.fatal("Unable to purge %s!" % dest)
+        if git:
+            git_cmd = self.query_exe('git')
+            needs_clobber = True
 
-        repo = {
-            'repo': repo_path,
-            'revision': revision,
-            'branch': branch,
-            'dest': dest,
-        }
+            if os.path.exists(dest) and os.path.exists(os.path.join(dest, '.git')):
+                cmd = [git_cmd, 'remote', '-v']
+                output = get_output_from_command(cmd, cwd=os.path.dirname(dest))
+                for line in output:
+                    if remote in line:
+                        needs_clobber = False
 
-        self.vcs_checkout_repos([repo], parent_dir=os.path.dirname(dest))
+            if needs_clobber:
+                self.rmtree(dest)
+
+            # git clone
+            cmd = [git_cmd,
+                   'clone',
+                   remote]
+            self.run_command(cmd,
+                             cwd=os.path.dirname(dest),
+                             halt_on_failure=True)
+
+            # checkout git branch
+            cmd = [git_cmd,
+                   'checkout',
+                   revision or branch]
+            self.run_command(cmd, cwd=dest, halt_on_failure=True)
+
+            # verify
+            cmd = [git_cmd]
+            if revision:
+                cmd += ['log', '-1']
+            else:
+                cmd += ['branch']
+            self.run_command(cmd, cwd=dest, halt_on_failure=True)
+
+        else:
+            # purge the repo if it already exists
+            if os.path.exists(dest):
+                if os.path.exists(os.path.join(dest, '.hg')):
+                    # this is an hg dir, so do an hg clone
+                    cmd = [self.query_exe('hg'),
+                           '--config',
+                           'extensions.purge=',
+                           'purge']
+                    if self.run_command(cmd, cwd=dest, error_list=HgErrorList):
+                        self.fatal("Unable to purge %s!" % dest)
+                else:
+                    # there's something here, but it isn't hg; just delete it
+                    self.rmtree(dest)
+
+            repo = {
+                'repo': repo_path,
+                'revision': revision,
+                'branch': branch,
+                'dest': dest,
+            }
+
+            self.vcs_checkout_repos([repo], parent_dir=os.path.dirname(dest))
 
     def make_gaia(self, gaia_dir, xre_dir, debug=False, noftu=True):
         make = self.query_exe('make', return_type="list")
