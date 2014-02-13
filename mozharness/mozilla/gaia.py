@@ -51,7 +51,7 @@ class GaiaMixin(object):
 
             if os.path.exists(dest) and os.path.exists(os.path.join(dest, '.git')):
                 cmd = [git_cmd, 'remote', '-v']
-                output = get_output_from_command(cmd, cwd=os.path.dirname(dest))
+                output = self.get_output_from_command(cmd, cwd=os.path.dirname(dest))
                 for line in output:
                     if remote in line:
                         needs_clobber = False
