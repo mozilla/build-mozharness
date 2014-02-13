@@ -388,6 +388,9 @@ config = {
             "branches": {
                 "default": "esr24",
             },
+            "branch_regexes": {
+                "^GECKO[0-9]+esr_[0-9]+_RELBRANCH$",
+            },
         },
         "tag_config": {
             "tag_regexes": [
