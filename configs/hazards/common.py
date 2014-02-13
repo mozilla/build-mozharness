@@ -1,22 +1,24 @@
 HG_SHARE_BASE_DIR = "/builds/hg-shared"
 
 PYTHON_DIR = "/tools/python27"
-#GCC_DIR = "/tools/gcc-4.7.3-0moz1"
-GCC_DIR = "/tools/gcc-4.7.2-0moz1"
-#GCC_RPM = "gcc473_0moz1"
-GCC_RPM = "gcc472_0moz1"
+SRCDIR = "source"
+ANALYSIS_SCRIPTDIR = SRCDIR + "/js/src/devtools/rootAnalysis"
 
 config = {
     "log_name": "spidermonkey",
     "shell-objdir": "obj-opt-js",
     "analysis-dir": "analysis",
-    "source-objdir": "obj-analyzed",
+    "analysis-objdir": "obj-analyzed",
+    "srcdir": SRCDIR,
 
-    "sixgill": "/usr/libexec/sixgill",
-    "sixgill_bin": "/usr/bin",
+    "sixgill": SRCDIR + "/sixgill/usr/libexec/sixgill",
+    "sixgill_bin": SRCDIR + "/sixgill/usr/bin",
     "python": PYTHON_DIR + "/bin/python2.7",
 
-    "exes": { 'hgtool.py': 'tools/buildfarm/utils/hgtool.py' },
+    "exes": {
+        'hgtool.py': 'tools/buildfarm/utils/hgtool.py',
+        'tooltool.py': '/tools/tooltool.py',
+    },
 
     "purge_minsize": 15,
     "force_clobber": True,
@@ -30,17 +32,20 @@ config = {
 
     "upload_remote_baseuri": 'https://ftp-ssl.mozilla.org/',
 
+    'tools_dir': "/tools",
+    'compiler_manifest': ANALYSIS_SCRIPTDIR + "/build/gcc.manifest",
+    'compiler_setup': "setup.sh.gcc",
+    'sixgill_manifest': ANALYSIS_SCRIPTDIR + "/build/sixgill.manifest",
+    'sixgill_setup': "setup.sh.sixgill",
+
     # Mock.
     "mock_packages": [
         "autoconf213", "mozilla-python27-mercurial", "ccache",
         "zip", "zlib-devel", "glibc-static",
         "openssh-clients", "mpfr", "wget", "rsync",
 
-        # For the analysis
-        GCC_RPM,
-
         # For building the JS shell
-        "gmp-devel", "nspr", "nspr-devel", "sixgill",
+        "gmp-devel", "nspr", "nspr-devel",
 
         # For building the browser
         "dbus-devel", "dbus-glib-devel", "hal-devel",
@@ -56,9 +61,9 @@ config = {
         'wireless-tools-devel', 'libX11-devel',
         'libXt-devel', 'mesa-libGL-devel',
         'gnome-vfs2-devel', 'GConf2-devel', 'wget',
-        'mpfr', # required for system compiler
-        'xorg-x11-font*', # fonts required for PGO
-        'imake', # required for makedepend!?!
+        'mpfr',  # required for system compiler
+        'xorg-x11-font*',  # fonts required for PGO
+        'imake',  # required for makedepend!?!
         'pulseaudio-libs-devel',
         'freetype-2.3.11-6.el6_1.8.x86_64',
         'freetype-devel-2.3.11-6.el6_1.8.x86_64',
@@ -66,12 +71,15 @@ config = {
     ],
     "mock_files": [
         ("/home/cltbld/.ssh", "/home/mock_mozilla/.ssh"),
+        ("/tools/tooltool.py", "/tools/tooltool.py"),
     ],
-    "mock_env_replacements": {
+    "env_replacements": {
         "pythondir": PYTHON_DIR,
-        "gccdir": GCC_DIR,
+        "gccdir": "%(abs_work_dir)s/" + SRCDIR + "/gcc",
+        "sixgilldir": "%(abs_work_dir)s/" + SRCDIR + "/sixgill",
     },
-    "mock_env": {
+    "partial_env": {
         "PATH": "%(pythondir)s/bin:%(gccdir)s/bin:%(PATH)s",
+        "LD_LIBRARY_PATH": "%(sixgilldir)s/usr/lib64",
     },
 }

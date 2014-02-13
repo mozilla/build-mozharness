@@ -78,6 +78,7 @@ class SpidermonkeyBuild(MockMixin,
 
                                 # First, build an optimized JS shell for running the analysis
                                 'checkout-source',
+                                'checkout-tooltool',
                                 'clobber-shell',
                                 'configure-shell',
                                 'build-shell',
@@ -102,6 +103,7 @@ class SpidermonkeyBuild(MockMixin,
                                 'setup-mock',
                                 'checkout-tools',
                                 'checkout-source',
+                                'checkout-tooltool',
                                 'clobber-shell',
                                 'configure-shell',
                                 'build-shell',
@@ -126,7 +128,6 @@ class SpidermonkeyBuild(MockMixin,
                             },
         )
 
-        self.nonmock_env = self.query_env(purge_env=nuisance_env_vars)
         self.env = self.nonmock_env
 
         self.buildtime = None
@@ -148,6 +149,7 @@ class SpidermonkeyBuild(MockMixin,
                         ('purge_maxage', 'purge_maxage', None),
                         ('purge_skip', 'purge_skip', None),
                         ('force_clobber', 'force_clobber', None),
+                        ('tooltool_url_list', 'tooltool_servers', ['http://runtime-binaries.pvt.build.mozilla.org/tooltool']),
                         ]
             buildbot_props = self.buildbot_config.get('properties', {})
             for bb_prop, cfg_prop, default in bb_props:
@@ -157,9 +159,17 @@ class SpidermonkeyBuild(MockMixin,
         else:
             self.config['is_automation'] = False
 
-        self.mock_env = self.query_env(replace_dict=self.config['mock_env_replacements'],
-                                       partial_env=self.config['mock_env'],
+        dirs = self.query_abs_dirs()
+        replacements = self.config['env_replacements'].copy()
+        for k,v in replacements.items():
+            replacements[k] = v % dirs
+
+        self.mock_env = self.query_env(replace_dict=replacements,
+                                       partial_env=self.config['partial_env'],
                                        purge_env=nuisance_env_vars)
+        self.nonmock_env = self.query_env(replace_dict=replacements,
+                                          partial_env=self.config['partial_env'],
+                                          purge_env=nuisance_env_vars)
 
     def query_abs_dirs(self):
         if self.abs_dirs:
@@ -175,7 +185,7 @@ class SpidermonkeyBuild(MockMixin,
             'abs_analysis_dir':
                 os.path.join(abs_work_dir, self.config['analysis-dir']),
             'abs_analyzed_objdir':
-                os.path.join(abs_work_dir, self.config['source-objdir']),
+                os.path.join(abs_work_dir, self.config['srcdir'], self.config['analysis-objdir']),
         }
 
         abs_dirs.update(dirs)
@@ -206,6 +216,14 @@ class SpidermonkeyBuild(MockMixin,
             return self.config['branch']
         else:
             return os.path.basename(self.query_repo())
+
+    def query_compiler_manifest(self):
+        dirs = self.query_abs_dirs()
+        return os.path.join(dirs['abs_work_dir'], self.config['compiler_manifest'])
+
+    def query_sixgill_manifest(self):
+        dirs = self.query_abs_dirs()
+        return os.path.join(dirs['abs_work_dir'], self.config['sixgill_manifest'])
 
     def query_buildtime(self):
         if self.buildtime:
@@ -354,6 +372,14 @@ class SpidermonkeyBuild(MockMixin,
         except Exception as e:
             self.fatal("checkout failed: " + str(e), exit_code=RETRY)
 
+    def checkout_tooltool(self):
+        dirs = self.query_abs_dirs()
+        source_dir = os.path.join(dirs['abs_work_dir'], 'source')
+        self.tooltool_fetch(self.query_compiler_manifest(), "sh " + self.config['compiler_setup'],
+                            source_dir)
+        self.tooltool_fetch(self.query_sixgill_manifest(), "sh " + self.config['sixgill_setup'],
+                            source_dir)
+
     def clobber_shell(self):
         dirs = self.query_abs_dirs()
         self.rmtree(dirs['shell_objdir'])
@@ -409,8 +435,8 @@ class SpidermonkeyBuild(MockMixin,
                   'analysis_scriptdir': os.path.join(dirs['abs_work_dir'], 'source/js/src/devtools/rootAnalysis'),
                   'source_objdir': dirs['abs_analyzed_objdir'],
                   'source': os.path.join(dirs['abs_work_dir'], 'source'),
-                  'sixgill': self.config['sixgill'],
-                  'sixgill_bin': self.config['sixgill_bin'],
+                  'sixgill': os.path.join(dirs['abs_work_dir'], self.config['sixgill']),
+                  'sixgill_bin': os.path.join(dirs['abs_work_dir'], self.config['sixgill_bin']),
                   }
         defaults = """
 js = '%(js)s'
