@@ -85,11 +85,43 @@ config = {
         },
         "mochitest-1": {
             "category": "mochitest",
-            "extra_args": ["--total-chunks", "2", "--this-chunk", "1", "--run-only-tests", "androidx86.json"],
+            "extra_args": ["--total-chunks", "10", "--this-chunk", "1", "--run-only-tests", "android.json"],
         },
         "mochitest-2": {
             "category": "mochitest",
-            "extra_args": ["--total-chunks", "2", "--this-chunk", "2", "--run-only-tests", "androidx86.json"],
+            "extra_args": ["--total-chunks", "10", "--this-chunk", "2", "--run-only-tests", "android.json"],
+        },
+        "mochitest-3": {
+            "category": "mochitest",
+            "extra_args": ["--total-chunks", "10", "--this-chunk", "3", "--run-only-tests", "android.json"],
+        },
+        "mochitest-4": {
+            "category": "mochitest",
+            "extra_args": ["--total-chunks", "10", "--this-chunk", "4", "--run-only-tests", "android.json"],
+        },
+        "mochitest-5": {
+            "category": "mochitest",
+            "extra_args": ["--total-chunks", "10", "--this-chunk", "5", "--run-only-tests", "android.json"],
+        },
+        "mochitest-6": {
+            "category": "mochitest",
+            "extra_args": ["--total-chunks", "10", "--this-chunk", "6", "--run-only-tests", "android.json"],
+        },
+        "mochitest-7": {
+            "category": "mochitest",
+            "extra_args": ["--total-chunks", "10", "--this-chunk", "7", "--run-only-tests", "android.json"],
+        },
+        "mochitest-8": {
+            "category": "mochitest",
+            "extra_args": ["--total-chunks", "10", "--this-chunk", "8", "--run-only-tests", "android.json"],
+        },
+        "mochitest-9": {
+            "category": "mochitest",
+            "extra_args": ["--total-chunks", "10", "--this-chunk", "9", "--run-only-tests", "android.json"],
+        },
+        "mochitest-10": {
+            "category": "mochitest",
+            "extra_args": ["--total-chunks", "10", "--this-chunk", "10", "--run-only-tests", "android.json"],
         },
         "mochitest-gl": {
             "category": "mochitest",
@@ -110,27 +142,59 @@ config = {
             "extra_args": ["--total-chunks", "3", "--this-chunk", "3",
                 "tests/layout/reftests/reftest.list"]
         },
-        "crashtest": {
+        "crashtest-1": {
             "category": "reftest",
-            "extra_args": ["tests/testing/crashtest/crashtests.list"]
+            "extra_args": ["--total-chunks", "4", "--this-chunk", "1",
+                "tests/testing/crashtest/crashtests.list"]
         },
-        "xpcshell": {
+        "crashtest-2": {
+            "category": "reftest",
+            "extra_args": ["--total-chunks", "4", "--this-chunk", "2",
+                "tests/testing/crashtest/crashtests.list"]
+        },
+        "crashtest-3": {
+            "category": "reftest",
+            "extra_args": ["--total-chunks", "4", "--this-chunk", "3",
+                "tests/testing/crashtest/crashtests.list"]
+        },
+        "crashtest-4": {
+            "category": "reftest",
+            "extra_args": ["--total-chunks", "4", "--this-chunk", "4",
+                "tests/testing/crashtest/crashtests.list"]
+        },
+        "xpcshell-1": {
             "category": "xpcshell",
-            "extra_args": ["--manifest", "tests/xpcshell_android.ini"]
+            "extra_args": ["--total-chunks", "3", "--this-chunk", "1",
+                "--manifest", "tests/xpcshell_android.ini"]
+        },
+        "xpcshell-2": {
+            "category": "xpcshell",
+            "extra_args": ["--total-chunks", "3", "--this-chunk", "2",
+                "--manifest", "tests/xpcshell_android.ini"]
+        },
+        "xpcshell-3": {
+            "category": "xpcshell",
+            "extra_args": ["--total-chunks", "3", "--this-chunk", "3",
+                "--manifest", "tests/xpcshell_android.ini"]
         },
         "robocop-1": {
             "category": "mochitest",
-            "extra_args": ["--total-chunks", "3", "--this-chunk", "1", "--robocop-path=../..",
+            "extra_args": ["--total-chunks", "4", "--this-chunk", "1", "--robocop-path=../..",
                 "--robocop-ids=fennec_ids.txt", "--robocop=robocop.ini"],
         },
         "robocop-2": {
             "category": "mochitest",
-            "extra_args": ["--total-chunks", "3", "--this-chunk", "2", "--robocop-path=../..",
+            "extra_args": ["--total-chunks", "4", "--this-chunk", "2", "--robocop-path=../..",
                 "--robocop-ids=fennec_ids.txt", "--robocop=robocop.ini"],
         },
         "robocop-3": {
             "category": "mochitest",
-            "extra_args": ["--total-chunks", "3", "--this-chunk", "3", "--robocop-path=../..",
+            "extra_args": ["--total-chunks", "4", "--this-chunk", "3", "--robocop-path=../..",
+                "--robocop-ids=fennec_ids.txt", "--robocop=robocop.ini"],
+        },
+        "robocop-4": {
+            "category": "mochitest",
+            "extra_args": ["--total-chunks", "4", "--this-chunk", "4", "--robocop-path=../..",
                 "--robocop-ids=fennec_ids.txt", "--robocop=robocop.ini"],
         },
     }, # end of "test_definitions"
