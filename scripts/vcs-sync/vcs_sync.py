@@ -55,20 +55,21 @@ class HgGitScript(VirtualenvMixin, TooltoolMixin, TransferMixin, VCSSyncScript):
     mapfile_binary_search = None
     all_repos = None
     successful_repos = []
-    config_options = [[
-        ["--no-check-incoming", ],
-        {"action": "store_false",
-         "dest": "check_incoming",
-         "default": True,
-         "help": "Don't check for incoming changesets"
-         }
-    ]]
+    config_options = [
+        [["--no-check-incoming"], {
+            "action": "store_false",
+            "dest": "check_incoming",
+            "default": True,
+            "help": "Don't check for incoming changesets"
+        }]
+    ]
 
     def __init__(self, require_config_file=True):
         super(HgGitScript, self).__init__(
             config_options=virtualenv_config_options + self.config_options,
             all_actions=[
                 'clobber',
+                'list-repos',
                 'create-virtualenv',
                 'update-stage-mirror',
                 'update-work-mirror',
@@ -81,6 +82,7 @@ class HgGitScript(VirtualenvMixin, TooltoolMixin, TransferMixin, VCSSyncScript):
             # initial steps to create the work mirror with all the branches +
             # cvs history have been run.
             default_actions=[
+                'list-repos',
                 'create-virtualenv',
                 'update-stage-mirror',
                 'update-work-mirror',
@@ -314,7 +316,7 @@ intree=1
         """ Update a stage repo.
             See update_stage_mirror() for a description of the stage repos.
             """
-        hg = self.query_exe('hg', return_type='list')
+        hg = self._query_hg_exe()
         dirs = self.query_abs_dirs()
         repo_name = repo_config['repo_name']
         source_dest = os.path.join(dirs['abs_source_dir'],
@@ -436,7 +438,7 @@ intree=1
             self.fatal("No conversion_dir for %s!" % repo_config['repo_name'])
         source_dir = os.path.join(dirs['abs_source_dir'], repo_config['repo_name'])
         git = self.query_exe('git', return_type='list')
-        hg = self.query_exe('hg', return_type='list')
+        hg = self._query_hg_exe()
         return_status = ''
         for target_config in repo_config['targets']:
             test_push = False
@@ -512,7 +514,7 @@ intree=1
                             continue
                         tag_name = tag_parts[0]
                         for regex in regex_list:
-                            if regex.search(tag_name) is not None:
+                            if tag_name != 'tip' and regex.search(tag_name) is not None:
                                 refs_list += ['+refs/tags/%s:refs/tags/%s' % (tag_name, tag_name)]
                                 continue
                 error_msg = "%s: Can't push %s to %s!\n" % (repo_config['repo_name'], conversion_dir, target_name)
@@ -605,6 +607,19 @@ intree=1
             create_parent_dir=True
         )
 
+    def _query_hg_exe(self):
+        """Returns the hg executable command as a list
+        """
+        # If "hg" is set in "exes" section of config use that.
+        # If not, get path from self.query_virtualenv_path() method
+        # (respects --work-dir and --venv-path and --virtualenv-path).
+        exe_command = self.query_exe('hg', return_type="list", default=[os.path.join(self.query_virtualenv_path(), "bin", "hg")])
+
+        # possible additional command line options can be specified in "hg_options" of self.config
+        hg_options = self.config.get("hg_options", ())
+        exe_command.extend(hg_options)
+        return exe_command
+
     def query_branches(self, branch_config, repo_path, vcs='hg'):
         """ Given a branch_config of branches and branch_regexes, return
             a dict of existing branch names to target branch names.
@@ -616,7 +631,7 @@ intree=1
             regex_list = list(branch_config['branch_regexes'])
             full_branch_list = []
             if vcs == 'hg':
-                hg = self.query_exe("hg", return_type="list")
+                hg = self._query_hg_exe()
                 # This assumes we always want closed branches as well.
                 # If not we may need more options.
                 output = self.get_output_from_command(
@@ -684,6 +699,11 @@ intree=1
                          cwd=cwd)
 
     # Actions {{{1
+
+    def list_repos(self):
+        repos = self.query_all_repos()
+        self.info(pprint.pformat(repos))
+
     def create_test_targets(self):
         """ This action creates local directories to do test pushes to.
             """
@@ -721,7 +741,7 @@ intree=1
             json, and run |hg gexport| to convert those latest changes into
             the git conversion repo.
             """
-        hg = self.query_exe("hg", return_type="list")
+        hg = self._query_hg_exe()
         git = self.query_exe("git", return_type="list")
         dirs = self.query_abs_dirs()
         repo_map = self._read_repo_update_json()
@@ -740,10 +760,9 @@ intree=1
 #                self.run_command(hg + ['pull', source],
 #                                 cwd=os.path.dirname(dest))
                 self.mkdir_p(os.path.dirname(dest))
-                self.run_command(hg + ['clone', '--noupdate', source],
+                self.run_command(hg + ['clone', '--noupdate', source, dest],
                                  error_list=HgErrorList,
-                                 halt_on_failure=True,
-                                 cwd=os.path.dirname(dest))
+                                 halt_on_failure=True)
                 self.write_hggit_hgrc(dest)
                 self.init_git_repo('%s/.git' % dest, additional_args=['--bare'])
                 self.run_command(

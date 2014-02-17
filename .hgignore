@@ -17,3 +17,5 @@ include/
 lib/
 local/
 logs/
+.pydevproject
+.project
