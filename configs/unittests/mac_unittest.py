@@ -104,6 +104,9 @@ config = {
     "all_jittest_suites": {
         "jittest": []
     },
+    "all_mozbase_suites": {
+        "mozbase": []
+    },
     "run_cmd_checks_enabled": True,
     "preflight_run_cmd_suites": [
         # NOTE 'enabled' is only here while we have unconsolidated configs
