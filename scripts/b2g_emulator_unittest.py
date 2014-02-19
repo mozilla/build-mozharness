@@ -381,6 +381,11 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, VCSMixin, BaseScript, BlobUpl
         else:
             self.info('no logcat file found')
 
+        qemu = os.path.join(dirs['abs_work_dir'], 'qemu.log')
+        if os.path.isfile(qemu):
+            self.copyfile(logcat, os.path.join(env['MOZ_UPLOAD_DIR'],
+                                               os.path.basename(qemu)))
+
         tbpl_status, log_level = parser.evaluate_parser(return_code)
         parser.append_tinderboxprint_line(suite_name)
 
