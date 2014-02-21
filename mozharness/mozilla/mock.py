@@ -135,7 +135,7 @@ class MockMixin(object):
         # Put the cache inside the mock root so that if somebody else resets
         # the environment, it invalidates the cache
         mock_root = self.get_output_from_command(
-            ['mock_mozilla', '-r', mock_target, '--print-root-path'])
+            ['mock_mozilla', '-r', t, '--print-root-path'])
         package_hash_file = os.path.join(mock_root, "builds/package_list.hash")
         if os.path.exists(package_hash_file):
             old_packages_hash = self.read_from_file(package_hash_file)
