@@ -7,7 +7,10 @@
 """Code to integrate with mock
 """
 
+import os.path
+import hashlib
 import subprocess
+
 
 # MockMixin {{{1
 class MockMixin(object):
@@ -30,6 +33,15 @@ class MockMixin(object):
         # TODO: parse output to see if packages actually were installed
         return super(MockMixin, self).run_command(cmd, halt_on_failure=True)
 
+    def delete_mock_files(self, mock_target, files):
+        """Delete files from the mock environment `mock_target`. `files` should
+        be an iterable of 2-tuples: (src, dst). Only the dst component is
+        deleted."""
+        cmd_base = ['mock_mozilla', '-r', mock_target, '--shell']
+        for src, dest in files:
+            cmd = cmd_base + ['rm -rf %s' % dest]
+            super(MockMixin, self).run_command(cmd, halt_on_failure=True)
+
     def copy_mock_files(self, mock_target, files):
         """Copy files into the mock environment `mock_target`. `files` should
         be an iterable of 2-tuples: (src, dst)"""
@@ -38,9 +50,9 @@ class MockMixin(object):
             cmd = cmd_base + [src, dest]
             super(MockMixin, self).run_command(cmd, halt_on_failure=True)
             super(MockMixin, self).run_command(
-                    ['mock_mozilla', '-r', mock_target, '--shell',
-                     'chown -R mock_mozilla %s' % dest],
-                    halt_on_failure=True)
+                ['mock_mozilla', '-r', mock_target, '--shell',
+                 'chown -R mock_mozilla %s' % dest],
+                halt_on_failure=True)
 
     def enable_mock(self):
         """Wrap self.run_command and self.get_output_from_command to run inside
@@ -93,15 +105,15 @@ class MockMixin(object):
         """Same as ScriptMixin.run_command, except runs command inside mock
         environment `mock_target`."""
         return self._do_mock_command(
-                super(MockMixin, self).run_command,
-                mock_target, command, cwd, env, **kwargs)
+            super(MockMixin, self).run_command,
+            mock_target, command, cwd, env, **kwargs)
 
     def get_mock_output_from_command(self, mock_target, command, cwd=None, env=None, **kwargs):
         """Same as ScriptMixin.get_output_from_command, except runs command
         inside mock environment `mock_target`."""
         return self._do_mock_command(
-                super(MockMixin, self).get_output_from_command,
-                mock_target, command, cwd, env, **kwargs)
+            super(MockMixin, self).get_output_from_command,
+            mock_target, command, cwd, env, **kwargs)
 
     def setup_mock(self, mock_target=None, mock_packages=None, mock_files=None):
         """Initializes and installs packages, copies files into mock
@@ -119,16 +131,55 @@ class MockMixin(object):
             t = c['mock_target']
         else:
             t = mock_target
-        self.init_mock(t)
+        # Don't re-initialize mock if we're using the same packages as before
+        # Put the cache inside the mock root so that if somebody else resets
+        # the environment, it invalidates the cache
+        mock_root = self.get_output_from_command(
+            ['mock_mozilla', '-r', mock_target, '--print-root-path'])
+        package_hash_file = os.path.join(mock_root, "builds/package_list.hash")
+        if os.path.exists(package_hash_file):
+            old_packages_hash = self.read_from_file(package_hash_file)
+            self.info("old package hash: %s" % old_packages_hash)
+        else:
+            self.info("no previous package list found")
+            old_packages_hash = None
 
         if mock_packages is None:
             mock_packages = list(c.get('mock_packages'))
+
+        package_list_hash = hashlib.new('sha1')
+        if mock_packages:
+            for p in sorted(mock_packages):
+                package_list_hash.update(p)
+        package_list_hash = package_list_hash.hexdigest()
+
+        did_init = True
+        # This simple hash comparison doesn't take into account depedency
+        # changes. If you really care about dependencies, then they should be
+        # explicitly listed in the package list.
+        if old_packages_hash != package_list_hash:
+            self.init_mock(t)
+        else:
+            self.info("Our list of packages hasn't changed; skipping re-initialization")
+            did_init = False
+
+        # Still try and install packages here since the package version may
+        # have been updated on the server
         if mock_packages:
             self.install_mock_packages(t, mock_packages)
+
+        # Save our list of packages
+        self.write_to_file(package_hash_file,
+                           package_list_hash)
 
         if mock_files is None:
             mock_files = list(c.get('mock_files'))
         if mock_files:
+            if not did_init:
+                # mock complains if you try and copy in files that already
+                # exist, so we need to delete them here first
+                self.info("Deleting old mock files")
+                self.delete_mock_files(t, mock_files)
             self.copy_mock_files(t, mock_files)
 
         self.done_mock_setup = True
