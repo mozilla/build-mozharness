@@ -17,6 +17,7 @@ import mozharness.base.errors as errors
 import mozharness.base.log as log
 from mozharness.base.log import DEBUG, INFO, WARNING, ERROR, CRITICAL, FATAL, IGNORE
 import mozharness.base.script as script
+from mozharness.base.config import parse_config_file
 
 test_string = '''foo
 bar
@@ -61,6 +62,106 @@ class TestScript(unittest.TestCase):
         if hasattr(self, 's') and isinstance(self.s, object):
             del(self.s)
         cleanup()
+
+    # test _dump_config_hierarchy() when --dump-config-hierarchy is passed
+    def test_dump_config_hierarchy_valid_files_len(self):
+        try:
+            self.s = script.BaseScript(
+                initial_config_file='test/test.json',
+                option_args=['--cfg', 'test/test_override.py,test/test_override2.py'],
+                config={'dump_config_hierarchy': True}
+            )
+        except SystemExit:
+            local_cfg_files = parse_config_file('test_logs/localconfigfiles.json')
+            # first let's see if the correct number of config files were
+            # realized
+            self.assertEqual(
+                len(local_cfg_files), 4,
+                msg="--dump-config-hierarchy dumped wrong number of config files"
+            )
+
+    def test_dump_config_hierarchy_keys_unique_and_valid(self):
+        try:
+            self.s = script.BaseScript(
+                initial_config_file='test/test.json',
+                option_args=['--cfg', 'test/test_override.py,test/test_override2.py'],
+                config={'dump_config_hierarchy': True}
+            )
+        except SystemExit:
+            local_cfg_files = parse_config_file('test_logs/localconfigfiles.json')
+            # now let's see if only unique items were added from each config
+            t_override = local_cfg_files.get('test/test_override.py', {})
+            self.assertTrue(
+                t_override.get('keep_string') == "don't change me" and len(t_override.keys()) == 1,
+                msg="--dump-config-hierarchy dumped wrong keys/value for "
+                    "`test/test_override.py`. There should only be one "
+                    "item and it should be unique to all the other "
+                    "items in test_log/localconfigfiles.json."
+            )
+
+    def test_dump_config_hierarchy_matches_self_config(self):
+        try:
+            ######
+            # we need temp_cfg because self.s will be gcollected (NoneType) by
+            # the time we get to SystemExit exception
+            # temp_cfg will differ from self.s.config because of
+            # 'dump_config_hierarchy'. we have to make a deepcopy because
+            # config is a locked dict
+            temp_s = script.BaseScript(
+                initial_config_file='test/test.json',
+                option_args=['--cfg', 'test/test_override.py,test/test_override2.py'],
+            )
+            from copy import deepcopy
+            temp_cfg = deepcopy(temp_s.config)
+            temp_cfg.update({'dump_config_hierarchy': True})
+            ######
+            self.s = script.BaseScript(
+                initial_config_file='test/test.json',
+                option_args=['--cfg', 'test/test_override.py,test/test_override2.py'],
+                config={'dump_config_hierarchy': True}
+            )
+        except SystemExit:
+            local_cfg_files = parse_config_file('test_logs/localconfigfiles.json')
+            # finally let's just make sure that all the items added up, equals
+            # what we started with: self.config
+            target_cfg = {}
+            for cfg_file in local_cfg_files:
+                target_cfg.update(local_cfg_files[cfg_file])
+            self.assertEqual(
+                target_cfg, temp_cfg,
+                msg="all of the items (combined) in each cfg file dumped via "
+                    "--dump-config-hierarchy does not equal self.config "
+            )
+
+    # test _dump_config() when --dump-config is passed
+    def test_dump_config_equals_self_config(self):
+        try:
+            ######
+            # we need temp_cfg because self.s will be gcollected (NoneType) by
+            # the time we get to SystemExit exception
+            # temp_cfg will differ from self.s.config because of
+            # 'dump_config_hierarchy'. we have to make a deepcopy because
+            # config is a locked dict
+            temp_s = script.BaseScript(
+                initial_config_file='test/test.json',
+                option_args=['--cfg', 'test/test_override.py,test/test_override2.py'],
+            )
+            from copy import deepcopy
+            temp_cfg = deepcopy(temp_s.config)
+            temp_cfg.update({'dump_config': True})
+            ######
+            self.s = script.BaseScript(
+                initial_config_file='test/test.json',
+                option_args=['--cfg', 'test/test_override.py,test/test_override2.py'],
+                config={'dump_config': True}
+            )
+        except SystemExit:
+            target_cfg = parse_config_file('test_logs/localconfig.json')
+            self.assertEqual(
+                target_cfg, temp_cfg,
+                msg="all of the items (combined) in each cfg file dumped via "
+                    "--dump-config does not equal self.config "
+            )
 
     def test_nonexistent_mkdir_p(self):
         self.s = script.BaseScript(initial_config_file='test/test.json')
