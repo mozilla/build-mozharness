@@ -10,6 +10,13 @@
 import os.path
 import hashlib
 import subprocess
+import os
+
+ERROR_MSGS = {
+    'undetermined_buildroot_lock': 'buildroot_lock_path does not exist.\
+Nothing to remove.'
+}
+
 
 
 # MockMixin {{{1
@@ -114,6 +121,27 @@ class MockMixin(object):
         return self._do_mock_command(
             super(MockMixin, self).get_output_from_command,
             mock_target, command, cwd, env, **kwargs)
+
+    def reset_mock(self, mock_target=None):
+        """rm mock lock and reset"""
+        c = self.config
+        if mock_target is None:
+            if not c.get('mock_target'):
+                self.fatal("Cound not determine: 'mock_target'")
+            mock_target = c.get('mock_target')
+        buildroot_lock_path = os.path.join(c.get('mock_mozilla_dir', ''),
+                                           mock_target,
+                                           'buildroot.lock')
+        self.info("Removing buildroot lock at path if exists:O")
+        self.info(buildroot_lock_path)
+        if not os.path.exists(buildroot_lock_path):
+            self.info(ERROR_MSGS['undetermined_buildroot_lock'])
+        else:
+            rm_lock_cmd = ['rm', '-f', buildroot_lock_path]
+            super(MockMixin, self).run_command(rm_lock_cmd,
+                                               halt_on_failure=True)
+        cmd = ['mock_mozilla', '-r', mock_target, '--orphanskill']
+        return super(MockMixin, self).run_command(cmd, halt_on_failure=True)
 
     def setup_mock(self, mock_target=None, mock_packages=None, mock_files=None):
         """Initializes and installs packages, copies files into mock

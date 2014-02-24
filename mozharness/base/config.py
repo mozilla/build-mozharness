@@ -210,9 +210,10 @@ class BaseConfig(object):
     """
     def __init__(self, config=None, initial_config_file=None, config_options=None,
                  all_actions=None, default_actions=None,
-                 volatile_config=None,
+                 volatile_config=None, option_args=None,
                  require_config_file=False, usage="usage: %prog [options]"):
         self._config = {}
+        self.all_cfg_files_and_dicts = []
         self.actions = []
         self.config_lock = False
         self.require_config_file = require_config_file
@@ -237,11 +238,16 @@ class BaseConfig(object):
         if config:
             self.set_config(config)
         if initial_config_file:
-            self.set_config(parse_config_file(initial_config_file))
+            initial_config = parse_config_file(initial_config_file)
+            self.all_cfg_files_and_dicts.append(
+                (initial_config_file, initial_config)
+            )
+            self.set_config(initial_config)
         if config_options is None:
             config_options = []
         self._create_config_parser(config_options, usage)
-        self.parse_args()
+        # we allow manually passing of option args for things like nosetests
+        self.parse_args(args=option_args)
 
     def get_read_only_config(self):
         return ReadOnlyDict(self._config)
@@ -266,6 +272,20 @@ class BaseConfig(object):
             "-C", "--opt-config-file", "--opt-cfg", action="extend",
             dest="opt_config_files", type="string", default=[],
             help="Specify the optional config files"
+        )
+        self.config_parser.add_option(
+            "--dump-config", action="store_true",
+            dest="dump_config",
+            help="List and dump the config generated from this run to "
+                 "a JSON file."
+        )
+        self.config_parser.add_option(
+            "--dump-config-hierarchy", action="store_true",
+            dest="dump_config_hierarchy",
+            help="Like dump config but will list and dump which config "
+                 "files were used making up the config and specify their own "
+                 "keys/values that were not overwritten by another cfg -- "
+                 "held the highest hierarchy."
         )
 
         # Logging
@@ -379,6 +399,39 @@ class BaseConfig(object):
             print "Default actions: " + ', '.join(self.default_actions)
         raise SystemExit(0)
 
+    def get_cfgs_from_files(self, all_config_files, parser):
+        """ returns a dict from a given list of config files.
+
+        this method can be overwritten in a subclassed BaseConfig to add extra
+        logic to the way that self.config is made up.
+        For eg:
+            Say you don't wish to update self.config with the entire contents
+            of a config file. You may have a config file that represents a dict
+            of branches.  These branches could be a series of dicts. You could
+            then look for the presence of such a known config file and take the
+            branch dict you desire from it.
+        """
+        all_cfg_files_and_dicts = []
+        for cf in all_config_files:
+            try:
+                if '://' in cf:  # config file is an url
+                    file_name = os.path.basename(cf)
+                    file_path = os.path.join(os.getcwd(), file_name)
+                    download_config_file(cf, file_path)
+                    all_cfg_files_and_dicts.append(
+                        (file_path, parse_config_file(file_path))
+                    )
+                else:
+                    all_cfg_files_and_dicts.append((cf, parse_config_file(cf)))
+            except Exception:
+                if cf in parser.opt_config_files:
+                    print(
+                        "WARNING: optional config file not found %s" % cf
+                    )
+                else:
+                    raise
+        return all_cfg_files_and_dicts
+
     def parse_args(self, args=None):
         """Parse command line arguments in a generic way.
         Return the parser object after adding the basic options, so
@@ -398,23 +451,22 @@ class BaseConfig(object):
                 print("Required config file not set! (use --config-file option)")
                 raise SystemExit(-1)
         else:
+            # this is what get_cfgs_from_files returns. It will represent each
+            # config file name and its assoctiated dict
+            # eg ('builds/branch_specifics.py', {'foo': 'bar'})
+            # let's store this to self for things like --interpret-config-files
+            self.all_cfg_files_and_dicts.extend(self.get_cfgs_from_files(
+                # append opt_config to allow them to overwrite previous configs
+                options.config_files + options.opt_config_files, parser=options
+            ))
             config = {}
-            # append opt_config to allow them to overwrite previous configs
-            all_config_files = options.config_files + options.opt_config_files
-            for cf in all_config_files:
-                try:
-                    if '://' in cf: # config file is an url
-                        file_name = os.path.basename(cf)
-                        file_path = os.path.join(os.getcwd(), file_name)
-                        download_config_file(cf, file_path)
-                        config.update(parse_config_file(file_path))
-                    else:
-                        config.update(parse_config_file(cf))
-                except Exception:
-                    if cf in options.opt_config_files:
-                        print("WARNING: optional config file not found %s" % cf)
-                    else:
-                        raise
+            for i, (c_file, c_dict) in enumerate(self.all_cfg_files_and_dicts):
+                config.update(c_dict)
+            # assign or update self._config depending on if it exists or not
+            #    NOTE self._config will be passed to ReadOnlyConfig's init -- a
+            #    dict subclass with immutable locking capabilities -- and serve
+            #    as the keys/values that make up that instance. Ultimately,
+            #    this becomes self.config during BaseScript's init
             self.set_config(config)
         for key in defaults.keys():
             value = getattr(options, key)

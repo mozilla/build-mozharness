@@ -16,6 +16,33 @@ from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_WORST_LEVEL_TUPLE
 SUITE_CATEGORIES = ['mochitest', 'reftest', 'xpcshell']
 
 
+def tbox_print_summary(pass_count, fail_count, known_fail_count=None,
+                       crashed=False, leaked=False):
+    emphasize_fail_text = '<em class="testfail">%s</em>'
+
+    if pass_count < 0 or fail_count < 0 or \
+            (known_fail_count is not None and known_fail_count < 0):
+        summary = emphasize_fail_text % 'T-FAIL'
+    elif pass_count == 0 and fail_count == 0 and \
+            (known_fail_count == 0 or known_fail_count is None):
+        summary = emphasize_fail_text % 'T-FAIL'
+    else:
+        str_fail_count = str(fail_count)
+        if fail_count > 0:
+            str_fail_count = emphasize_fail_text % str_fail_count
+        summary = "%d/%s" % (pass_count, str_fail_count)
+        if known_fail_count is not None:
+            summary += "/%d" % known_fail_count
+    # Format the crash status.
+    if crashed:
+        summary += "&nbsp;%s" % emphasize_fail_text % "CRASH"
+    # Format the leak status.
+    if leaked is not False:
+        summary += "&nbsp;%s" % emphasize_fail_text % (
+            (leaked and "LEAK") or "L-FAIL")
+    return summary
+
+
 class TestSummaryOutputParserHelper(OutputParser):
     def __init__(self, regex=re.compile(r'(passed|failed|todo): (\d+)'), **kwargs):
         self.regex = regex
@@ -150,29 +177,11 @@ class DesktopUnittestOutputParser(OutputParser):
         # the log more then once.  I figured this method should stay isolated as
         # it is only here for tbpl highlighted summaries and is not part of
         # buildbot evaluation or result status IIUC.
-        emphasize_fail_text = '<em class="testfail">%s</em>'
-
-        if self.pass_count < 0 or self.fail_count < 0 or \
-                (self.known_fail_count is not None and self.known_fail_count < 0):
-            summary = emphasize_fail_text % 'T-FAIL'
-        elif self.pass_count == 0 and self.fail_count == 0 and \
-                (self.known_fail_count == 0 or self.known_fail_count is None):
-            summary = emphasize_fail_text % 'T-FAIL'
-        else:
-            str_fail_count = str(self.fail_count)
-            if self.fail_count > 0:
-                str_fail_count = emphasize_fail_text % str_fail_count
-            summary = "%d/%s" % (self.pass_count, str_fail_count)
-            if self.known_fail_count is not None:
-                summary += "/%d" % self.known_fail_count
-        # Format the crash status.
-        if self.crashed:
-            summary += "&nbsp;%s" % emphasize_fail_text % "CRASH"
-        # Format the leak status.
-        if self.leaked is not False:
-            summary += "&nbsp;%s" % emphasize_fail_text % (
-                (self.leaked and "LEAK") or "L-FAIL")
-        # Return the summary.
+        summary = tbox_print_summary(self.pass_count,
+                                     self.fail_count,
+                                     self.known_fail_count,
+                                     self.crashed,
+                                     self.leaked)
         self.info("TinderboxPrint: %s<br/>%s\n" % (suite_name, summary))
 
 
