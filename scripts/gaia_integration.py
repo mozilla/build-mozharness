@@ -42,14 +42,9 @@ class GaiaIntegrationTest(GaiaTest):
 
         self.run_command(['npm', 'cache', 'clean'])
 
-        # run 'npm install' first, so we can separately handle
+        # run 'make node_modules' first, so we can separately handle
         # errors that occur here
-        cmd = [
-            'npm',
-            'install',
-            '--registry',
-            self.config.get('npm_registry')
-        ]
+        cmd = ['make', 'node_modules']
         kwargs = {
             'cwd': dirs['abs_gaia_dir'],
             'output_timeout': 300,
