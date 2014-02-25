@@ -154,6 +154,11 @@ def map_remote(r, mappings):
     remote = r.getAttribute('fetch')
     if remote in mappings:
         r.setAttribute('fetch', mappings[remote])
+        # Add a comment about where our original remote was
+        comment = r.ownerDocument.createComment("original fetch url was %s" % remote)
+        line = r.ownerDocument.createTextNode("\n")
+        r.parentNode.insertBefore(comment, r)
+        r.parentNode.insertBefore(line, r)
         return r
     return None
 
