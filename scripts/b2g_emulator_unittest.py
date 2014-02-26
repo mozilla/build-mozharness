@@ -37,13 +37,6 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, VCSMixin, BaseScript, BlobUpl
          "help": "The type of tests to run",
          }
     ], [
-        ["--no-update"],
-        {"action": "store_false",
-         "dest": "update_files",
-         "default": True,
-         "help": "Don't update emulator and gecko before running tests"
-         }
-    ], [
         ["--busybox-url"],
         {"action": "store",
          "dest": "busybox_url",

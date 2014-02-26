@@ -107,13 +107,6 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
                  "gaiatest's runtests.py rather than Marionette's."
          }
     ], [
-        ["--no-update"],
-        {"action": "store_false",
-         "dest": "update_files",
-         "default": True,
-         "help": "Don't update emulator and gecko before running tests"
-         }
-    ], [
         ["--test-manifest"],
         {"action": "store",
          "dest": "test_manifest",
