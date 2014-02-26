@@ -329,7 +329,7 @@ class PandaTalosTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixi
         dirs = self.query_abs_dirs()
         options = []
         run_file = self.config['run_file_names'][suite_category]
-        base_cmd = ['python']
+        base_cmd = ['python', '-u']
         base_cmd.append(os.path.join((dirs["abs_%s_dir" % suite_category]), run_file))
         self.device_ip = socket.gethostbyname(self.mozpool_device)
         hostnumber = int(self.mozpool_device.split('-')[1])
