@@ -73,6 +73,7 @@ config = {
         "--tbpl"
     ],
     "mozbase_options": [
+        "-b", "%(binary_path)s"
     ],
     #local mochi suites
     "all_mochitest_suites":
