@@ -119,8 +119,9 @@ class BouncerSubmitter(BaseScript, PurgeMixin):
         url = self.config["shipped-locales-url"] % replace_dict
         dirs = self.query_abs_dirs()
         self.mkdir_p(dirs["abs_work_dir"])
-        self.download_file(url=url,
-                           file_name=self.query_shipped_locales_path())
+        if not self.download_file(url=url,
+                                  file_name=self.query_shipped_locales_path()):
+            self.fatal("Unable to fetch shipped-locales from %s" % url)
         # populate the list
         self.query_shipped_locales()
 
