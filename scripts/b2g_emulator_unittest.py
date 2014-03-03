@@ -266,6 +266,14 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, VCSMixin, BaseScript, BlobUpl
             'this_chunk': self.config.get('this_chunk'),
         }
 
+        # Bug 978233 - hack to get around multiple mochitest manifest arguments
+        if suite == 'mochitest':
+            if self.test_manifest.endswith('.ini'):
+                manifest_param = '--manifest'
+            else:
+                manifest_param = '--test-manifest'
+            str_format_values['test_manifest'] = '%s=%s' % (manifest_param, self.test_manifest)
+
         name = '%s_options' % suite
         options = self.tree_config.get(name, self.config.get(name))
         if options:
