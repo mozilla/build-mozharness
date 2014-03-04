@@ -43,6 +43,7 @@ class B2GBumper(VCSScript, MapperMixin):
         super(B2GBumper, self).__init__(
             all_actions=[
                 'clobber',
+                'check-treestatus',
                 'checkout-gecko',
                 'bump-gaia',
                 'checkout-manifests',
@@ -55,6 +56,10 @@ class B2GBumper(VCSScript, MapperMixin):
                 'push-loop',
             ],
             require_config_file=require_config_file,
+            # Default config options
+            config={
+                'treestatus_base_url': 'https://treestatus.mozilla.org',
+            }
         )
 
         # Mapping of device name to manifest
@@ -363,7 +368,31 @@ class B2GBumper(VCSScript, MapperMixin):
         message = message.encode("utf-8")
         return message
 
+    def query_treestatus(self):
+        "Return True if we can land based on treestatus"
+        c = self.config
+        dirs = self.query_abs_dirs()
+        tree = c.get('treestatus_tree', os.path.basename(c['gecko_pull_url']))
+        treestatus_url = "%s/%s?format=json" % (c['treestatus_base_url'], tree)
+        treestatus_json = os.path.join(dirs['abs_work_dir'], 'treestatus.json')
+        if self.download_file(treestatus_url, file_name=treestatus_json) != treestatus_json:
+            # Failed to check tree status...assume we can land
+            self.info("failed to check tree status - assuming we can land")
+            return True
+
+        treestatus = self._read_json(treestatus_json)
+        if treestatus['status'] != 'closed':
+            self.info("treestatus is %s - assuming we can land" % repr(treestatus['status']))
+            return True
+
+        return False
+
     # Actions {{{1
+    def check_treestatus(self):
+        if not self.query_treestatus():
+            self.info("breaking early since treestatus is closed")
+            sys.exit(0)
+
     def checkout_gecko(self):
         c = self.config
         dirs = self.query_abs_dirs()
@@ -470,9 +499,12 @@ class B2GBumper(VCSScript, MapperMixin):
         max_retries = 5
         for _ in range(max_retries):
             changed = False
+            if not self.query_treestatus():
+                # Tree is closed; exit early to avoid a bunch of wasted time
+                self.info("breaking early since treestatus is closed")
+                break
+
             self.checkout_gecko()
-            # TODO: Enforce b2g manifests have equivalent revision of gaia that
-            # gaia.json has?
             if self.bump_gaia():
                 changed = True
             self.checkout_manifests()
