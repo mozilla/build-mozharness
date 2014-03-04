@@ -491,6 +491,10 @@ class B2GBumper(VCSScript, MapperMixin):
                 break
             # If we're here, then the push failed. It also stripped any
             # outgoing commits, so we should be in a pristine state again
+            # Empty our local cache of manifests so they get loaded again next
+            # time through this loop. This makes sure we get fresh upstream
+            # manifests, and avoids problems like bug 979080
+            self.device_manifests = {}
 
             # Sleep before trying again
             self.info("Sleeping 60 before trying again")
