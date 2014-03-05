@@ -67,6 +67,7 @@ class MockMixin(object):
         if not 'mock_target' in self.config:
             return
         self.mock_enabled = True
+        self.setup_mock()
         self.run_command = self.run_command_m
         self.get_output_from_command = self.get_output_from_command_m
 
