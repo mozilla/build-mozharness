@@ -383,7 +383,11 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
                     binary = os.path.join(binary_path, 'b2g')
 
             cmd.append('--restart')
-            cmd.extend(self._build_arg('--timeout', '10000'))
+
+            # emulator builds require a longer timeout
+            timeout = self.config.get('emulator') and 60000 or 10000
+            cmd.extend(self._build_arg('--timeout', timeout))
+
             cmd.extend(self._build_arg('--type', self.config['test_type']))
             cmd.extend(self._build_arg('--testvars', testvars))
             cmd.extend(self._build_arg('--profile', os.path.join(dirs['abs_gaia_dir'],
