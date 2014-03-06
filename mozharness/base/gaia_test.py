@@ -47,6 +47,13 @@ class GaiaTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin,
          "help": "branch of gaia repo to clone"
          }
     ], [
+        ["--application"],
+        {"action": "store",
+         "dest": "application",
+         "default": "b2g",
+         "help": "application binary name"
+         }
+    ], [
         ["--xre-path"],
         {"action": "store",
          "dest": "xre_path",
@@ -211,15 +218,6 @@ class GaiaTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin,
             if not os.access(xulrunner_bin, os.F_OK):
                 xre = self.download_file(xre_url, parent_dir=dirs['abs_work_dir'])
                 self.extract_xre(xre, parent_dir=dirs['abs_gaia_dir'])
-
-    def install(self):
-        # mozinstall doesn't work with B2G desktop builds, but we don't need it
-        tar = self.query_exe('tar', return_type='list')
-        dirs = self.query_abs_dirs()
-        self.run_command(tar + ['jxf', self.installer_path],
-                         cwd=dirs['abs_work_dir'],
-                         error_list=TarErrorList,
-                         halt_on_failure=True)
 
     def run_tests(self):
         """

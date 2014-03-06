@@ -28,6 +28,10 @@ config = {
     'mapper_url': 'http://cruncher.build.mozilla.org/mapper/{project}/{vcs}/{rev}',
 
     'devices': {
+        'emulator-kk': {
+            'ignore_projects': ['gecko'],
+            'ignore_groups': ['darwin'],
+        },
         'emulator-jb': {
             'ignore_projects': ['gecko'],
             'ignore_groups': ['darwin'],
