@@ -35,7 +35,7 @@ class GaiaUnitTest(GaiaTest):
         cmd = [python, '-u', os.path.join(dirs['abs_runner_dir'],
                                           'gaia_unit_test',
                                           'main.py')]
-        binary = os.path.join(os.path.dirname(self.binary), 'b2g-bin')
+        binary = os.path.join(os.path.dirname(self.binary_path), 'b2g-bin')
         cmd.extend(self._build_arg('--binary', binary))
         cmd.extend(self._build_arg('--profile', os.path.join(dirs['abs_gaia_dir'],
                                                              'profile-debug')))

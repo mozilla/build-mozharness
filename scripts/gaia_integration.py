@@ -35,7 +35,7 @@ class GaiaIntegrationTest(GaiaTest):
         # Copy the b2g desktop we built to the gaia directory so that it
         # gets used by the marionette-js-runner.
         self.copytree(
-            os.path.join(os.path.dirname(self.binary)),
+            os.path.join(os.path.dirname(self.binary_path)),
             os.path.join(dirs['abs_gaia_dir'], 'b2g'),
             overwrite='clobber'
         )
