@@ -165,6 +165,12 @@ class BouncerSubmitter(BaseScript, PurgeMixin):
             res = urllib2.urlopen(request, timeout=60).read()
             self.info("Server response")
             self.info(res)
+        except urllib2.HTTPError as e:
+            self.critical("Cannot access %s POST data:\n%s" % (api_url,
+                                                               post_data))
+            traceback.print_exc(file=sys.stdout)
+            self.crititcal("Returned page source:")
+            self.fatal(e.read())
         except urllib2.URLError:
             traceback.print_exc(file=sys.stdout)
             self.fatal("Cannot access %s POST data:\n%s" % (api_url,
