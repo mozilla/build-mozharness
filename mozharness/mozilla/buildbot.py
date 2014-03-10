@@ -105,7 +105,7 @@ class BuildbotMixin(object):
 
     def query_is_nightly(self):
         if self.buildbot_config and 'properties' in self.buildbot_config:
-            return self.buildbot_config['properties'].get('nightly_build')
+            return self.buildbot_config['properties'].get('nightly_build', False)
         return False
 
     def dump_buildbot_properties(self, prop_list=None, file_name="properties", error_level=ERROR):
@@ -128,20 +128,22 @@ class BuildbotMixin(object):
             contents += "%s:%s\n" % (prop, self.buildbot_properties.get(prop, "None"))
         return self.write_to_file(file_name, contents)
 
-    def sendchange(self, downloadables=None, branch=None):
+    def sendchange(self, downloadables=None, branch=None,
+                   username="sendchange-unittest", sendchange_props=None):
         """ Generic sendchange, currently b2g- and unittest-specific.
             """
+        c = self.config
         buildbot = self.query_exe("buildbot", return_type="list")
         if branch is None:
-            if self.config.get("debug_build"):
+            if c.get("debug_build"):
                 platform = re.sub('[_-]debug', '', self.buildbot_config["properties"]["platform"])
                 branch = '%s-%s-debug-unittest' % (self.buildbot_config["properties"]["branch"], platform)
             else:
                 branch = '%s-%s-opt-unittest' % (self.buildbot_config["properties"]["branch"], self.buildbot_config["properties"]["platform"])
         sendchange = [
             'sendchange',
-            '--master', self.config.get("sendchange_masters")[0],
-            '--username', 'sendchange-unittest',
+            '--master', c.get("sendchange_masters")[0],
+            '--username', username,
             '--branch', branch,
         ]
         if self.buildbot_config['sourcestamp'].get("revision"):
@@ -151,12 +153,16 @@ class BuildbotMixin(object):
                 sendchange += ['--username', self.buildbot_config['sourcestamp']['changes'][0]['who']]
             if self.buildbot_config['sourcestamp']['changes'][0].get('comments'):
                 sendchange += ['--comments', self.buildbot_config['sourcestamp']['changes'][0]['comments'].encode('ascii', 'ignore')]
-        if self.buildbot_config["properties"].get("builduid"):
-            sendchange += ['--property', "builduid:%s" % self.buildbot_config["properties"]["builduid"]]
-        sendchange += [
-            '--property', "buildid:%s" % self.query_buildid(),
-            '--property', 'pgo_build:False',
-        ]
+        if sendchange_props:
+            for key, value in sendchange_props.iteritems():
+                sendchange.extend(['--property', '%s:%s' % (key, value)])
+        else:
+            if self.buildbot_config["properties"].get("builduid"):
+                sendchange += ['--property', "builduid:%s" % self.buildbot_config["properties"]["builduid"]]
+            sendchange += [
+                '--property', "buildid:%s" % self.query_buildid(),
+                '--property', 'pgo_build:False',
+            ]
 
         for d in downloadables:
             sendchange += [d]
