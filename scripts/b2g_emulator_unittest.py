@@ -359,8 +359,6 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, VCSMixin, BaseScript, BlobUpl
         env['MOZ_UPLOAD_DIR'] = dirs['abs_blob_upload_dir']
         if not os.path.isdir(env['MOZ_UPLOAD_DIR']):
             self.mkdir_p(env['MOZ_UPLOAD_DIR'])
-        if suite_name == 'reftest' and os.environ.get("OPENGL_IS_BROKEN_HERE"):
-            env["GALLIUM_DRIVER"] = "softpipe"
         env = self.query_env(partial_env=env)
 
         parser = DesktopUnittestOutputParser(suite_category=suite_name,
