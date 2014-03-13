@@ -248,7 +248,10 @@ class MercurialVCS(ScriptMixin, LogMixin, object):
         cmd = self.hg + ['pull']
         cmd.extend(self.common_args(**kwargs))
         cmd.append(repo)
-        if self.run_command(cmd, cwd=dest, error_list=HgErrorList):
+        output_timeout = self.config.get("vcs_output_timeout",
+                                         self.vcs_config.get("output_timeout"))
+        if self.run_command(cmd, cwd=dest, error_list=HgErrorList,
+                            output_timeout=output_timeout) != 0:
             raise VCSException("Can't pull in %s!" % dest)
 
         if update_dest:
