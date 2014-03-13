@@ -127,6 +127,18 @@ class Talos(TestingMixin, MercurialScript, BlobUploadMixin):
           "default": None,
           "help": "extra options to talos"
           }],
+        [["--spsProfile"], {
+            "dest": "sps_profile",
+            "action": "store_true",
+            "default": False,
+            "help": "Whether or not to profile the test run and save the profile results"
+        }],
+        [["--spsProfileInterval"], {
+            "dest": "sps_profile_interval",
+            "type": "int",
+            "default": 0,
+            "help": "The interval between samples taken by the profiler (milliseconds)"
+        }],
     ] + talos_config_options + testing_config_options + \
         copy.deepcopy(blobupload_config_options)
 
@@ -171,8 +183,39 @@ class Talos(TestingMixin, MercurialScript, BlobUploadMixin):
         self.abs_pagesets_paths = None
         self.pagesets_manifest_filename = None
         self.pagesets_manifest_parent_path = None
+        self.sps_profile = self.config.get('sps_profile')
+        self.sps_profile_interval = self.config.get('sps_profile_interval')
         if 'run-tests' in self.actions:
             self.preflight_run_tests()
+
+    # We accept some configuration options from the try commit message in the format mozharness: <options>
+    # Example try commit message:
+    #   mozharness: --spsProfile try: <stuff>
+    def query_sps_profile_options(self):
+        sps_results = []
+        if self.buildbot_config:
+            # this is inside automation
+            # now let's see if we added spsProfile specs in the commit message
+            junk, junk, opts = self.buildbot_config['sourcestamp']['changes'][-1]['comments'].partition('mozharness:')
+            if opts:
+              opts = re.sub(r'\w+:.*', '', opts).strip().split(' ')
+              if "--spsProfile" in opts:
+                  # overwrite whatever was set here.
+                  self.sps_profile = True
+              try:
+                    idx = opts.index('--spsProfileInterval')
+                    if len(opts) > idx + 1:
+                        self.sps_profile_interval = opts[idx + 1]
+              except ValueError:
+                  pass
+        # finally, if sps_profile is set, we add that to the talos options
+        if self.sps_profile:
+            sps_results.append('--spsProfile')
+            if self.sps_profile_interval:
+                sps_results.extend(
+                    ['--spsProfileInterval', str(self.sps_profile_interval)]
+                )
+        return sps_results
 
     def query_abs_dirs(self):
         c = self.config
@@ -410,6 +453,8 @@ class Talos(TestingMixin, MercurialScript, BlobUploadMixin):
         authfile = self.config.get('datazilla_authfile')
         if authfile:
             options.extend(['--authfile', authfile])
+        # configure profiling options
+        options.extend(self.query_sps_profile_options())
         # extra arguments
         if args is None:
             args = self.query_talos_options()
