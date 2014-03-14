@@ -598,6 +598,8 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
         # TODO: eh? what's this for? config.sh does it, but why?
         if device_name == 'generic':
             lines.append("LUNCH=full-eng")
+        elif device_name == 'tarako':
+            lines.append("LUNCH=sp6821a_gonk-userdebug")
 
         # Make sure we get a blank line at the end
         lines.append("")
