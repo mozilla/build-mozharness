@@ -198,15 +198,19 @@ class B2GBumper(VCSScript, MapperMixin):
 
         # TODO: alert/notify on missing repositories
         # TODO: Add external caching
+        abort = False
         for p, result in results:
             abs_revision = result.get()
             remote_url = repo_manifest.get_project_remote_url(manifest, p)
             revision = repo_manifest.get_project_revision(manifest, p)
             if not abs_revision:
-                self.fatal("Couldn't resolve %s %s" % (remote_url, revision))
+                abort = True
+                self.error("Couldn't resolve %s %s" % (remote_url, revision))
             # Save to our cache
             self._git_ref_cache[remote_url, revision] = abs_revision
             p.setAttribute('revision', abs_revision)
+        if abort:
+            self.fatal("couldn't resolve some refs; exiting")
 
     def query_manifest_path(self, device):
         dirs = self.query_abs_dirs()
@@ -505,7 +509,7 @@ class B2GBumper(VCSScript, MapperMixin):
                 break
 
             self.checkout_gecko()
-            if self.bump_gaia():
+            if not self.config.get('skip_gaia_json') and self.bump_gaia():
                 changed = True
             self.checkout_manifests()
             self.massage_manifests()
