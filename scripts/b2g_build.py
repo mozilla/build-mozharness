@@ -215,6 +215,14 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
         if 'target' not in self.config:
             self.fatal("Must specify --target!")
 
+        # Override target for things with weird names
+        if self.config['target'] == 'tarako':
+            self.info("Setting target=sp6821a_gonk")
+            self.config['target'] = 'sp6821a_gonk'
+            # Override b2g_config_dir if it hasn't been set yet
+            if self.config.get('b2g_config_dir') is None:
+                self.config['b2g_config_dir'] = 'tarako'
+
         if not (self.buildbot_config and 'properties' in self.buildbot_config) and 'repo' not in self.config:
             self.fatal("Must specify --repo")
 
@@ -598,7 +606,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
         # TODO: eh? what's this for? config.sh does it, but why?
         if device_name == 'generic':
             lines.append("LUNCH=full-eng")
-        elif device_name == 'tarako':
+        elif device_name in ('tarako', 'sp6821a_gonk'):
             lines.append("LUNCH=sp6821a_gonk-userdebug")
 
         # Make sure we get a blank line at the end
