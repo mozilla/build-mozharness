@@ -169,7 +169,7 @@ class BouncerSubmitter(BaseScript, PurgeMixin):
             self.critical("Cannot access %s POST data:\n%s" % (api_url,
                                                                post_data))
             traceback.print_exc(file=sys.stdout)
-            self.crititcal("Returned page source:")
+            self.critical("Returned page source:")
             self.fatal(e.read())
         except urllib2.URLError:
             traceback.print_exc(file=sys.stdout)
