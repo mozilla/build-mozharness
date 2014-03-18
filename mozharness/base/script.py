@@ -19,12 +19,10 @@ import platform
 import pprint
 import re
 import shutil
-import socket
 import subprocess
 import sys
 import time
 import traceback
-import urllib2
 import urlparse
 if os.name == 'nt':
     try:
@@ -44,6 +42,12 @@ from mozprocess import ProcessHandler
 from mozharness.base.config import BaseConfig
 from mozharness.base.log import SimpleFileLogger, MultiFileLogger, \
     LogMixin, OutputParser, DEBUG, INFO, ERROR, FATAL
+
+import mozharness
+external_tools_path = os.path.join(
+    os.path.abspath(os.path.dirname(os.path.dirname(mozharness.__file__))),
+    'external_tools',
+)
 
 
 # ScriptMixin {{{1
@@ -172,55 +176,11 @@ class ScriptMixin(object):
         else:
             return parsed.netloc
 
-    def _download_file(self, url, file_name):
-        """ Helper script for download_file()
-            """
-        try:
-            f_length = None
-            f = urllib2.urlopen(url, timeout=30)
-            if f.info().get('content-length') is not None:
-                f_length = int(f.info()['content-length'])
-                got_length = 0
-            local_file = open(file_name, 'wb')
-            while True:
-                block = f.read(1024 ** 2)
-                if not block:
-                    if f_length is not None and got_length != f_length:
-                        raise urllib2.URLError("Download incomplete; content-length was %d, but only received %d" % (f_length, got_length))
-                    break
-                local_file.write(block)
-                if f_length is not None:
-                    got_length += len(block)
-            local_file.close()
-            return file_name
-        except urllib2.HTTPError, e:
-            self.warning("Server returned status %s %s for %s" % (str(e.code), str(e), url))
-            raise
-        except urllib2.URLError, e:
-            self.warning("URL Error: %s" % url)
-            remote_host = urlparse.urlsplit(url)[1]
-            if remote_host:
-                nslookup = self.query_exe('nslookup')
-                error_list = [{
-                    'substr': "server can't find %s" % remote_host,
-                    'level': ERROR,
-                    'explanation': "Either %s is an invalid hostname, or DNS is busted." % remote_host,
-                }]
-                self.run_command([nslookup, remote_host],
-                                 error_list=error_list)
-            raise
-        except socket.timeout, e:
-            self.warning("Timed out accessing %s: %s" % (url, str(e)))
-            raise
-        except socket.error, e:
-            self.warning("Socket error when accessing %s: %s" % (url, str(e)))
-            raise
-
     # http://www.techniqal.com/blog/2008/07/31/python-file-read-write-with-urllib2/
     # TODO thinking about creating a transfer object.
     def download_file(self, url, file_name=None, parent_dir=None,
                       create_parent_dir=True, error_level=ERROR,
-                      exit_code=-1):
+                      exit_code=-1, output_timeout=300):
         """Python wget.
         """
         if not file_name:
@@ -235,12 +195,23 @@ class ScriptMixin(object):
             if create_parent_dir:
                 self.mkdir_p(parent_dir, error_level=error_level)
         self.info("Downloading %s to %s" % (url, file_name))
+
+        env = None
+        if hasattr(self, 'query_python_site_packages_path'):
+            env = {"PYTHONPATH": self.script_obj.query_python_site_packages_path()}
+
+        command = [os.path.join(external_tools_path, 'download_file.py'),
+                   url, file_name]
+
         status = self.retry(
-            self._download_file,
-            args=(url, file_name),
-            failure_status=None,
-            retry_exceptions=(urllib2.HTTPError, urllib2.URLError,
-                              socket.timeout, socket.error),
+            self.run_command,
+            args=(command, ),
+            kwargs={
+                'output_timeout': output_timeout,
+                'shell': True,
+                'env': env,
+            },
+            good_statuses=(0, ),
             error_message="Can't download from %s to %s!" % (url, file_name),
             error_level=error_level,
         )
