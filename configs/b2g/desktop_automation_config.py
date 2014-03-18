@@ -42,7 +42,7 @@ config = {
     },
 
     "mochitest_options": [
-        "--console-level=INFO", "--test-manifest=%(test_manifest)s",
+        "--console-level=INFO", "%(test_manifest)s",
         "--total-chunks=%(total_chunks)s", "--this-chunk=%(this_chunk)s",
         "--profile=%(gaia_profile)s", "--app=%(application)s", "--desktop",
         "--utility-path=%(utility_path)s", "--certificate-path=%(cert_path)s",

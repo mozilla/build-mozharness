@@ -14,7 +14,7 @@ import sys
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
 from mozharness.base.errors import BaseErrorList, TarErrorList
-from mozharness.base.log import ERROR
+from mozharness.base.log import ERROR, WARNING
 from mozharness.base.script import (
     BaseScript,
     PreScriptAction,
@@ -268,11 +268,17 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, VCSMixin, BaseScript, BlobUpl
 
         # Bug 978233 - hack to get around multiple mochitest manifest arguments
         if suite == 'mochitest':
-            if self.test_manifest.endswith('.ini'):
-                manifest_param = '--manifest'
+            if os.path.isfile(self.test_manifest):
+                if self.test_manifest.endswith('.ini'):
+                    manifest_param = '--manifest'
+                else:
+                    manifest_param = '--test-manifest'
+                manifest_param = '%s=%s' % (manifest_param, self.test_manifest)
             else:
-                manifest_param = '--test-manifest'
-            str_format_values['test_manifest'] = '%s=%s' % (manifest_param, self.test_manifest)
+                self.log('Ignoring non-existent manifest \'%s\'.' % self.test_manifest,
+                         level=WARNING)
+                manifest_param = ''
+            str_format_values['test_manifest'] = manifest_param
 
         name = '%s_options' % suite
         options = self.tree_config.get(name, self.config.get(name))
