@@ -198,7 +198,7 @@ class ScriptMixin(object):
 
         env = None
         if hasattr(self, 'query_python_site_packages_path'):
-            env = {"PYTHONPATH": self.script_obj.query_python_site_packages_path()}
+            env = {"PYTHONPATH": self.query_python_site_packages_path()}
 
         command = [os.path.join(external_tools_path, 'download_file.py'),
                    url, file_name]
