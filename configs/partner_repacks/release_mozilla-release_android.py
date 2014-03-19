@@ -39,9 +39,7 @@ config = {
     "keystore": KEYSTORE,
     "key_alias": KEY_ALIAS,
     "exes": {
-        # This path doesn't exist and this file probably doesn't work
-        # Comment out to avoid confusion
-#        "jarsigner": "/tools/jdk-1.6.0_17/bin/jarsigner",
+        "jarsigner": "/tools/jdk-1.6.0_17/bin/jarsigner",
         "zipalign": "/tools/android-sdk-r8/tools/zipalign",
     },
 }

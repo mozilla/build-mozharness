@@ -24,6 +24,10 @@
     "hg_l10n_base": "https://hg.mozilla.org/releases/l10n/mozilla-aurora",
     "hg_l10n_tag": "default",
     "l10n_dir": "mozilla-aurora",
+    "env": {
+        "JAVA_HOME": "/tools/jdk",
+        "PATH": "%(PATH)s:/tools/jdk/bin"
+    },
     "merge_locales": true,
     "mozilla_dir": "build",
     "mozconfig": "build/configs/mozilla2/mobile/android/mozilla-aurora/nightly/mozconfig"
