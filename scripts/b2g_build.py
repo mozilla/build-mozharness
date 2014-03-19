@@ -14,6 +14,7 @@ from datetime import datetime
 import urlparse
 import xml.dom.minidom
 import functools
+import time
 
 try:
     import simplejson as json
@@ -131,7 +132,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
     def __init__(self, require_config_file=False):
         self.gecko_config = None
         self.buildid = None
-        self.wrote_b2g_config = False
+        self.dotconfig = None
         LocalesMixin.__init__(self)
         BaseScript.__init__(self,
                             config_options=self.config_options,
@@ -194,16 +195,11 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
         dirs = self.query_abs_dirs()
         self.objdir = os.path.join(dirs['work_dir'], 'objdir-gecko')
         if self.config.get("update_type", "ota") == "fota":
-            self.marfile = "%s/out/target/product/%s/fota-update.mar" % (dirs['abs_work_dir'], self.config['target'])
             self.make_updates_cmd = ['./build.sh', 'gecko-update-fota']
             self.extra_update_attrs = 'isOsUpdate="true"'
         else:
-            self.marfile = "%s/dist/b2g-update/b2g-gecko-update.mar" % self.objdir
             self.make_updates_cmd = ['./build.sh', 'gecko-update-full']
             self.extra_update_attrs = None
-        self.application_ini = os.path.join(
-            dirs['work_dir'], 'out', 'target', 'product',
-            self.config['target'], 'system', 'b2g', 'application.ini')
 
     def _pre_config_lock(self, rw_config):
         super(B2GBuild, self)._pre_config_lock(rw_config)
@@ -216,12 +212,21 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
             self.fatal("Must specify --target!")
 
         # Override target for things with weird names
-        if self.config['target'] == 'tarako':
-            self.info("Setting target=sp6821a_gonk")
-            self.config['target'] = 'sp6821a_gonk'
-            # Override b2g_config_dir if it hasn't been set yet
+        if self.config['target'] == 'mako':
+            self.info("Using target nexus-4 instead of mako")
+            self.config['target'] = 'nexus-4'
             if self.config.get('b2g_config_dir') is None:
-                self.config['b2g_config_dir'] = 'tarako'
+                self.config['b2g_config_dir'] = 'mako'
+        elif self.config['target'] == 'generic':
+            if self.config.get('b2g_config_dir') == 'emulator':
+                self.info("Using target emulator instead of generic")
+                self.config['target'] = 'emulator'
+            elif self.config.get('b2g_config_dir') == 'emulator-jb':
+                self.info("Using target emulator-jb instead of generic")
+                self.config['target'] = 'emulator-jb'
+            elif self.config.get('b2g_config_dir') == 'emulator-kk':
+                self.info("Using target emulator-kk instead of generic")
+                self.config['target'] = 'emulator-kk'
 
         if not (self.buildbot_config and 'properties' in self.buildbot_config) and 'repo' not in self.config:
             self.fatal("Must specify --repo")
@@ -294,10 +299,8 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
     def query_buildid(self):
         if self.buildid:
             return self.buildid
-        dirs = self.query_abs_dirs()
-        platform_ini = os.path.join(dirs['work_dir'], 'out', 'target',
-                                    'product', self.config['target'], 'system',
-                                    'b2g', 'platform.ini')
+        platform_ini = os.path.join(self.query_device_outputdir(),
+                                    'system', 'b2g', 'platform.ini')
         data = self.read_from_file(platform_ini)
         buildid = re.search("^BuildID=(\d+)$", data, re.M)
         if buildid:
@@ -305,7 +308,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
             return self.buildid
 
     def query_version(self):
-        data = self.read_from_file(self.application_ini)
+        data = self.read_from_file(self.query_application_ini())
         version = re.search("^Version=(.+)$", data, re.M)
         if version:
             return version.group(1)
@@ -440,6 +443,33 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
             url = self.query_hgweb_url(repo, rev, config_path)
             return self.retry(self.load_json_from_url, args=(url,))
 
+    def query_dotconfig(self):
+        if self.dotconfig:
+            return self.dotconfig
+        dirs = self.query_abs_dirs()
+        dotconfig_file = os.path.join(dirs['abs_work_dir'], '.config')
+        self.dotconfig = {}
+        for line in open(dotconfig_file):
+            key, value = line.split("=", 1)
+            self.dotconfig[key.strip()] = value.strip()
+        return self.dotconfig
+
+    def query_device_outputdir(self):
+        dirs = self.query_abs_dirs()
+        dotconfig = self.query_dotconfig()
+        output_dir = os.path.join(dirs['work_dir'], 'out', 'target', 'product', dotconfig['DEVICE'])
+        return output_dir
+
+    def query_application_ini(self):
+        return os.path.join(self.query_device_outputdir(), 'system', 'b2g', 'application.ini')
+
+    def query_marfile_path(self):
+        if self.config.get("update_type", "ota") == "fota":
+            output_dir = self.query_device_outputdir()
+            return "%s/fota-update.mar" % output_dir
+        else:
+            return "%s/dist/b2g-update/b2g-gecko-update.mar" % self.objdir
+
     # Actions {{{2
     def clobber(self):
         dirs = self.query_abs_dirs()
@@ -496,35 +526,18 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
                 if not gecko_node:
                     self.fatal("couldn't remove gecko from manifest")
 
-            # repo requires a git repo to work with
-            # so we create a temporary repo, put our manifest file into it, and
-            # commit it
+            # Write out our manifest locally
             manifest_dir = os.path.join(dirs['work_dir'], 'tmp_manifest')
             self.rmtree(manifest_dir)
             self.mkdir_p(manifest_dir)
-
-            self.info("Writing manifest to %s" % manifest_filename)
             manifest_filename = os.path.join(manifest_dir, self.config['target'] + '.xml')
+            self.info("Writing manifest to %s" % manifest_filename)
             manifest_file = open(manifest_filename, 'w')
             manifest.writexml(manifest_file)
             manifest_file.close()
 
-            git = self.query_exe('git')
-            self.run_command([git, 'init'], cwd=manifest_dir, halt_on_failure=True)
-            self.run_command([git, 'add', manifest_filename], cwd=manifest_dir, halt_on_failure=True)
-            self.run_command([git, 'commit', '-m', 'manifest'], cwd=manifest_dir, halt_on_failure=True)
-            self.run_command([git, 'branch', '-m', b2g_manifest_branch], cwd=manifest_dir, halt_on_failure=True)
-
-            # We need to reset gaia, since the build process locally modifies
-            # files here, which can break sync later. \o/
-            gaia_dir = os.path.join(dirs['work_dir'], 'gaia')
-            if os.path.exists(gaia_dir):
-                self.run_command([git, 'reset', '--hard'], cwd=gaia_dir)
-
-            repo_repo = self.config['repo_repo']
-
             # Check it out!
-            repo = os.path.join(dirs['work_dir'], 'repo')
+            repo_link = os.path.join(dirs['work_dir'], '.repo')
             if 'repo_mirror_dir' in self.config:
                 # Make our local .repo directory a symlink to the shared repo
                 # directory
@@ -536,19 +549,39 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
                     self.info("Creating link from %s to %s" % (repo_link, repo_mirror_dir))
                     os.symlink(repo_mirror_dir, repo_link)
 
-            self.run_command([
-                repo, "init", "--repo-url", repo_repo,
-                # Bug 922750 - use --no-repo-verify to work around busted
-                # upstream tagging
-                "--no-repo-verify",
-                "-q", "-u", manifest_dir,
-                "-m", self.config['target'] + '.xml',
-                '-b', b2g_manifest_branch],
-                cwd=dirs['work_dir'], halt_on_failure=True)
-            # self.run_command([repo, "sync", "--quiet"], cwd=dirs['work_dir'], halt_on_failure=True)
-            # XXX Workaround git failing to clone some repositories when
-            # running in quiet mode. See bug 857158
-            self.run_command(['script', '-q', '-c', '%s sync' % repo], cwd=dirs['work_dir'], halt_on_failure=True)
+            max_tries = 5
+            for _ in range(max_tries):
+                # If .repo points somewhere, then try and reset our state
+                # before running config.sh
+                if os.path.isdir(repo_link):
+                    # Delete any projects with broken HEAD references
+                    self.info("Deleting broken projects...")
+                    cmd = ['./repo', 'forall', '-c', 'git show-ref -q --head HEAD || rm -rfv $PWD']
+                    self.run_command(cmd, cwd=dirs['work_dir'])
+
+                config_result = self.run_command([
+                    './config.sh', '-q', self.config['target'], manifest_filename,
+                ], cwd=dirs['work_dir'])
+
+                # TODO: Check return code from these? retry?
+                # Run git reset --hard to make sure we're in a clean state
+                self.info("Resetting all git projects")
+                cmd = ['./repo', 'forall', '-c', 'git reset --hard']
+                self.run_command(cmd, cwd=dirs['work_dir'])
+
+                self.info("Cleaning all git projects")
+                cmd = ['./repo', 'forall', '-c', 'git clean -f -x -d']
+                self.run_command(cmd, cwd=dirs['work_dir'])
+
+                if config_result == 0:
+                    break
+                else:
+                    # Try again in a bit. Broken clones should be deleted and
+                    # re-tried above
+                    self.info("config.sh failed; sleeping and retrying")
+                    time.sleep(30)
+            else:
+                self.fatal("failed to run config.sh")
 
             # output our sources.xml, make a copy for update_sources_xml()
             self.run_command(["./gonk-misc/add-revision.py", "-o", "sources.xml", "--force", ".repo/manifest.xml"], cwd=dirs["work_dir"], halt_on_failure=True)
@@ -582,42 +615,6 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
     def get_blobs(self):
         self.download_blobs()
         self.unpack_blobs()
-
-    def write_b2g_config(self):
-        if self.wrote_b2g_config:
-            return
-
-        dirs = self.query_abs_dirs()
-
-        # Write .config to point to the correct object directory for gecko
-        # and specifies which target to use
-        device_name = self.config['target']
-        device = {
-            'pandaboard': 'panda',
-        }.get(device_name, device_name)
-
-        # TODO: this re-implements some config.sh logic
-        # TODO: write to .userconfig if we're using snapshots
-        lines = [
-            "GECKO_OBJDIR=%s" % self.objdir,
-            "DEVICE_NAME=%s" % device_name,
-            "DEVICE=%s" % device,
-        ]
-        # TODO: eh? what's this for? config.sh does it, but why?
-        if device_name == 'generic':
-            lines.append("LUNCH=full-eng")
-        elif device_name in ('tarako', 'sp6821a_gonk'):
-            lines.append("LUNCH=sp6821a_gonk-userdebug")
-
-        # Make sure we get a blank line at the end
-        lines.append("")
-
-        self.write_to_file(
-            os.path.join(dirs['work_dir'], '.config'),
-            "\n".join(lines)
-        )
-
-        self.wrote_b2g_config = True
 
     def checkout_gecko(self):
         '''
@@ -893,21 +890,28 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
         dirs = self.query_abs_dirs()
         gecko_config = self.load_gecko_config()
         build_targets = gecko_config.get('build_targets', [])
-        cmd = ['./build.sh'] + build_targets
+        if not build_targets:
+            cmds = ['./build.sh']
+        else:
+            cmds = []
+            for t in build_targets:
+                # Workaround bug 984061
+                if t == 'package-tests':
+                    cmds.append(['./build.sh', '-j1', t])
+                else:
+                    cmds.append(['./build.sh', t])
         env = self.query_build_env()
         if self.config.get('gaia_languages_file'):
             env['LOCALE_BASEDIR'] = dirs['gaia_l10n_base_dir']
             env['LOCALES_FILE'] = os.path.join(dirs['abs_work_dir'], 'gaia', self.config['gaia_languages_file'])
         if self.config.get('locales_file'):
             env['L10NBASEDIR'] = dirs['abs_l10n_dir']
-            env['MOZ_CHROME_MULTILOCALE'] = " ".join(self.locales)
+            env['MOZ_CHROME_MULTILOCALE'] = " ".join(self.query_locales())
             if 'PATH' not in env:
                 env['PATH'] = os.environ.get('PATH')
             env['PATH'] += ':%s' % os.path.join(dirs['compare_locales_dir'], 'scripts')
             env['PYTHONPATH'] = os.environ.get('PYTHONPATH', '')
             env['PYTHONPATH'] += ':%s' % os.path.join(dirs['compare_locales_dir'], 'lib')
-
-        self.write_b2g_config()
 
         if 'mock_target' in gecko_config:
             # initialize mock
@@ -915,7 +919,10 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
             if self.config['ccache']:
                 self.run_mock_command(gecko_config['mock_target'], 'ccache -z', cwd=dirs['work_dir'], env=env)
 
-            retval = self.run_mock_command(gecko_config['mock_target'], cmd, cwd=dirs['work_dir'], env=env, error_list=B2GMakefileErrorList)
+            for cmd in cmds:
+                retval = self.run_mock_command(gecko_config['mock_target'], cmd, cwd=dirs['work_dir'], env=env, error_list=B2GMakefileErrorList)
+                if retval != 0:
+                    break
             if self.config['ccache']:
                 self.run_mock_command(gecko_config['mock_target'], 'ccache -s', cwd=dirs['work_dir'], env=env)
         else:
@@ -940,8 +947,6 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
 
         cmd = ['./build.sh', 'buildsymbols']
         env = self.query_build_env()
-
-        self.write_b2g_config()
 
         if 'mock_target' in gecko_config:
             # initialize mock
@@ -973,8 +978,6 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
         gecko_config = self.load_gecko_config()
         cmd = self.make_updates_cmd[:]
         env = self.query_build_env()
-
-        self.write_b2g_config()
 
         if 'mock_target' in gecko_config:
             # initialize mock
@@ -1053,7 +1056,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
         self.set_buildbot_property("tools_revision", rev, write_to_file=True)
 
         cmd = self.query_moz_sign_cmd(formats='b2gmar')
-        cmd.append(self.marfile)
+        cmd.append(self.query_marfile_path())
 
         retval = self.run_command(cmd)
         if retval != 0:
@@ -1069,7 +1072,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
         # Copy stuff into build/upload directory
         gecko_config = self.load_gecko_config()
 
-        output_dir = os.path.join(dirs['work_dir'], 'out', 'target', 'product', self.config['target'])
+        output_dir = self.query_device_outputdir()
 
         # Zip up stuff
         files = []
@@ -1485,7 +1488,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
         )
 
         self.info("Generating update.xml for %s" % mar_url)
-        if not self.create_update_xml(self.marfile, self.query_version(),
+        if not self.create_update_xml(self.query_marfile_path(), self.query_version(),
                                       self.query_buildid(),
                                       mar_url,
                                       upload_dir,
@@ -1493,11 +1496,11 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
             self.fatal("Failed to generate update.xml")
 
         self.copy_to_upload_dir(
-            self.marfile,
+            self.query_marfile_path(),
             os.path.join(upload_dir, dated_mar)
         )
         self.copy_to_upload_dir(
-            self.application_ini,
+            self.query_application_ini(),
             os.path.join(upload_dir, dated_application_ini)
         )
         # copy update.xml to update_${buildid}.xml to keep history of updates
