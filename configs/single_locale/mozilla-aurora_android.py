@@ -1,7 +1,6 @@
 BRANCH = "mozilla-aurora"
 MOZ_UPDATE_CHANNEL = "aurora"
 MOZILLA_DIR = BRANCH
-JAVA_HOME = "/tools/jdk6"
 OBJDIR = "obj-l10n"
 EN_US_BINARY_URL = "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-%s-android/en-US" % (BRANCH)
 #STAGE_SERVER = "dev-stage01.srv.releng.scl3.mozilla.com"
