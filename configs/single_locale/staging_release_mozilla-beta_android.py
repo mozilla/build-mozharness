@@ -1,6 +1,7 @@
 BRANCH = "mozilla-beta"
 MOZ_UPDATE_CHANNEL = "beta"
 MOZILLA_DIR = BRANCH
+JAVA_HOME = "/tools/jdk6"
 OBJDIR = "obj-l10n"
 STAGE_SERVER = "dev-stage01.srv.releng.scl3.mozilla.com"
 #STAGE_SERVER = "stage.mozilla.org"
