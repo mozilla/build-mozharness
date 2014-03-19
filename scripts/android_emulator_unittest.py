@@ -432,7 +432,8 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
             self.fatal("Don't know how to run --test-suite '%s'!" % suite_name)
 
         env = self.query_env()
-        self.query_minidump_stackwalk()
+        if self.query_minidump_stackwalk():
+            env['MINIDUMP_STACKWALK'] = self.minidump_stackwalk_path
         env['MOZ_UPLOAD_DIR'] = self.query_abs_dirs()['abs_blob_upload_dir']
         env['MINIDUMP_SAVE_PATH'] = self.query_abs_dirs()['abs_blob_upload_dir']
 

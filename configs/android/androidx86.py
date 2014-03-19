@@ -23,7 +23,6 @@ config = {
     "env": {
         "DISPLAY": ":0.0",
         "PATH": "%(PATH)s:/tools/android-sdk18/tools:/tools/android-sdk18/platform-tools",
-        "MINIDUMP_STACKWALK": "/home/cltbld/talos-slave/test/build/venv/lib/python2.7/site-packages/talos/breakpad/linux64/minidump_stackwalk",
     },
     "default_actions": [
         'clobber',
@@ -163,6 +162,7 @@ config = {
             ],
         },
     }, # end of "suite_definitions"
+    "download_minidump_stackwalk": True,
     "default_blob_upload_servers": [
          "https://blobupload.elasticbeanstalk.com",
     ],
