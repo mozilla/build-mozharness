@@ -154,7 +154,7 @@ class B2GDesktopTest(BlobUploadMixin, TestingMixin, TooltoolMixin, MercurialScri
 
         # Bug 978233 - hack to get around multiple mochitest manifest arguments
         if suite == 'mochitest':
-            if os.path.isfile(self.test_manifest):
+            if os.path.isfile(os.path.join(dirs['abs_mochitest_dir'], self.test_manifest)):
                 if self.test_manifest.endswith('.ini'):
                     manifest_param = '--manifest'
                 else:
