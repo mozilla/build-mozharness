@@ -1,7 +1,6 @@
 BRANCH = "mozilla-release"
 MOZ_UPDATE_CHANNEL = "release"
 MOZILLA_DIR = BRANCH
-JAVA_HOME = "/tools/jdk6"
 OBJDIR = "obj-l10n"
 STAGE_SERVER = "dev-stage01.srv.releng.scl3.mozilla.com"
 EN_US_BINARY_URL = "http://" + STAGE_SERVER + "/pub/mozilla.org/mobile/candidates/%(version)s-candidates/build%(buildnum)d/android/en-US"
@@ -53,8 +52,6 @@ config = {
 
     "release_config_file": "buildbot-configs/mozilla/staging_release-fennec-mozilla-release.py",
     "repack_env": {
-        "JAVA_HOME": JAVA_HOME,
-        "PATH": JAVA_HOME + "/bin:%(PATH)s",
         # so ugly, bug 951238
         "LD_LIBRARY_PATH": "/lib:/tools/gcc-4.7.2-0moz1/lib:/tools/gcc-4.7.2-0moz1/lib64",
         "MOZ_PKG_VERSION": "%(version)s",

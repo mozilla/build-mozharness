@@ -331,8 +331,8 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
                              error_list=TarErrorList,
                              halt_on_failure=True)
 
-            if self.config.get('download_minidump_stackwalk'):
-                self.install_minidump_stackwalk()
+        if self.config.get('download_minidump_stackwalk'):
+            self.install_minidump_stackwalk()
 
     def install(self):
         if self.config.get('emulator'):

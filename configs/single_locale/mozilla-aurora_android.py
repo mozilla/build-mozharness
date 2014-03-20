@@ -1,7 +1,6 @@
 BRANCH = "mozilla-aurora"
 MOZ_UPDATE_CHANNEL = "aurora"
 MOZILLA_DIR = BRANCH
-JAVA_HOME = "/tools/jdk6"
 OBJDIR = "obj-l10n"
 EN_US_BINARY_URL = "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-%s-android/en-US" % (BRANCH)
 #STAGE_SERVER = "dev-stage01.srv.releng.scl3.mozilla.com"
@@ -58,8 +57,6 @@ config = {
 
     "l10n_dir": MOZILLA_DIR,
     "repack_env": {
-        "JAVA_HOME": JAVA_HOME,
-        "PATH": JAVA_HOME + "/bin:%(PATH)s",
         # so ugly, bug 951238
         "LD_LIBRARY_PATH": "/lib:/tools/gcc-4.7.2-0moz1/lib:/tools/gcc-4.7.2-0moz1/lib64",
         "MOZ_OBJDIR": OBJDIR,
