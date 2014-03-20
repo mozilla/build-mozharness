@@ -5,7 +5,7 @@ config = {
     "ssl-only-product-name": "Thunderbird-%(version)s-SSL",
     "complete-updates-product-name": "Thunderbird-%(version)s-Complete",
     "partial-updates-product-name": "Thunderbird-%(version)s-Partial-%(prev_version)s",
-    "add-ssl-only-product": False,
+    "add-ssl-only-product": True,
     "platform-config": {
         "linux": {
             "installer": "/thunderbird/releases/%(version)s/linux-i686/:lang/thunderbird-%(version)s.tar.bz2",
