@@ -1316,7 +1316,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
 
             if self.config["target"] == "panda" and self.config.get('sendchange_masters'):
                 self.sendchange(downloadables=[download_url, "%s/%s" % (download_url, "gaia-tests.zip")])
-            if self.config["target"] == "generic" and self.config.get('sendchange_masters'):
+            if self.config["target"].startswith("emulator") and self.config.get('sendchange_masters'):
                 # yay hardcodes
                 downloadables = [
                     '%s/%s' % (download_url, 'emulator.tar.gz'),
