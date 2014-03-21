@@ -26,10 +26,6 @@ class BouncerSubmitter(BaseScript, PurgeMixin):
             "dest": "revision",
             "help": "Source revision/tag used to fetch shipped-locales",
         }],
-        [["--product-name"], {
-            "dest": "product-name",
-            "help": "Override product if needed, e.g. for EUBallot",
-        }],
         [["--version"], {
             "dest": "version",
             "help": "Current version",
@@ -39,11 +35,6 @@ class BouncerSubmitter(BaseScript, PurgeMixin):
             "action": "extend",
             "help": "Previous version(s)",
         }],
-        [['--platform'], {
-            "dest": "platforms",
-            "action": "extend",
-            "help": "Buildbot platform name(s)",
-        }],
         [["--bouncer-api-prefix"], {
             "dest": "bouncer-api-prefix",
             "help": "Bouncer admin API URL prefix",
@@ -51,12 +42,6 @@ class BouncerSubmitter(BaseScript, PurgeMixin):
         [["--credentials-file"], {
             "dest": "credentials_file",
             "help": "File containing Bouncer credentials",
-        }],
-        [["--no-locales"], {
-            "dest": "no-locales",
-            "action": "store_true",
-            "default": False,
-            "help": "Do not add locales, e.g. for EUBallot",
         }],
     ]
 
@@ -68,18 +53,12 @@ class BouncerSubmitter(BaseScript, PurgeMixin):
                             all_actions=[
                                 'clobber',
                                 'download-shipped-locales',
-                                'add-product',
-                                'add-ssl-only-product',
-                                'add-complete-updates',
-                                'add-partial-updates',
+                                'submit',
                             ],
                             default_actions=[
                                 'clobber',
                                 'download-shipped-locales',
-                                'add-product',
-                                'add-ssl-only-product',
-                                'add-complete-updates',
-                                'add-partial-updates',
+                                'submit',
                             ],
                             )
         self.locales = None
@@ -88,32 +67,27 @@ class BouncerSubmitter(BaseScript, PurgeMixin):
     def _pre_config_lock(self, rw_config):
         super(BouncerSubmitter, self)._pre_config_lock(rw_config)
 
-        for opt in ["version", "platforms",
-                    "platform-config", "credentials_file",
-                    "bouncer-api-prefix"]:
+        for opt in ["version", "credentials_file", "bouncer-api-prefix"]:
             if opt not in self.config:
                 self.fatal("%s must be specified" % opt)
-
-        if not self.config["no-locales"]:
-            for opt in ["revision", "repo"]:
+        if self.need_shipped_locales():
+            for opt in ["shipped-locales-url", "repo", "revision"]:
                 if opt not in self.config:
                     self.fatal("%s must be specified" % opt)
 
-        for p in self.config["platforms"]:
-            if p not in self.config["platform-config"]:
-                self.fatal("%s is not in platform-config" % p)
+    def need_shipped_locales(self):
+        return any(e.get("add-locales") for e in
+                   self.config["products"].values())
 
     def query_shipped_locales_path(self):
         dirs = self.query_abs_dirs()
         return os.path.join(dirs["abs_work_dir"], "shipped-locales")
 
     def download_shipped_locales(self):
-        if not self.config.get("shipped-locales-url"):
-            self.info("Not downloading shipped-locales")
-            return
-        if self.config["no-locales"]:
+        if not self.need_shipped_locales():
             self.info("No need to download shipped-locales")
             return
+
         replace_dict = {"revision": self.config["revision"],
                         "repo": self.config["repo"]}
         url = self.config["shipped-locales-url"] % replace_dict
@@ -123,11 +97,9 @@ class BouncerSubmitter(BaseScript, PurgeMixin):
                                   file_name=self.query_shipped_locales_path()):
             self.fatal("Unable to fetch shipped-locales from %s" % url)
         # populate the list
-        self.query_shipped_locales()
+        self.load_shipped_locales()
 
-    def query_shipped_locales(self):
-        if self.config["no-locales"]:
-            return None
+    def load_shipped_locales(self):
         if self.locales:
             return self.locales
         content = self.read_from_file(self.query_shipped_locales_path())
@@ -176,11 +148,11 @@ class BouncerSubmitter(BaseScript, PurgeMixin):
             self.fatal("Cannot access %s POST data:\n%s" % (api_url,
                                                             post_data))
 
-    def api_add_product(self, product_name, ssl_only=False):
+    def api_add_product(self, product_name, add_locales, ssl_only=False):
         data = {
             "product": product_name,
         }
-        if self.locales:
+        if self.locales and add_locales:
             data["languages"] = self.locales
         if ssl_only:
             # Send "true" as a string
@@ -195,64 +167,45 @@ class BouncerSubmitter(BaseScript, PurgeMixin):
         }
         self.api_call("location_add/", data)
 
-    def add_locations(self, product_name, path_type, prev_version=None):
-        platforms = self.config["platforms"]
-        replace_dict = {
-            "version": self.config["version"],
-            "prev_version": prev_version,
-        }
-        for p in platforms:
-            c = self.config["platform-config"][p]
-            if path_type not in c:
-                self.fatal("Cannot find %s for %s" % (path_type, p))
-            path = c[path_type] % replace_dict
-            bouncer_platform = c["bouncer-platform"]
-            self.api_add_location(product_name, bouncer_platform, path)
-
-    def add_product(self):
+    def submit(self):
         version = self.config["version"]
-        product_name = self.config["product-name"] % dict(version=version)
-        self.api_add_product(product_name)
-        self.add_locations(product_name, "installer")
+        for product, pr_config in sorted(self.config["products"].items()):
+            self.info("Adding %s..." % product)
+            product_name = pr_config["product-name"] % dict(version=version)
+            self.api_add_product(
+                product_name=product_name,
+                add_locales=pr_config.get("add-locales"),
+                ssl_only=pr_config.get("ssl-only"))
+            self.info("Adding paths...")
+            for platform, pl_config in sorted(pr_config["paths"].items()):
+                bouncer_platform = pl_config["bouncer-platform"]
+                path = pl_config["path"] % dict(version=version)
+                self.info("%s (%s): %s" % (platform, bouncer_platform, path))
+                self.api_add_location(product_name, bouncer_platform, path)
 
-    def add_ssl_only_product(self):
-        if not self.config.get("add-ssl-only-product"):
-            self.info("SSL-only product disabled. Skipping...")
-            return
-        product_name = self.config.get("ssl-only-product-name")
-        if not product_name:
-            self.warning("Skipping SSL-only product")
-            return
+        # Add partial updates
+        if "partials" in self.config and self.config.get("prev_versions"):
+            self.submit_partials()
+
+    def submit_partials(self):
+        part_config = self.config["partials"]
+        product_name = part_config["product-name"]
         version = self.config["version"]
-        product_name = product_name % dict(version=version)
-        self.api_add_product(product_name, ssl_only=True)
-        self.add_locations(product_name, "installer")
-
-    def add_complete_updates(self):
-        product_name = self.config.get("complete-updates-product-name")
-        if not product_name:
-            self.warning("Skipping complete updates")
-            return
-        version = self.config["version"]
-        product_name = product_name % dict(version=version)
-        self.api_add_product(product_name)
-        self.add_locations(product_name, "complete-mar")
-
-    def add_partial_updates(self):
-        product_name = self.config.get("partial-updates-product-name")
-        if not product_name:
-            self.warning("Skipping partial updates")
-            return
         prev_versions = self.config.get("prev_versions")
-        if not prev_versions:
-            self.warning("No previous version set")
-            return
-        version = self.config["version"]
         for prev_version in prev_versions:
             _product_name = product_name % dict(version=version,
                                                 prev_version=prev_version)
-            self.api_add_product(_product_name)
-            self.add_locations(_product_name, "partial-mar", prev_version)
+            self.info("Adding partial updates for %s" % _product_name)
+            self.api_add_product(
+                product_name=_product_name,
+                add_locales=part_config.get("add-locales"),
+                ssl_only=part_config.get("ssl-only"))
+            for platform, pl_config in sorted(part_config["paths"].items()):
+                bouncer_platform = pl_config["bouncer-platform"]
+                path = pl_config["path"] % dict(version=version,
+                                                prev_version=prev_version)
+                self.info("%s (%s): %s" % (platform, bouncer_platform, path))
+                self.api_add_location(product_name, bouncer_platform, path)
 
 
 if __name__ == '__main__':
