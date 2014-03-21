@@ -7,7 +7,8 @@ import os
 
 config = {
     "options": [
-        "--metadata-root=%(test_path)s/metadata"
+        "--metadata-root=%(test_path)s/metadata",
+        "--processes=1",
     ],
 
     "exes": {

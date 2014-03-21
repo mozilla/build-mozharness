@@ -119,12 +119,17 @@ class WebPlatformTest(TestingMixin, MercurialScript, BlobUploadMixin):
         base_cmd = [self.query_python_path('python'), '-u']
         base_cmd.append(os.path.join(dirs["abs_wpttest_dir"], run_file_name))
 
-        base_cmd += ["--log-stdout",
-                     "-o=%s" % os.path.join(dirs["abs_blob_upload_dir"],
-                                            "wpt_structured_full.log")]
+        # Make sure that the logging directory exists
+        if self.mkdir_p(dirs["abs_blob_upload_dir"]) == -1:
+            self.fatal("Could not create blobber upload directory")
+            # Exit
 
-        pos_args = [self.binary_path,
-                    os.path.join(dirs["abs_wpttest_dir"], "tests")]
+        base_cmd += ["--log-raw=-",
+                     "--log-raw=%s" % os.path.join(dirs["abs_blob_upload_dir"],
+                                                   "wpt_structured_full.log"),
+                     "--binary=%s" % self.binary_path]
+
+        pos_args = [os.path.join(dirs["abs_wpttest_dir"], "tests")]
 
         options = c["options"]
 
@@ -136,7 +141,7 @@ class WebPlatformTest(TestingMixin, MercurialScript, BlobUploadMixin):
 
         options = [item % str_format_values for item in options]
 
-        return base_cmd + pos_args + options
+        return base_cmd + options + pos_args
 
     def run_tests(self):
         dirs = self.query_abs_dirs()
