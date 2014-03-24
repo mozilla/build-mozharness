@@ -143,22 +143,27 @@ config = {
         },
         "crashtest-1": {
             "category": "reftest",
-            "extra_args": ["--total-chunks", "4", "--this-chunk", "1",
+            "extra_args": ["--total-chunks", "5", "--this-chunk", "1",
                 "tests/testing/crashtest/crashtests.list"]
         },
         "crashtest-2": {
             "category": "reftest",
-            "extra_args": ["--total-chunks", "4", "--this-chunk", "2",
+            "extra_args": ["--total-chunks", "5", "--this-chunk", "2",
                 "tests/testing/crashtest/crashtests.list"]
         },
         "crashtest-3": {
             "category": "reftest",
-            "extra_args": ["--total-chunks", "4", "--this-chunk", "3",
+            "extra_args": ["--total-chunks", "5", "--this-chunk", "3",
                 "tests/testing/crashtest/crashtests.list"]
         },
         "crashtest-4": {
             "category": "reftest",
-            "extra_args": ["--total-chunks", "4", "--this-chunk", "4",
+            "extra_args": ["--total-chunks", "5", "--this-chunk", "4",
+                "tests/testing/crashtest/crashtests.list"]
+        },
+        "crashtest-5": {
+            "category": "reftest",
+            "extra_args": ["--total-chunks", "5", "--this-chunk", "5",
                 "tests/testing/crashtest/crashtests.list"]
         },
         "xpcshell-1": {
