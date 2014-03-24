@@ -205,7 +205,7 @@ class BouncerSubmitter(BaseScript, PurgeMixin):
                 path = pl_config["path"] % dict(version=version,
                                                 prev_version=prev_version)
                 self.info("%s (%s): %s" % (platform, bouncer_platform, path))
-                self.api_add_location(product_name, bouncer_platform, path)
+                self.api_add_location(_product_name, bouncer_platform, path)
 
 
 if __name__ == '__main__':
