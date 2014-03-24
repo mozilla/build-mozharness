@@ -104,9 +104,20 @@ class BuildbotMixin(object):
         return self.buildbot_properties.get(prop_name)
 
     def query_is_nightly(self):
-        if self.buildbot_config and 'properties' in self.buildbot_config:
+        """returns whether or not the script should run as a nightly build.
+
+           First will check for 'nightly_build' in self.config and if that is
+           not True, we will also allow buildbot_config to determine
+           for us. Failing all of that, we default to False.
+           Note, dependancy on buildbot_config is being deprecated.
+           Putting everything in self.config is the preference.
+        """
+        if self.config.get('nightly_build'):
+            return True
+        elif self.buildbot_config and 'properties' in self.buildbot_config:
             return self.buildbot_config['properties'].get('nightly_build', False)
-        return False
+        else:
+            return False
 
     def dump_buildbot_properties(self, prop_list=None, file_name="properties", error_level=ERROR):
         c = self.config
