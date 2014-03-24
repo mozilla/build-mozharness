@@ -226,10 +226,23 @@ You can set this by:
         dirs = self.query_abs_dirs()
         test_install_dir = dirs.get('abs_test_install_dir',
                                     os.path.join(dirs['abs_work_dir'], 'tests'))
-        tree_config_path = os.path.join(test_install_dir, 'config', 'mozharness_config.py')
 
-        if os.path.isfile(tree_config_path):
-            self.tree_config.update(parse_config_file(tree_config_path))
+        if 'in_tree_config' in self.config:
+            rel_tree_config_path = self.config['in_tree_config']
+            tree_config_path = os.path.join(test_install_dir, rel_tree_config_path)
+
+            if not os.path.isfile(tree_config_path):
+                self.fatal("The in-tree configuration file '%s' does not exist!" \
+                           "It must be added to '%s'. See bug 981030 for more details." %
+                           (tree_config_path, os.path.join('gecko', 'testing', rel_tree_config_path)))
+
+            try:
+                self.tree_config.update(parse_config_file(tree_config_path))
+            except:
+                msg = "There was a problem parsing the in-tree configuration file '%s'!" % \
+                      os.path.join('gecko', 'testing', rel_tree_config_path)
+                self.exception(message=msg, level=FATAL)
+
             self.dump_config(file_path=os.path.join(dirs['abs_log_dir'], 'treeconfig.json'),
                              config=self.tree_config)
         self.tree_config.lock()

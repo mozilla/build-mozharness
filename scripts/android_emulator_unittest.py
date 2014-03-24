@@ -374,12 +374,17 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
         c = self.config
         dirs = self.query_abs_dirs()
         suite_category = self.test_suite_definitions[suite_name]["category"]
+
+        if suite_category not in self.tree_config["suite_definitions"]:
+            self.fatal("Key '%s' not defined in the in-tree config! Please add it to '%s'." \
+                       "See bug 981030 for more details." % (suite_category,
+                       os.path.join('gecko', 'testing', self.config['in_tree_config'])))
         cmd = [
             self.query_python_path('python'),
             '-u',
             os.path.join(
                 dirs["abs_%s_dir" % suite_category],
-                c["suite_definitions"][suite_category]["run_filename"]
+                self.tree_config["suite_definitions"][suite_category]["run_filename"]
             ),
         ]
 
@@ -399,7 +404,7 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
             'modules_dir': dirs['abs_modules_dir'],
             'installer_path': self.installer_path,
         }
-        for option in c["suite_definitions"][suite_category]["options"]:
+        for option in self.tree_config["suite_definitions"][suite_category]["options"]:
             cmd.extend([option % str_format_values])
         cmd.extend(self.test_suite_definitions[suite_name]["extra_args"])
 

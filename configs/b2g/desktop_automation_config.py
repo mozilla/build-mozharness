@@ -35,22 +35,10 @@ config = {
     ],
     "blob_uploader_auth_file": os.path.join(os.getcwd(), "oauth.txt"),
 
-    # test harness options
     "run_file_names": {
         "mochitest": "runtestsb2g.py",
         "reftest": "runreftestb2g.py",
     },
-
-    "mochitest_options": [
-        "--console-level=INFO", "%(test_manifest)s",
-        "--total-chunks=%(total_chunks)s", "--this-chunk=%(this_chunk)s",
-        "--profile=%(gaia_profile)s", "--app=%(application)s", "--desktop",
-        "--utility-path=%(utility_path)s", "--certificate-path=%(cert_path)s",
-        "--symbols-path=%(symbols_path)s",
-    ],
-
-    "reftest_options": [
-        "--desktop", "--profile=%(gaia_profile)s", "--appname=%(application)s",
-        "--symbols-path=%(symbols_path)s", "%(test_manifest)s",
-    ]
+    # test harness options are located in the gecko tree
+    "in_tree_config": "config/mozharness/b2g_desktop_config.py",
 }
