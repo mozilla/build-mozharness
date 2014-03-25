@@ -65,6 +65,7 @@ class GaiaMixin(object):
                    remote]
             self.run_command(cmd,
                              cwd=os.path.dirname(dest),
+                             output_timeout=1760,
                              halt_on_failure=True)
 
             # checkout git branch

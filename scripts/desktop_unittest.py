@@ -238,8 +238,12 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
             abs_app_plugins_dir = os.path.join(abs_app_dir, 'plugins')
             str_format_values['test_plugin_path'] = abs_app_plugins_dir
 
-            name = '%s_options' % suite_category
-            options = list(self.tree_config.get(name, c.get(name)))
+            suite_options = '%s_options' % suite_category
+            if suite_options not in self.tree_config:
+                self.fatal("Key '%s' not defined in the in-tree config! Please add it to '%s'." \
+                           "See bug 981030 for more details." % (suite_options,
+                           os.path.join('gecko', 'testing', self.config['in_tree_config'])))
+            options = list(self.tree_config[suite_options])
             if options:
                 for i, option in enumerate(options):
                     options[i] = option % str_format_values

@@ -280,8 +280,12 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, VCSMixin, BaseScript, BlobUpl
                 manifest_param = ''
             str_format_values['test_manifest'] = manifest_param
 
-        name = '%s_options' % suite
-        options = self.tree_config.get(name, self.config.get(name))
+        suite_options = '%s_options' % suite
+        if suite_options not in self.tree_config:
+            self.fatal("Key '%s' not defined in the in-tree config! Please add it to '%s'." \
+                       "See bug 981030 for more details." % (suite_options,
+                       os.path.join('gecko', 'testing', self.config['in_tree_config'])))
+        options = self.tree_config[suite_options]
         if options:
             for option in options:
                 option = option % str_format_values

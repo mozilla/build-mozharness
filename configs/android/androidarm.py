@@ -143,22 +143,27 @@ config = {
         },
         "crashtest-1": {
             "category": "reftest",
-            "extra_args": ["--total-chunks", "4", "--this-chunk", "1",
+            "extra_args": ["--total-chunks", "5", "--this-chunk", "1",
                 "tests/testing/crashtest/crashtests.list"]
         },
         "crashtest-2": {
             "category": "reftest",
-            "extra_args": ["--total-chunks", "4", "--this-chunk", "2",
+            "extra_args": ["--total-chunks", "5", "--this-chunk", "2",
                 "tests/testing/crashtest/crashtests.list"]
         },
         "crashtest-3": {
             "category": "reftest",
-            "extra_args": ["--total-chunks", "4", "--this-chunk", "3",
+            "extra_args": ["--total-chunks", "5", "--this-chunk", "3",
                 "tests/testing/crashtest/crashtests.list"]
         },
         "crashtest-4": {
             "category": "reftest",
-            "extra_args": ["--total-chunks", "4", "--this-chunk", "4",
+            "extra_args": ["--total-chunks", "5", "--this-chunk", "4",
+                "tests/testing/crashtest/crashtests.list"]
+        },
+        "crashtest-5": {
+            "category": "reftest",
+            "extra_args": ["--total-chunks", "5", "--this-chunk", "5",
                 "tests/testing/crashtest/crashtests.list"]
         },
         "xpcshell-1": {
@@ -197,37 +202,8 @@ config = {
                 "--robocop-ids=fennec_ids.txt", "--robocop=robocop.ini"],
         },
     }, # end of "test_definitions"
-    "suite_definitions": {
-        "mochitest": {
-            "run_filename": "runtestsremote.py",
-            "options": ["--autorun", "--close-when-done", "--dm_trans=sut",
-                "--console-level=INFO", "--app=%(app)s", "--remote-webserver=%(remote_webserver)s",
-                "--xre-path=%(xre_path)s", "--utility-path=%(utility_path)s",
-                "--deviceIP=%(device_ip)s", "--devicePort=%(device_port)s",
-                "--http-port=%(http_port)s", "--ssl-port=%(ssl_port)s",
-                "--certificate-path=%(certs_path)s", "--symbols-path=%(symbols_path)s"
-            ],
-        },
-        "reftest": {
-            "run_filename": "remotereftest.py",
-            "options": [ "--app=%(app)s", "--ignore-window-size",
-                "--bootstrap", "--enable-privilege",
-                "--remote-webserver=%(remote_webserver)s", "--xre-path=%(xre_path)s",
-                "--utility-path=%(utility_path)s", "--deviceIP=%(device_ip)s",
-                "--devicePort=%(device_port)s", "--http-port=%(http_port)s",
-                "--ssl-port=%(ssl_port)s", "--httpd-path", "reftest/components",
-                "--symbols-path=%(symbols_path)s",
-            ],
-        },
-        "xpcshell": {
-            "run_filename": "remotexpcshelltests.py",
-            "options": ["--deviceIP=%(device_ip)s", "--devicePort=%(device_port)s",
-                "--xre-path=%(xre_path)s", "--testing-modules-dir=%(modules_dir)s",
-                "--apk=%(installer_path)s", "--no-logfiles",
-                "--symbols-path=%(symbols_path)s",
-            ],
-        },
-    }, # end of "suite_definitions"
+    # test harness options are located in the gecko tree
+    "in_tree_config": "config/mozharness/android_arm_config.py",
     "download_minidump_stackwalk": True,
     "default_blob_upload_servers": [
          "https://blobupload.elasticbeanstalk.com",

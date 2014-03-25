@@ -442,8 +442,8 @@ class PandaTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixin, Bu
             'apk_name':  self.filename_apk,
             'apk_path':  self.apk_path
         }
-        if self.config['%s_options' % suite_category]:
-            for option in self.config['%s_options' % suite_category]:
+        if self.tree_config['%s_options' % suite_category]:
+            for option in self.tree_config['%s_options' % suite_category]:
                 options.append(option % str_format_values)
             abs_base_cmd = base_cmd + options
             return abs_base_cmd
@@ -451,7 +451,7 @@ class PandaTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixin, Bu
             self.warning("Suite options for %s could not be determined."
                          "\nIf you meant to have options for this suite, "
                          "please make sure they are specified in your "
-                         "config under %s_options" %
+                         "tree config under %s_options" %
                          (suite_category, suite_category))
 
     ###### helper methods
