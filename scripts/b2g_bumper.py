@@ -338,7 +338,7 @@ class B2GBumper(VCSScript, MapperMixin):
             "git": {
                 "remote": "",
                 "branch": "",
-                "revision": ""
+                "git_revision": ""
             }
         }
         if self.write_to_file(path, json.dumps(contents, indent=4) + "\n") != path:

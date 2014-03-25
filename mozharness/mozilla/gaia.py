@@ -37,7 +37,7 @@ class GaiaMixin(object):
                 git = True
                 remote = contents['git']['remote']
                 branch = contents['git'].get('branch')
-                revision = contents['git'].get('revision')
+                revision = contents['git'].get('git_revision')
                 if not (branch or revision):
                     self.fatal('Must specify branch or revision for git repo')
             elif contents.get('repo_path') and contents.get('revision'):
