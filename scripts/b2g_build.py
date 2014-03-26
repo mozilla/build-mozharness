@@ -584,7 +584,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
                 self.fatal("failed to run config.sh")
 
             # Workaround bug 985837
-            if self.target == 'emulator-kk':
+            if self.config['target'] == 'emulator-kk':
                 self.info("Forcing -j4 for emulator-kk")
                 dotconfig_file = os.path.join(dirs['abs_work_dir'], '.config')
                 with open(dotconfig_file, "a+") as f:
