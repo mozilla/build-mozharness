@@ -62,6 +62,7 @@ config = {
         "browser-chrome-1": ["--browser-chrome", "--total-chunks=3", "--this-chunk=1"],
         "browser-chrome-2": ["--browser-chrome", "--total-chunks=3", "--this-chunk=2"],
         "browser-chrome-3": ["--browser-chrome", "--total-chunks=3", "--this-chunk=3"],
+        "mochitest-devtools-chrome": ["--browser-chrome", "--subsuite=devtools"],
         "mochitest-metro-chrome": ["--browser-chrome", "--metro-immersive"],
         "a11y": ["--a11y"],
         "plugins": ['--setpref=dom.ipc.plugins.enabled=false',
