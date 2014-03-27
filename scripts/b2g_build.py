@@ -588,7 +588,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
                 self.info("Forcing -j4 for emulator-kk")
                 dotconfig_file = os.path.join(dirs['abs_work_dir'], '.config')
                 with open(dotconfig_file, "a+") as f:
-                    f.write("\nMAKE_FLAGS=-j4\n")
+                    f.write("\nMAKE_FLAGS=-j1\n")
 
             # output our sources.xml, make a copy for update_sources_xml()
             self.run_command(["./gonk-misc/add-revision.py", "-o", "sources.xml", "--force", ".repo/manifest.xml"], cwd=dirs["work_dir"], halt_on_failure=True)
