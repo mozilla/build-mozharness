@@ -12,6 +12,7 @@ author: Jordan Lund
 """
 
 import os
+import pprint
 import subprocess
 import re
 import time
@@ -228,7 +229,7 @@ class BuildingConfig(BaseConfig):
             if cf == parser.build_variant:
                 variant_cfg_file = all_config_files[i]
 
-        # now remove these from the list if there was any
+        # now remove these from the list if there was any.
         # we couldn't pop() these in the above loop as mutating a list while
         # iterating through it causes spurious results :)
         for cf in [pool_cfg_file, branch_cfg_file, variant_cfg_file]:
@@ -253,11 +254,6 @@ class BuildingConfig(BaseConfig):
             # take only the specific branch, if present
             branch_configs = parse_config_file(branch_cfg_file)
             if branch_configs.get(parser.branch or ""):
-                print(
-                    'Branch found in file: "builds/branch_specifics.py". '
-                    'Updating self.config with keys/values under '
-                    'branch: "%s".' % (parser.branch,)
-                )
                 all_config_dicts.append(
                     (branch_cfg_file, branch_configs[parser.branch])
                 )
@@ -265,12 +261,6 @@ class BuildingConfig(BaseConfig):
             # take only the specific pool. If we are here, the pool
             # must be present
             build_pool_configs = parse_config_file(pool_cfg_file)
-            print(
-                'Build pool config found in file: '
-                '"builds/build_pool_specifics.py". Updating self.config'
-                ' with keys/values under build pool: '
-                '"%s".' % (parser.build_pool,)
-            )
             all_config_dicts.append(
                 (pool_cfg_file, build_pool_configs[parser.build_pool])
             )
@@ -525,6 +515,56 @@ class BuildScript(BuildbotMixin, PurgeMixin, MockMixin,
         self.query_buildid()  # sets self.buildid
         self.query_builduid()  # sets self.builduid
 
+    def _pre_config_lock(self, rw_config):
+        c = self.config
+        build_pool = c.get('build_pool', '')
+        cfg_match_msg = "Script was ran with '%(option)s %(type)s' and \
+%(type)s matches a key in '%(type_config_file)s'. Updating self.config with \
+items from that key's value."
+        pf_override_msg = "The branch '%(branch)s' has custom behavior for the \
+platform '%(platform)s'. Updating self.config with the following from \
+'platform_overrides' found in '%(pf_cfg_file)s':"
+        cfg_files_and_dicts = rw_config.all_cfg_files_and_dicts
+        for i, (target_file, target_dict) in enumerate(cfg_files_and_dicts):
+            if BuildOptionParser.branch_cfg_file == target_file:
+                self.info(
+                    cfg_match_msg % {
+                        'option': '--branch',
+                        'type': c['branch'],
+                        'type_config_file': BuildOptionParser.branch_cfg_file
+                    }
+                )
+            if target_file == BuildOptionParser.build_pools.get(build_pool):
+                self.info(
+                    cfg_match_msg % {
+                        'option': '--build-pool',
+                        'type': c['build_pool'],
+                        'type_config_file': BuildOptionParser.build_pools[
+                            c['build_pool']
+                        ]
+                    }
+                )
+        if c.get("platform_overrides"):
+            if c['platform'] in c['platform_overrides'].keys():
+                self.info(
+                    pf_override_msg % {
+                        'branch': c['branch'],
+                        'platform': c['platform'],
+                        'pf_cfg_file': BuildOptionParser.branch_cfg_file
+                    }
+                )
+                branch_pf_overrides = c['platform_overrides'][c['platform']]
+                self.info(pprint.pformat(branch_pf_overrides))
+                c.update(branch_pf_overrides)
+        self.info('To generate a config file based upon options passed and '
+                  'config files used, run script as before but extend options '
+                  'with "--dump-config"')
+        self.info('For a diff of where self.config got its items, '
+                  'run the script again as before but extend options with: '
+                  '"--dump-config-hierarchy"')
+        self.info("Both --dump-config and --dump-config-hierarchy don't "
+                  "actually run any actions.")
+
     def _assert_cfg_valid_for_action(self, dependencies, action):
         """ assert dependency keys are in config for given action.
 
@@ -645,13 +685,19 @@ or run without that action (ie: --no-{action})"
     def _query_repo(self):
         if self.repo_path:
             return self.repo_path
-        self._assert_cfg_valid_for_action(['repo_base', 'repo_path'], 'build')
         c = self.config
 
         # unlike b2g, we actually supply the repo in mozharness so if it's in
         #  the config, we use that (automation does not require it in
         # buildbot props)
-        self.repo_path = '%s/%s' % (c['repo_base'], c['repo_path'],)
+        if not c.get('repo_path'):
+            repo_path = 'projects/%s' % (self.branch,)
+            self.info(
+                "repo_path not in config. Using '%s' instead" % (repo_path,)
+            )
+        else:
+            repo_path = c['repo_path']
+        self.repo_path = '%s/%s' % (c['repo_base'], repo_path,)
         return self.repo_path
 
     def _skip_buildbot_specific_action(self):
@@ -1490,16 +1536,25 @@ or run without that action (ie: --no-{action})"
                             username='sendchange',
                             sendchange_props=sendchange_props)
         if c.get('enable_package_tests'):  # do unittest sendchange
-            if c.get('pgo_build'):
+            # we need a way to make opt builds use pgo branch sendchanges.
+            # if the branch supports is per_checkin and this platform is a
+            # pgo platform: see branch_specifics.py, use pgo instead of opt.
+            override_opt_branch = (self.platform in c['pgo_platforms'] and
+                                   c.get('branch_uses_per_checkin_strategy'))
+            if c.get('pgo_build') or override_opt_branch:
                 build_type = 'pgo'
             elif c.get('debug_build'):
                 build_type = 'debug'
             else:  # generic opt build
                 build_type = 'opt'
-            unittest_branch = "%s-%s-%s-%s" % (self.branch,
-                                               self.platform,
-                                               build_type,
-                                               'unittest')
+            if c.get('unittest_platform'):
+                platform = c['unittest_platform']
+            else:
+                platform = self.platform
+            full_unittest_platform = "%s-%s" % (platform, build_type)
+            unittest_branch = "%s-%s-%s" % (self.branch,
+                                            full_unittest_platform,
+                                            'unittest')
             self.sendchange(downloadables=[installer_url, tests_url],
                             branch=unittest_branch,
                             sendchange_props=sendchange_props)
@@ -1561,14 +1616,13 @@ or run without that action (ie: --no-{action})"
 
     def check_test(self):
         self._assert_cfg_valid_for_action(
-            ['mock_target', 'check_test_env'], 'check-test'
+            ['mock_target', 'check_test_env', 'enable_checktests'],
+            'check-test'
         )
-        if self.query_is_nightly():
+        c = self.config
+        if self.query_is_nightly() or not c['enable_checktests']:
             self.info("Skipping action because this is a nightly run...")
             return
-        self._assert_cfg_valid_for_action(['check_test_env'],
-                                          'check-test-complete')
-        c = self.config
         dirs = self.query_abs_dirs()
         abs_check_test_env = {}
         for env_var, env_value in c['check_test_env'].iteritems():
@@ -1597,8 +1651,8 @@ or run without that action (ie: --no-{action})"
         c = self.config
         dirs = self.query_abs_dirs()
         created_partial_snippet = False
-        if (not (self.query_is_nightly() or not c['create_snippets']) and
-                c['platform_supports_snippets']):
+        if (not self.query_is_nightly() or not c['create_snippets'] or
+                not c['platform_supports_snippets']):
             self.info("Skipping action because this action is only done for "
                       "nightlies and that support/enable snippets...")
             return

@@ -9,7 +9,7 @@ config = {
         'generate-build-props',
         # 'generate-build-stats', debug skips this action
         'symbols',
-        # 'packages',  non-unified skips this action
+        'packages',
         # 'upload',  non-unified skips this action
         # 'sendchanges',  non-unified skips this action
         # 'pretty-names', debug skips this action
