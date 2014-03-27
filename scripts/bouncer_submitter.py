@@ -189,15 +189,15 @@ class BouncerSubmitter(BaseScript, PurgeMixin):
 
     def submit_partials(self):
         part_config = self.config["partials"]
-        product_name = part_config["product-name"]
+        product_name_tmpl = part_config["product-name"]
         version = self.config["version"]
         prev_versions = self.config.get("prev_versions")
         for prev_version in prev_versions:
-            _product_name = product_name % dict(version=version,
-                                                prev_version=prev_version)
-            self.info("Adding partial updates for %s" % _product_name)
+            product_name = product_name_tmpl % dict(version=version,
+                                                    prev_version=prev_version)
+            self.info("Adding partial updates for %s" % product_name)
             self.api_add_product(
-                product_name=_product_name,
+                product_name=product_name,
                 add_locales=part_config.get("add-locales"),
                 ssl_only=part_config.get("ssl-only"))
             for platform, pl_config in sorted(part_config["paths"].items()):
@@ -205,7 +205,7 @@ class BouncerSubmitter(BaseScript, PurgeMixin):
                 path = pl_config["path"] % dict(version=version,
                                                 prev_version=prev_version)
                 self.info("%s (%s): %s" % (platform, bouncer_platform, path))
-                self.api_add_location(_product_name, bouncer_platform, path)
+                self.api_add_location(product_name, bouncer_platform, path)
 
 
 if __name__ == '__main__':
