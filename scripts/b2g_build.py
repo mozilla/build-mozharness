@@ -450,8 +450,9 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
         dotconfig_file = os.path.join(dirs['abs_work_dir'], '.config')
         self.dotconfig = {}
         for line in open(dotconfig_file):
-            key, value = line.split("=", 1)
-            self.dotconfig[key.strip()] = value.strip()
+            if "=" in line:
+                key, value = line.split("=", 1)
+                self.dotconfig[key.strip()] = value.strip()
         return self.dotconfig
 
     def query_device_outputdir(self):
