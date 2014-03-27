@@ -940,7 +940,8 @@ or run without that action (ie: --no-{action})"
                               command=cmd,
                               cwd=os.path.join(dirs['abs_obj_dir'], 'current'),
                               env=update_env,
-                              halt_on_failure=True)
+                              halt_on_failure=True,
+                              fatal_exit_code=3)
         # The mar file name will be the same from one day to the next,
         # *except* when we do a version bump for a release. To cope with
         # this, we get the name of the previous complete mar directly
@@ -1133,7 +1134,8 @@ or run without that action (ie: --no-{action})"
         self.info("finding previous mar's inipath...")
         prev_ini_path = self.get_output_from_command(cmd,
                                                      cwd=dirs['abs_obj_dir'],
-                                                     halt_on_failure=True)
+                                                     halt_on_failure=True,
+                                                     fatal_exit_code=3)
         print_conf_path = os.path.join(dirs['abs_src_dir'],
                                        'config',
                                        'printconfigsetting.py')
@@ -1315,7 +1317,11 @@ or run without that action (ie: --no-{action})"
                        " path to your config via: 'balrog_credentials_file'")
         self.info("Submitting Balrog updates...")
         self.retry(
-            self.run_command, args=(cmd,), kwargs={'halt_on_failure': True}
+            self.run_command, args=(cmd,),
+            kwargs={
+                'halt_on_failure': True,
+                'fatal_exit_code': 3,
+            }
         )
 
     def preflight_build(self):

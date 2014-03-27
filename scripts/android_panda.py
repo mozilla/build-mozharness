@@ -319,7 +319,7 @@ class PandaTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixin, Bu
         self._stop_logcat()
 
     def _start_logcat(self):
-        # Start logcat.py as a separate process continuously pulling logcat from 
+        # Start logcat.py as a separate process continuously pulling logcat from
         # the device and writing to a file. Output is written directly to
         # the blobber upload directory so that it is uploaded automatically
         # at the end of the job.
@@ -349,7 +349,7 @@ class PandaTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixin, Bu
         c = self.config
         base_work_dir = c['base_work_dir']
         cmd = ['python', self.config.get("install_app_path"), self.device_ip, 'build/' + str(self.filename_apk), self.app_name]
-        self.run_command(cmd, cwd=base_work_dir, halt_on_failure=True)
+        self.run_command(cmd, cwd=base_work_dir, halt_on_failure=True, fatal_exit_code=3)
 
     def _download_robocop_apk(self):
         dirs = self.query_abs_dirs()
@@ -429,7 +429,7 @@ class PandaTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixin, Bu
         unzip = self.query_exe("unzip")
         package_path = os.path.join(apk_dir, 'package-name.txt')
         unzip_cmd = [unzip, '-q', '-o',  self.apk_path]
-        self.run_command(unzip_cmd, cwd=apk_dir, halt_on_failure=True)
+        self.run_command(unzip_cmd, cwd=apk_dir, halt_on_failure=True, fatal_exit_code=3)
         self.app_name = str(self.read_from_file(package_path, verbose=True)).rstrip()
 
         str_format_values = {

@@ -224,10 +224,8 @@ class BaseLogger(object):
         log_dir='.',
         log_to_raw=False,
         logger_name='',
-        halt_on_failure=True,
         append_to_log=False,
     ):
-        self.halt_on_failure = halt_on_failure,
         self.log_format = log_format
         self.log_date_format = log_date_format
         self.log_to_console = log_to_console

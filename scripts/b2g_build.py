@@ -591,9 +591,9 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
                     f.write("\nMAKE_FLAGS=-j1\n")
 
             # output our sources.xml, make a copy for update_sources_xml()
-            self.run_command(["./gonk-misc/add-revision.py", "-o", "sources.xml", "--force", ".repo/manifest.xml"], cwd=dirs["work_dir"], halt_on_failure=True)
-            self.run_command(["cat", "sources.xml"], cwd=dirs['work_dir'], halt_on_failure=True)
-            self.run_command(["cp", "-p", "sources.xml", "sources.xml.original"], cwd=dirs['work_dir'], halt_on_failure=True)
+            self.run_command(["./gonk-misc/add-revision.py", "-o", "sources.xml", "--force", ".repo/manifest.xml"], cwd=dirs["work_dir"], halt_on_failure=True, fatal_exit_code=3)
+            self.run_command(["cat", "sources.xml"], cwd=dirs['work_dir'], halt_on_failure=True, fatal_exit_code=3)
+            self.run_command(["cp", "-p", "sources.xml", "sources.xml.original"], cwd=dirs['work_dir'], halt_on_failure=True, fatal_exit_code=3)
 
             manifest = load_manifest(os.path.join(dirs['work_dir'], 'sources.xml'))
             gaia_node = get_project(manifest, path="gaia")
@@ -716,7 +716,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
 
         for tarball in extra_tarballs:
             self.run_command(tar + ["xf", tarball], cwd=dirs['work_dir'],
-                             halt_on_failure=True)
+                             halt_on_failure=True, fatal_exit_code=3)
 
     def checkout_gaia(self):
         dirs = self.query_abs_dirs()

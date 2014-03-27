@@ -189,7 +189,8 @@ class GaiaTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin,
             self.run_command(command,
                              cwd=parent_dir,
                              error_list=TarErrorList,
-                             halt_on_failure=True)
+                             halt_on_failure=True,
+                             fatal_exit_code=3)
         else:
             # a tooltool xre.zip
             command = self.query_exe('unzip', return_type='list')
@@ -204,7 +205,8 @@ class GaiaTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin,
             self.run_command(command,
                              cwd=parent_dir,
                              error_list=ZipErrorList,
-                             halt_on_failure=True)
+                             halt_on_failure=True,
+                             fatal_exit_code=3)
 
     def download_and_extract(self):
         super(GaiaTest, self).download_and_extract()

@@ -348,7 +348,7 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MobileSigningMixin,
                          cwd=dirs["abs_mozilla_dir"],
                          env=self.query_repack_env(),
                          error_list=BaseErrorList,
-                         halt_on_failure=True)
+                         halt_on_failure=True, fatal_exit_code=3)
         self._mar_tools_download()
         # if checkout updates CLOBBER file with a newer timestamp,
         # next make -f client.mk configure  will delete archives
