@@ -186,7 +186,7 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, VCSMixin, BaseScript, BlobUpl
         self.run_command(tar + ['zxf', self.installer_path],
                          cwd=dirs['abs_emulator_dir'],
                          error_list=TarErrorList,
-                         halt_on_failure=True)
+                         halt_on_failure=True, fatal_exit_code=3)
 
         if self.config.get('download_minidump_stackwalk'):
             self.install_minidump_stackwalk()

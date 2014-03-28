@@ -66,13 +66,15 @@ class GaiaMixin(object):
             self.run_command(cmd,
                              cwd=os.path.dirname(dest),
                              output_timeout=1760,
-                             halt_on_failure=True)
+                             halt_on_failure=True,
+                             fatal_exit_code=3)
 
             # checkout git branch
             cmd = [git_cmd,
                    'checkout',
                    revision or branch]
-            self.run_command(cmd, cwd=dest, halt_on_failure=True)
+            self.run_command(cmd, cwd=dest, halt_on_failure=True,
+                             fatal_exit_code=3)
 
             # verify
             cmd = [git_cmd]
@@ -80,7 +82,8 @@ class GaiaMixin(object):
                 cmd += ['log', '-1']
             else:
                 cmd += ['branch']
-            self.run_command(cmd, cwd=dest, halt_on_failure=True)
+            self.run_command(cmd, cwd=dest, halt_on_failure=True,
+                             fatal_exit_code=3)
 
         else:
             # purge the repo if it already exists

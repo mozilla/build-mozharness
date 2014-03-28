@@ -32,13 +32,15 @@ class MockMixin(object):
     def init_mock(self, mock_target):
         "Initialize mock environment defined by `mock_target`"
         cmd = ['mock_mozilla', '-r', mock_target, '--init']
-        return super(MockMixin, self).run_command(cmd, halt_on_failure=True)
+        return super(MockMixin, self).run_command(cmd, halt_on_failure=True,
+                                                  fatal_exit_code=3)
 
     def install_mock_packages(self, mock_target, packages):
         "Install `packages` into mock environment `mock_target`"
         cmd = ['mock_mozilla', '-r', mock_target, '--install'] + packages
         # TODO: parse output to see if packages actually were installed
-        return super(MockMixin, self).run_command(cmd, halt_on_failure=True)
+        return super(MockMixin, self).run_command(cmd, halt_on_failure=True,
+                                                  fatal_exit_code=3)
 
     def delete_mock_files(self, mock_target, files):
         """Delete files from the mock environment `mock_target`. `files` should
@@ -47,7 +49,8 @@ class MockMixin(object):
         cmd_base = ['mock_mozilla', '-r', mock_target, '--shell']
         for src, dest in files:
             cmd = cmd_base + ['rm -rf %s' % dest]
-            super(MockMixin, self).run_command(cmd, halt_on_failure=True)
+            super(MockMixin, self).run_command(cmd, halt_on_failure=True,
+                                               fatal_exit_code=3)
 
     def copy_mock_files(self, mock_target, files):
         """Copy files into the mock environment `mock_target`. `files` should
@@ -55,11 +58,13 @@ class MockMixin(object):
         cmd_base = ['mock_mozilla', '-r', mock_target, '--copyin', '--unpriv']
         for src, dest in files:
             cmd = cmd_base + [src, dest]
-            super(MockMixin, self).run_command(cmd, halt_on_failure=True)
+            super(MockMixin, self).run_command(cmd, halt_on_failure=True,
+                                               fatal_exit_code=3)
             super(MockMixin, self).run_command(
                 ['mock_mozilla', '-r', mock_target, '--shell',
                  'chown -R mock_mozilla %s' % dest],
-                halt_on_failure=True)
+                halt_on_failure=True,
+                fatal_exit_code=3)
 
     def enable_mock(self):
         """Wrap self.run_command and self.get_output_from_command to run inside
@@ -141,9 +146,11 @@ class MockMixin(object):
         else:
             rm_lock_cmd = ['rm', '-f', buildroot_lock_path]
             super(MockMixin, self).run_command(rm_lock_cmd,
-                                               halt_on_failure=True)
+                                               halt_on_failure=True,
+                                               fatal_exit_code=3)
         cmd = ['mock_mozilla', '-r', mock_target, '--orphanskill']
-        return super(MockMixin, self).run_command(cmd, halt_on_failure=True)
+        return super(MockMixin, self).run_command(cmd, halt_on_failure=True,
+                                                  fatal_exit_code=3)
 
     def setup_mock(self, mock_target=None, mock_packages=None, mock_files=None):
         """Initializes and installs packages, copies files into mock

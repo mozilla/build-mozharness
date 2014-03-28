@@ -156,7 +156,7 @@ class PandaTalosTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixi
             for arg in suites[suite]:
                 cmd.append(arg % replace_dict)
         self._install_app()
-        self.run_command(cmd, dirs['abs_talosdatatalos_dir'], env=env, halt_on_failure=True)
+        self.run_command(cmd, dirs['abs_talosdatatalos_dir'], env=env, halt_on_failure=True, fatal_exit_code=suites.get('fatal_exit_code', 3))
 
     def _run_category_suites(self, suite_category, preflight_run_method=None):
         """run suite(s) to a specific category"""
@@ -236,7 +236,7 @@ class PandaTalosTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixi
     def _install_app(self):
         dirs = self.query_abs_dirs()
         cmd = ['python', self.config.get("install_app_path"), self.device_ip, os.path.join(dirs['abs_talosdata_dir'], self.filename_apk), self.app_name]
-        self.run_command(cmd, dirs['abs_talosdata_dir'], halt_on_failure=True)
+        self.run_command(cmd, dirs['abs_talosdata_dir'], halt_on_failure=True, fatal_exit_code=3)
 
     def query_abs_dirs(self):
         if self.abs_dirs:
@@ -320,10 +320,10 @@ class PandaTalosTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixi
         talos_base_cmd.append("--talos-json-url")
         talos_base_cmd.append(talos_json_url)
         env = self.query_env()
-        self.run_command(talos_base_cmd, dirs['abs_talosdata_dir'], env=env, halt_on_failure=True)
+        self.run_command(talos_base_cmd, dirs['abs_talosdata_dir'], env=env, halt_on_failure=True, fatal_exit_code=3)
         unzip = self.query_exe("unzip")
         unzip_cmd = [unzip, '-q', '-o',  talos_zip_path]
-        self.run_command(unzip_cmd, cwd=dirs['abs_talosdata_dir'], halt_on_failure=True)
+        self.run_command(unzip_cmd, cwd=dirs['abs_talosdata_dir'], halt_on_failure=True, fatal_exit_code=3)
 
     def _query_abs_base_cmd(self, suite_category):
         dirs = self.query_abs_dirs()
@@ -343,7 +343,7 @@ class PandaTalosTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixi
         unzip = self.query_exe("unzip")
         package_path = os.path.join(dirs['abs_fennec_dir'], 'package-name.txt')
         unzip_cmd = [unzip, '-q', '-o',  self.apk_path]
-        self.run_command(unzip_cmd, cwd=dirs['abs_fennec_dir'], halt_on_failure=True)
+        self.run_command(unzip_cmd, cwd=dirs['abs_fennec_dir'], halt_on_failure=True, fatal_exit_code=3)
         self.app_name = str(self.read_from_file(package_path, verbose=True)).rstrip()
 
         str_format_values = {

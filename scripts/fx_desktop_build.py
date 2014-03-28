@@ -48,15 +48,15 @@ class FxDesktopBuild(BuildScript, object):
             # Default configuration
             'config': {
                 "repo_base": "https://hg.mozilla.org",
-                "repo_path": "mozilla-central",
                 "nightly_build": False,
                 "pgo_build": False,
+                "pgo_platforms": ['linux', 'linux64', 'win32'],
                 'is_automation': True,
                 # create_snippets will be decided by
                 # configs/builds/branch_specifics.py
-                # and whether or not this is a nightly build
-                "create_snippets": False,
-                "create_partial": False,
+                # and used only if this is a nightly build
+                "create_snippets": True,
+                "create_partial": True,
                 # We have "platform_supports_{snippets, partial}" to dictate
                 # whether the platform even supports creating_{snippets,
                 # partial}. In other words: we create {snippets, partial} if
@@ -85,6 +85,7 @@ class FxDesktopBuild(BuildScript, object):
                                 '.org/tooltool',
                 # only used for make uploadsymbols
                 'use_branch_in_symbols_extra_buildid': True,
+                'enable_checktests': True,
             },
             'ConfigClass': BuildingConfig,
         }
@@ -92,6 +93,7 @@ class FxDesktopBuild(BuildScript, object):
 
     def _pre_config_lock(self, rw_config):
         """grab buildbot props if we are running this in automation"""
+        super(FxDesktopBuild, self)._pre_config_lock(rw_config)
         c = self.config
         if c['is_automation']:
             # parse buildbot config and add it to self.config

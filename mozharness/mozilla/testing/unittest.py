@@ -119,7 +119,7 @@ class DesktopUnittestOutputParser(OutputParser):
                         # This handles suites that either pass or report
                         # number of failures. We need to set both
                         # pass and fail count in the pass case.
-                        self.pass_count = 1 
+                        self.pass_count = 1
                         self.fail_count = 0
                 elif self.summary_suite_re['fail_group'] in r:
                     self.fail_count = int(summary_match_list[-1])
@@ -194,7 +194,8 @@ class EmulatorMixin(object):
             self.fatal("Unable to download emulator via tooltool!")
         unzip = self.query_exe("unzip")
         unzip_cmd = [unzip, '-q', os.path.join(dirs['abs_work_dir'], "emulator.zip")]
-        self.run_command(unzip_cmd, cwd=dirs['abs_emulator_dir'], halt_on_failure=True)
+        self.run_command(unzip_cmd, cwd=dirs['abs_emulator_dir'], halt_on_failure=True,
+                         fatal_exit_code=3)
 
     def install_emulator(self):
         dirs = self.query_abs_dirs()

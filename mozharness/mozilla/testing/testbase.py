@@ -202,7 +202,8 @@ You can set this by:
                                      error_level=FATAL)
         command = self.query_exe('unzip', return_type='list')
         command.extend(['-q', '-o', zipfile])
-        self.run_command(command, cwd=parent_dir, halt_on_failure=True)
+        self.run_command(command, cwd=parent_dir, halt_on_failure=True,
+                         fatal_exit_code=3)
 
     def _extract_test_zip(self, target_unzip_dirs=None):
         dirs = self.query_abs_dirs()
@@ -219,7 +220,8 @@ You can set this by:
         # TODO error_list
         # unzip return code 11 is 'no matching files were found'
         self.run_command(unzip_cmd, cwd=test_install_dir,
-                         halt_on_failure=True, success_codes=[0, 11])
+                         halt_on_failure=True, success_codes=[0, 11],
+                         fatal_exit_code=3)
 
     def _read_tree_config(self):
         """Reads an in-tree config file"""
@@ -232,7 +234,7 @@ You can set this by:
             tree_config_path = os.path.join(test_install_dir, rel_tree_config_path)
 
             if not os.path.isfile(tree_config_path):
-                self.fatal("The in-tree configuration file '%s' does not exist!" \
+                self.fatal("The in-tree configuration file '%s' does not exist!"
                            "It must be added to '%s'. See bug 981030 for more details." %
                            (tree_config_path, os.path.join('gecko', 'testing', rel_tree_config_path)))
 
@@ -273,7 +275,7 @@ You can set this by:
         self.set_buildbot_property("symbols_url", self.symbols_url,
                                    write_to_file=True)
         self.run_command(['unzip', '-q', source], cwd=self.symbols_path,
-                         halt_on_failure=True)
+                         halt_on_failure=True, fatal_exit_code=3)
 
     def download_and_extract(self, target_unzip_dirs=None):
         """
@@ -336,7 +338,8 @@ Did you run with --create-virtualenv? Is mozinstall in virtualenv_modules?""")
         cmd.extend([self.installer_path,
                     '--destination', target_dir])
         # TODO we'll need some error checking here
-        self.binary_path = self.get_output_from_command(cmd, halt_on_failure=True)
+        self.binary_path = self.get_output_from_command(cmd, halt_on_failure=True,
+                                                        fatal_exit_code=3)
 
     def install_minidump_stackwalk(self):
         dirs = self.query_abs_dirs()
@@ -408,7 +411,8 @@ Did you run with --create-virtualenv? Is mozinstall in virtualenv_modules?""")
             self.run_command(cmd,
                              cwd=dirs['abs_work_dir'],
                              error_list=BaseErrorList,
-                             halt_on_failure=suite['halt_on_failure'])
+                             halt_on_failure=suite['halt_on_failure'],
+                             fatal_exit_code=suite.get('fatal_exit_code', 3))
 
     def preflight_run_tests(self):
         """preflight commands for all tests"""
