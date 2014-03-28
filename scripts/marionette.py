@@ -205,7 +205,12 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
 
     @PreScriptAction('create-virtualenv')
     def _configure_marionette_virtualenv(self, action):
-        if self.tree_config.get('use_puppetagain_packages'):
+        # XXX Bug 981030 - hack to unbreak b2g18. Remove when b2g18 no longer supported
+        try:
+            branch = self.buildbot_config['properties']['branch']
+        except:
+            branch = None
+        if self.tree_config.get('use_puppetagain_packages') or branch == 'mozilla-b2g18':
             self.register_virtualenv_module('mozinstall')
             self.register_virtualenv_module(
                 'marionette', os.path.join('tests', 'marionette'))
