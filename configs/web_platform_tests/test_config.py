@@ -7,10 +7,11 @@
 # This is a template config file for web-platform-tests test.
 
 config = {
-    "options": [
-        "--metadata-root=%(test_path)s/metadata",
-        "--processes=1"
-    ],
+    # test harness options are located in the gecko tree
+    "in_tree_config": "config/mozharness/web_platform_tests_config.py",
+
+    "options": [],
+
     "default_actions": [
         'clobber',
         'download-and-extract',
@@ -19,6 +20,7 @@ config = {
         'install',
         'run-tests',
     ],
+
     "find_links": [
         "http://pypi.pub.build.mozilla.org/pub",
     ],

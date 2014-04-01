@@ -129,9 +129,7 @@ class WebPlatformTest(TestingMixin, MercurialScript, BlobUploadMixin):
                                                    "wpt_structured_full.log"),
                      "--binary=%s" % self.binary_path]
 
-        pos_args = [os.path.join(dirs["abs_wpttest_dir"], "tests")]
-
-        options = c["options"]
+        options = list(c.get("options", [])) + list(self.tree_config["options"])
 
         str_format_values = {
             'binary_path': self.binary_path,
@@ -141,7 +139,7 @@ class WebPlatformTest(TestingMixin, MercurialScript, BlobUploadMixin):
 
         options = [item % str_format_values for item in options]
 
-        return base_cmd + options + pos_args
+        return base_cmd + options
 
     def run_tests(self):
         dirs = self.query_abs_dirs()

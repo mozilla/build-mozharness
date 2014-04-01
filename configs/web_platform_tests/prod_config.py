@@ -6,10 +6,10 @@
 import os
 
 config = {
-    "options": [
-        "--metadata-root=%(test_path)s/metadata",
-        "--processes=1",
-    ],
+    # test harness options are located in the gecko tree
+    "in_tree_config": "config/mozharness/web_platform_tests_config.py",
+
+    "options": [],
 
     "exes": {
         'python': '/tools/buildbot/bin/python',
