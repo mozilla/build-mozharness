@@ -43,7 +43,7 @@ except ImportError:
 from mozprocess import ProcessHandler
 from mozharness.base.config import BaseConfig
 from mozharness.base.log import SimpleFileLogger, MultiFileLogger, \
-    LogMixin, OutputParser, DEBUG, INFO, ERROR, CRITICAL, FATAL
+    LogMixin, OutputParser, DEBUG, INFO, ERROR, FATAL
 
 
 # ScriptMixin {{{1
