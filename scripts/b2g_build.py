@@ -15,6 +15,7 @@ import urlparse
 import xml.dom.minidom
 import functools
 import time
+import random
 
 try:
     import simplejson as json
@@ -556,6 +557,8 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
                     os.symlink(repo_mirror_dir, repo_link)
 
             max_tries = 5
+            sleep_time = 60
+            max_sleep_time = 300
             for _ in range(max_tries):
                 # If .repo points somewhere, then try and reset our state
                 # before running config.sh
@@ -584,8 +587,10 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
                 else:
                     # Try again in a bit. Broken clones should be deleted and
                     # re-tried above
-                    self.info("config.sh failed; sleeping and retrying")
-                    time.sleep(30)
+                    self.info("config.sh failed; sleeping %i and retrying" % sleep_time)
+                    time.sleep(sleep_time)
+                    # Exponential backoff with random jitter
+                    sleep_time = min(sleep_time * 1.5, max_sleep_time) + random.randint(1, 60)
             else:
                 self.fatal("failed to run config.sh")
 
