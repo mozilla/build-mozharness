@@ -2,10 +2,7 @@
 ###########################################################################
 # This requires coverage and nosetests:
 #
-#  easy_install coverage
-#  easy_install nose
-#  easy_install pylint
-#  easy_install pyflakes
+#  pip install -r requirements.txt
 #
 # test_base_vcs_mercurial.py requires hg >= 1.6.0 with mq, rebase, share
 # extensions to fully test.

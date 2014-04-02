@@ -210,7 +210,7 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
             branch = self.buildbot_config['properties']['branch']
         except:
             branch = None
-        if self.tree_config.get('use_puppetagain_packages') or branch == 'mozilla-b2g18':
+        if self.tree_config.get('use_puppetagain_packages') or branch in ('mozilla-b2g18', 'mozilla-b2g18_v1_1_0_hd'):
             self.register_virtualenv_module('mozinstall')
             self.register_virtualenv_module(
                 'marionette', os.path.join('tests', 'marionette'))
