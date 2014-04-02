@@ -91,6 +91,12 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
                     "in the config file. You do not need to specify "
                     "any other suites.\nBeware, this may take a while ;)"}
          ],
+        [['--e10s', ], {
+            "action": "store_true",
+            "dest": "e10s",
+            "default": False,
+            "help": "Run tests with multiple processes."}
+         ],
     ] + copy.deepcopy(testing_config_options) + \
         copy.deepcopy(blobupload_config_options)
 
@@ -233,6 +239,9 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
             # self.symbols_path when downloading/extracting.
             if self.symbols_path:
                 str_format_values['symbols_path'] = self.symbols_path
+
+            if c['e10s']:
+                base_cmd.append('--e10s')
 
             # set pluginsPath
             abs_app_plugins_dir = os.path.join(abs_app_dir, 'plugins')
