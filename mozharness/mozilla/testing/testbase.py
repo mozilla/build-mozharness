@@ -203,7 +203,7 @@ You can set this by:
         command = self.query_exe('unzip', return_type='list')
         command.extend(['-q', '-o', zipfile])
         self.run_command(command, cwd=parent_dir, halt_on_failure=True,
-                         fatal_exit_code=3)
+                         fatal_exit_code=3, output_timeout=1760)
 
     def _extract_test_zip(self, target_unzip_dirs=None):
         dirs = self.query_abs_dirs()
