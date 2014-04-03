@@ -12,8 +12,6 @@ import sys
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
 from mozharness.base.gaia_test import GaiaTest
-from mozharness.base.log import ERROR
-from mozharness.base.errors import BaseErrorList
 from mozharness.mozilla.testing.unittest import TestSummaryOutputParserHelper
 
 

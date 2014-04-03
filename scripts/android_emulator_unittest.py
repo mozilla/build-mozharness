@@ -376,7 +376,7 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
         suite_category = self.test_suite_definitions[suite_name]["category"]
 
         if suite_category not in self.tree_config["suite_definitions"]:
-            self.fatal("Key '%s' not defined in the in-tree config! Please add it to '%s'." \
+            self.fatal("Key '%s' not defined in the in-tree config! Please add it to '%s'. "
                        "See bug 981030 for more details." % (suite_category,
                        os.path.join('gecko', 'testing', self.config['in_tree_config'])))
         cmd = [
@@ -603,7 +603,7 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
             config = dict(config.items() + self.config.items())
 
             self.info("Creating ADBDevicHandler for %s with config %s" % (emulator["name"], config))
-            dh = ADBDeviceHandler(config=config)
+            dh = ADBDeviceHandler(config=config, log_obj=self.log_obj)
             dh.device_id = emulator['device_id']
 
             # Install Fennec

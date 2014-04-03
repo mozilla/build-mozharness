@@ -53,6 +53,8 @@ config = {
         "browser-chrome-2": ["--browser-chrome", "--total-chunks=3", "--this-chunk=2"],
         "browser-chrome-3": ["--browser-chrome", "--total-chunks=3", "--this-chunk=3"],
         "mochitest-devtools-chrome": ["--browser-chrome", "--subsuite=devtools"],
+        "mochitest-devtools-chrome-1": ["--browser-chrome", "--subsuite=devtools", "--total-chunks=2", "--this-chunk=1"],
+        "mochitest-devtools-chrome-2": ["--browser-chrome", "--subsuite=devtools", "--total-chunks=2", "--this-chunk=2"],
         "a11y": ["--a11y"],
         "plugins": ['--setpref=dom.ipc.plugins.enabled=false',
                     '--setpref=dom.ipc.plugins.enabled.x86_64=false',
