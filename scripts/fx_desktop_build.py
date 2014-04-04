@@ -50,6 +50,7 @@ class FxDesktopBuild(BuildScript, object):
                 "repo_base": "https://hg.mozilla.org",
                 "nightly_build": False,
                 "pgo_build": False,
+                "debug_build": False,
                 "pgo_platforms": ['linux', 'linux64', 'win32'],
                 'is_automation': True,
                 # create_snippets will be decided by

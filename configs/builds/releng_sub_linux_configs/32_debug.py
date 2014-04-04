@@ -18,6 +18,7 @@ config = {
         'update',  # decided by query_is_nightly()
         'enable-ccache',
     ],
+    'debug_build': True,
     'platform': 'linux-debug',
     'purge_minsize': 14,
     'mock_files': [
