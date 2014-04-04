@@ -48,6 +48,10 @@ config = {
             'ignore_groups': ['darwin'],
             'manifest_file': 'emulator.xml',
         },
+        'flame': {
+            'ignore_projects': ['gecko'],
+            'ignore_groups': ['darwin'],
+        },
         'hamachi': {
             'ignore_projects': ['gecko'],
             'ignore_groups': ['darwin'],
