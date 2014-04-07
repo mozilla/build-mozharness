@@ -351,7 +351,6 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
                 self.config['tooltool_config']['manifest'],
                 bootstrap_cmd=self.config['tooltool_config']['bootstrap_cmd'],
                 output_dir=self.config['tooltool_config']['output_dir'] % self.query_abs_dirs(),
-                cache_dir=self.config['tooltool_config'].get('tooltool_cache', os.environ.get("TOOLTOOL_CACHE", None))
             )
         self._setup_configure()
         self.run_command_m([make, "wget-en-US"],
