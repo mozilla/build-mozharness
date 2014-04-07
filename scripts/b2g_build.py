@@ -674,7 +674,8 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
                 manifest = os.path.abspath(os.path.join(config_dir, gecko_config['tooltool_manifest']))
                 self.tooltool_fetch(manifest=manifest,
                                     bootstrap_cmd=gecko_config.get('tooltool_bootstrap_cmd'),
-                                    output_dir=dirs['work_dir'])
+                                    output_dir=dirs['work_dir'],
+                                    cache_dir=self.config['tooltool_config'].get('tooltool_cache', os.environ.get("TOOLTOOL_CACHE", None)))
                 return
             gonk_url = gecko_config['gonk_snapshot_url']
 
