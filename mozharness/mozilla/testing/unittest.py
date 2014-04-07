@@ -190,7 +190,8 @@ class EmulatorMixin(object):
 
     def install_emulator_from_tooltool(self, manifest_path):
         dirs = self.query_abs_dirs()
-        if self.tooltool_fetch(manifest_path, output_dir=dirs['abs_work_dir']):
+        cache_dir=self.config['tooltool_config'].get('tooltool_cache', os.environ.get("TOOLTOOL_CACHE", None))
+        if self.tooltool_fetch(manifest_path, output_dir=dirs['abs_work_dir'], cache_dir=cache_dir):
             self.fatal("Unable to download emulator via tooltool!")
         unzip = self.query_exe("unzip")
         unzip_cmd = [unzip, '-q', os.path.join(dirs['abs_work_dir'], "emulator.zip")]

@@ -1548,16 +1548,16 @@ or run without that action (ie: --no-{action})"
             override_opt_branch = (self.platform in c['pgo_platforms'] and
                                    c.get('branch_uses_per_checkin_strategy'))
             if c.get('pgo_build') or override_opt_branch:
-                build_type = 'pgo'
-            elif c.get('debug_build'):
-                build_type = 'debug'
+                build_type = '-pgo'
+            elif c.get('debug_build'):  # for debug builds we append nothing
+                build_type = ''
             else:  # generic opt build
-                build_type = 'opt'
+                build_type = '-opt'
             if c.get('unittest_platform'):
                 platform = c['unittest_platform']
             else:
                 platform = self.platform
-            full_unittest_platform = "%s-%s" % (platform, build_type)
+            full_unittest_platform = "%s%s" % (platform, build_type)
             unittest_branch = "%s-%s-%s" % (self.branch,
                                             full_unittest_platform,
                                             'unittest')
