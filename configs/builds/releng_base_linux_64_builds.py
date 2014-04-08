@@ -64,7 +64,7 @@ config = {
         "%(objdir)s/dist/thunderbird*",
         "%(objdir)s/dist/install/sea/*.exe"
     ],
-    'tooltool_script': "/tools/tooltool.py",
+    'tooltool_script':  ["/builds/tooltool.py"],
     'tooltool_bootstrap': "setup.sh",
     # in linux we count ctors
     'enable_count_ctors': True,

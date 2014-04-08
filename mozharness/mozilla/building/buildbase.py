@@ -812,16 +812,16 @@ or run without that action (ie: --no-{action})"
         if not c.get('tooltool_manifest_src'):
             return self.warning(ERROR_MSGS['tooltool_manifest_undetermined'])
         fetch_script_path = os.path.join(dirs['abs_tools_dir'],
-                                         'scripts/tooltool/fetch_and_unpack.sh')
+                                         'scripts/tooltool/tooltool_wrapper.sh')
         tooltool_manifest_path = os.path.join(dirs['abs_src_dir'],
                                               c['tooltool_manifest_src'])
         cmd = [
             fetch_script_path,
             tooltool_manifest_path,
             c['tooltool_url'],
-            c['tooltool_script'],
             c['tooltool_bootstrap'],
         ]
+        cmd.extend(c['tooltool_script'])
         self.info(str(cmd))
         self.run_command(cmd, cwd=dirs['abs_src_dir'])
 
