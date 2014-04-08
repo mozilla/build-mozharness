@@ -59,6 +59,7 @@ class B2GBumper(VCSScript, MapperMixin):
             # Default config options
             config={
                 'treestatus_base_url': 'https://treestatus.mozilla.org',
+                'log_max_rotate': 99,
             }
         )
 
