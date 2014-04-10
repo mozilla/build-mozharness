@@ -79,6 +79,7 @@ config = {
         "jsreftest": ["--extra-profile-file=tests/jsreftest/tests/user.js", "tests/jsreftest/tests/jstests.list"],
         "reftest-ipc": ['--setpref=browser.tabs.remote=true',
                         '--setpref=browser.tabs.remote.autostart=true',
+                        '--setpref=layers.async-pan-zoom.enabled=true',
                         'tests/reftest/tests/layout/reftests/reftest-sanity/reftest.list'],
         "reftest-no-accel": ["--setpref=gfx.direct2d.disabled=true", "--setpref=layers.acceleration.disabled=true",
                              "tests/reftest/tests/layout/reftests/reftest.list"],
@@ -86,6 +87,7 @@ config = {
                          "tests/reftest/tests/layout/reftests/reftest.list"],
         "crashtest-ipc": ['--setpref=browser.tabs.remote=true',
                           '--setpref=browser.tabs.remote.autostart=true',
+                          '--setpref=layers.async-pan-zoom.enabled=true',
                           'tests/reftest/tests/testing/crashtest/crashtests.list'],
     },
     "all_xpcshell_suites": {

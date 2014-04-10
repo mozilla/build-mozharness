@@ -402,6 +402,9 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
                 channel=self.query_update_channel(),
                 version=self.query_b2g_version(),
             )
+        # Force B2G_UPDATER so that eng builds (like the emulator) will get
+        # the updater included. Otherwise the xpcshell updater tests won't run.
+        env['B2G_UPDATER'] = '1'
         if self.config.get('debug_build'):
             env['B2G_DEBUG'] = '1'
         return env

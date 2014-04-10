@@ -80,6 +80,7 @@ config = {
                         'options': ['--setpref=browser.tabs.remote=true',
                                     '--setpref=browser.tabs.remote.autostart=true',
                                     '--setpref=layers.offmainthreadcomposition.testing.enabled=true',
+                                    '--setpref=layers.async-pan-zoom.enabled=true',
                                     'tests/reftest/tests/layout/reftests/reftest-sanity/reftest.list']},
         "reftest-no-accel": ['--setpref=layers.acceleration.force-enabled=disabled',
                              'tests/reftest/tests/layout/reftests/reftest.list'],
@@ -88,6 +89,7 @@ config = {
                           'options': ['--setpref=browser.tabs.remote=true',
                                       '--setpref=browser.tabs.remote.autostart=true',
                                       '--setpref=layers.offmainthreadcomposition.testing.enabled=true',
+                                      '--setpref=layers.async-pan-zoom.enabled=true',
                                       'tests/reftest/tests/testing/crashtest/crashtests.list']},
     },
     "all_xpcshell_suites": {
