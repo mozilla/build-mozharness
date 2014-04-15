@@ -467,7 +467,13 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
     def query_device_outputdir(self):
         dirs = self.query_abs_dirs()
         dotconfig = self.query_dotconfig()
-        output_dir = os.path.join(dirs['work_dir'], 'out', 'target', 'product', dotconfig['DEVICE'])
+        if 'DEVICE' in dotconfig:
+            devicedir = dotconfig['DEVICE']
+        elif 'PRODUCT_NAME' in dotconfig:
+            devicedir = dotconfig['PRODUCT_NAME']
+        else:
+            self.fatal("Couldn't determine device directory")
+        output_dir = os.path.join(dirs['work_dir'], 'out', 'target', 'product', devicedir)
         return output_dir
 
     def query_application_ini(self):
