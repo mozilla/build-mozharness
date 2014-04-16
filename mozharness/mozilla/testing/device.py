@@ -386,7 +386,10 @@ class ADBDeviceHandler(BaseDeviceHandler):
                                  error_list=ADBErrorList)
             self.run_command([adb, "-s", device_id, "install", '-r',
                               file_path],
-                             error_list=ADBErrorList)
+                             error_list=ADBErrorList,
+                             halt_on_failure=True,
+                             fatal_exit_code=3,
+                             output_timeout=300)
 
     def uninstall_app(self, package_name, package_root="/data/data",
                       error_level="error"):
