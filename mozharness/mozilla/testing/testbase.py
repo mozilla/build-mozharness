@@ -121,13 +121,17 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin):
         if self.buildbot_config:
             c = self.config
             message = "Unable to set %s from the buildbot config"
+            if c.get("installer_url"):
+                self.installer_url = c['installer_url']
+            if c.get("test_url"):
+                self.test_url = c['test_url']
             try:
                 files = self.buildbot_config['sourcestamp']['changes'][-1]['files']
                 # Bug 868490 - Only require exactly two files if require_test_zip;
                 # otherwise accept either 1 or 2, since we'll be getting a
                 # test_zip url that we don't need.
                 expected_length = [1, 2, 3]
-                if c.get("require_test_zip"):
+                if c.get("require_test_zip") and not self.test_url:
                     expected_length = [2, 3]
                 actual_length = len(files)
                 if actual_length not in expected_length:
@@ -135,21 +139,22 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin):
                                (c['buildbot_json_path'], str(expected_length), actual_length))
                 for f in files:
                     if f['name'].endswith('tests.zip'):  # yuk
-                        # str() because of unicode issues on mac
-                        self.test_url = str(f['name'])
-                        self.info("Found test url %s." % self.test_url)
+                        if not self.test_url:
+                            # str() because of unicode issues on mac
+                            self.test_url = str(f['name'])
+                            self.info("Found test url %s." % self.test_url)
                     elif f['name'].endswith('crashreporter-symbols.zip'):  # yuk
                         self.symbols_url = str(f['name'])
                         self.info("Found symbols url %s." % self.symbols_url)
                     else:
-                        self.installer_url = str(f['name'])
-                        self.info("Found installer url %s." % self.installer_url)
-            except IndexError, e:
+                        if not self.installer_url:
+                            self.installer_url = str(f['name'])
+                            self.info("Found installer url %s." % self.installer_url)
+            except IndexError:
                 if c.get("require_test_zip"):
                     message = message % ("installer_url+test_url")
                 else:
                     message = message % ("installer_url")
-                self.fatal("%s: %s!" % (message, str(e)))
             missing = []
             if not self.installer_url:
                 missing.append("installer_url")

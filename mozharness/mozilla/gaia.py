@@ -29,14 +29,15 @@ class GaiaMixin(object):
         repo_path = repo.get('repo_path')
         revision = repo.get('revision')
         branch = repo.get('branch')
+        gaia_json_path = self.config.get("gaia_json_path", "{repo_path}/raw-file/{revision}/b2g/config/gaia.json")
         git = False
 
-        print 'dest', dest
+        self.info('dest: %s' % dest)
 
         if use_gaia_json:
-            url = "{repo_path}/raw-file/{revision}/b2g/config/gaia.json".format(
-                  repo_path=repo_path,
-                  revision=revision)
+            url = gaia_json_path.format(
+                repo_path=repo_path,
+                revision=revision)
             contents = self.retry(self.load_json_from_url, args=(url,))
             if contents.get('git') and contents['git'].get('remote'):
                 git = True
@@ -56,7 +57,7 @@ class GaiaMixin(object):
 
             if os.path.exists(dest) and os.path.exists(os.path.join(dest, '.git')):
                 cmd = [git_cmd, 'remote', '-v']
-                output = self.get_output_from_command(cmd, cwd=os.path.dirname(dest))
+                output = self.get_output_from_command(cmd, cwd=dest)
                 for line in output:
                     if remote in line:
                         needs_clobber = False
