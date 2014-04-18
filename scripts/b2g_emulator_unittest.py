@@ -161,6 +161,8 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, VCSMixin, BaseScript, BlobUpl
             dirs['abs_emulator_dir'], 'b2g-distro')
         dirs['abs_mochitest_dir'] = os.path.join(
             dirs['abs_test_install_dir'], 'mochitest')
+        dirs['abs_certs_dir'] = os.path.join(
+            dirs['abs_test_install_dir'], 'certs')
         dirs['abs_modules_dir'] = os.path.join(
             dirs['abs_test_install_dir'], 'modules')
         dirs['abs_reftest_dir'] = os.path.join(
@@ -264,6 +266,7 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, VCSMixin, BaseScript, BlobUpl
             'busybox': self.busybox_path,
             'total_chunks': self.config.get('total_chunks'),
             'this_chunk': self.config.get('this_chunk'),
+            'certificate_path': dirs['abs_certs_dir'],
         }
 
         # Bug 978233 - hack to get around multiple mochitest manifest arguments
