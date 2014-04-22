@@ -32,7 +32,7 @@ from mozharness.base.script import BaseScript
 from mozharness.base.vcs.vcsbase import VCSMixin
 from mozharness.base.transfer import TransferMixin
 from mozharness.base.errors import MakefileErrorList
-from mozharness.base.log import WARNING, ERROR, INFO, FATAL
+from mozharness.base.log import WARNING, ERROR, FATAL
 from mozharness.mozilla.l10n.locales import GaiaLocalesMixin, LocalesMixin
 from mozharness.mozilla.mock import MockMixin
 from mozharness.mozilla.tooltool import TooltoolMixin
@@ -59,10 +59,6 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
         [["--repo"], {
             "dest": "repo",
             "help": "which gecko repo to check out",
-        }],
-        [["--gonk-snapshot"], {
-            "dest": "gonk_snapshot_url",
-            "help": "override the gonk snapshot specified in the build config",
         }],
         [["--target"], {
             "dest": "target",
@@ -523,7 +519,10 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
                 # Checkout B2G and b2g-manifests. We'll do gecko later
                 b2g_manifest_branch = gecko_config.get('b2g_manifest_branch', 'master')
                 repos.append(
-                    {'vcs': 'gittool', 'repo': 'https://git.mozilla.org/b2g/b2g-manifest.git', 'dest': os.path.join(dirs['work_dir'], 'b2g-manifest'), 'branch': b2g_manifest_branch},
+                    {'vcs': 'gittool',
+                     'repo': 'https://git.mozilla.org/b2g/b2g-manifest.git',
+                     'dest': os.path.join(dirs['work_dir'], 'b2g-manifest'),
+                     'branch': b2g_manifest_branch},
                 )
                 manifest_filename = gecko_config.get('b2g_manifest', self.config['target'] + '.xml')
                 manifest_filename = os.path.join(dirs['work_dir'], 'b2g-manifest', manifest_filename)
@@ -611,7 +610,10 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
                     f.write("\nMAKE_FLAGS=-j1\n")
 
             # output our sources.xml, make a copy for update_sources_xml()
-            self.run_command(["./gonk-misc/add-revision.py", "-o", "sources.xml", "--force", ".repo/manifest.xml"], cwd=dirs["work_dir"], halt_on_failure=True, fatal_exit_code=3)
+            self.run_command(
+                ["./gonk-misc/add-revision.py", "-o", "sources.xml", "--force",
+                 ".repo/manifest.xml"], cwd=dirs["work_dir"],
+                halt_on_failure=True, fatal_exit_code=3)
             self.run_command(["cat", "sources.xml"], cwd=dirs['work_dir'], halt_on_failure=True, fatal_exit_code=3)
             self.run_command(["cp", "-p", "sources.xml", "sources.xml.original"], cwd=dirs['work_dir'], halt_on_failure=True, fatal_exit_code=3)
 
@@ -668,67 +670,20 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
         self.set_buildbot_property('gecko_revision', rev, write_to_file=True)
 
     def download_blobs(self):
-        c = self.config
         dirs = self.query_abs_dirs()
-        gonk_url = None
-        if 'gonk_snapshot_url' in c:
-            # We've overridden which gonk to use
-            gonk_url = c['gonk_snapshot_url']
-        else:
-            gecko_config = self.load_gecko_config()
-            if 'tooltool_manifest' in gecko_config:
-                # The manifest is relative to the gecko config
-                config_dir = os.path.join(dirs['src'], 'b2g', 'config',
-                                          self.config.get('b2g_config_dir', self.config['target']))
-                manifest = os.path.abspath(os.path.join(config_dir, gecko_config['tooltool_manifest']))
-                self.tooltool_fetch(manifest=manifest,
-                                    bootstrap_cmd=gecko_config.get('tooltool_bootstrap_cmd'),
-                                    output_dir=dirs['work_dir'])
-                return
-            gonk_url = gecko_config['gonk_snapshot_url']
-
-        if gonk_url:
-            if os.path.exists("gonk.tar.xz"):
-                self.info("Skipping download of %s because we have a local copy already" % gonk_url)
-            else:
-                retval = self.download_file(gonk_url, os.path.join(dirs['work_dir'], 'gonk.tar.xz'))
-                if retval is None:
-                    self.fatal("failed to download gonk", exit_code=2)
+        gecko_config = self.load_gecko_config()
+        if 'tooltool_manifest' in gecko_config:
+            # The manifest is relative to the gecko config
+            config_dir = os.path.join(dirs['src'], 'b2g', 'config',
+                                      self.config.get('b2g_config_dir', self.config['target']))
+            manifest = os.path.abspath(os.path.join(config_dir, gecko_config['tooltool_manifest']))
+            self.tooltool_fetch(manifest=manifest,
+                                bootstrap_cmd=gecko_config.get('tooltool_bootstrap_cmd'),
+                                output_dir=dirs['work_dir'])
 
     def unpack_blobs(self):
         dirs = self.query_abs_dirs()
         tar = self.query_exe('tar', return_type="list")
-        gonk_snapshot = os.path.join(dirs['abs_work_dir'], 'gonk.tar.xz')
-        if os.path.exists(gonk_snapshot):
-            mtime = int(os.path.getmtime(gonk_snapshot))
-            mtime_file = os.path.join(dirs['abs_work_dir'], '.gonk_mtime')
-            if os.path.exists(mtime_file):
-                try:
-                    prev_mtime = int(self.read_from_file(mtime_file, error_level=INFO))
-                    if mtime == prev_mtime:
-                        # transition code - help existing build dirs without a sources.xml.original
-                        sourcesfile = os.path.join(dirs['work_dir'], 'sources.xml')
-                        sourcesfile_orig = sourcesfile + '.original'
-                        if not os.path.exists(sourcesfile_orig):
-                            self.run_command(tar + ["xf", "gonk.tar.xz", "--strip-components", "1", "B2G_default_*/sources.xml"],
-                                             cwd=dirs['work_dir'])
-                            self.run_command(["cp", "-p", sourcesfile, sourcesfile_orig], cwd=dirs['work_dir'])
-                        # end transition code
-                        self.info("We already have this gonk unpacked; skipping")
-                        return
-                except:
-                    pass
-
-            self.info("Writing %s to %s" % (mtime, mtime_file))
-            self.write_to_file(mtime_file, str(mtime))
-            retval = self.run_command(tar + ["xf", "gonk.tar.xz", "--strip-components", "1"], cwd=dirs['work_dir'])
-            if retval != 0:
-                self.fatal("failed to unpack gonk", exit_code=2)
-
-            # output our sources.xml, make a copy for update_sources_xml()
-            self.run_command(["cat", "sources.xml"], cwd=dirs['work_dir'])
-            self.run_command(["cp", "-p", "sources.xml", "sources.xml.original"], cwd=dirs['work_dir'])
-
         gecko_config = self.load_gecko_config()
         extra_tarballs = self.config.get('additional_source_tarballs', [])
         if 'additional_source_tarballs' in gecko_config:
