@@ -33,6 +33,8 @@ config = {
         }, {
             "target_dest": "gitmo-beagle",
         }, {
+            "target_dest": "gitmo-staging",
+        }, {
             "target_dest": "github-beagle",
         }],
         "vcs": "hg",
@@ -59,6 +61,8 @@ config = {
             "test_push": True,
         }, {
             "target_dest": "gitmo-beagle",
+        }, {
+            "target_dest": "gitmo-staging",
         }, {
             "target_dest": "github-beagle",
             "tag_config": {
@@ -89,6 +93,8 @@ config = {
         }, {
             "target_dest": "gitmo-beagle",
         }, {
+            "target_dest": "gitmo-staging",
+        }, {
             "target_dest": "github-beagle",
             "tag_config": {
                 "tag_regexes": [
@@ -117,6 +123,8 @@ config = {
             "test_push": True,
         }, {
             "target_dest": "gitmo-beagle",
+        }, {
+            "target_dest": "gitmo-staging",
         }, {
             "target_dest": "github-beagle",
             "tag_config": {
@@ -147,6 +155,8 @@ config = {
         }, {
             "target_dest": "gitmo-beagle",
         }, {
+            "target_dest": "gitmo-staging",
+        }, {
             "target_dest": "github-beagle",
             "tag_config": {
                 "tag_regexes": [
@@ -176,6 +186,8 @@ config = {
         }, {
             "target_dest": "gitmo-beagle",
         }, {
+            "target_dest": "gitmo-staging",
+        }, {
             "target_dest": "github-beagle",
             "tag_config": {
                 "tag_regexes": [
@@ -195,6 +207,37 @@ config = {
             ],
         },
     }, {
+        "repo": "https://hg.mozilla.org/releases/mozilla-b2g30_v1_4",
+        "revision": "default",
+        "repo_name": "mozilla-b2g30_v1_4",
+        "targets": [{
+            "target_dest": "beagle/.git",
+            "vcs": "git",
+            "test_push": True,
+        }, {
+            "target_dest": "gitmo-beagle",
+        }, {
+            "target_dest": "gitmo-staging",
+        }, {
+            "target_dest": "github-beagle",
+            "tag_config": {
+                "tag_regexes": [
+                    "^B2G_",
+                ],
+            },
+        }],
+        "vcs": "hg",
+        "branch_config": {
+            "branches": {
+                "default": "b2g30_v1_4",
+            },
+        },
+        "tag_config": {
+            "tag_regexes": [
+                "^B2G_",
+            ],
+        },
+    }, {
         "repo": "https://hg.mozilla.org/releases/mozilla-b2g18_v1_1_0_hd",
         "revision": "default",
         "repo_name": "mozilla-b2g18_v1_1_0_hd",
@@ -204,6 +247,8 @@ config = {
             "test_push": True,
         }, {
             "target_dest": "gitmo-beagle",
+        }, {
+            "target_dest": "gitmo-staging",
         }, {
             "target_dest": "github-beagle",
         }],
@@ -229,6 +274,8 @@ config = {
         }, {
             "target_dest": "gitmo-beagle",
         }, {
+            "target_dest": "gitmo-staging",
+        }, {
             "target_dest": "github-beagle",
         }],
         "vcs": "hg",
@@ -252,6 +299,8 @@ config = {
             "test_push": True,
         }, {
             "target_dest": "gitmo-beagle",
+        }, {
+            "target_dest": "gitmo-staging",
         }, {
             "target_dest": "github-beagle",
         }],
@@ -277,6 +326,8 @@ config = {
         }, {
             "target_dest": "gitmo-beagle",
         }, {
+            "target_dest": "gitmo-staging",
+        }, {
             "target_dest": "github-beagle",
         }],
         "vcs": "hg",
@@ -300,6 +351,8 @@ config = {
             "test_push": True,
         }, {
             "target_dest": "gitmo-beagle",
+        }, {
+            "target_dest": "gitmo-staging",
         }, {
             "target_dest": "github-beagle",
         }],
@@ -329,6 +382,8 @@ config = {
         }, {
             "target_dest": "gitmo-beagle",
         }, {
+            "target_dest": "gitmo-staging",
+        }, {
             "target_dest": "github-beagle",
         }],
         "vcs": "hg",
@@ -357,6 +412,8 @@ config = {
         }, {
             "target_dest": "gitmo-beagle",
         }, {
+            "target_dest": "gitmo-staging",
+        }, {
             "target_dest": "github-beagle",
         }],
         "vcs": "hg",
@@ -380,6 +437,8 @@ config = {
             "test_push": True,
         }, {
             "target_dest": "gitmo-beagle",
+        }, {
+            "target_dest": "gitmo-staging",
         }, {
             "target_dest": "github-beagle",
         }],
@@ -408,6 +467,8 @@ config = {
         }, {
             "target_dest": "gitmo-beagle",
         }, {
+            "target_dest": "gitmo-staging",
+        }, {
             "target_dest": "github-beagle",
         }],
         "vcs": "hg",
@@ -427,6 +488,8 @@ config = {
             "test_push": True,
         }, {
             "target_dest": "gitmo-beagle",
+        }, {
+            "target_dest": "gitmo-staging",
         }, {
             "target_dest": "github-beagle",
         }],
@@ -448,6 +511,8 @@ config = {
         }, {
             "target_dest": "gitmo-beagle",
         }, {
+            "target_dest": "gitmo-staging",
+        }, {
             "target_dest": "github-beagle",
         }],
         "vcs": "hg",
@@ -466,6 +531,11 @@ config = {
         },
         "gitmo-beagle": {
             "repo": "gitolite3@git.mozilla.org:integration/gecko-dev.git",
+            "ssh_key": "~/.ssh/vcs-sync_rsa",
+            "vcs": "git",
+        },
+        "gitmo-staging": {
+            "repo": "gitolite3@git1.stage.dmz.scl3.mozilla.com:test/gecko-dev.git",
             "ssh_key": "~/.ssh/vcs-sync_rsa",
             "vcs": "git",
         },
