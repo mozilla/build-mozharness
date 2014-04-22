@@ -6,7 +6,7 @@
 # However, that broke on tilde expansion.
 # Let's just assume if GIT_SSH_KEY is set, we want to use it.
 if [ "x$GIT_SSH_KEY" != "x" ]; then
-    exec ssh -o IdentityFile="$GIT_SSH_KEY" "$@"
+    exec ssh -o IdentityFile="$GIT_SSH_KEY" -o ServerAliveInterval=600 "$@"
 else
-    exec ssh "$@"
+    exec ssh -o ServerAliveInterval=600 "$@"
 fi

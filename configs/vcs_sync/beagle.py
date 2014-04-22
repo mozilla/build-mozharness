@@ -535,7 +535,7 @@ config = {
             "vcs": "git",
         },
         "gitmo-staging": {
-            "repo": "gitolite3@git1.stage.dmz.scl3.mozilla.com:test/gecko-dev.git",
+            "repo": "gitolite3@git.allizom.org:test/gecko-dev.git",
             "ssh_key": "~/.ssh/vcs-sync_rsa",
             "vcs": "git",
         },
