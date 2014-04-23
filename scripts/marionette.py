@@ -55,6 +55,13 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
          "help": "application name of binary"
          }
     ], [
+        ["--app-arg"],
+        {"action": "store",
+         "dest": "app_arg",
+         "default": None,
+         "help": "Optional command-line argument to pass to the browser"
+         }
+    ], [
         ["--gaia-dir"],
         {"action": "store",
          "dest": "gaia_dir",
@@ -428,6 +435,8 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
             cmd.extend(self._build_arg('--binary', binary))
             cmd.extend(self._build_arg('--address',
                                        self.config['marionette_address']))
+            if self.config.get('app_arg'):
+                cmd.extend(['--app-arg', self.config['app_arg']])
 
         cmd.append(manifest)
 
