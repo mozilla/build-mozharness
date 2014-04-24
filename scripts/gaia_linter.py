@@ -93,7 +93,7 @@ class GaiaLinterOutputParser(OutputParser):
 
 class GaiaIntegrationTest(GaiaTest):
 
-    virtualenv_modules = ['closure_linter==2.3.10',
+    virtualenv_modules = ['closure_linter==2.3.13',
                           'python-gflags',
                           ]
 
