@@ -578,7 +578,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
 
                 config_result = self.run_command([
                     './config.sh', '-q', self.config['target'], manifest_filename,
-                ], cwd=dirs['work_dir'])
+                ], cwd=dirs['work_dir'], output_timeout=45 * 60)  # timeout after 45 minutes of no output
 
                 # TODO: Check return code from these? retry?
                 # Run git reset --hard to make sure we're in a clean state
