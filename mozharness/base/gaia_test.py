@@ -54,6 +54,13 @@ class GaiaTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin,
          "help": "application binary name"
          }
     ], [
+        ["--browser-arg"],
+        {"action": "store",
+         "dest": "browser_arg",
+         "default": None,
+         "help": "optional command-line argument to pass to the browser"
+         }
+    ], [
         ["--xre-path"],
         {"action": "store",
          "dest": "xre_path",
