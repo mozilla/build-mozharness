@@ -606,8 +606,7 @@ class ScriptMixin(object):
         """Run a command, with logging and error parsing.
 
         output_timeout is the number of seconds without output before the process
-        is killed; it requires that mozprocess is installed in the script's
-        virtualenv.
+        is killed.
 
         TODO: context_lines
         TODO: error_level_override?

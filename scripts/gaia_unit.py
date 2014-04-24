@@ -40,6 +40,7 @@ class GaiaUnitTest(GaiaTest):
         cmd.extend(self._build_arg('--profile', os.path.join(dirs['abs_gaia_dir'],
                                                              'profile-debug')))
         cmd.extend(self._build_arg('--symbols-path', self.symbols_path))
+        cmd.extend(self._build_arg('--browser-arg', self.config.get('browser_arg')))
 
         output_parser = TestSummaryOutputParserHelper(config=self.config,
                                                       log_obj=self.log_obj,
