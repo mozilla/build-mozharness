@@ -30,6 +30,7 @@ class GaiaLinterOutputParser(OutputParser):
     GENERAL_ERRORS = (re.compile('make(.*?)\*\*\*(.*?)Error'),)
 
     def __init__(self, **kwargs):
+        self.base_dir = kwargs.pop('base_dir')
         super(GaiaLinterOutputParser, self).__init__(**kwargs)
         self.in_jshint = False
         self.in_gjslint = False
@@ -39,7 +40,10 @@ class GaiaLinterOutputParser(OutputParser):
         if not filename:
             self.log('TEST-UNEXPECTED-FAIL | make lint | %s' % message)
         else:
-            self.log('TEST-UNEXPECTED-FAIL | %s | %s' % (filename, message),
+            path = filename
+            if self.base_dir in path:
+                path = os.path.relpath(filename, self.base_dir)
+            self.log('TEST-UNEXPECTED-FAIL | %s | %s' % (path, message),
                      level=ERROR)
         self.num_errors += 1
         self.worst_log_level = self.worst_level(ERROR,
@@ -93,7 +97,7 @@ class GaiaLinterOutputParser(OutputParser):
 
 class GaiaIntegrationTest(GaiaTest):
 
-    virtualenv_modules = ['closure_linter==2.3.10',
+    virtualenv_modules = ['closure_linter==2.3.13',
                           'python-gflags',
                           ]
 
@@ -117,7 +121,9 @@ class GaiaIntegrationTest(GaiaTest):
         self.make_node_modules()
 
         output_parser = GaiaLinterOutputParser(
-          config=self.config, log_obj=self.log_obj)
+            base_dir=dirs['abs_gaia_dir'],
+            config=self.config,
+            log_obj=self.log_obj)
 
         code = self.run_command([
             'make',
