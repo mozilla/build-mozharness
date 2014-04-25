@@ -43,6 +43,14 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
                     "Suites are defined in the config file.\n"
                     "Examples: 'all', 'plain1', 'plain5', 'chrome', or 'a11y'"}
          ],
+        [['--webapprt-suite', ], {
+            "action": "extend",
+            "dest": "specified_webapprt_suites",
+            "type": "string",
+            "help": "Specify which webapprt suite to run. "
+                    "Suites are defined in the config file.\n"
+                    "Examples: 'content', 'chrome'"}
+         ],
         [['--reftest-suite', ], {
             "action": "extend",
             "dest": "specified_reftest_suites",
@@ -158,6 +166,7 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
         dirs['abs_test_bin_components_dir'] = os.path.join(dirs['abs_test_bin_dir'],
                                                            'components')
         dirs['abs_mochitest_dir'] = os.path.join(dirs['abs_test_install_dir'], "mochitest")
+        dirs['abs_webapprt_dir'] = os.path.join(dirs['abs_test_install_dir'], "mochitest")
         dirs['abs_reftest_dir'] = os.path.join(dirs['abs_test_install_dir'], "reftest")
         dirs['abs_xpcshell_dir'] = os.path.join(dirs['abs_test_install_dir'], "xpcshell")
         dirs['abs_cppunittest_dir'] = os.path.join(dirs['abs_test_install_dir'], "cppunittests")
@@ -230,10 +239,17 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
             base_cmd = [self.query_python_path('python'), '-u']
             base_cmd.append(dirs["abs_%s_dir" % suite_category] + "/" + run_file)
             abs_app_dir = self.query_abs_app_dir()
+
+            webapprt_path = os.path.join(os.path.dirname(self.binary_path),
+                                         'webapprt-stub')
+            if c.get('exe_suffix'):
+                webapprt_path += c['exe_suffix']
+
             str_format_values = {
                 'binary_path': self.binary_path,
                 'symbols_path': self._query_symbols_url(),
-                'abs_app_dir': abs_app_dir
+                'abs_app_dir': abs_app_dir,
+                'app_path': webapprt_path
             }
             # TestingMixin._download_and_extract_symbols() will set
             # self.symbols_path when downloading/extracting.
@@ -336,6 +352,7 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
     def run_tests(self):
         self._run_category_suites('mochitest')
         self._run_category_suites('reftest')
+        self._run_category_suites('webapprt')
         self._run_category_suites('xpcshell',
                                   preflight_run_method=self.preflight_xpcshell)
         self._run_category_suites('cppunittest',
@@ -378,7 +395,6 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
         """run suite(s) to a specific category"""
         c = self.config
         dirs = self.query_abs_dirs()
-        abs_base_cmd = self._query_abs_base_cmd(suite_category)
         suites = self._query_specified_suites(suite_category)
         abs_app_dir = self.query_abs_app_dir()
 
@@ -386,6 +402,7 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
             preflight_run_method(suites)
         if suites:
             self.info('#### Running %s suites' % suite_category)
+            abs_base_cmd = self._query_abs_base_cmd(suite_category)
             for suite in suites:
                 cmd = abs_base_cmd[:]
                 replace_dict = {
