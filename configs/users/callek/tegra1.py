@@ -26,7 +26,7 @@ config = {
     # this needs to be set to either your_IP:8000, or an existing webserver
     # that serves talos.
 #    "talos_webserver": "10.251.25.44:8000",
-    "talos_webserver": "talos-remote.pvt.build.mozilla.org",
+    "talos_webserver": "bm-remote.build.mozilla.org",
     "talos_branch": "MobileTest",
     "disable_chrome": True,
 

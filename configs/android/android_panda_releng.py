@@ -20,7 +20,7 @@ config = {
         "jittest": "jit_test.py",
         "cppunittest": "remotecppunittests.py"
     },
-    "hostutils_url":  "http://talos-remote.pvt.build.mozilla.org/tegra/tegra-host-utils.Linux.742597.zip",
+    "hostutils_url":  "http://bm-remote.build.mozilla.org/tegra/tegra-host-utils.Linux.742597.zip",
     "verify_path":  "/builds/sut_tools/verify.py",
     "install_app_path":  "/builds/sut_tools/installApp.py",
     "logcat_path":  "/builds/sut_tools/logcat.py",
