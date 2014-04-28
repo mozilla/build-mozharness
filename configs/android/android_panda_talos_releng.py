@@ -19,8 +19,6 @@ config = {
     "talos_json_url": "https://hg.mozilla.org/%s/raw-file/%s/testing/talos/talos.json",
     "datazilla_urls": ["https://datazilla.mozilla.org/talos"],
     "datazilla_authfile": os.path.join(os.getcwd(), "oauth.txt"),
-    "old_webserver":"bm-remote.build.mozilla.org",
-    "new_webserver": "talos-remote.pvt.build.mozilla.org",
     #remotePerfConfigurator.py options
     "preflight_talos_options": [
         "-v", "-e", "%(app_name)s",
@@ -33,7 +31,7 @@ config = {
         "--remoteDevice=%(device_ip)s",
         "--sampleConfig=remote.config",
         "--output=local.yml",
-        "--webServer=%(webserver)s",
+        "--webServer=talos-remote.pvt.build.mozilla.org",
         "--browserWait=60"
     ],
     #run_tests.py options
