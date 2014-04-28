@@ -19,3 +19,4 @@ local/
 logs/
 .pydevproject
 .project
+docs/_build/
