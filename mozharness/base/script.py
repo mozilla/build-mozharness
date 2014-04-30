@@ -830,7 +830,7 @@ class ScriptMixin(object):
         else:
             return output
 
-    def _touch_file(self, file_name, times=None):
+    def _touch_file(self, file_name, times=None, error_level=FATAL):
         """touch a file; If times is None, then the file's access and modified
            times are set to the current time
         """
@@ -841,8 +841,8 @@ class ScriptMixin(object):
             try:
                 open(file_name, 'w').close()
             except IOError as e:
-                self.fatal("I/O error({0}): {1}".format(e.errno, e.strerror))
-
+                self.log("I/O error({0}): {1}".format(e.errno, e.strerror),
+                         error_level=error_level)
         os.utime(file_name, times)
 
     def unpack(self, filename, extract_to):

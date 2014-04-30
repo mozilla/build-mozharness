@@ -324,7 +324,6 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MobileSigningMixin,
 
     def _setup_configure(self, buildid=None):
         """configuration setup"""
-        self.enable_mock()
         if self.make_configure():
             self.fatal("Configure failed!")
         self.make_dirs()
@@ -332,7 +331,6 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MobileSigningMixin,
 
     def setup(self):
         """setup step"""
-        self.enable_mock()
         dirs = self.query_abs_dirs()
         self._copy_mozconfig()
         self._setup_configure()
@@ -378,22 +376,27 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MobileSigningMixin,
 
         # STUPID HACK HERE
         # should we update the mozconfig so it has the right value?
-        with open(src, 'r') as in_mozconfig:
-            with open(dst, 'w') as out_mozconfig:
+        with self.opened(src, 'r') as (in_mozconfig, in_error):
+            if in_error:
+                self.fatal('cannot open {0}'.format(src))
+            with self.opened(dst, open_mode='w') as (out_mozconfig, out_error):
+                if out_error:
+                    self.fatal('cannot write {0}'.format(dst))
                 for line in in_mozconfig:
                     if 'with-l10n-base' in line:
                         line = 'ac_add_options --with-l10n-base=../../l10n\n'
                         self.l10n_dir = line.partition('=')[2].strip()
                     out_mozconfig.write(line)
         # now log
-        with open(dst, 'r') as mozconfig:
+        with self.opened(dst, 'r') as (mozconfig, in_error):
+            if in_error:
+                self.fatal('cannot open {0}'.format(dst))
             for line in mozconfig:
                 self.info(line.strip())
 
     def _make(self, target, cwd, env, error_list=MakefileErrorList,
               halt_on_failure=True):
         """Runs make. Returns the exit code"""
-        self.enable_mock()
         make = self.query_exe("make", return_type="list")
         return self.run_command(make + target,
                                 cwd=cwd,
@@ -403,7 +406,6 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MobileSigningMixin,
 
     def _get_output_from_make(self, target, cwd, env, halt_on_failure=True):
         """runs make and returns the output of the command"""
-        self.enable_mock()
         make = self.query_exe("make", return_type="list")
         return self.get_output_from_command(make + target,
                                             cwd=cwd,
@@ -491,7 +493,6 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MobileSigningMixin,
     def repack(self):
         """creates the repacks and udpates"""
         # TODO per-locale logs and reporting.
-        self.enable_mock()
         locales = self.query_locales()
         results = {}
         for locale in locales:
