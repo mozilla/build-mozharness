@@ -37,7 +37,6 @@ config = {
         "revision": "RELEASE_AUTOMATION"
     }],
     "repack_env": {
-        "SHELL": '/bin/bash',
         "MOZ_OBJDIR": OBJDIR,
         "EN_US_BINARY_URL": EN_US_BINARY_URL,
         "MOZ_UPDATE_CHANNEL": MOZ_UPDATE_CHANNEL,
@@ -49,7 +48,6 @@ config = {
     },
     "log_name": "single_locale",
     "objdir": OBJDIR,
-    "js_src_dir": "js/src",
     "make_dirs": ['config'],
     "vcs_share_base": HG_SHARE_BASE_DIR,
 

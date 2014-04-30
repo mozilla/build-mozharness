@@ -155,16 +155,24 @@ class MarFile(ScriptMixin, LogMixin, object):
         self.unpack_mar(temp_dir)
         files = self.mar_scripts
         ini_file = os.path.join(temp_dir, files.ini_file)
+        # need this chunk to print out the location
+        # of the application.ini file.
+        # When every platform has it's own application_ini set
+        # in the configuration, DELETE the following code.
+        # application_ini
+        # macosx      [ok]
+        # linux 32    [ok]
+        # linux 64    [ok]
+        # windows     [missing]
+        for dirpath, dirnames, filenames in os.walk(temp_dir):
+            for f in filenames:
+                if f == 'application.ini':
+                    self.log("found application.ini file: %s" % os.path.join(dirpath, f))
+                    with open(os.path.join(dirpath, f), 'r') as ini:
+                        self.log(ini.read())
+        #
         self.info("application.ini file: %s" % ini_file)
-
-        # log the content of application.ini
-        with self.opened(ini_file, 'r') as (ini, error):
-            if error:
-                self.fatal('cannot open {0}'.format(ini_file))
-            self.debug(ini.read())
-        # delete temp_dir
         self.build_id = buildid_form_ini(ini_file)
-        self.rmtree(temp_dir)
         return self.build_id
 
 
