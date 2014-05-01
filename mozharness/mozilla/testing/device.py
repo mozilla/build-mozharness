@@ -299,13 +299,13 @@ class ADBDeviceHandler(BaseDeviceHandler):
         return date_string
 
     def set_device_time(self, device_time=None, error_level='error'):
-        # adb shell date UNIXTIMESTAMP will set date
+        # adb shell date -s YYYYMMDD.hhmmss will set date
         device_id = self.query_device_id()
         if device_time is None:
-            device_time = time.time()
+            device_time = time.strftime("%Y%m%d.%H%M%S")
         self.info(self.query_device_time())
         adb = self.query_exe('adb')
-        status = self.run_command([adb, "-s", device_id,  "shell", "date",
+        status = self.run_command([adb, "-s", device_id,  "shell", "date", "-s",
                                    str(device_time)],
                                   error_list=ADBErrorList)
         self.info(self.query_device_time())

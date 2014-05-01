@@ -331,12 +331,7 @@ class PandaTalosTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixi
         run_file = self.config['run_file_names'][suite_category]
         base_cmd = ['python', '-u']
         base_cmd.append(os.path.join((dirs["abs_%s_dir" % suite_category]), run_file))
-        self.device_ip = socket.gethostbyname(self.mozpool_device)        
-        self.tree_branch = self.buildbot_config.get('properties')["branch"]
-        if (self.tree_branch == "cedar"):
-            webserver = self.config.get('new_webserver', [])
-        else:    
-            webserver = self.config.get('old_webserver', [])
+        self.device_ip = socket.gethostbyname(self.mozpool_device)
         hostnumber = int(self.mozpool_device.split('-')[1])
         http_port = '30%03i' % hostnumber
         ssl_port = '31%03i' % hostnumber
@@ -358,7 +353,6 @@ class PandaTalosTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixi
             'ssl_port':  ssl_port,
             'app_name':  self.app_name,
             'talos_branch':  self.talos_branch,
-            'webserver': webserver,
         }
         if self.config['%s_options' % suite_category]:
             for option in self.config['%s_options' % suite_category]:
