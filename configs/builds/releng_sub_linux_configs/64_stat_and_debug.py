@@ -3,7 +3,7 @@ MOZ_OBJDIR = 'obj-firefox'
 config = {
     'default_actions': [
         'clobber',
-        'pull',
+        'clone-tools',
         'setup-mock',
         'build',
         'generate-build-props',
@@ -16,18 +16,13 @@ config = {
         # 'check-l10n', stat debug skips this action
         # 'check-test', stat debug skips this action
         'update',  # decided by query_is_nightly()
-        'enable-ccache',
+        'ccache-stats',
     ],
     'debug_build': True,
-    'platform': 'linux64-st-an-debug',
-    'mock_files': [
-        ('/home/cltbld/.ssh', '/home/mock_mozilla/.ssh'),
-        ('/home/cltbld/.hgrc', '/builds/.hgrc'),
-        ('/builds/gapi.data', '/builds/gapi.data'),
-    ],
+    'stage_platform': 'linux64-st-an-debug',
     "enable_talos_sendchange": False,  # stat debug doesn't do talos sendchange
     # stat debug doesn't do unittest sendchange or make package-tests
-    'enable_package_tests': False,
+    'package_targets': ['package'],
     'enable_signing': False,
     'purge_minsize': 12,
     'tooltool_manifest_src': "browser/config/tooltool-manifests/linux64/\
@@ -49,6 +44,8 @@ clang.manifest",
         'SYMBOL_SERVER_SSH_KEY': "/home/mock_mozilla/.ssh/ffxbld_dsa",
         'POST_SYMBOL_UPLOAD_CMD': '/usr/local/bin/post-symbol-upload.py',
         'TINDERBOX_OUTPUT': '1',
+        'TOOLTOOL_CACHE': '/builds/tooltool_cache',
+        'TOOLTOOL_HOME': '/builds',
         'MOZ_CRASHREPORTER_NO_REPORT': '1',
         'CCACHE_DIR': '/builds/ccache',
         'CCACHE_COMPRESS': '1',

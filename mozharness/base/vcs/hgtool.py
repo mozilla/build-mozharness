@@ -46,6 +46,8 @@ class HgtoolVCS(ScriptMixin, LogMixin):
         #  revision: revision,
         #  ssh_username: ssh_username,
         #  ssh_key: ssh_key,
+        #  clone_by_revision: clone_by_revision,
+        #  clone_with_purge: clone_with_purge,
         # }
         self.vcs_config = vcs_config
         self.hgtool = self.query_exe('hgtool.py', return_type='list')
@@ -65,11 +67,16 @@ class HgtoolVCS(ScriptMixin, LogMixin):
         revision = c.get('revision')
         branch = c.get('branch')
         share_base = c.get('vcs_share_base', os.environ.get("HG_SHARE_BASE_DIR", None))
+        clone_by_rev = c.get('clone_by_revision')
+        clone_with_purge = c.get('clone_with_purge')
         env = {'PATH': os.environ.get('PATH')}
         if share_base is not None:
             env['HG_SHARE_BASE_DIR'] = share_base
 
         cmd = self.hgtool[:]
+
+        if clone_by_rev:
+            cmd.append('--clone-by-revision')
         if branch:
             cmd.extend(['-b', branch])
         if revision:
@@ -85,6 +92,10 @@ class HgtoolVCS(ScriptMixin, LogMixin):
             cmd.extend(['--bundle', bundle_url])
 
         cmd.extend([repo, dest])
+
+        if clone_with_purge:
+            cmd.append('--purge')
+
         parser = HgtoolParser(config=self.config, log_obj=self.log_obj,
                               error_list=HgtoolErrorList)
         retval = self.run_command(cmd, error_list=HgtoolErrorList, env=env, output_parser=parser)

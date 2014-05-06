@@ -1,5 +1,6 @@
+import os
+
 STAGE_PRODUCT = 'firefox'
-# TODO Reminder, stage_username and stage_ssh_key differ on Try
 STAGE_USERNAME = 'ffxbld'
 STAGE_SSH_KEY = 'ffxbld_dsa'
 
@@ -11,13 +12,9 @@ config = {
     # code block and also make sure this is synced with
     # releng_base_linux_64_builds.py
 
-    'app_ini_path': '%(obj_dir)s/dist/bin/application.ini',
-    # decides whether we want to use moz_sign_cmd in env
-    'enable_signing': True,
-    "buildbot_json_path": "buildprops.json",
     'default_actions': [
         'clobber',
-        'pull',
+        'clone-tools',
         'setup-mock',
         'build',
         'generate-build-props',
@@ -30,45 +27,38 @@ config = {
         'check-l10n',
         'check-test',
         'update',  # decided by query_is_nightly()
-        'enable-ccache',
+        'ccache-stats',
     ],
+    "buildbot_json_path": "buildprops.json",
     'exes': {
+        'hgtool.py': os.path.join(
+            os.getcwd(), 'build', 'tools', 'buildfarm', 'utils', 'hgtool.py'
+        ),
         "buildbot": "/tools/buildbot/bin/buildbot",
     },
+    'app_ini_path': '%(obj_dir)s/dist/bin/application.ini',
+    # decides whether we want to use moz_sign_cmd in env
+    'enable_signing': True,
     'purge_skip': ['info', 'rel-*:45d', 'tb-rel-*:45d'],
     'purge_basedirs':  ["/mock/users/cltbld/home/cltbld/build"],
     # mock shtuff
-    'use_mock':  True,
     'mock_mozilla_dir':  '/builds/mock_mozilla',
     'mock_target': 'mozilla-centos6-x86_64',
     'mock_files': [
         ('/home/cltbld/.ssh', '/home/mock_mozilla/.ssh'),
         ('/home/cltbld/.hgrc', '/builds/.hgrc'),
+        ('/home/cltbld/.boto', '/builds/.boto'),
         ('/builds/gapi.data', '/builds/gapi.data'),
         ('/tools/tooltool.py', '/builds/tooltool.py'),
     ],
     'enable_ccache': True,
-    'ccache_env': {
-        'CCACHE_BASEDIR': "%(base_dir)s",
-        'CCACHE_COMPRESS': '1',
-        'CCACHE_DIR': '/builds/ccache',
-        'CCACHE_HASHDIR': '',
-        'CCACHE_UMASK': '002',
-    },
     'vcs_share_base': '/builds/hg-shared',
     'objdir': 'obj-firefox',
-    'old_packages': [
-        "%(objdir)s/dist/firefox-*",
-        "%(objdir)s/dist/fennec*",
-        "%(objdir)s/dist/seamonkey*",
-        "%(objdir)s/dist/thunderbird*",
-        "%(objdir)s/dist/install/sea/*.exe"
-    ],
-    'tooltool_script':  ["/builds/tooltool.py"],
+    'tooltool_script': ["/builds/tooltool.py"],
     'tooltool_bootstrap': "setup.sh",
     # in linux we count ctors
     'enable_count_ctors': True,
-    'enable_package_tests': True,
+    'package_targets': ['package', 'package-tests'],
     'stage_product': STAGE_PRODUCT,
     "enable_talos_sendchange": True,
     "do_pretty_name_l10n_check": True,
@@ -94,12 +84,8 @@ config = {
 
     #########################################################################
     ###### 64 bit specific ######
-    # TODO we may need to add these other platform keys but thus far, I don't
     'platform': 'linux64',
-    # # this will change for sub configs like asan, pgo etc
-    # 'platform_variation': '',
-    # 'complete_platform': 'linux',
-    # 'stage_platform': 'linux64',
+    'stage_platform': 'linux64',
     'platform_ftp_name': 'linux-x86_64.complete.mar',
     'env': {
         'DISPLAY': ':2',
@@ -112,6 +98,8 @@ config = {
         'POST_SYMBOL_UPLOAD_CMD': '/usr/local/bin/post-symbol-upload.py',
         'SYMBOL_SERVER_SSH_KEY': "/home/mock_mozilla/.ssh/ffxbld_dsa",
         'TINDERBOX_OUTPUT': '1',
+        'TOOLTOOL_CACHE': '/builds/tooltool_cache',
+        'TOOLTOOL_HOME': '/builds',
         'MOZ_CRASHREPORTER_NO_REPORT': '1',
         'CCACHE_DIR': '/builds/ccache',
         'CCACHE_COMPRESS': '1',
@@ -156,8 +144,8 @@ config = {
 releng.manifest",
     'package_filename': '*.linux-x86_64*.tar.bz2',
     "check_test_env": {
-        'MINIDUMP_STACKWALK': 'breakpad/linux64/minidump_stackwalk',
-        'MINIDUMP_SAVE_PATH': 'minidumps',
+        'MINIDUMP_STACKWALK': '%(abs_tools_dir)s/breakpad/linux64/minidump_stackwalk',
+        'MINIDUMP_SAVE_PATH': '%(base_work_dir)s/minidumps',
     },
     'base_name': 'Linux_x86-64_%(branch)s',
     'update_platform': 'Linux_x86_64-gcc3',
