@@ -8,6 +8,7 @@
 import copy
 import getpass
 import os
+import pprint
 import sys
 import time
 import socket
@@ -16,6 +17,7 @@ import socket
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
 from mozharness.mozilla.buildbot import BuildbotMixin
+from mozharness.base.config import parse_config_file
 from mozharness.base.log import INFO, FATAL
 from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_options
@@ -86,7 +88,13 @@ class PandaTalosTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixi
 
     virtualenv_modules = [
         'mozpoolclient',
-        'mozcrash'
+        'mozcrash',
+        'mozdevice',
+        'mozpoolclient',
+        'mozinfo',
+        'datazilla',
+        'PyYAML',
+        'mozprocess'
     ]
 
     def __init__(self, require_config_file=False):
@@ -95,6 +103,7 @@ class PandaTalosTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixi
             all_actions=['clobber',
                          'read-buildbot-config',
                          'download-and-extract',
+                         'clone-talos',
                          'create-virtualenv',
                          'request-device',
                          'run-test',
@@ -102,6 +111,7 @@ class PandaTalosTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixi
             default_actions=['clobber',
                              'read-buildbot-config',
                              'download-and-extract',
+                             'clone-talos',
                              'create-virtualenv',
                              'request-device',
                              'run-test',
@@ -114,12 +124,20 @@ class PandaTalosTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixi
         self.test_url = self.config.get("test_url")
         self.mozpool_device = self.config.get("mozpool_device")
         self.talos_branch = self.config.get("talos_branch")
+        self.tests = None
+        self.talos_json = self.config.get("talos_json")
+        self.talos_json_config = self.config.get("talos_json_config")
+        # hackety hack otherwise specified talos suites is in the format ('tvsg',) which doesn't find it in the json
+        if len(self.config.get("specified_talos_suites")) == 1:
+            self.specified_talos_suites = str(self.config.get("specified_talos_suites")[0].rstrip())
+        else:
+            self.fatal("You can only specify one suite to run")
 
     def postflight_read_buildbot_config(self):
         super(PandaTalosTest, self).postflight_read_buildbot_config()
         self.mozpool_device = self.config.get('mozpool_device', self.buildbot_config.get('properties')["slavename"])
         dirs = self.query_abs_dirs()
-        #touch the shutdown file
+        # touch the shutdown file
         shutdown_file = os.path.join(dirs['shutdown_dir'], 'shutdown.stamp')
         try:
             self.info("*** Touching the shutdown file **")
@@ -147,6 +165,8 @@ class PandaTalosTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixi
         """preflight perf config etc"""
         env = self.query_env(partial_env={'DM_TRANS': "sut", 'TEST_DEVICE': self.mozpool_device})
         self.info("Running preflight...")
+        if not self.query_tests():
+            self.fatal("No tests specified; please specify --tests")
         preflight_category = "preflight_" + str(suite_category)
         dirs = self.query_abs_dirs()
         abs_base_cmd = self._query_abs_base_cmd(preflight_category)
@@ -156,7 +176,18 @@ class PandaTalosTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixi
             for arg in suites[suite]:
                 cmd.append(arg % replace_dict)
         self._install_app()
-        self.run_command(cmd, dirs['abs_talosdatatalos_dir'], env=env, halt_on_failure=True, fatal_exit_code=suites.get('fatal_exit_code', 3))
+        # move fennec ids to repo so we can invoke the scripts from that dir
+        self.copyfile(os.path.join(dirs['abs_talosdata_dir'], 'fennec_ids.txt'),
+                      os.path.join(dirs['abs_talosrepo_dir'], 'fennec_ids.txt'),
+                      error_level=FATAL,
+                      )
+
+        self.run_command(cmd, dirs['abs_preflight_talos_dir'], env=env, halt_on_failure=True, fatal_exit_code=suites.get('fatal_exit_code', 3))
+        # move local.yaml to talos-data/talos dir so it can be consumed by the run_tests.py
+        self.move(os.path.join(dirs['abs_preflight_talos_dir'], 'local.yml'),
+                  os.path.join(dirs['abs_talosdatatalos_dir'], 'local.yml'),
+                  error_level=FATAL,
+                  )
 
     def _run_category_suites(self, suite_category, preflight_run_method=None):
         """run suite(s) to a specific category"""
@@ -183,6 +214,10 @@ class PandaTalosTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixi
                 if not os.path.isdir(env['MOZ_UPLOAD_DIR']):
                     self.mkdir_p(env['MOZ_UPLOAD_DIR'])
                 env = self.query_env(partial_env=env, log_level=INFO)
+                # need to use mozdevice from virtualenv instead of sut_tools
+                # so remove it from the path when running tests
+                if 'PYTHONPATH' in env:
+                    del env['PYTHONPATH']
 
                 parser = TalosOutputParser(config=self.config, log_obj=self.log_obj,
                                            error_list=TalosErrorList)
@@ -194,6 +229,114 @@ class PandaTalosTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixi
                 return_code = self.run_command(cmd, dirs['abs_talosdatatalos_dir'], env=env, output_parser=parser)
                 if return_code != 0:
                     self.fatal("Failed talos " + str(cmd) + " command run.")
+
+    def query_talos_json_url(self):
+        revision = self.config.get('revision', self.buildbot_config.get('properties')["revision"])
+        repo_path = self.config.get('repo_path', self.buildbot_config.get('properties')["repo_path"])
+
+        talosjson = self.config.get("talos_json_url")
+        self.talos_json_url = (talosjson % (repo_path, revision))
+        return self.talos_json_url
+
+    def download_talos_json(self):
+        self.talos_json_url = self.query_talos_json_url()
+        dirs = self.query_abs_dirs()
+        self.talos_json = self.download_file(self.talos_json_url,
+                                             parent_dir=dirs['abs_talosdata_dir'],
+                                             error_level=FATAL)
+
+    def query_talos_json_config(self):
+        """Return the talos json config; download and read from the
+        talos_json_url if need be."""
+        if self.talos_json_config:
+            return self.talos_json_config
+        c = self.config
+        if not c['use_talos_json']:
+            return
+        if not c['specified_talos_suites']:
+            self.fatal("To use talos_json, you must define use_talos_json, suite.")
+            return
+        if not self.talos_json:
+            talos_json_url = self.query_talos_json_url()
+            if not talos_json_url:
+                self.fatal("Can't download talos_json without a talos_json_url!")
+            self.download_talos_json()
+        self.talos_json_config = parse_config_file(self.talos_json)
+        self.info(pprint.pformat(self.talos_json_config))
+        return self.talos_json_config
+
+    def query_talos_repo(self):
+        """Where do we install the talos python package from?
+        This needs to be overrideable by the talos json.
+        """
+        default_repo = "http://hg.mozilla.org/build/talos"
+        if self.query_talos_json_config():
+            return self.talos_json_config.get('global', {}).get('talos_repo', default_repo)
+
+    def query_talos_revision(self):
+        """Which talos revision do we want to use?
+        This needs to be overrideable by the talos json.
+        """
+        if self.query_talos_json_config():
+            return self.talos_json_config['global']['talos_revision']
+        else:
+            return self.config.get('talos_revision')
+
+    def clone_talos(self):
+        """clone talos scripts"""
+        talos_repo = self.query_talos_repo()
+        talos_revision = self.query_talos_revision()
+        # mkdir talos dir
+        dirs = self.query_abs_dirs()
+        self.info("talos_revision " + str(talos_revision))
+
+        # clone talos' repo
+        repo = {
+            'repo': talos_repo,
+            'vcs': 'hg',
+            'dest':  dirs['abs_talosrepo_dir'],
+            'revision': talos_revision
+        }
+        self.vcs_checkout(**repo)
+
+    def query_tests(self):
+        """Determine if we have tests to run.
+
+        ?Currently talos json will take precedence over config and command
+        ?line options; if that's not a good default we can switch the order.
+        """
+        if self.tests is not None:
+            return self.tests
+        c = self.config
+
+        if c['use_talos_json']:
+            if not c['specified_talos_suites']:
+                self.fatal("Can't use_talos_json without a --talos_suite!")
+            talos_config = self.query_talos_json_config()
+            try:
+                self.tests = talos_config['mobile-suites'][self.specified_talos_suites]['tests']
+            except KeyError, e:
+                self.error("Badly formed talos_json for suite %s; KeyError trying to access talos_config['mobile-suites'][%s]['tests']: %s" % (self.specified_talos_suites, self.specified_talos_suites, str(e)))
+        elif c['tests']:
+            self.tests = c['tests']
+        # Ignore these tests, specifically so we can not run a11yr on osx
+        if c.get('ignore_tests'):
+            for test in c['ignore_tests']:
+                if test in self.tests:
+                    del self.tests[self.tests.index(test)]
+        return self.tests
+
+    def query_talos_options(self):
+        options = []
+        c = self.config
+        if self.query_talos_json_config():
+            try:
+                options += self.talos_json_config['mobile-suites'][self.specified_talos_suites].get('talos_options', [])
+            except KeyError, e:
+                self.error("Badly formed talos_json for suite %s; KeyError trying to access talos_config['mobile-suites'][%s]['talos_options']: %s" % (self.specified_talos_suites, self.specified_talos_suites, str(e)))
+        if c.get('talos_extra_options'):
+            options += c['talos_extra_options']
+        return options
 
     def _query_specified_suites(self, category):
         # logic goes: if at least one '--{category}-suite' was given,
@@ -223,8 +366,8 @@ class PandaTalosTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixi
         return suites
 
     def run_test(self):
-       # do we need to set the device time? command doesn't work anyways
-       # self._sut_prep_steps()
+        # do we need to set the device time? command doesn't work anyways
+        # self._sut_prep_steps()
         env = self.query_env()
         env["DM_TRANS"] = "sut"
         env["TEST_DEVICE"] = self.mozpool_device
@@ -255,7 +398,10 @@ class PandaTalosTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixi
         dirs['abs_talosbuild_dir'] = os.path.join(
             dirs['shutdown_dir'], 'talos-data/build')
         dirs['abs_talos_dir'] = dirs['abs_talosdatatalos_dir']
-        dirs['abs_preflight_talos_dir'] = dirs['abs_talosdatatalos_dir']
+        dirs['abs_talosrepo_dir'] = os.path.join(abs_dirs['abs_work_dir'], 'talos_repo')
+        dirs['abs_preflight_talos_dir'] = os.path.join(dirs['abs_talosrepo_dir'], 'talos')
+        dirs['abs_talos_dir'] = dirs['abs_preflight_talos_dir']
+
         dirs['abs_blob_upload_dir'] = os.path.join(abs_dirs['abs_work_dir'], 'blobber_upload_dir')
         for key in dirs.keys():
             if key not in abs_dirs:
@@ -266,30 +412,31 @@ class PandaTalosTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixi
     def download_and_extract(self):
         dirs = self.query_abs_dirs()
 
-        #mkdir talos in  /builds/panda-0052/test/../talos-data
+        # mkdir talos in  /builds/panda-0052/test/../talos-data
         fennec_ids_url = self.installer_url.rsplit("/", 1)[0] + "/fennec_ids.txt"
         self.mkdir_p(dirs['abs_talosbuild_dir'])
         robocop_url = self.installer_url.rsplit("/", 1)[0] + "/robocop.apk"
-        self.mkdir_p(dirs['abs_talosdatatalos_dir'])
 
-        #download and extract apk to /builds/panda-0nnn/talos-data
+        # download and extract apk to /builds/panda-0nnn/talos-data
         self.rmtree(dirs['abs_talosdata_dir'])
         self.mkdir_p(dirs['abs_talosdata_dir'])
+        self.mkdir_p(dirs['abs_talosdatatalos_dir'])
         self.mkdir_p(dirs['abs_symbols_dir'])
         self.mkdir_p(dirs['abs_fennec_dir'])
         self._download_unzip(self.installer_url,
                              dirs['abs_fennec_dir'])
-        #this is ugly but you can't specify a file in download_unzip to extract the file to, by default it's the abs_work_dir
-        #should think of a better way
+        # this is ugly but you can't specify a file in download_unzip to
+        # extract the file to, by default it's the abs_work_dir
+        # should think of a better way
         self.download_file(self.installer_url,
                            parent_dir=dirs['abs_talosdata_dir'],
                            error_level=FATAL)
 
-        #download and extract fennec_ids.txt to /builds/panda-0nnn/talos-data
+        # download and extract fennec_ids.txt to /builds/panda-0nnn/talos-data
         self.download_file(fennec_ids_url, file_name='fennec_ids.txt',
                            parent_dir=dirs['abs_talosdata_dir'],
                            error_level=FATAL)
-        #download and extract robocop.apk to /builds/panda-0nnn/talos-data/build
+        # download and extract robocop.apk to /builds/panda-0nnn/talos-data/build
         self.download_file(robocop_url, file_name='robocop.apk',
                            parent_dir=dirs['abs_talosbuild_dir'],
                            error_level=FATAL)
@@ -315,15 +462,11 @@ class PandaTalosTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixi
 
         talos_base_cmd = ['python']
         talos_code_path = (os.path.join(dirs['abs_talosdata_dir'], "talos_from_code.py"))
-        talos_zip_path = (os.path.join(dirs['abs_talosdata_dir'], "talos.zip"))
         talos_base_cmd.append(talos_code_path)
         talos_base_cmd.append("--talos-json-url")
         talos_base_cmd.append(talos_json_url)
         env = self.query_env()
         self.run_command(talos_base_cmd, dirs['abs_talosdata_dir'], env=env, halt_on_failure=True, fatal_exit_code=3)
-        unzip = self.query_exe("unzip")
-        unzip_cmd = [unzip, '-q', '-o',  talos_zip_path]
-        self.run_command(unzip_cmd, cwd=dirs['abs_talosdata_dir'], halt_on_failure=True, fatal_exit_code=3)
 
     def _query_abs_base_cmd(self, suite_category):
         dirs = self.query_abs_dirs()
@@ -335,9 +478,9 @@ class PandaTalosTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixi
         hostnumber = int(self.mozpool_device.split('-')[1])
         http_port = '30%03i' % hostnumber
         ssl_port = '31%03i' % hostnumber
-        #get filename from installer_url
+        # get filename from installer_url
         self.filename_apk = self.installer_url.split('/')[-1]
-        #find appname from package-name.txt - assumes download-and-extract has completed successfully
+        # find appname from package-name.txt - assumes download-and-extract has completed successfully
         apk_dir = self.abs_dirs['abs_work_dir']
         self.apk_path = os.path.join(apk_dir, self.filename_apk)
         unzip = self.query_exe("unzip")
@@ -363,6 +506,10 @@ class PandaTalosTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixi
             authfile = self.config.get('datazilla_authfile')
             if authfile:
                 options.extend(['--authfile', authfile])
+            if self.config['use_talos_json']:
+                s = "--activeTests=" + ":".join(self.query_tests())
+                options.extend([s])
+                options.extend(self.query_talos_options())
             abs_base_cmd = base_cmd + options
             return abs_base_cmd
         else:
@@ -372,7 +519,7 @@ class PandaTalosTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixi
                          "config under %s_options" %
                          (suite_category, suite_category))
 
-    ###### helper methods
+    # helper methods
     def _pre_config_lock(self, rw_config):
         c = self.config
         if not c.get('run_all_suites'):
