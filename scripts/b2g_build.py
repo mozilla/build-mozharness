@@ -576,11 +576,6 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
                     cmd = ['./repo', 'forall', '-c', 'git show-ref -q --head HEAD || rm -rfv $PWD']
                     self.run_command(cmd, cwd=dirs['work_dir'])
 
-                    # Delete any .lock files
-                    self.info("Deleting stale lock files")
-                    cmd = ['find', '.repo', '-name', '*.lock', '-print', '-delete']
-                    self.run_command(cmd, cwd=dirs['work_dir'])
-
                 config_result = self.run_command([
                     './config.sh', '-q', self.config['target'], manifest_filename,
                 ], cwd=dirs['work_dir'], output_timeout=45 * 60)  # timeout after 45 minutes of no output
@@ -598,6 +593,12 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
                 if config_result == 0:
                     break
                 else:
+                    # We may have died due to left-over lock files. Make sure
+                    # we clean those up before trying again.
+                    self.info("Deleting stale lock files")
+                    cmd = ['find', '.repo/', '-name', '*.lock', '-print', '-delete']
+                    self.run_command(cmd, cwd=dirs['work_dir'])
+
                     # Try again in a bit. Broken clones should be deleted and
                     # re-tried above
                     self.info("config.sh failed; sleeping %i and retrying" % sleep_time)
