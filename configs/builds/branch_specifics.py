@@ -138,6 +138,22 @@ config = {
     'mozilla-b2g18_v1_1_0_hd': {
         'repo_path': 'releases/mozilla-b2g18',
     },
+    'try': {
+        'repo_path': 'try',
+        'clone_by_revision': True,
+        'clone_with_purge': True,
+        'tinderbox_build_dir': '%(who)s-%(got_revision)s',
+        'to_tinderbox_dated': False,
+        'include_post_upload_builddir': True,
+        'release_to_try_builds': True,
+        'upload_env': {
+            # stage_server is dictated from build_pool_specifics.py
+            'UPLOAD_HOST': "%(stage_server)s",
+            'UPLOAD_USER': "trybld",
+            'UPLOAD_TO_TEMP': '1',
+            'UPLOAD_SSH_KEY': '~/.ssh/%s' % ("trybld_dsa",),
+        },
+    },
 
     ### project branches
     'b2g-inbound': {

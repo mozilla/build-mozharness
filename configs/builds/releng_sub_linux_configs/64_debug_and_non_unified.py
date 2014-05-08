@@ -3,7 +3,7 @@ MOZ_OBJDIR = 'obj-firefox'
 config = {
     'default_actions': [
         'clobber',
-        'pull',
+        'clone-tools',
         'setup-mock',
         'build',
         'generate-build-props',
@@ -16,15 +16,10 @@ config = {
         # 'check-l10n', debug skips this action
         'check-test',
         'update',  # decided by query_is_nightly()
-        'enable-ccache',
+        'ccache-stats',
     ],
     'debug_build': True,
-    'platform': 'linux64-debug-nonunified',
-    'mock_files': [
-        ('/home/cltbld/.ssh', '/home/mock_mozilla/.ssh'),
-        ('/home/cltbld/.hgrc', '/builds/.hgrc'),
-        ('/builds/gapi.data', '/builds/gapi.data'),
-    ],
+    'stage_platform': 'linux64-debug-nonunified',
     "enable_talos_sendchange": False,  # debug does not fire a talos sendchange
     'enable_signing': False,
     'upload_symbols': False,
