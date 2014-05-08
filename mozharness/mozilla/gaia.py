@@ -31,6 +31,7 @@ class GaiaMixin(object):
         branch = repo.get('branch')
         gaia_json_path = self.config.get("gaia_json_path", "{repo_path}/raw-file/{revision}/b2g/config/gaia.json")
         git = False
+        pr_num = None
 
         self.info('dest: %s' % dest)
 
@@ -44,6 +45,7 @@ class GaiaMixin(object):
                 remote = contents['git']['remote']
                 branch = contents['git'].get('branch')
                 revision = contents['git'].get('git_revision')
+                pr_num = contents['git'].get('github_pr_number')
                 if not (branch or revision):
                     self.fatal('Must specify branch or revision for git repo')
             elif contents.get('repo_path') and contents.get('revision'):
@@ -74,6 +76,19 @@ class GaiaMixin(object):
                              output_timeout=1760,
                              halt_on_failure=True,
                              fatal_exit_code=3)
+
+            if pr_num:
+                local_pr_branch = 'local_pr_%d' % pr_num
+                cmd = [git_cmd,
+                       'fetch',
+                       'origin',
+                       '+refs/pull/%d/merge' % pr_num,
+                       local_pr_branch]
+                self.run_command(cmd,
+                                 cwd=dest,
+                                 output_timeout=1760,
+                                 halt_on_failure=True,
+                                 fatal_exit_code=3)
 
             # checkout git branch
             cmd = [git_cmd,
