@@ -82,8 +82,7 @@ class GaiaMixin(object):
                 cmd = [git_cmd,
                        'fetch',
                        'origin',
-                       '+refs/pull/%d/merge' % pr_num,
-                       local_pr_branch]
+                       '+refs/pull/%d/merge:%s' % (pr_num, local_pr_branch)]
                 self.run_command(cmd,
                                  cwd=dest,
                                  output_timeout=1760,
