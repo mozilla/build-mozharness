@@ -88,6 +88,12 @@ class GaiaMixin(object):
                                  output_timeout=1760,
                                  halt_on_failure=True,
                                  fatal_exit_code=3)
+                # Ideally, we'd just use the merge_sha from the github api
+                # but the PR object that gets sent with the hook call is
+                # either an empty string for new PRs or an outdated value
+                # for synchronise events.  I guess Github doesn't generate
+                # a new merge sha before sending the webhook
+                branch = revision = local_pr_branch
 
             # checkout git branch
             cmd = [git_cmd,
