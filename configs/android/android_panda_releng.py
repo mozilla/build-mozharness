@@ -77,7 +77,7 @@ config = {
     ],
     "pip_index": False,
     "buildbot_json_path": "buildprops.json",
-    "mobile_imaging_format": "http://mobile-imaging-%03i.p%i.releng.scl1.mozilla.com",
+    "mobile_imaging_format": "http://mobile-imaging",
     "mozpool_assignee": socket.gethostname(),
     "default_actions": [
         'clobber',

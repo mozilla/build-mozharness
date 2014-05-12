@@ -22,18 +22,15 @@ RETRY_INTERVAL = 60
 # MozpoolMixin {{{1
 class MozpoolMixin(object):
     mozpool_handler = None
-    mobile_imaging_format= "http://mobile-imaging-%03i.p%i.releng.scl1.mozilla.com"
+    mobile_imaging_format= "http://mobile-imaging"
 
     def determine_mozpool_host(self, device):
         if "mobile_imaging_format" in self.config:
             self.mobile_imaging_format = self.config["mobile_imaging_format"]
-        fqdn = socket.getfqdn(device)
-        vlan_match = re.search("%s\.p([0-9]+)\.releng.*" % device, fqdn)
-        if vlan_match:
-            vlan = int(vlan_match.group(1))
-        else:
-            raise self.MozpoolException("This panda board does not have an associated BMM.")
-        return self.mobile_imaging_format % (vlan, vlan)
+        hostname = str(self.mobile_imaging_format)[7:]
+        fqdn = socket.getfqdn(hostname)
+        imaging_server_fqdn = (str(self.mobile_imaging_format)).replace(hostname, fqdn)
+        return imaging_server_fqdn
 
     def query_mozpool_handler(self, device=None, mozpool_api_url=None):
         if self.mozpool_handler != None:
