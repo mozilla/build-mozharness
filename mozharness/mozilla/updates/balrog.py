@@ -8,9 +8,9 @@ class BalrogMixin(object):
     def submit_balrog_updates(self, release_type="nightly"):
         c = self.config
         dirs = self.query_abs_dirs()
-        props_path = os.path.join(dirs["base_work_dir"], "balrog_props.json")
+        props_path = os.path.join(c["abs_work_dir"], "balrog_props.json")
         credentials_file = os.path.join(
-            dirs["base_work_dir"], c["balrog_credentials_file"]
+            c["abs_work_dir"], c["balrog_credentials_file"]
         )
         submitter_script = os.path.join(
             dirs["abs_tools_dir"], "scripts", "updates", "balrog-submitter.py"

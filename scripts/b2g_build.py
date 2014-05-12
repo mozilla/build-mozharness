@@ -43,7 +43,6 @@ from mozharness.mozilla.repo_manifest import (load_manifest, rewrite_remotes,
                                               remove_project, get_project,
                                               get_remote, map_remote, add_project)
 from mozharness.mozilla.mapper import MapperMixin
-from mozharness.mozilla.updates.balrog import BalrogMixin
 
 # B2G builds complain about java...but it doesn't seem to be a problem
 # Let's turn those into WARNINGS instead
@@ -55,7 +54,7 @@ B2GMakefileErrorList.insert(0, {'substr': r'/bin/bash: java: command not found',
 
 class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
                TooltoolMixin, TransferMixin, BuildbotMixin, GaiaLocalesMixin,
-               SigningMixin, MapperMixin, BalrogMixin):
+               SigningMixin, MapperMixin):
     config_options = [
         [["--repo"], {
             "dest": "repo",
@@ -158,7 +157,6 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
                                 'upload-updates',
                                 'make-socorro-json',
                                 'upload-source-manifest',
-                                'submit-to-balrog',
                             ],
                             default_actions=[
                                 'checkout-sources',
@@ -188,7 +186,6 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
                                 'repo_repo': "https://git.mozilla.org/external/google/gerrit/git-repo.git",
                                 'repo_remote_mappings': {},
                                 'update_channel': 'default',
-                                'balrog_credentials_file': 'oauth.txt',
                             },
                             )
 
@@ -244,7 +241,6 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
             'gaia_l10n_base_dir': os.path.join(abs_dirs['abs_work_dir'], 'gaia-l10n'),
             'compare_locales_dir': os.path.join(abs_dirs['abs_work_dir'], 'compare-locales'),
             'abs_public_upload_dir': os.path.join(abs_dirs['abs_work_dir'], 'upload-public'),
-            'abs_tools_dir': os.path.join(abs_dirs['abs_work_dir'], 'tools'),
         }
 
         abs_dirs.update(dirs)
@@ -484,11 +480,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
             output_dir = self.query_device_outputdir()
             return "%s/fota-update.mar" % output_dir
         else:
-            mardir = "%s/dist/b2g-update" % self.objdir
-            files = os.listdir(mardir)
-            if len(files) != 1:
-                self.fatal("Found none or too many marfiles, don't know what to do.", exit_code=1)
-            return "%s/%s" % (mardir, files[0])
+            return "%s/dist/b2g-update/b2g-gecko-update.mar" % self.objdir
 
     # Actions {{{2
     def clobber(self):
@@ -1547,51 +1539,6 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
             else:
                 self.info("Upload successful")
 
-    def submit_to_balrog(self):
-        if not self.query_is_nightly():
-            self.info("Not a nightly build, skipping balrog submission.")
-            return
-
-        if not self.config.get("balrog_api_root"):
-            self.info("balrog_api_root not set; skipping balrog submission.")
-            return
-
-        dirs = self.query_abs_dirs()
-
-        self.info("Checking out tools")
-        repos = [{
-            'repo': self.config['tools_repo'],
-            'vcs': "hgtool",
-            'dest': dirs['abs_tools_dir'],
-        }]
-        rev = self.vcs_checkout(**repos[0])
-        self.set_buildbot_property("tools_revision", rev, write_to_file=True)
-
-        marfile = self.query_marfile_path()
-        # Need to update the base url to point at FTP, or better yet, read post_upload.py output?
-        mar_url = self.config["update"]["mar_base_url"] + os.path.basename(marfile)
-        mar_url = mar_url.format(
-            branch=self.query_branch()
-        )
-
-        # Set other necessary properties for Balrog submission. None need to
-        # be passed back to buildbot, so we won't write them to the properties
-        # files.
-        # Locale is hardcoded to en-US, for silly reasons
-        self.set_buildbot_property("locale", "en-US")
-        self.set_buildbot_property("appVersion", self.query_version())
-        # The Balrog submitter translates this platform into a build target
-        # via https://github.com/mozilla/build-tools/blob/master/lib/python/release/platforms.py#L23
-        self.set_buildbot_property("platform", self.buildbot_config["properties"]["platform"])
-        # TODO: Is there a better way to get this?
-        self.set_buildbot_property("appName", "B2G")
-        # TODO: don't hardcode
-        self.set_buildbot_property("hashType", "sha512")
-        self.set_buildbot_property("completeMarSize", self.query_filesize(marfile))
-        self.set_buildbot_property("completeMarHash", self.query_sha512sum(marfile))
-        self.set_buildbot_property("completeMarUrl", mar_url)
-
-        self.submit_balrog_updates()
 
 # main {{{1
 if __name__ == '__main__':
