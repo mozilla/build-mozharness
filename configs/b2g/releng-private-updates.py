@@ -15,6 +15,7 @@ config = {
         'upload-updates',
         'make-socorro-json',
         'upload-source-manifest',
+        'submit-to-balrog',
     ],
     "upload": {
         "default": {
@@ -92,6 +93,8 @@ config = {
         'git://github.com/apitrace/': 'https://git.mozilla.org/external/apitrace',
     },
     "update": {
+        "mar_base_url": "http://ftp.mozilla.org/pub/mozilla.org/b2g/nightly/latest-{branch}/",
+        # TODO: remove these after bug 918068 is fixed
         "upload_remote_host": "update.boot2gecko.org",
         "upload_remote_basepath": "/data/update-channels/{target}/{version}/{publish_channel}",
         "base_url": "http://update.boot2gecko.org/{target}/{version}/{update_channel}/",
