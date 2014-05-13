@@ -23,6 +23,7 @@ except ImportError:
 sys.path.insert(1, os.path.dirname(os.path.dirname(sys.path[0])))
 
 from mozharness.base.errors import GitErrorList, HgErrorList, VCSException
+from mozharness.base.log import INFO
 from mozharness.base.transfer import TransferMixin
 from mozharness.base.vcs.vcsbase import MercurialScript
 
@@ -51,11 +52,13 @@ class B2GTag(TransferMixin, MercurialScript):
             config_options=self.config_options,
             all_actions=[
                 'clobber',
+                'clean-repos',
                 'pull',
                 'push-loop',
                 'summary',
             ],
             default_actions=[
+                'clean-repos',
                 'pull',
                 'push-loop',
                 'summary',
@@ -86,7 +89,10 @@ class B2GTag(TransferMixin, MercurialScript):
                 sanity_message += "The following branch name(s) aren't in b2g_branches: %s\n" % ",".join(bad_branch_names)
         if 'push_loop' in self.actions:
             try:
-                json_contents = self.load_json_from_url("%s/1" % self.config["gaia_mapper_base_url"])
+                json_contents = self.load_json_from_url(
+                    "%s/1" % self.config["gaia_mapper_base_url"],
+                    log_level=INFO,
+                )
                 assert json_contents["git_rev"]
             except:
                 sanity_message += "Can't load %s/1 for hg->git mapping!\n" % self.config["gaia_mapper_base_url"]
@@ -100,7 +106,8 @@ class B2GTag(TransferMixin, MercurialScript):
             """
         if self.gecko_repos:
             return self.gecko_repos
-        self.gecko_repos = self.config.get("gecko_repos", self.config['b2g_branches'].keys())
+        self.gecko_repos = list(self.config.get("gecko_repos",
+                                self.config['b2g_branches'].keys()))
         self.gecko_repos.sort()
         return self.gecko_repos
 
@@ -239,6 +246,69 @@ class B2GTag(TransferMixin, MercurialScript):
             raise VCSException("Can't push gaia tag for %s!" % hg_repo_name)
 
 # Actions {{{1
+    def clean_repos(self):
+        """ We may end up with contaminated local repos at some point, but
+            we don't want to have to clobber and reclone from scratch every
+            time.
+
+            This is an attempt to clean up the local repos without needing a
+            clobber.
+            """
+        dirs = self.query_abs_dirs()
+        hg = self.query_exe("hg", return_type="list")
+        git = self.query_exe("git", return_type="list")
+        hg_repos = self.query_gecko_repos()
+        hg_strip_error_list = [{
+            'substr': r'''abort: empty revision set''', 'level': INFO,
+            'explanation': "Nothing to clean up; we're good!",
+        }] + HgErrorList
+        for repo_name in hg_repos:
+            repo_path = os.path.join(dirs['abs_work_dir'], repo_name)
+            if os.path.exists(repo_path):
+                self.retry(
+                    self.run_command,
+                    args=(hg + ["--config", "extensions.mq=", "strip",
+                          "--no-backup", "outgoing()"], ),
+                    kwargs={
+                        'cwd': repo_path,
+                        'error_list': hg_strip_error_list,
+                        'return_type': 'num_errors',
+                        'success_codes': (0, 255),
+                    },
+                )
+        if os.path.exists(dirs['abs_gaia_dir']):
+            remote_tags = []
+            output = self.get_output_from_command(
+                git + ["ls-remote", "--tags"],
+                cwd=dirs['abs_gaia_dir'],
+            )
+            for line in output.splitlines():
+                if 'refs/tags' not in line:
+                    continue
+                remote_tags.append(line.split('/')[-1])
+            output = self.get_output_from_command(
+                git + ["tag", "-l"],
+                cwd=dirs['abs_gaia_dir'],
+            )
+            local_tags = output.splitlines()
+            for tag in local_tags:
+                if tag not in remote_tags:
+                    self.info("Found local tag %s that doesn't exist on remote!" % tag)
+                    self.run_command(
+                        git + ['tag', '-d', tag],
+                        cwd=dirs["abs_gaia_dir"],
+                    )
+            # Verify
+            output = self.get_output_from_command(
+                git + ["tag", "-l"],
+                cwd=dirs['abs_gaia_dir'],
+            )
+            local_tags = output.splitlines()
+            if not set(local_tags).issubset(set(remote_tags)):
+                self.fatal("Gaia still has tags that don't exist on remote!")
+            else:
+                self.info("Looks like we're good, local_tags is a subset of remote_tags.")
+
     def pull(self):
         """ Pull action.
 
