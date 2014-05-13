@@ -910,7 +910,10 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
         else:
             if self.config['ccache']:
                 self.run_command('ccache -z', cwd=dirs['work_dir'], env=env)
-            retval = self.run_command(cmd, cwd=dirs['work_dir'], env=env, error_list=B2GMakefileErrorList)
+            for cmd in cmds:
+                retval = self.run_command(cmd, cwd=dirs['work_dir'], env=env, error_list=B2GMakefileErrorList)
+                if retval != 0:
+                    break
             if self.config['ccache']:
                 self.run_command('ccache -s', cwd=dirs['work_dir'], env=env)
 
