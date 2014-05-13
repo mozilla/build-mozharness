@@ -190,7 +190,7 @@ class PandaTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixin, Bu
         if self.run_command(cmd, env=env):
             self.critical("Preparing to abort run due to failed verify check.")
             self.close_request()
-            self.fatal("Dieing due to failing verification")
+            self.fatal("Dying due to failing verification")
         else:
             self.info("Successfully verified the device")
 
