@@ -125,6 +125,14 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
             "action": "store_true",
             "help": "Set B2G_DEBUG=1 (debug build)",
         }],
+        [["--repotool-repo"], {
+            "dest": "repo_repo",
+            "help": "where to pull repo tool source from",
+        }],
+        [["--repotool-revision"], {
+            "dest": "repo_rev",
+            "help": "which revision of repo tool to use",
+        }],
     ]
 
     def __init__(self, require_config_file=False):
@@ -186,6 +194,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
                                 'compare_locales_rev': 'RELEASE_AUTOMATION',
                                 'compare_locales_vcs': 'hgtool',
                                 'repo_repo': "https://git.mozilla.org/external/google/gerrit/git-repo.git",
+                                'repo_rev': 'stable',
                                 'repo_remote_mappings': {},
                                 'update_channel': 'default',
                                 'balrog_credentials_file': 'oauth.txt',
@@ -490,6 +499,23 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
                 self.fatal("Found none or too many marfiles, don't know what to do.", exit_code=1)
             return "%s/%s" % (mardir, files[0])
 
+    def checkout_repotool(self, repo_dir):
+        self.info("Checking out repo tool")
+        repo_repo = self.config['repo_repo']
+        repo_rev = self.config['repo_rev']
+        repos = [
+            {'vcs': 'gittool', 'repo': repo_repo, 'dest': repo_dir, 'revision': repo_rev},
+        ]
+
+        # self.vcs_checkout already retries, so no need to wrap it in
+        # self.retry. We set the error_level to ERROR to prevent it going fatal
+        # so we can do our own handling here.
+        retval = self.vcs_checkout_repos(repos, error_level=ERROR)
+        if not retval:
+            self.rmtree(repo_dir)
+            self.fatal("Automation Error: couldn't clone repo", exit_code=4)
+        return retval
+
     # Actions {{{2
     def clobber(self):
         dirs = self.query_abs_dirs()
@@ -559,7 +585,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
             manifest.writexml(manifest_file)
             manifest_file.close()
 
-            # Check it out!
+            # Set up repo
             repo_link = os.path.join(dirs['work_dir'], '.repo')
             if 'repo_mirror_dir' in self.config:
                 # Make our local .repo directory a symlink to the shared repo
@@ -572,6 +598,17 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
                     self.info("Creating link from %s to %s" % (repo_link, repo_mirror_dir))
                     os.symlink(repo_mirror_dir, repo_link)
 
+            # Checkout the repo tool
+            if 'repo_repo' in self.config:
+                repo_dir = os.path.join(dirs['work_dir'], '.repo', 'repo')
+                self.checkout_repotool(repo_dir)
+
+                cmd = ['./repo', '--version']
+                if not self.run_command(cmd, cwd=dirs['work_dir']) == 0:
+                    # Set return code to RETRY
+                    self.fatal("repo is broken", exit_code=4)
+
+            # Check it out!
             max_tries = 5
             sleep_time = 60
             max_sleep_time = 300
@@ -584,9 +621,10 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
                     cmd = ['./repo', 'forall', '-c', 'git show-ref -q --head HEAD || rm -rfv $PWD']
                     self.run_command(cmd, cwd=dirs['work_dir'])
 
+                # timeout after 55 minutes of no output
                 config_result = self.run_command([
                     './config.sh', '-q', self.config['target'], manifest_filename,
-                ], cwd=dirs['work_dir'], output_timeout=45 * 60)  # timeout after 45 minutes of no output
+                ], cwd=dirs['work_dir'], output_timeout=55 * 60)
 
                 # TODO: Check return code from these? retry?
                 # Run git reset --hard to make sure we're in a clean state
