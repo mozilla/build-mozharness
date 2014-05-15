@@ -9,7 +9,6 @@ config = {
         'build',
         'build-symbols',
         'make-updates',
-        'build-update-testdata',
         'prep-upload',
         'upload',
         'make-socorro-json',
@@ -86,30 +85,6 @@ config = {
     "variant": "eng",
     "target_suffix": "-eng",
     "update_type": "fota",
-    "smoketest_config": {
-        "devices": {
-            "otoro": {
-                "system_fs_type": "ext4",
-                "system_location": "/dev/block/mmcblk0p19",
-                "data_fs_type": "ext4",
-                "data_location": "/dev/block/mmcblk0p22",
-                "sdcard": "/mnt/sdcard",
-                "sdcard_recovery": "/sdcard",
-                "serials": ["full_otoro"],
-            },
-            "inari": {
-                "system_fs_type": "ext4",
-                "system_location": "/dev/block/mmcblk0p19",
-                "data_fs_type": "ext4",
-                "data_location": "/dev/block/mmcblk0p22",
-                "sdcard": "/mnt/sdcard",
-                "sdcard_recovery": "/sdcard",
-                "serials": ["full_inari"],
-            },
-        },
-        "public_key": os.path.abspath("build/target/product/security/testkey.x509.pem"),
-        "private_key": os.path.abspath("build/target/product/security/testkey.pk8"),
-    },
     "repo_mirror_dir": "/builds/git-shared/repo",
     "repo_remote_mappings": {
         'https://android.googlesource.com/': 'https://git.mozilla.org/external/aosp',

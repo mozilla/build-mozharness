@@ -159,7 +159,6 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
                                 'build',
                                 'build-symbols',
                                 'make-updates',
-                                'build-update-testdata',
                                 'prep-upload',
                                 'upload',
                                 'make-update-xml',
@@ -249,7 +248,6 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
         dirs = {
             'src': os.path.join(c['work_dir'], 'gecko'),
             'work_dir': abs_dirs['abs_work_dir'],
-            'testdata_dir': os.path.join(abs_dirs['abs_work_dir'], 'testdata'),
             'gaia_l10n_base_dir': os.path.join(abs_dirs['abs_work_dir'], 'gaia-l10n'),
             'compare_locales_dir': os.path.join(abs_dirs['abs_work_dir'], 'compare-locales'),
             'abs_public_upload_dir': os.path.join(abs_dirs['abs_work_dir'], 'upload-public'),
@@ -524,7 +522,6 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
             always_clobber_dirs=[
                 dirs['abs_upload_dir'],
                 dirs['abs_public_upload_dir'],
-                dirs['testdata_dir'],
             ],
         )
 
@@ -1014,52 +1011,6 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
 
         # Sign the updates
         self.sign_updates()
-
-    def build_update_testdata(self):
-        # only run for nightlies, if target is in the smoketest_config
-        if not self.query_is_nightly():
-            self.info("Not a nightly build. Skipping...")
-            return
-        smoketest_config = self.config.get('smoketest_config')
-        if not smoketest_config:
-            self.fatal("failed to find smoketest_config")
-        target = self.config['target']
-        if target not in smoketest_config['devices']:
-            self.info("%s not in smoketest_config. Skipping...")
-            return
-
-        # create testdata for update testing
-        dirs = self.query_abs_dirs()
-        gecko_config = self.load_gecko_config()
-        cmd = ['./build.sh', 'fs_config']
-        env = self.query_build_env()
-
-        retval = self.run_mock_command(gecko_config['mock_target'], cmd, cwd=dirs['work_dir'], env=env, error_list=B2GMakefileErrorList)
-        if retval != 0:
-            self.fatal("failed to build fs_config", exit_code=2)
-
-        self.mkdir_p(dirs['testdata_dir'])
-        self.write_to_file(os.path.join(dirs['testdata_dir'], 'smoketest-config.json'),
-                           json.dumps(smoketest_config))
-        gecko_smoketest_dir = os.path.join(dirs['work_dir'], 'gecko/testing/marionette/update-smoketests')
-
-        stage_update = os.path.join(gecko_smoketest_dir, 'stage-update.py')
-        python = self.query_exe("python", return_type="list")
-        cmd = python + [stage_update, target, dirs['testdata_dir']]
-        retval = self.run_mock_command(gecko_config['mock_target'], cmd, cwd=dirs['work_dir'], env=env)
-        if retval != 0:
-            self.fatal("failed to stage b2g update testdata", exit_code=2)
-
-        # copy to upload_dir
-        buildid = self.query_buildid()
-        upload_testdata_dir = os.path.join(dirs['abs_upload_dir'], 'update-testdata')
-        target_testdata_dir = os.path.join(dirs['testdata_dir'], target, buildid)
-        self.mkdir_p(upload_testdata_dir)
-
-        for f in ('flash.zip', 'flash.sh'):
-            self.copy_to_upload_dir(
-                os.path.join(target_testdata_dir, f),
-                os.path.join(upload_testdata_dir, f))
 
     def sign_updates(self):
         if 'MOZ_SIGNING_SERVERS' not in os.environ:
