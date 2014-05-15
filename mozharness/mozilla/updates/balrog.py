@@ -8,6 +8,7 @@ class BalrogMixin(object):
     def submit_balrog_updates(self, release_type="nightly"):
         c = self.config
         dirs = self.query_abs_dirs()
+        product = self.buildbot_config["properties"]["product"]
         props_path = os.path.join(dirs["base_work_dir"], "balrog_props.json")
         credentials_file = os.path.join(
             dirs["base_work_dir"], c["balrog_credentials_file"]
@@ -29,7 +30,7 @@ class BalrogMixin(object):
             submitter_script,
             "--build-properties", props_path,
             "--api-root", c["balrog_api_root"],
-            "--username", c["balrog_username"],
+            "--username", c["balrog_usernames"][product],
             "-t", release_type,
             "--credentials-file", credentials_file,
         ]
