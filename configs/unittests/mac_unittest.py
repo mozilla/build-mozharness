@@ -3,6 +3,7 @@ import os
 #### OS Specifics ####
 INSTALLER_PATH = os.path.join(os.getcwd(), "installer.dmg")
 XPCSHELL_NAME = 'xpcshell'
+EXE_SUFFIX = ''
 DISABLE_SCREEN_SAVER = False
 ADJUST_MOUSE_AND_SCREEN = False
 #####
@@ -21,8 +22,10 @@ config = {
     ###
     "installer_path": INSTALLER_PATH,
     "xpcshell_name": XPCSHELL_NAME,
+    "exe_suffix": EXE_SUFFIX,
     "run_file_names": {
         "mochitest": "runtests.py",
+        "webapprt": "runtests.py",
         "reftest": "runreftest.py",
         "xpcshell": "runxpcshelltests.py",
         "cppunittest": "runcppunittests.py",
@@ -32,6 +35,7 @@ config = {
     "minimum_tests_zip_dirs": ["bin/*", "certs/*", "modules/*", "mozbase/*", "config/*"],
     "specific_tests_zip_dirs": {
         "mochitest": ["mochitest/*"],
+        "webapprt": ["mochitest/*"],
         "reftest": ["reftest/*", "jsreftest/*"],
         "xpcshell": ["xpcshell/*"],
         "cppunittest": ["cppunittests/*"],
@@ -60,6 +64,11 @@ config = {
         "plugins": ['--setpref=dom.ipc.plugins.enabled=false',
                     '--setpref=dom.ipc.plugins.enabled.x86_64=false',
                     '--ipcplugins']
+    },
+    #local webapprt suites
+    "all_webapprt_suites": {
+        "chrome": ["--webapprt-chrome", "--browser-arg=-test-mode"],
+        "content": ["--webapprt-content"]
     },
     #local reftest suites
     "all_reftest_suites": {
