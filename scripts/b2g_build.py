@@ -488,14 +488,19 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
 
     def query_marfile_path(self):
         if self.config.get("update_type", "ota") == "fota":
-            output_dir = self.query_device_outputdir()
-            return "%s/fota-update.mar" % output_dir
+            mardir = self.query_device_outputdir()
         else:
             mardir = "%s/dist/b2g-update" % self.objdir
-            files = os.listdir(mardir)
-            if len(files) != 1:
-                self.fatal("Found none or too many marfiles, don't know what to do.", exit_code=1)
-            return "%s/%s" % (mardir, files[0])
+
+        mars = []
+        for f in os.listdir(mardir):
+            if f.endswith(".mar"):
+                mars.append(f)
+
+        if len(mars) != 1:
+            self.fatal("Found none or too many marfiles in %s, don't know what to do:\n%s" % (mardir, mars), exit_code=1)
+
+        return "%s/%s" % (mardir, mars[0])
 
     def checkout_repotool(self, repo_dir):
         self.info("Checking out repo tool")
