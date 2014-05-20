@@ -5,7 +5,7 @@
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 # ***** END LICENSE BLOCK *****
 """desktop_unittest.py
-The goal of this is to extract desktop unittestng from buildbot's factory.py
+The goal of this is to extract desktop unittesting from buildbot's factory.py
 
 author: Jordan Lund
 """
@@ -105,9 +105,18 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
             "default": False,
             "help": "Run tests with multiple processes."}
          ],
+        [["--total-chunks"], {
+            "action": "store",
+            "dest": "total_chunks",
+            "help": "Number of total chunks"}
+         ],
+        [["--this-chunk"], {
+            "action": "store",
+            "dest": "this_chunk",
+            "help": "Number of this chunk"}
+         ],
     ] + copy.deepcopy(testing_config_options) + \
         copy.deepcopy(blobupload_config_options)
-
 
     def __init__(self, require_config_file=True):
         # abs_dirs defined already in BaseScript but is here to make pylint happy
@@ -137,7 +146,7 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
         self.binary_path = c.get('binary_path')
         self.abs_app_dir = None
 
-    ###### helper methods
+    # helper methods {{{2
     def _pre_config_lock(self, rw_config):
         c = self.config
         if not c.get('run_all_suites'):
@@ -259,15 +268,20 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
             if c['e10s']:
                 base_cmd.append('--e10s')
 
+            if c.get('total_chunks') and c.get('this_chunk'):
+                base_cmd.extend(['--total-chunks', c['total_chunks'],
+                                 '--this-chunk', c['this_chunk']])
+
             # set pluginsPath
             abs_app_plugins_dir = os.path.join(abs_app_dir, 'plugins')
             str_format_values['test_plugin_path'] = abs_app_plugins_dir
 
             suite_options = '%s_options' % suite_category
             if suite_options not in self.tree_config:
-                self.fatal("Key '%s' not defined in the in-tree config! Please add it to '%s'." \
-                           "See bug 981030 for more details." % (suite_options,
-                           os.path.join('gecko', 'testing', self.config['in_tree_config'])))
+                self.fatal("Key '%s' not defined in the in-tree config! Please add it to '%s'. "
+                           "See bug 981030 for more details." %
+                           (suite_options,
+                            os.path.join('gecko', 'testing', self.config['in_tree_config'])))
             options = list(self.tree_config[suite_options])
             if options:
                 for i, option in enumerate(options):
@@ -282,7 +296,7 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
                              (suite_category, suite_category))
                 return base_cmd
         else:
-            self.fatal("'binary_path' could not be determined.\n This should"
+            self.fatal("'binary_path' could not be determined.\n This should "
                        "be like '/path/build/application/firefox/firefox'"
                        "\nIf you are running this script without the 'install' "
                        "action (where binary_path is set), please ensure you are"
