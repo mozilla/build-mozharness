@@ -105,7 +105,7 @@ class ServoBuild(MockMixin, BaseScript, VCSMixin, BuildbotMixin):
         self.did_backup = False
         if self.config.get('backup_rust') and os.path.exists(os.path.join(dirs['abs_work_dir'], 'Makefile.backup')) and os.path.exists(dirs['objdir']):
             self.run_command(['make', '-f', 'Makefile.backup', 'backup-rust'], cwd=dirs['abs_work_dir'],
-                             halt_on_failure=True)
+                             partial_env=self.config.get("env", {}), halt_on_failure=True)
             self.did_backup = True
         self.rmtree(dirs['objdir'])
 
@@ -114,7 +114,7 @@ class ServoBuild(MockMixin, BaseScript, VCSMixin, BuildbotMixin):
 
         if not os.path.exists(dirs['objdir']):
             self.mkdir_p(dirs['objdir'])
-        rc = self.run_command(['../configure'], cwd=dirs['objdir'])
+        rc = self.run_command(['../configure'], cwd=dirs['objdir'], partial_env=self.config.get("env", {}))
         if rc != 0:
             self.fatal("Configure failed, can't continue.", exit_code=FAILURE)
 
@@ -124,16 +124,16 @@ class ServoBuild(MockMixin, BaseScript, VCSMixin, BuildbotMixin):
         # If rust was backed up, we need to restore it before building,
         # otherwise it will get rebuilt from scratch.
         if self.config.get('backup_rust') and self.did_backup:
-            self.run_command(['make', '-f', 'Makefile.backup', 'restore-rust'], cwd=dirs['abs_work_dir'])
+            self.run_command(['make', '-f', 'Makefile.backup', 'restore-rust'], cwd=dirs['abs_work_dir'], partial_env=self.config.get("env", {}))
 
-        rc = self.run_command(['make', '-j', str(self.config['concurrency'])], cwd=dirs['objdir'])
+        rc = self.run_command(['make', '-j', str(self.config['concurrency'])], cwd=dirs['objdir'], partial_env=self.config.get("env", {}))
         if rc != 0:
             self.fatal("Build failed, can't continue.", exit_code=FAILURE)
 
     def check(self):
         dirs = self.query_abs_dirs()
 
-        rc = self.run_command(['make', 'check'], cwd=dirs['objdir'])
+        rc = self.run_command(['make', 'check'], cwd=dirs['objdir'], partial_env=self.config.get("env", {}))
         if rc != 0:
             self.fatal("Tests failed.", exit_code=WARNINGS)
 
