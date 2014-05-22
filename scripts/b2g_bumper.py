@@ -17,7 +17,6 @@
 
 import os
 import sys
-import functools
 from multiprocessing.pool import ThreadPool
 import subprocess
 import time
@@ -38,9 +37,22 @@ from mozharness.mozilla.mapper import MapperMixin
 
 
 class B2GBumper(VCSScript, MapperMixin):
+    config_options = [
+        [['--no-write'], {
+            'dest': 'do_write',
+            'action': 'store_const',
+            'const': False,
+            'help': 'disable writing in-tree manifests',
+        }],
+        [['--device'], {
+            'dest': 'device_override',
+            'help': 'specific device to process',
+        }],
+    ]
 
     def __init__(self, require_config_file=True):
         super(B2GBumper, self).__init__(
+            config_options=self.config_options,
             all_actions=[
                 'clobber',
                 'check-treestatus',
@@ -60,6 +72,7 @@ class B2GBumper(VCSScript, MapperMixin):
             config={
                 'treestatus_base_url': 'https://treestatus.mozilla.org',
                 'log_max_rotate': 99,
+                'do_write': True,
             }
         )
 
@@ -68,6 +81,9 @@ class B2GBumper(VCSScript, MapperMixin):
 
         # Cache of (remote url, refname) to revision hashes
         self._git_ref_cache = {}
+
+        # Cache of new remotes to original upstreams
+        self._remote_mappings = {}
 
         # Have we missed some gaia revisions?
         self.truncated_revisions = False
@@ -119,9 +135,11 @@ class B2GBumper(VCSScript, MapperMixin):
                 self.info("Removed %s" % r.toxml())
 
     def map_remotes(self, manifest):
-        mapping_func = functools.partial(
-            repo_manifest.map_remote,
-            mappings=self.config['repo_remote_mappings'])
+        def mapping_func(r):
+            orig_url = r.getAttribute('fetch')
+            m = repo_manifest.map_remote(r, self.config['repo_remote_mappings'])
+            self._remote_mappings[m.getAttribute('fetch')] = orig_url
+            return m
         repo_manifest.rewrite_remotes(manifest, mapping_func)
 
     def resolve_git_ref(self, remote_url, revision):
@@ -200,6 +218,7 @@ class B2GBumper(VCSScript, MapperMixin):
         # TODO: alert/notify on missing repositories
         # TODO: Add external caching
         abort = False
+        failed = []
         for p, result in results:
             abs_revision = result.get()
             remote_url = repo_manifest.get_project_remote_url(manifest, p)
@@ -207,10 +226,24 @@ class B2GBumper(VCSScript, MapperMixin):
             if not abs_revision:
                 abort = True
                 self.error("Couldn't resolve %s %s" % (remote_url, revision))
+                failed.append(p)
             # Save to our cache
             self._git_ref_cache[remote_url, revision] = abs_revision
             p.setAttribute('revision', abs_revision)
         if abort:
+            # Write message about how to set up syncing
+            default = repo_manifest.get_default(manifest)
+            for p in failed:
+                if p.hasAttribute('remote'):
+                    remote = repo_manifest.get_remote(manifest, p.getAttribute('remote'))
+                else:
+                    remote = repo_manifest.get_remote(manifest, default.getAttribute('remote'))
+
+                new_fetch_url = remote.getAttribute('fetch')
+                orig_fetch_url = self._remote_mappings[new_fetch_url]
+                name = p.getAttribute('name')
+                self.info("needs sync? %s/%s -> %s/%s" % (orig_fetch_url, name, new_fetch_url, name))
+
             self.fatal("couldn't resolve some refs; exiting")
 
     def query_manifest_path(self, device):
@@ -380,6 +413,9 @@ class B2GBumper(VCSScript, MapperMixin):
         tree = c.get('treestatus_tree', os.path.basename(c['gecko_pull_url']))
         treestatus_url = "%s/%s?format=json" % (c['treestatus_base_url'], tree)
         treestatus_json = os.path.join(dirs['abs_work_dir'], 'treestatus.json')
+        if not os.path.exists(dirs['abs_work_dir']):
+            self.mkdir_p(dirs['abs_work_dir'])
+
         if self.download_file(treestatus_url, file_name=treestatus_json) != treestatus_json:
             # Failed to check tree status...assume we can land
             self.info("failed to check tree status - assuming we can land")
@@ -391,6 +427,14 @@ class B2GBumper(VCSScript, MapperMixin):
             return True
 
         return False
+
+    def query_devices(self):
+        c = self.config
+        override = c.get('device_override')
+        if override:
+            return {override: c['devices'][override]}
+        else:
+            return c['devices']
 
     # Actions {{{1
     def check_treestatus(self):
@@ -431,7 +475,7 @@ class B2GBumper(VCSScript, MapperMixin):
         Finally, we'll resolve absolute refs for projects that aren't fully
         specified.
         """
-        for device, device_config in self.config['devices'].items():
+        for device, device_config in self.query_devices().items():
             self.info("Massaging manifests for %s" % device)
             manifest = self.query_manifest(device)
             self.filter_projects(device_config, manifest)
@@ -445,12 +489,15 @@ class B2GBumper(VCSScript, MapperMixin):
             manifest_xml = manifest.toxml()
             if not manifest_xml.endswith("\n"):
                 manifest_xml += "\n"
-            self.write_to_file(manifest_path, manifest_xml)
+
+            if self.config['do_write']:
+                self.mkdir_p(os.path.dirname(manifest_path))
+                self.write_to_file(manifest_path, manifest_xml)
 
     def commit_manifests(self):
         dirs = self.query_abs_dirs()
         repo_path = dirs['gecko_local_dir']
-        for device, device_config in self.config['devices'].items():
+        for device, device_config in self.query_devices().items():
             manifest_path = self.query_manifest_path(device)
             self.hg_add(repo_path, manifest_path)
 
