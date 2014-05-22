@@ -15,6 +15,7 @@ from mozharness.mozilla.buildbot import BuildbotMixin
 
 SUCCESS, WARNINGS, FAILURE, EXCEPTION = xrange(4)
 
+from mozharness.base.log import DEBUG
 
 class ServoBuild(MockMixin, BaseScript, VCSMixin, BuildbotMixin):
     config_options = [
@@ -66,6 +67,7 @@ class ServoBuild(MockMixin, BaseScript, VCSMixin, BuildbotMixin):
                                 'default_vcs': 'gittool',
                                 'backup_rust': True,
                                 'concurrency': 1,
+                                'log_level': DEBUG,
                             },
                             )
 
