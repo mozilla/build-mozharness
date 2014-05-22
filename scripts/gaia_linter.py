@@ -12,8 +12,8 @@ import sys
 # load modules from parent dir
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
-from mozharness.base.gaia_test import GaiaTest
 from mozharness.base.log import OutputParser, ERROR
+from mozharness.mozilla.testing.gaia_test import GaiaTest
 
 
 class GaiaLinterOutputParser(OutputParser):

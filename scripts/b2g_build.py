@@ -44,6 +44,7 @@ from mozharness.mozilla.repo_manifest import (load_manifest, rewrite_remotes,
                                               get_remote, map_remote, add_project)
 from mozharness.mozilla.mapper import MapperMixin
 from mozharness.mozilla.updates.balrog import BalrogMixin
+from mozharness.mozilla.building.buildbase import MakeUploadOutputParser
 
 # B2G builds complain about java...but it doesn't seem to be a problem
 # Let's turn those into WARNINGS instead
@@ -133,6 +134,10 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
             "dest": "repo_rev",
             "help": "which revision of repo tool to use",
         }],
+        [["--complete-mar-url"], {
+            "dest": "complete_mar_url",
+            "help": "the URL where the complete MAR was uploaded. Required if submit-to-balrog is requested and upload isn't.",
+        }],
     ]
 
     def __init__(self, require_config_file=False):
@@ -208,6 +213,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
         else:
             self.make_updates_cmd = ['./build.sh', 'gecko-update-full']
             self.extra_update_attrs = None
+        self.package_urls = {}
 
     def _pre_config_lock(self, rw_config):
         super(B2GBuild, self)._pre_config_lock(rw_config)
@@ -488,14 +494,26 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
 
     def query_marfile_path(self):
         if self.config.get("update_type", "ota") == "fota":
-            output_dir = self.query_device_outputdir()
-            return "%s/fota-update.mar" % output_dir
+            mardir = self.query_device_outputdir()
         else:
             mardir = "%s/dist/b2g-update" % self.objdir
-            files = os.listdir(mardir)
-            if len(files) != 1:
-                self.fatal("Found none or too many marfiles, don't know what to do.", exit_code=1)
-            return "%s/%s" % (mardir, files[0])
+
+        mars = []
+        for f in os.listdir(mardir):
+            if f.endswith(".mar"):
+                mars.append(f)
+
+        if len(mars) != 1:
+            self.fatal("Found none or too many marfiles in %s, don't know what to do:\n%s" % (mardir, mars), exit_code=1)
+
+        return "%s/%s" % (mardir, mars[0])
+
+    def query_complete_mar_url(self):
+        if "complete_mar_url" in self.config:
+            return self.config["complete_mar_url"]
+        if "completeMarUrl" in self.package_urls:
+            return self.package_urls["completeMarUrl"]
+        self.fatal("Couldn't find complete mar url in config or package_urls")
 
     def checkout_repotool(self, repo_dir):
         self.info("Checking out repo tool")
@@ -650,13 +668,6 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
                     sleep_time = min(sleep_time * 1.5, max_sleep_time) + random.randint(1, 60)
             else:
                 self.fatal("failed to run config.sh")
-
-            # Workaround bug 985837
-            if self.config['target'] == 'emulator-kk':
-                self.info("Forcing -j4 for emulator-kk")
-                dotconfig_file = os.path.join(dirs['abs_work_dir'], '.config')
-                with open(dotconfig_file, "a+") as f:
-                    f.write("\nMAKE_FLAGS=-j1\n")
 
             # output our sources.xml, make a copy for update_sources_xml()
             self.run_command(
@@ -1194,6 +1205,9 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
             self.error("Failed to upload %s to %s@%s:%s!" % (upload_dir, ssh_user, remote_host, remote_path))
             self.return_code = 2
         else:  # post_upload.py
+            parser = MakeUploadOutputParser(config=self.config,
+                log_obj=self.log_obj
+            )
             # build filelist
             filelist = []
             for dirpath, dirname, filenames in os.walk(upload_dir):
@@ -1210,7 +1224,8 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
                    remote_host,
                    '%s %s %s' % (postupload_cmd, remote_path, ' '.join(filelist))
                    ]
-            retval = self.run_command(cmd)
+            retval = self.run_command(cmd, output_parser=parser)
+            self.package_urls = parser.matches
             if retval != 0:
                 self.error("failed to run %s!" % postupload_cmd)
                 self.return_code = 2
@@ -1221,8 +1236,9 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
                '-l', ssh_user,
                '-i', ssh_key,
                remote_host,
-               'rm -f %s' % remote_path
+               'rm -rf %s' % remote_path
                ]
+        self.run_command(cmd)
 
     def upload(self):
         if not self.query_do_upload():
@@ -1561,10 +1577,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
 
         marfile = self.query_marfile_path()
         # Need to update the base url to point at FTP, or better yet, read post_upload.py output?
-        mar_url = self.config["update"]["mar_base_url"] + os.path.basename(marfile)
-        mar_url = mar_url.format(
-            branch=self.query_branch()
-        )
+        mar_url = self.query_complete_mar_url()
 
         # Set other necessary properties for Balrog submission. None need to
         # be passed back to buildbot, so we won't write them to the properties

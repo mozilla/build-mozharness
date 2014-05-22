@@ -1,7 +1,7 @@
 import os
 import sys
 
-#### OS Specifics ####
+# OS Specifics
 ABS_WORK_DIR = os.path.join(os.getcwd(), "build")
 BINARY_PATH = os.path.join(ABS_WORK_DIR, "firefox", "firefox.exe")
 INSTALLER_PATH = os.path.join(ABS_WORK_DIR, "installer.zip")
@@ -11,7 +11,6 @@ DISABLE_SCREEN_SAVER = False
 ADJUST_MOUSE_AND_SCREEN = True
 #####
 config = {
-    ### BUILDBOT
     "buildbot_json_path": "buildprops.json",
     "exes": {
         'python': sys.executable,
@@ -53,7 +52,7 @@ config = {
     },
     # test harness options are located in the gecko tree
     "in_tree_config": "config/mozharness/windows_config.py",
-    #local mochi suites
+    # local mochi suites
     "all_mochitest_suites":
     {
         "plain1": ["--total-chunks=5", "--this-chunk=1", "--chunk-by-dir=4"],
@@ -61,27 +60,31 @@ config = {
         "plain3": ["--total-chunks=5", "--this-chunk=3", "--chunk-by-dir=4"],
         "plain4": ["--total-chunks=5", "--this-chunk=4", "--chunk-by-dir=4"],
         "plain5": ["--total-chunks=5", "--this-chunk=5", "--chunk-by-dir=4"],
+        "plain": [],
+        "plain-chunked": ["--chunk-by-dir=4"],
         "chrome": ["--chrome"],
         "browser-chrome": ["--browser-chrome"],
         "browser-chrome-1": ["--browser-chrome", "--chunk-by-dir=5", "--total-chunks=3", "--this-chunk=1"],
         "browser-chrome-2": ["--browser-chrome", "--chunk-by-dir=5", "--total-chunks=3", "--this-chunk=2"],
         "browser-chrome-3": ["--browser-chrome", "--chunk-by-dir=5", "--total-chunks=3", "--this-chunk=3"],
+        "browser-chrome-chunked": ["--browser-chrome", "--chunk-by-dir=5"],
         "mochitest-devtools-chrome": ["--browser-chrome", "--subsuite=devtools"],
         "mochitest-devtools-chrome-1": ["--browser-chrome", "--subsuite=devtools", "--chunk-by-dir=5", "--total-chunks=3", "--this-chunk=1"],
         "mochitest-devtools-chrome-2": ["--browser-chrome", "--subsuite=devtools", "--chunk-by-dir=5", "--total-chunks=3", "--this-chunk=2"],
         "mochitest-devtools-chrome-3": ["--browser-chrome", "--subsuite=devtools", "--chunk-by-dir=5", "--total-chunks=3", "--this-chunk=3"],
+        "mochitest-devtools-chrome-chunked": ["--browser-chrome", "--subsuite=devtools", "--chunk-by-dir=5"],
         "mochitest-metro-chrome": ["--browser-chrome", "--metro-immersive"],
         "a11y": ["--a11y"],
         "plugins": ['--setpref=dom.ipc.plugins.enabled=false',
                     '--setpref=dom.ipc.plugins.enabled.x86_64=false',
                     '--ipcplugins']
     },
-    #local webapprt suites
+    # local webapprt suites
     "all_webapprt_suites": {
         "chrome": ["--webapprt-chrome", "--browser-arg=-test-mode"],
         "content": ["--webapprt-content"]
     },
-    #local reftest suites
+    # local reftest suites
     "all_reftest_suites": {
         "reftest": ["tests/reftest/tests/layout/reftests/reftest.list"],
         "crashtest": ["tests/reftest/tests/testing/crashtest/crashtests.list"],

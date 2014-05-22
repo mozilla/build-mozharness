@@ -8,9 +8,10 @@ import copy
 import os
 import re
 import sys
+import time
 
 # load modules from parent dir
-sys.path.insert(1, os.path.dirname(sys.path[0]))
+sys.path.insert(1, os.path.dirname(os.path.dirname(sys.path[0])))
 
 from mozharness.base.errors import TarErrorList, ZipErrorList
 from mozharness.base.log import INFO, ERROR, WARNING, FATAL
@@ -215,6 +216,29 @@ class GaiaTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin,
                              error_list=ZipErrorList,
                              halt_on_failure=True,
                              fatal_exit_code=3)
+
+    def _retry_download_file(self, url, file_name, error_level=FATAL):
+        if self.config.get("bypass_download_cache"):
+            n = 0
+            max_attempts = 5
+            while n < max_attempts:
+                n += 1
+                try:
+                    _url = "%s?rand=%s" % (url, time.strftime("%Y%m%d%H%M%S"))
+                    self.info("Trying %s..." % _url)
+                    status = self._download_file(_url, file_name)
+                    return status
+                except Exception:
+                    if n >= max_attempts:
+                        self.log("Can't download from %s to %s!" % (url, file_name),
+                                 level=error_level, exit_code=3)
+                        return -1
+                    self.info("Sleeping 60 before retrying...")
+                    time.sleep(60)
+        else:
+            return super(GaiaTest, self)._retry_download_file(
+                url, file_name, error_level
+            )
 
     def download_and_extract(self):
         super(GaiaTest, self).download_and_extract()
