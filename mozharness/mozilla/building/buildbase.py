@@ -99,8 +99,8 @@ class MakeUploadOutputParser(OutputParser):
                            "'unsigned-unaligned' in m"),
         ('robocopApkUrl', "m.endswith('apk') and 'robocop' in m"),
         ('jsshellUrl', "'jsshell-' in m and m.endswith('.zip')"),
-        ('completeMarUrl', "m.endswith('.complete.mar')"),
         ('partialMarUrl', "m.endswith('.mar') and '.partial.' in m"),
+        ('completeMarUrl', "m.endswith('.mar')"),
     ]
 
     def __init__(self, **kwargs):
