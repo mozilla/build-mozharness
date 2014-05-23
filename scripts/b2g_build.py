@@ -513,6 +513,11 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
             return self.config["complete_mar_url"]
         if "completeMarUrl" in self.package_urls:
             return self.package_urls["completeMarUrl"]
+        # XXX: remove this after everything is uploading publicly
+        url = self.config.get("update", {}).get("mar_base_url")
+        if url:
+            url += os.path.basename(self.query_marfile_path())
+            return url.format(branch=self.query_branch())
         self.fatal("Couldn't find complete mar url in config or package_urls")
 
     def checkout_repotool(self, repo_dir):
