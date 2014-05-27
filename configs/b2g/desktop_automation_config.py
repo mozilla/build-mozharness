@@ -35,6 +35,7 @@ config = {
     ],
     "blob_uploader_auth_file": os.path.join(os.getcwd(), "oauth.txt"),
 
+    # testsuite options
     "run_file_names": {
         "mochitest": "runtestsb2g.py",
         "reftest": "runreftestb2g.py",
