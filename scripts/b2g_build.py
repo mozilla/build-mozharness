@@ -230,23 +230,6 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
         if 'target' not in self.config:
             self.fatal("Must specify --target!")
 
-        # Override target for things with weird names
-        if self.config['target'] == 'mako':
-            self.info("Using target nexus-4 instead of mako")
-            self.config['target'] = 'nexus-4'
-            if self.config.get('b2g_config_dir') is None:
-                self.config['b2g_config_dir'] = 'mako'
-        elif self.config['target'] == 'generic':
-            if self.config.get('b2g_config_dir') == 'emulator':
-                self.info("Using target emulator instead of generic")
-                self.config['target'] = 'emulator'
-            elif self.config.get('b2g_config_dir') == 'emulator-jb':
-                self.info("Using target emulator-jb instead of generic")
-                self.config['target'] = 'emulator-jb'
-            elif self.config.get('b2g_config_dir') == 'emulator-kk':
-                self.info("Using target emulator-kk instead of generic")
-                self.config['target'] = 'emulator-kk'
-
         if not (self.buildbot_config and 'properties' in self.buildbot_config) and 'repo' not in self.config:
             self.fatal("Must specify --repo")
 
