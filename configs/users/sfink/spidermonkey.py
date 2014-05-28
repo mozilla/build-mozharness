@@ -35,7 +35,7 @@ config = {
     "upload_ssh_server": "localhost",
     "upload_ssh_key": "/home/sfink/.ssh/id_rsa",
     "upload_ssh_user": "sfink",
-    "target": "linux64-br-haz",
+    "upload_label": "linux64-br-haz",
 
     # For testing tryserver uploads (directory structure is different)
     #"branch": "try",

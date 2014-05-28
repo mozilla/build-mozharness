@@ -13,15 +13,14 @@ import re
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
 from mozharness.base.errors import MakefileErrorList
-from mozharness.base.script import BaseScript
-from mozharness.base.transfer import TransferMixin
-from mozharness.base.vcs.vcsbase import VCSMixin
-from mozharness.mozilla.buildbot import BuildbotMixin, TBPL_WARNING
-from mozharness.mozilla.purge import PurgeMixin
-from mozharness.mozilla.mock import MockMixin
-from mozharness.mozilla.tooltool import TooltoolMixin
+from mozharness.mozilla.buildbot import TBPL_WARNING
+from mozharness.mozilla.building.buildb2gbase import B2GBuildBaseScript
+
+from b2g_build import B2GMakefileErrorList
 
 SUCCESS, WARNINGS, FAILURE, EXCEPTION, RETRY = xrange(5)
+
+nuisance_env_vars = ['TERMCAP', 'LS_COLORS', 'PWD', '_']
 
 
 def requires(*queries):
@@ -36,114 +35,62 @@ def requires(*queries):
     return make_wrapper
 
 
-nuisance_env_vars = ['TERMCAP', 'LS_COLORS', 'PWD', '_']
+class B2GHazardBuild(B2GBuildBaseScript):
+    all_actions = [
+        'checkout-tools',
+        'clobber',
+        'checkout-sources',
+        'get-blobs',
+        'update-source-manifest',
+        'clobber-shell',
+        'configure-shell',
+        'build-shell',
+        'clobber-analysis',
+        'setup-analysis',
+        'run-analysis',
+        'collect-analysis-output',
+        'upload-analysis',
+        'check-expectations',
+    ]
 
-
-class SpidermonkeyBuild(MockMixin,
-                        PurgeMixin, BaseScript,
-                        VCSMixin, BuildbotMixin, TooltoolMixin, TransferMixin):
-    config_options = [
-        [["--repo"], {
-            "dest": "repo",
-            "help": "which gecko repo to get spidermonkey from",
-        }],
-        [["--revision"], {
-            "dest": "revision",
-        }],
-        [["--branch"], {
-            "dest": "branch",
-        }],
-        [["--vcs-share-base"], {
-            "dest": "vcs_share_base",
-            "help": "base directory for shared repositories",
-        }],
-        [["-j"], {
-            "dest": "concurrency",
-            "type": int,
-            "default": 4,
-            "help": "number of simultaneous jobs used while building the shell " +
-                    "(currently ignored for the analyzed build",
-        }],
+    default_actions = [
+        'checkout-tools',
+        'checkout-sources',
+        'get-blobs',
+        'clobber-shell',
+        'configure-shell',
+        'build-shell',
+        'clobber-analysis',
+        'setup-analysis',
+        'run-analysis',
+        'collect-analysis-output',
+        'upload-analysis',
+        'check-expectations',
     ]
 
     def __init__(self):
-        BaseScript.__init__(self,
-                            config_options=self.config_options,
-                            # other stuff
-                            all_actions=[
-                                'purge',
-                                'checkout-tools',
+        super(B2GHazardBuild, self).__init__(
+            config_options=[],
+            config={
+                'default_vcs': 'hgtool',
+                'ccache': False,
+                'mozilla_dir': 'build/gecko',
 
-                                # First, build an optimized JS shell for running the analysis
-                                'checkout-source',
-                                'get-blobs',
-                                'clobber-shell',
-                                'configure-shell',
-                                'build-shell',
-
-                                # Next, build a tree with the analysis plugin
-                                # active. Note that we are using the same
-                                # checkout for the JS shell build and the build
-                                # of the source to be analyzed, which is a
-                                # little unnecessary (no need to rebuild the JS
-                                # shell all the time). (Different objdir,
-                                # though.)
-                                'clobber-analysis',
-                                'setup-analysis',
-                                'run-analysis',
-                                'collect-analysis-output',
-                                'upload-analysis',
-                                'check-expectations',
-                            ],
-                            default_actions=[
-                                'purge',
-                                'checkout-tools',
-                                'checkout-source',
-                                'get-blobs',
-                                'clobber-shell',
-                                'configure-shell',
-                                'build-shell',
-                                'clobber-analysis',
-                                'setup-analysis',
-                                'run-analysis',
-                                'collect-analysis-output',
-                                'upload-analysis',
-                                'check-expectations',
-                            ],
-                            config={
-                                'default_vcs': 'hgtool',
-                                'vcs_share_base': os.environ.get('HG_SHARE_BASE_DIR'),
-                                'ccache': True,
-                                'buildbot_json_path': os.environ.get('PROPERTIES_FILE'),
-                                'tooltool_servers': None,
-                                'tools_repo': 'https://hg.mozilla.org/build/tools',
-
-                                'upload_ssh_server': None,
-                                'upload_remote_basepath': None,
-                                'enable_try_uploads': True,
-                            },
+                'upload_ssh_server': None,
+                'upload_remote_basepath': None,
+                'enable_try_uploads': True,
+            },
+            all_actions=B2GHazardBuild.all_actions,
+            default_actions=B2GHazardBuild.default_actions,
         )
 
         self.buildtime = None
 
     def _pre_config_lock(self, rw_config):
-        super(SpidermonkeyBuild, self)._pre_config_lock(rw_config)
-
-        if self.buildbot_config is None:
-            self.info("Reading buildbot build properties...")
-            self.read_buildbot_config()
+        super(B2GHazardBuild, self)._pre_config_lock(rw_config)
 
         if self.buildbot_config:
-            bb_props = [('mock_target', 'mock_target', None),
-                        ('base_bundle_urls', 'hgtool_base_bundle_urls', None),
-                        ('base_mirror_urls', 'hgtool_base_mirror_urls', None),
-                        ('hgurl', 'hgurl', None),
-                        ('clobberer_url', 'clobberer_url', 'http://clobberer.pvt.build.mozilla.org/index.php'),
-                        ('purge_minsize', 'purge_minsize', 15),
-                        ('purge_maxage', 'purge_maxage', None),
-                        ('purge_skip', 'purge_skip', None),
-                        ('force_clobber', 'force_clobber', None),
-                        ('tooltool_url_list', 'tooltool_servers', ['http://runtime-binaries.pvt.build.mozilla.org/tooltool']),
+            bb_props = [('tooltool_url_list', 'tooltool_servers', ['http://runtime-binaries.pvt.build.mozilla.org/tooltool']),
                         ]
             buildbot_props = self.buildbot_config.get('properties', {})
             for bb_prop, cfg_prop, default in bb_props:
@@ -155,7 +102,7 @@ class SpidermonkeyBuild(MockMixin,
 
         dirs = self.query_abs_dirs()
         replacements = self.config['env_replacements'].copy()
-        for k,v in replacements.items():
+        for k, v in replacements.items():
             replacements[k] = v % dirs
 
         self.env = self.query_env(replace_dict=replacements,
@@ -165,10 +112,14 @@ class SpidermonkeyBuild(MockMixin,
     def query_abs_dirs(self):
         if self.abs_dirs:
             return self.abs_dirs
-        abs_dirs = BaseScript.query_abs_dirs(self)
+        abs_dirs = super(B2GHazardBuild, self).query_abs_dirs()
 
         abs_work_dir = abs_dirs['abs_work_dir']
         dirs = {
+            'b2g_src':
+                abs_work_dir,
+            'target_compiler_base':
+                os.path.join(abs_dirs['abs_work_dir'], 'target_compiler'),
             'shell_objdir':
                 os.path.join(abs_work_dir, self.config['shell-objdir']),
             'mozharness_scriptdir':
@@ -178,32 +129,12 @@ class SpidermonkeyBuild(MockMixin,
             'abs_analyzed_objdir':
                 os.path.join(abs_work_dir, self.config['srcdir'], self.config['analysis-objdir']),
             'analysis_scriptdir':
-                os.path.join(self.config['srcdir'], self.config['analysis-scriptdir']),
-            'abs_tools_dir':
-                os.path.join(abs_dirs['base_work_dir'], 'tools'),
+                os.path.join(abs_dirs['gecko_src'], self.config['analysis-scriptdir'])
         }
 
         abs_dirs.update(dirs)
         self.abs_dirs = abs_dirs
         return self.abs_dirs
-
-    def query_repo(self):
-        if self.config.get('repo'):
-            return self.config['repo']
-        elif self.buildbot_config and 'properties' in self.buildbot_config:
-            return self.config['hgurl'] + self.buildbot_config['properties']['repo_path']
-        else:
-            return None
-
-    def query_revision(self):
-        if 'revision' in self.buildbot_properties:
-            return self.buildbot_properties['revision']
-
-        if self.buildbot_config and 'sourcestamp' in self.buildbot_config:
-            return self.buildbot_config['sourcestamp']['revision']
-
-        # Useful for local testing. In actual use, this would always be None.
-        return self.config.get('revision')
 
     def query_branch(self):
         if self.buildbot_config and 'properties' in self.buildbot_config:
@@ -216,17 +147,15 @@ class SpidermonkeyBuild(MockMixin,
 
     def query_compiler_manifest(self):
         dirs = self.query_abs_dirs()
-        manifest = os.path.join(dirs['abs_work_dir'], dirs['analysis_scriptdir'], "build", self.config['compiler_manifest'])
-        if os.path.exists(manifest):
-            return manifest
-        return os.path.join(dirs['abs_work_dir'], self.config['compiler_manifest'])
+        return os.path.join(dirs['analysis_scriptdir'], self.config['compiler_manifest'])
+
+    def query_b2g_compiler_manifest(self):
+        dirs = self.query_abs_dirs()
+        return os.path.join(dirs['analysis_scriptdir'], self.config['b2g_compiler_manifest'])
 
     def query_sixgill_manifest(self):
         dirs = self.query_abs_dirs()
-        manifest = os.path.join(dirs['abs_work_dir'], dirs['analysis_scriptdir'], "build", self.config['sixgill_manifest'])
-        if os.path.exists(manifest):
-            return manifest
-        return os.path.join(dirs['abs_work_dir'], self.config['sixgill_manifest'])
+        return os.path.join(dirs['analysis_scriptdir'], self.config['sixgill_manifest'])
 
     def query_buildtime(self):
         if self.buildtime:
@@ -277,11 +206,11 @@ class SpidermonkeyBuild(MockMixin,
                 baseuri = buildprops['upload_remote_baseuri']
         return baseuri.strip("/") if baseuri else None
 
-    def query_target(self):
+    def query_upload_label(self):
         if self.buildbot_config and 'properties' in self.buildbot_config:
             return self.buildbot_config['properties']['platform']
         else:
-            return self.config.get('target')
+            return self.config.get('upload_label')
 
     def query_upload_path(self):
         branch = self.query_branch()
@@ -289,7 +218,7 @@ class SpidermonkeyBuild(MockMixin,
         common = {
             'basepath': self.query_upload_remote_basepath(),
             'branch': branch,
-            'target': self.query_target(),
+            'target': self.query_upload_label(),
         }
 
         if branch == 'try':
@@ -315,47 +244,16 @@ class SpidermonkeyBuild(MockMixin,
             return self.config.get('enable_try_uploads')
         return True
 
-    # Actions {{{2
-    def purge(self):
+    def make_source_dir(self):
         dirs = self.query_abs_dirs()
-        PurgeMixin.clobber(
-            self,
-            always_clobber_dirs=[
-                dirs['abs_upload_dir'],
-            ],
-        )
-
-    def checkout_tools(self):
-        rev = self.vcs_checkout(
-            vcs='hg',  # Don't have hgtool.py yet
-            repo=self.config['tools_repo'],
-            clean=False,
-        )
-        self.set_buildbot_property("tools_revision", rev, write_to_file=True)
-
-    def do_checkout_source(self):
-        dirs = self.query_abs_dirs()
-        dest = os.path.join(dirs['abs_work_dir'], 'source')
-
-        # Pre-create the directory to appease the share extension
+        dest = dirs['b2g_src']
         if not os.path.exists(dest):
             self.mkdir_p(dest)
 
-        rev = self.vcs_checkout(
-            repo=self.query_repo(),
-            dest=dest,
-            revision=self.query_revision(),
-            branch=self.config.get('branch'),
-            clean=True,
-        )
-        self.set_buildbot_property('source_revision', rev, write_to_file=True)
-
-    @requires(query_repo)
-    def checkout_source(self):
-        try:
-            self.do_checkout_source()
-        except Exception as e:
-            self.fatal("checkout failed: " + str(e), exit_code=RETRY)
+    # Actions {{{2
+    def checkout_sources(self):
+        self.make_source_dir()
+        super(B2GHazardBuild, self).checkout_sources()
 
     def get_blobs(self):
         dirs = self.query_abs_dirs()
@@ -363,26 +261,30 @@ class SpidermonkeyBuild(MockMixin,
                             dirs['abs_work_dir'])
         self.tooltool_fetch(self.query_sixgill_manifest(), "sh " + self.config['sixgill_setup'],
                             dirs['abs_work_dir'])
+        if not os.path.exists(dirs['target_compiler_base']):
+            self.mkdir_p(dirs['target_compiler_base'])
+        self.tooltool_fetch(self.query_b2g_compiler_manifest(), "sh " + self.config['compiler_setup'],
+                            dirs['target_compiler_base'])
 
     def clobber_shell(self):
         dirs = self.query_abs_dirs()
         self.rmtree(dirs['shell_objdir'])
 
     def configure_shell(self):
-        self.enable_mock()
-
         dirs = self.query_abs_dirs()
+
         if not os.path.exists(dirs['shell_objdir']):
             self.mkdir_p(dirs['shell_objdir'])
 
+        js_src_dir = os.path.join(dirs['gecko_src'], 'js', 'src')
         rc = self.run_command(['autoconf-2.13'],
-                              cwd=dirs['abs_work_dir'] + '/source/js/src',
+                              cwd=js_src_dir,
                               env=self.env,
                               error_list=MakefileErrorList)
         if rc != 0:
             self.fatal("autoconf failed, can't continue.", exit_code=FAILURE)
 
-        rc = self.run_command(['../source/js/src/configure',
+        rc = self.run_command([os.path.join(js_src_dir, 'configure'),
                                '--enable-optimize',
                                '--disable-debug',
                                '--enable-ctypes',
@@ -394,20 +296,15 @@ class SpidermonkeyBuild(MockMixin,
         if rc != 0:
             self.fatal("Configure failed, can't continue.", exit_code=FAILURE)
 
-        self.disable_mock()
-
     def build_shell(self):
-        self.enable_mock()
-
         dirs = self.query_abs_dirs()
-        rc = self.run_command(['make', '-j', str(self.config['concurrency']), '-s'],
+
+        rc = self.run_command(['make', '-j', str(self.config.get('concurrency', 4)), '-s'],
                               cwd=dirs['shell_objdir'],
                               env=self.env,
                               error_list=MakefileErrorList)
         if rc != 0:
             self.fatal("Build failed, can't continue.", exit_code=FAILURE)
-
-        self.disable_mock()
 
     def clobber_analysis(self):
         dirs = self.query_abs_dirs()
@@ -421,13 +318,14 @@ class SpidermonkeyBuild(MockMixin,
         if not os.path.exists(analysis_dir):
             self.mkdir_p(analysis_dir)
 
-        values = {'js': os.path.join(dirs['shell_objdir'], 'dist', 'bin', 'js'),
-                  'analysis_scriptdir': os.path.join(dirs['abs_work_dir'], 'source/js/src/devtools/rootAnalysis'),
-                  'source_objdir': dirs['abs_analyzed_objdir'],
-                  'source': os.path.join(dirs['abs_work_dir'], 'source'),
-                  'sixgill': os.path.join(dirs['abs_work_dir'], self.config['sixgill']),
-                  'sixgill_bin': os.path.join(dirs['abs_work_dir'], self.config['sixgill_bin']),
-                  }
+        values = {
+            'js': os.path.join(dirs['shell_objdir'], 'dist', 'bin', 'js'),
+            'analysis_scriptdir': dirs['analysis_scriptdir'],
+            'source_objdir': dirs['abs_analyzed_objdir'],
+            'source': os.path.join(dirs['work_dir'], 'source'),
+            'sixgill': os.path.join(dirs['work_dir'], self.config['sixgill']),
+            'sixgill_bin': os.path.join(dirs['work_dir'], self.config['sixgill_bin']),
+        }
         defaults = """
 js = '%(js)s'
 analysis_scriptdir = '%(analysis_scriptdir)s'
@@ -438,7 +336,10 @@ sixgill_bin = '%(sixgill_bin)s'
 jobs = 2
 """ % values
 
-        file(os.path.join(analysis_dir, 'defaults.py'), "w").write(defaults)
+        #defaults_path = os.path.join(analysis_dir, 'defaults.py')
+        defaults_path = os.path.join(analysis_dir, 'defaults.py')
+        file(defaults_path, "w").write(defaults)
+        self.log("Wrote analysis config file " + defaults_path)
 
         build_command = self.config['build_command']
         self.copyfile(os.path.join(dirs['mozharness_scriptdir'],
@@ -447,28 +348,42 @@ jobs = 2
                       copystat=True)
 
     def run_analysis(self):
-        self.enable_mock()
-
         dirs = self.query_abs_dirs()
         analysis_dir = dirs['abs_analysis_dir']
-        analysis_scriptdir = os.path.join(dirs['abs_work_dir'], 'source/js/src/devtools/rootAnalysis')
+        analysis_scriptdir = dirs['analysis_scriptdir']
 
-        # The build for the analysis is always a clobber build,
-        # because the analysis needs to see every compile to work
-        self.rmtree(dirs['abs_analyzed_objdir'])
+        gecko_config = self.load_gecko_config()
+        env = self.query_build_env().copy()
+        self.enable_mock()
 
         build_command = self.config['build_command']
         build_command = os.path.abspath(os.path.join(analysis_dir, build_command))
-        rc = self.run_command(
-            [
-                self.config['python'], os.path.join(analysis_scriptdir, 'analyze.py'),
-                "--buildcommand=%s" % build_command,
-            ],
-            cwd=analysis_dir,
-            env=self.env,
-            error_list=MakefileErrorList)
-        if rc != 0:
-            self.fatal("analysis failed, can't continue.", exit_code=FAILURE)
+        gonk_misc = os.path.join(dirs['b2g_src'], 'gonk-misc')
+        mozconfig = os.path.join(gonk_misc, 'hazard-analysis-config')
+        mozconfig_text = '. "%s/default-gecko-config"\n' % gonk_misc
+        basecc = os.path.join(dirs['abs_work_dir'], self.config['sixgill'], 'scripts', 'wrap_gcc', 'basecc')
+        mozconfig_text += "ac_add_options --with-compiler-wrapper=" + basecc + "\n"
+        mozconfig_text += "ac_add_options --without-ccache\n"
+        file(mozconfig, "w").write(mozconfig_text)
+
+        # Stuff I set in my .userconfig for manual builds
+        env['B2G_SOURCE'] = dirs['b2g_src']
+        env['MOZCONFIG_PATH'] = mozconfig
+        env['GECKO_PATH'] = dirs['gecko_src']
+        env['TARGET_TOOLS_PREFIX'] = os.path.join(dirs['abs_work_dir'], self.config['b2g_target_compiler_prefix'])
+
+        cmd = [
+            self.config['python'],
+            os.path.join(analysis_scriptdir, 'analyze.py'),
+            "--source", dirs['gecko_src'],
+            "--buildcommand", build_command,
+        ]
+        retval = self.run_command(cmd,
+                                  cwd=analysis_dir,
+                                  env=env,
+                                  error_list=B2GMakefileErrorList)
+        if retval != 0:
+            self.fatal("failed to build", exit_code=2)
 
         self.disable_mock()
 
@@ -483,9 +398,6 @@ jobs = 2
                  ('gcFunctions.txt',
                   'gcFunctions',
                   'list of functions that can gc, and why'),
-                 ('allFunctions.txt',
-                  'allFunctions',
-                  'list of all functions that were compiled'),
                  ('gcTypes.txt',
                   'gcTypes',
                   'list of types containing unrooted gc pointers'),
@@ -541,7 +453,7 @@ jobs = 2
 
         dirs = self.query_abs_dirs()
         analysis_dir = dirs['abs_analysis_dir']
-        analysis_scriptdir = os.path.join(dirs['abs_work_dir'], 'source/js/src/devtools/rootAnalysis')
+        analysis_scriptdir = os.path.join(dirs['gecko_src'], 'js', 'src', 'devtools', 'rootAnalysis')
         expect_file = os.path.join(analysis_scriptdir, self.config['expect_file'])
         expect = self.read_from_file(expect_file)
         if expect is None:
@@ -597,5 +509,5 @@ jobs = 2
 
 # main {{{1
 if __name__ == '__main__':
-    myScript = SpidermonkeyBuild()
+    myScript = B2GHazardBuild()
     myScript.run_and_exit()
