@@ -179,44 +179,48 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
         }],
     ]
 
-    def __init__(self, require_config_file=False,
+    def __init__(self, require_config_file=False, config={},
                  all_actions=all_actions,
                  default_actions=default_actions):
+                                # XXX: Remove me after all devices/branches are switched to Balrog
+                                # XXX: Remove me after all devices/branches are switched to Balrog
+        # Default configuration
+        default_config = {
+            'default_vcs': 'hgtool',
+            'vcs_share_base': os.environ.get('HG_SHARE_BASE_DIR'),
+            'ccache': True,
+            'buildbot_json_path': os.environ.get('PROPERTIES_FILE'),
+            'tooltool_servers': None,
+            'tools_repo': 'https://hg.mozilla.org/build/tools',
+            'locales_dir': 'gecko/b2g/locales',
+            'l10n_dir': 'gecko-l10n',
+            'ignore_locales': ['en-US', 'multi'],
+            'locales_file': 'gecko/b2g/locales/all-locales',
+            'mozilla_dir': 'build/gecko',
+            'objdir': 'build/objdir-gecko',
+            'merge_locales': True,
+            'compare_locales_repo': 'https://hg.mozilla.org/build/compare-locales',
+            'compare_locales_rev': 'RELEASE_AUTOMATION',
+            'compare_locales_vcs': 'hgtool',
+            'repo_repo': "https://git.mozilla.org/external/google/gerrit/git-repo.git",
+                                'repo_rev': 'stable',
+            'repo_remote_mappings': {},
+                                # XXX: Remove me after all devices/branches are switched to Balrog
+            'update_channel': 'default',
+            'balrog_credentials_file': 'oauth.txt',
+        }
+        default_config.update(config)
+
         self.gecko_config = None
         self.buildid = None
         self.dotconfig = None
         LocalesMixin.__init__(self)
         BaseScript.__init__(self,
                             config_options=self.config_options,
-                                # XXX: Remove me after all devices/branches are switched to Balrog
-                                # XXX: Remove me after all devices/branches are switched to Balrog
                             require_config_file=require_config_file,
-
-                            # Default configuration
-                            config={
-                                'default_vcs': 'hgtool',
-                                'vcs_share_base': os.environ.get('HG_SHARE_BASE_DIR'),
-                                'ccache': True,
-                                'buildbot_json_path': os.environ.get('PROPERTIES_FILE'),
-                                'tooltool_servers': None,
-                                'tools_repo': 'https://hg.mozilla.org/build/tools',
-                                'locales_dir': 'gecko/b2g/locales',
-                                'l10n_dir': 'gecko-l10n',
-                                'ignore_locales': ['en-US', 'multi'],
-                                'locales_file': 'gecko/b2g/locales/all-locales',
-                                'mozilla_dir': 'build/gecko',
-                                'objdir': 'build/objdir-gecko',
-                                'merge_locales': True,
-                                'compare_locales_repo': 'https://hg.mozilla.org/build/compare-locales',
-                                'compare_locales_rev': 'RELEASE_AUTOMATION',
-                                'compare_locales_vcs': 'hgtool',
-                                'repo_repo': "https://git.mozilla.org/external/google/gerrit/git-repo.git",
-                                'repo_rev': 'stable',
-                                'repo_remote_mappings': {},
-                                # XXX: Remove me after all devices/branches are switched to Balrog
-                                'update_channel': 'default',
-                                'balrog_credentials_file': 'oauth.txt',
-                            },
+                            config=default_config,
+                            all_actions=all_actions,
+                            default_actions=default_actions,
                             )
 
         dirs = self.query_abs_dirs()
