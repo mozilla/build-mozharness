@@ -247,7 +247,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
 
         c = self.config
         dirs = {
-            'src': os.path.join(c['work_dir'], 'gecko'),
+            'gecko_src': os.path.join(c['work_dir'], 'gecko'),
             'work_dir': abs_dirs['abs_work_dir'],
             'gaia_l10n_base_dir': os.path.join(abs_dirs['abs_work_dir'], 'gaia-l10n'),
             'compare_locales_dir': os.path.join(abs_dirs['abs_work_dir'], 'compare-locales'),
@@ -281,7 +281,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
         dirs = self.query_abs_dirs()
         conf_file = self.query_gecko_config_path()
         if not os.path.isabs(conf_file):
-            conf_file = os.path.abspath(os.path.join(dirs['src'], conf_file))
+            conf_file = os.path.abspath(os.path.join(dirs['gecko_src'], conf_file))
 
         if os.path.exists(conf_file):
             self.info("gecko_config file: %s" % conf_file)
@@ -353,7 +353,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
         dirs = self.query_abs_dirs()
         hg = self.query_exe('hg', return_type='list')
         return self.get_output_from_command(
-            hg + ['parent', '--template', '{node|short}'], cwd=dirs['src']
+            hg + ['parent', '--template', '{node|short}'], cwd=dirs['gecko_src']
         )
 
     def get_hg_commit_time(self, repo_dir, rev):
@@ -399,7 +399,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
         env = self.query_env()
         for k, v in gecko_config.get('env', {}).items():
             v = v.format(workdir=dirs['abs_work_dir'],
-                         srcdir=os.path.abspath(dirs['src']))
+                         srcdir=os.path.abspath(dirs['gecko_src']))
             env[k] = v
         if self.config.get('variant'):
             v = str(self.config['variant'])
@@ -569,7 +569,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
 
                 # Now checkout gecko inside the build directory
                 self.checkout_gecko()
-                conf_dir = os.path.join(dirs['src'], os.path.dirname(self.query_gecko_config_path()))
+                conf_dir = os.path.join(dirs['gecko_src'], os.path.dirname(self.query_gecko_config_path()))
                 manifest_filename = os.path.join(conf_dir, 'sources.xml')
                 self.info("Using manifest at %s" % manifest_filename)
                 have_gecko = True
@@ -724,17 +724,17 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
 
         # Make sure the parent directory to gecko exists so that 'hg share ...
         # build/gecko' works
-        self.mkdir_p(os.path.dirname(dirs['src']))
+        self.mkdir_p(os.path.dirname(dirs['gecko_src']))
 
         repo = self.query_repo()
         if "checkout_revision" in self.config:
-            rev = self.vcs_checkout(repo=repo, dest=dirs['src'], revision=self.config["checkout_revision"])
+            rev = self.vcs_checkout(repo=repo, dest=dirs['gecko_src'], revision=self.config["checkout_revision"])
             # in this case, self.query_revision() will be returning the "revision" that triggered the job
             # we know that it is not a gecko revision that did so
             self.set_buildbot_property('revision', self.query_revision(), write_to_file=True)
         else:
             # a gecko revision triggered this job; self.query_revision() will return it
-            rev = self.vcs_checkout(repo=repo, dest=dirs['src'], revision=self.query_revision())
+            rev = self.vcs_checkout(repo=repo, dest=dirs['gecko_src'], revision=self.query_revision())
             self.set_buildbot_property('revision', rev, write_to_file=True)
         self.set_buildbot_property('gecko_revision', rev, write_to_file=True)
 
@@ -743,7 +743,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
         gecko_config = self.load_gecko_config()
         if 'tooltool_manifest' in gecko_config:
             # The manifest is relative to the gecko config
-            config_dir = os.path.join(dirs['src'], 'b2g', 'config',
+            config_dir = os.path.join(dirs['gecko_src'], 'b2g', 'config',
                                       self.config.get('b2g_config_dir', self.config['target']))
             manifest = os.path.abspath(os.path.join(config_dir, gecko_config['tooltool_manifest']))
             self.tooltool_fetch(manifest=manifest,
@@ -1073,7 +1073,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
             else:
                 pattern, target = item, None
 
-            pattern = pattern.format(objdir=self.objdir, workdir=dirs['work_dir'], srcdir=dirs['src'])
+            pattern = pattern.format(objdir=self.objdir, workdir=dirs['work_dir'], srcdir=dirs['gecko_src'])
             for f in glob.glob(pattern):
                 files.append((f, target))
 
@@ -1124,7 +1124,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
 
         upload_patterns = gecko_config.get('upload_files', [])
         for base_pattern in upload_patterns + public_upload_patterns:
-            pattern = base_pattern.format(objdir=self.objdir, workdir=dirs['work_dir'], srcdir=dirs['src'])
+            pattern = base_pattern.format(objdir=self.objdir, workdir=dirs['work_dir'], srcdir=dirs['gecko_src'])
             for f in glob.glob(pattern):
                 if base_pattern in upload_patterns:
                     files.append(f)
