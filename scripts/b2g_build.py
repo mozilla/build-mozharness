@@ -57,6 +57,38 @@ B2GMakefileErrorList.insert(0, {'substr': r'/bin/bash: java: command not found',
 class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
                TooltoolMixin, TransferMixin, BuildbotMixin, GaiaLocalesMixin,
                SigningMixin, MapperMixin, BalrogMixin):
+    all_actions=[
+        'clobber',
+        'checkout-sources',
+        # Deprecated
+        'checkout-gecko',
+        'download-gonk',
+        'unpack-gonk',
+        'checkout-gaia',
+        'checkout-gaia-l10n',
+        'checkout-gecko-l10n',
+        'checkout-compare-locales',
+        # End deprecated
+        'get-blobs',
+        'update-source-manifest',
+        'build',
+        'build-symbols',
+        'make-updates',
+        'build-update-testdata',
+        'prep-upload',
+        'upload',
+        'make-update-xml',
+        'upload-updates',
+        'make-socorro-json',
+        'upload-source-manifest',
+        'submit-to-balrog',
+    ]
+    default_actions=[
+        'checkout-sources',
+        'get-blobs',
+        'build',
+    ]
+
     config_options = [
         [["--repo"], {
             "dest": "repo",
@@ -147,45 +179,17 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
         }],
     ]
 
-    def __init__(self, require_config_file=False):
+    def __init__(self, require_config_file=False,
+                 all_actions=all_actions,
+                 default_actions=default_actions):
         self.gecko_config = None
         self.buildid = None
         self.dotconfig = None
         LocalesMixin.__init__(self)
         BaseScript.__init__(self,
                             config_options=self.config_options,
-                            all_actions=[
-                                'clobber',
-                                'checkout-sources',
-                                # Deprecated
-                                'checkout-gecko',
-                                'download-gonk',
-                                'unpack-gonk',
-                                'checkout-gaia',
-                                'checkout-gaia-l10n',
-                                'checkout-gecko-l10n',
-                                'checkout-compare-locales',
-                                # End deprecated
-                                'get-blobs',
-                                'update-source-manifest',
-                                'build',
-                                'build-symbols',
-                                'make-updates',
-                                'prep-upload',
-                                'upload',
                                 # XXX: Remove me after all devices/branches are switched to Balrog
-                                'make-update-xml',
                                 # XXX: Remove me after all devices/branches are switched to Balrog
-                                'upload-updates',
-                                'make-socorro-json',
-                                'upload-source-manifest',
-                                'submit-to-balrog',
-                            ],
-                            default_actions=[
-                                'checkout-sources',
-                                'get-blobs',
-                                'build',
-                            ],
                             require_config_file=require_config_file,
 
                             # Default configuration
