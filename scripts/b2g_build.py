@@ -923,20 +923,23 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
         self.write_to_file(sourcesfile, dom.toxml(), verbose=False)
         self.run_command(["diff", "-u", sourcesfile_orig, sourcesfile], success_codes=[1])
 
+    def generate_build_command(self, target=None):
+        cmd = ['./build.sh']
+        if target is not None:
+            # Workaround bug 984061
+            if target == 'package-tests':
+                cmd.append('-j1')
+            cmd.append(target)
+        return cmd;
+
     def build(self):
         dirs = self.query_abs_dirs()
         gecko_config = self.load_gecko_config()
         build_targets = gecko_config.get('build_targets', [])
         if not build_targets:
-            cmds = ['./build.sh']
+            cmds = [self.generate_build_command()]
         else:
-            cmds = []
-            for t in build_targets:
-                # Workaround bug 984061
-                if t == 'package-tests':
-                    cmds.append(['./build.sh', '-j1', t])
-                else:
-                    cmds.append(['./build.sh', t])
+            cmds = [self.generate_build_command(t) for t in build_targets]
         env = self.query_build_env()
         if self.config.get('gaia_languages_file'):
             env['LOCALE_BASEDIR'] = dirs['gaia_l10n_base_dir']
