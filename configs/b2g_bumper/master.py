@@ -60,20 +60,7 @@ config = {
             'ignore_projects': ['gecko'],
             'ignore_groups': ['darwin'],
         },
-        'leo': {
-            'ignore_projects': ['gecko'],
-            'ignore_groups': ['darwin'],
-        },
-        'mako': {
-            'ignore_projects': ['gecko'],
-            'ignore_groups': ['darwin'],
-            'manifest_file': 'nexus-4.xml',
-        },
         'nexus-4': {
-            'ignore_projects': ['gecko'],
-            'ignore_groups': ['darwin'],
-        },
-        'inari': {
             'ignore_projects': ['gecko'],
             'ignore_groups': ['darwin'],
         },
