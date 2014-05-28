@@ -16,7 +16,8 @@ config = {
     "python": PYTHON_DIR + "/bin/python2.7",
 
     "exes": {
-        'hgtool.py': 'tools/buildfarm/utils/hgtool.py',
+        'hgtool.py': '%(abs_tools_dir)s/buildfarm/utils/hgtool.py',
+        'gittool.py': '%(abs_tools_dir)s/buildfarm/utils/gittool.py',
         'tooltool.py': '/tools/tooltool.py',
     },
 

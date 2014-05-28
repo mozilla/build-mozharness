@@ -1055,7 +1055,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
         repos = [{
             'repo': self.config['tools_repo'],
             'vcs': "hgtool",
-            'dest': os.path.join(dirs['abs_work_dir'], "tools")
+            'dest': dirs['abs_tools_dir'],
         }]
         rev = self.vcs_checkout(**repos[0])
         self.set_buildbot_property("tools_revision", rev, write_to_file=True)
