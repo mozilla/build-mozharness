@@ -362,8 +362,7 @@ class BaseConfig(object):
     def set_config(self, config, overwrite=False):
         """This is probably doable some other way."""
         if self._config and not overwrite:
-            for key, value in config.iteritems():
-                self._config[key] = value
+            self._config.update(config)
         else:
             self._config = config
         return self._config
