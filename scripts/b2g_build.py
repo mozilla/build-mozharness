@@ -128,6 +128,11 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
             "action": "store_true",
             "help": "Set B2G_DEBUG=1 (debug build)",
         }],
+        [["--non-unified"], {
+            "dest": "nonunified_build",
+            "action": "store_true",
+            "help": "Set MOZ_NON_UNIFIED=1 (non-unified build)",
+        }],
         [["--repotool-repo"], {
             "dest": "repo_repo",
             "help": "where to pull repo tool source from",
@@ -413,6 +418,8 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
         env['B2G_UPDATER'] = '1'
         if self.config.get('debug_build'):
             env['B2G_DEBUG'] = '1'
+        if self.config.get('nonunified_build'):
+            env['MOZ_NON_UNIFIED'] = '1'
         return env
 
     def query_hgweb_url(self, repo, rev, filename=None):
