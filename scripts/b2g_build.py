@@ -109,10 +109,12 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
             "dest": "additional_source_tarballs",
             "help": "Additional source tarballs to extract",
         }],
+        # XXX: Remove me after all devices/branches are switched to Balrog
         [["--update-channel"], {
             "dest": "update_channel",
             "help": "b2g update channel",
         }],
+        # XXX: Remove me after all devices/branches are switched to Balrog
         [["--nightly-update-channel"], {
             "dest": "nightly_update_channel",
             "help": "b2g update channel for nightly builds",
@@ -125,6 +127,11 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
             "dest": "debug_build",
             "action": "store_true",
             "help": "Set B2G_DEBUG=1 (debug build)",
+        }],
+        [["--non-unified"], {
+            "dest": "nonunified_build",
+            "action": "store_true",
+            "help": "Set MOZ_NON_UNIFIED=1 (non-unified build)",
         }],
         [["--repotool-repo"], {
             "dest": "repo_repo",
@@ -166,7 +173,9 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
                                 'make-updates',
                                 'prep-upload',
                                 'upload',
+                                # XXX: Remove me after all devices/branches are switched to Balrog
                                 'make-update-xml',
+                                # XXX: Remove me after all devices/branches are switched to Balrog
                                 'upload-updates',
                                 'make-socorro-json',
                                 'upload-source-manifest',
@@ -200,6 +209,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
                                 'repo_repo': "https://git.mozilla.org/external/google/gerrit/git-repo.git",
                                 'repo_rev': 'stable',
                                 'repo_remote_mappings': {},
+                                # XXX: Remove me after all devices/branches are switched to Balrog
                                 'update_channel': 'default',
                                 'balrog_credentials_file': 'oauth.txt',
                             },
@@ -224,23 +234,6 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
 
         if 'target' not in self.config:
             self.fatal("Must specify --target!")
-
-        # Override target for things with weird names
-        if self.config['target'] == 'mako':
-            self.info("Using target nexus-4 instead of mako")
-            self.config['target'] = 'nexus-4'
-            if self.config.get('b2g_config_dir') is None:
-                self.config['b2g_config_dir'] = 'mako'
-        elif self.config['target'] == 'generic':
-            if self.config.get('b2g_config_dir') == 'emulator':
-                self.info("Using target emulator instead of generic")
-                self.config['target'] = 'emulator'
-            elif self.config.get('b2g_config_dir') == 'emulator-jb':
-                self.info("Using target emulator-jb instead of generic")
-                self.config['target'] = 'emulator-jb'
-            elif self.config.get('b2g_config_dir') == 'emulator-kk':
-                self.info("Using target emulator-kk instead of generic")
-                self.config['target'] = 'emulator-kk'
 
         if not (self.buildbot_config and 'properties' in self.buildbot_config) and 'repo' not in self.config:
             self.fatal("Must specify --repo")
@@ -338,6 +331,10 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
         return version
 
     def query_update_channel(self):
+        env = self.query_env()
+        if 'B2G_UPDATE_CHANNEL' in env:
+            return env['B2G_UPDATE_CHANNEL']
+        # XXX: Remove me after all devices/branches are switched to Balrog
         if self.query_is_nightly() and 'nightly_update_channel' in self.config:
             return self.config['nightly_update_channel']
         else:
@@ -409,6 +406,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
         if self.buildbot_config and 'buildid' in self.buildbot_config.get('properties', {}):
             env['MOZ_BUILD_DATE'] = self.buildbot_config['properties']['buildid']
 
+        # XXX: Remove me after all devices/branches are switched to Balrog
         if 'B2G_UPDATE_CHANNEL' not in env:
             env['B2G_UPDATE_CHANNEL'] = "{target}/{version}/{channel}".format(
                 target=self.config['target'],
@@ -420,6 +418,8 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
         env['B2G_UPDATER'] = '1'
         if self.config.get('debug_build'):
             env['B2G_DEBUG'] = '1'
+        if self.config.get('nonunified_build'):
+            env['MOZ_NON_UNIFIED'] = '1'
         return env
 
     def query_hgweb_url(self, repo, rev, filename=None):
@@ -1454,6 +1454,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
                 return
         self.info("Upload successful")
 
+    # XXX: Remove me after all devices/branches are switched to Balrog
     def make_update_xml(self):
         if not self.query_is_nightly():
             self.info("Not a nightly build. Skipping...")
@@ -1508,6 +1509,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
             os.path.join(upload_dir, dated_sources_xml)
         )
 
+    # XXX: Remove me after all devices/branches are switched to Balrog
     def upload_updates(self):
         if not self.query_is_nightly():
             self.info("Not a nightly build. Skipping...")
