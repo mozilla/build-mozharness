@@ -386,6 +386,8 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
             return True
         if self.config['target'] in self.config['upload']['default'].get('upload_dep_target_exclusions', []):
             return False
+        if self.config.get('nonunified_build'):
+            return False
         return True
 
     def query_build_env(self):
