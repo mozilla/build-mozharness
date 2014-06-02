@@ -1478,7 +1478,10 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
         dated_application_ini = "application_%s.ini" % suffix
         dated_sources_xml = "b2g_update_source_%s.xml" % suffix
         mar_url = self.config['update']['base_url'] + dated_mar
-        update_channel = self.query_update_channel()
+        if self.query_is_nightly() and 'nightly_update_channel' in self.config:
+            update_channel = self.config['nightly_update_channel']
+        else:
+            update_channel = self.config['update_channel']
         publish_channel = self.config.get('publish_channel', update_channel)
         mar_url = mar_url.format(
             update_channel=update_channel,
@@ -1525,7 +1528,10 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
         upload_dir = dirs['abs_upload_dir'] + '-updates'
         # upload dated files first to be sure that update.xml doesn't
         # point to not existing files
-        update_channel = self.query_update_channel()
+        if self.query_is_nightly() and 'nightly_update_channel' in self.config:
+            update_channel = self.config['nightly_update_channel']
+        else:
+            update_channel = self.config['update_channel']
         publish_channel = self.config.get('publish_channel', update_channel)
         if publish_channel is None:
             publish_channel = update_channel
