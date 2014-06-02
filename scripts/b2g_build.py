@@ -220,9 +220,11 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
         if self.config.get("update_type", "ota") == "fota":
             self.make_updates_cmd = ['./build.sh', 'gecko-update-fota']
             self.extra_update_attrs = 'isOsUpdate="true"'
+            self.isOSUpdate = True
         else:
             self.make_updates_cmd = ['./build.sh', 'gecko-update-full']
             self.extra_update_attrs = None
+            self.isOSUpdate = False
         self.package_urls = {}
 
     def _pre_config_lock(self, rw_config):
@@ -1604,6 +1606,7 @@ class B2GBuild(LocalesMixin, MockMixin, PurgeMixin, BaseScript, VCSMixin,
         self.set_buildbot_property("completeMarSize", self.query_filesize(marfile))
         self.set_buildbot_property("completeMarHash", self.query_sha512sum(marfile))
         self.set_buildbot_property("completeMarUrl", mar_url)
+        self.set_buildbot_property("isOSUpdate", self.isOSUpdate)
 
         self.submit_balrog_updates()
 
