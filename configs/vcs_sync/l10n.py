@@ -5,7 +5,8 @@ hostname = socket.gethostname()
 
 GECKO_BRANCHES = {
     'v1.4': 'mozilla-beta',
-    'v2.0': 'mozilla-central',
+    'v2.0': 'mozilla-aurora',
+    'v2.1': 'mozilla-central',
 }
 
 GECKO_CONFIG_TEMPLATE = {
@@ -82,6 +83,21 @@ config = {
     "l10n_config": {
         "gecko_config": GECKO_CONFIG,
         "gaia_config": {
+            'v2_0': {
+                'locales_file_url': 'https://raw.github.com/mozilla-b2g/gaia/v2.0/locales/languages_all.json',
+                'hg_url': 'https://hg.mozilla.org/gaia-l10n/%(locale)s',
+                # MERGE DAY switch to the below hg_url on 2014-07-21
+                # 'hg_url': 'https://hg.mozilla.org/releases/gaia-l10n/v2_0/%(locale)s',
+                'git_branch_name': 'v2.0',
+                'targets': [{
+                    "target_dest": "gitmo-gaia-l10n",
+                }],
+                'tag_config': {
+                    'tag_regexes': [
+                        '^B2G_',
+                    ],
+                },
+            },
             'v1_4': {
                 'locales_file_url': 'https://raw.github.com/mozilla-b2g/gaia/v1.4/locales/languages_all.json',
                 'hg_url': 'https://hg.mozilla.org/releases/gaia-l10n/v1_4/%(locale)s',
