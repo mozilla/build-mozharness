@@ -494,6 +494,7 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
             "We can't run more tests that the number of emulators we start"
         # We kill compiz because it sometimes prevents us from starting the emulators
         self._kill_processes("compiz")
+        self._kill_processes("xpcshell")
 
         # We add a symlink for libGL.so because the emulator dlopen()s it by that name
         # even though the installed library on most systems without dev packages is

@@ -6,7 +6,7 @@ ABS_WORK_DIR = os.path.join(os.getcwd(), "build")
 BINARY_PATH = os.path.join(ABS_WORK_DIR, "firefox", "firefox.exe")
 INSTALLER_PATH = os.path.join(ABS_WORK_DIR, "installer.zip")
 XPCSHELL_NAME = 'xpcshell.exe'
-EXE_SUFFIX = 'exe'
+EXE_SUFFIX = '.exe'
 DISABLE_SCREEN_SAVER = False
 ADJUST_MOUSE_AND_SCREEN = True
 #####
