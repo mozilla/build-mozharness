@@ -12,6 +12,8 @@ config = {
     "exes": {
         'python': 'c:/mozilla-build/python27/python',
         'virtualenv': ['c:/mozilla-build/python27/python', 'c:/mozilla-build/buildbotve/virtualenv.py'],
+        'mozinstall': ['%s/build/venv/scripts/python' % os.getcwd(),
+                       '%s/build/venv/scripts/mozinstall-script.py' % os.getcwd()],
     },
 
     "find_links": [
