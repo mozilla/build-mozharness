@@ -24,8 +24,23 @@ from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_WORST_LEVEL_TUPLE
 
 
 class WebPlatformTest(TestingMixin, MercurialScript, BlobUploadMixin):
-    config_options = copy.deepcopy(testing_config_options) + \
-                     copy.deepcopy(blobupload_config_options)
+    config_options = [
+        [['--test-type'], {
+            "action": "extend",
+            "dest": "test_type",
+            "help": "Specify the test types to run."}
+         ],
+        [["--total-chunks"], {
+            "action": "store",
+            "dest": "total_chunks",
+            "help": "Number of total chunks"}
+         ],
+        [["--this-chunk"], {
+            "action": "store",
+            "dest": "this_chunk",
+            "help": "Number of this chunk"}]
+    ] + copy.deepcopy(testing_config_options) + \
+        copy.deepcopy(blobupload_config_options)
 
     def __init__(self, require_config_file=True):
         super(WebPlatformTest, self).__init__(
@@ -129,6 +144,14 @@ class WebPlatformTest(TestingMixin, MercurialScript, BlobUploadMixin):
                                                    "wpt_structured_full.log"),
                      "--binary=%s" % self.binary_path]
 
+        for test_type in c.get("test_type", []):
+            base_cmd.append("--test-type=%s" % test_type)
+
+        for opt in ["total_chunks", "this_chunk"]:
+            val = c.get(opt)
+            if val:
+                base_cmd.append("--%s=%s" % (opt.replace("_", "-"), val))
+
         options = list(c.get("options", [])) + list(self.tree_config["options"])
 
         str_format_values = {
@@ -137,9 +160,9 @@ class WebPlatformTest(TestingMixin, MercurialScript, BlobUploadMixin):
             'abs_app_dir': abs_app_dir
             }
 
-        options = [item % str_format_values for item in options]
+        opt_cmd = [item % str_format_values for item in options]
 
-        return base_cmd + options
+        return base_cmd + opt_cmd
 
     def run_tests(self):
         dirs = self.query_abs_dirs()
