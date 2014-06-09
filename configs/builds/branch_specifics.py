@@ -60,9 +60,6 @@ config = {
         'update_channel': 'nightly-esr24',
         'branch_uses_per_checkin_strategy': True,
     },
-    'mozilla-b2g26_v1_2': {
-        'repo_path': 'releases/mozilla-b2g26_v1_2',
-    },
     'mozilla-b2g28_v1_3': {
         'repo_path': 'releases/mozilla-b2g28_v1_3',
         'update_channel': 'nightly-b2g28',
@@ -73,70 +70,6 @@ config = {
     },
     'mozilla-b2g28_v1_3t': {
         'repo_path': 'releases/mozilla-b2g28_v1_3t',
-    },
-    'mozilla-b2g18': {
-        'repo_path': 'releases/mozilla-aurora',
-        'platform_overrides': {
-            # removes pulseaudio and gstreamer packages
-            'linux64': {
-                'mock_packages': [
-                    'autoconf213', 'python', 'zip', 'mozilla-python27-mercurial',
-                    'git', 'ccache', 'perl-Test-Simple', 'perl-Config-General',
-                    'yasm', 'wget',
-                    'mpfr',  # required for system compiler
-                    'xorg-x11-font*',  # fonts required for PGO
-                    'imake',  # required for makedepend!?!
-                    ### <-- from releng repo
-                    'gcc45_0moz3', 'gcc454_0moz1', 'gcc472_0moz1', 'gcc473_0moz1',
-                    'yasm', 'ccache',
-                    ###
-                    'valgrind', 'dbus-x11',
-                    ######## 64 bit specific ###########
-                    'glibc-static', 'libstdc++-static',
-                    'gtk2-devel', 'libnotify-devel',
-                    'alsa-lib-devel', 'libcurl-devel', 'wireless-tools-devel',
-                    'libX11-devel', 'libXt-devel', 'mesa-libGL-devel', 'gnome-vfs2-devel',
-                    'GConf2-devel',
-                    ### from releng repo
-                    'gcc45_0moz3', 'gcc454_0moz1', 'gcc472_0moz1', 'gcc473_0moz1',
-                    'yasm', 'ccache',
-                    ###
-                    'freetype-2.3.11-6.el6_1.8.x86_64',
-                    'freetype-devel-2.3.11-6.el6_1.8.x86_64'
-                ]
-            },
-            # removes pulseaudio and gstreamer packages
-            'linux64-debug': {
-                'mock_packages': [
-                    'autoconf213', 'python', 'zip', 'mozilla-python27-mercurial',
-                    'git', 'ccache', 'perl-Test-Simple', 'perl-Config-General',
-                    'yasm', 'wget',
-                    'mpfr',  # required for system compiler
-                    'xorg-x11-font*',  # fonts required for PGO
-                    'imake',  # required for makedepend!?!
-                    ### <-- from releng repo
-                    'gcc45_0moz3', 'gcc454_0moz1', 'gcc472_0moz1', 'gcc473_0moz1',
-                    'yasm', 'ccache',
-                    ###
-                    'valgrind', 'dbus-x11',
-                    ######## 64 bit specific ###########
-                    'glibc-static', 'libstdc++-static',
-                    'gtk2-devel', 'libnotify-devel',
-                    'alsa-lib-devel', 'libcurl-devel', 'wireless-tools-devel',
-                    'libX11-devel', 'libXt-devel', 'mesa-libGL-devel', 'gnome-vfs2-devel',
-                    'GConf2-devel',
-                    ### from releng repo
-                    'gcc45_0moz3', 'gcc454_0moz1', 'gcc472_0moz1', 'gcc473_0moz1',
-                    'yasm', 'ccache',
-                    ###
-                    'freetype-2.3.11-6.el6_1.8.x86_64',
-                    'freetype-devel-2.3.11-6.el6_1.8.x86_64'
-                ]
-            },
-        },
-    },
-    'mozilla-b2g18_v1_1_0_hd': {
-        'repo_path': 'releases/mozilla-b2g18',
     },
     'try': {
         'repo_path': 'try',
