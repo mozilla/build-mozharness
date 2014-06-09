@@ -8,7 +8,7 @@ config = {
     "test_manifest": "unit-tests.ini",
 
     "virtualenv_python_dll": 'c:/mozilla-build/python27/python27.dll',
-    "virtualenv_path": 'c:/talos-slave/test/build/venv',
+    "virtualenv_path": 'venv',
     "exes": {
         'python': 'c:/mozilla-build/python27/python',
         'virtualenv': ['c:/mozilla-build/python27/python', 'c:/mozilla-build/buildbotve/virtualenv.py'],

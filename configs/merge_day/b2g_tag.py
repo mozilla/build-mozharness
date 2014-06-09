@@ -1,18 +1,4 @@
 LIVE_B2G_BRANCHES = {
-    "mozilla-b2g18": {
-        "gaia_branch": "v1-train",
-        "tag_name": "B2G_1_1_%(DATE)s_MERGEDAY",
-        "use_gaia_json": False,
-    },
-    "mozilla-b2g18_v1_1_0_hd": {
-        "gaia_branch": "v1.1.0hd",
-        "tag_name": "B2G_1_1_0_hd_%(DATE)s_MERGEDAY",
-        "use_gaia_json": False,
-    },
-    "mozilla-b2g26_v1_2": {
-        "gaia_branch": "v1.2",
-        "tag_name": "B2G_1_2_%(DATE)s_MERGEDAY",
-    },
     "mozilla-b2g28_v1_3": {
         "gaia_branch": "v1.3",
         "tag_name": "B2G_1_3_%(DATE)s_MERGEDAY",
