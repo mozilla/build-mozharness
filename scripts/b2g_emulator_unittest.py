@@ -98,6 +98,12 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, VCSMixin, BaseScript, BlobUpl
          "dest": "this_chunk",
          "help": "Number of this chunk",
          }
+    ], [
+        ["--test-path"],
+        {"action": "store",
+         "dest": "test_path",
+         "help": "Path of tests to run",
+         }
     ]] + copy.deepcopy(testing_config_options) \
        + copy.deepcopy(blobupload_config_options)
 
@@ -266,6 +272,7 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, VCSMixin, BaseScript, BlobUpl
             'busybox': self.busybox_path,
             'total_chunks': self.config.get('total_chunks'),
             'this_chunk': self.config.get('this_chunk'),
+            'test_path': self.config.get('test_path'),
             'certificate_path': dirs['abs_certs_dir'],
         }
 
