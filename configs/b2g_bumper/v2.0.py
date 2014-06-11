@@ -11,7 +11,7 @@ config = {
     'gecko_local_dir': 'mozilla-aurora',
 
     'manifests_repo': 'https://git.mozilla.org/b2g/b2g-manifest.git',
-    'manifests_revision': 'origin/master',
+    'manifests_revision': 'origin/v2.0',
 
     'hg_user': 'B2G Bumper Bot <release+b2gbumper@mozilla.com>',
     "ssh_key": "~/.ssh/ffxbld_dsa",
