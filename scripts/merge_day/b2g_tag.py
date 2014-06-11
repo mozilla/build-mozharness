@@ -193,13 +193,13 @@ class B2GTag(TransferMixin, MercurialScript):
         short_tag_name = self.query_short_tag_name(b2g_branch_config)
         push_url = self.query_repo_push_url(repo_name)
         cmd = hg + ["tag", tag_name, "-m",
-                    "tagging %s for mergeday. r=a=mergeday DONTBUILD" % short_tag_name,
+                    "tagging %s for mergeday. r=a=mergeday CLOSED TREE DONTBUILD" % short_tag_name,
                     ]
         if self.run_command(cmd, cwd=hg_dir, error_list=HgErrorList):
             raise VCSException("Can't tag %s with %s" % (repo_name, tag_name))
         # Debugging! Echo only for now.
         # cmd = hg + ["push", push_url]
-        cmd = ["echo"] + hg + ["push", push_url]
+        cmd = hg + ["push", push_url]
         if self.run_command(cmd, cwd=hg_dir, error_list=HgErrorList):
             self.run_command(hg + ["--config", "extensions.mq=",
                                    "strip", "--no-backup", "outgoing()"],
@@ -237,7 +237,7 @@ class B2GTag(TransferMixin, MercurialScript):
             raise VCSException("Can't tag gaia for %s!" % hg_repo_name)
         if self.run_command(
             # Debugging! Echo only for now.
-            ["echo"] + git + ["push", "--tags"],
+            git + ["push", "--tags"],
             # comment out for testing
             # git + ["push", "--tags"],
             cwd=dirs["abs_gaia_dir"],
