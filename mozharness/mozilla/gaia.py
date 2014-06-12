@@ -103,13 +103,9 @@ class GaiaMixin(object):
                              fatal_exit_code=3)
 
             # verify
-            cmd = [git_cmd]
-            if revision:
-                cmd += ['log', '-1']
-            else:
-                cmd += ['branch']
-            self.run_command(cmd, cwd=dest, halt_on_failure=True,
-                             fatal_exit_code=3)
+            for cmd in ([git_cmd, 'log', '-1'], [git_cmd, 'branch']):
+                self.run_command(cmd, cwd=dest, halt_on_failure=True,
+                                 fatal_exit_code=3)
 
         else:
             # purge the repo if it already exists
