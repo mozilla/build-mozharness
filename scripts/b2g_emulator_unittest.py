@@ -393,8 +393,13 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, VCSMixin, BaseScript, BlobUpl
         logcat = os.path.join(dirs['abs_work_dir'], 'emulator-5554.log')
         if os.path.isfile(logcat):
             if parser.fail_count != 0 or parser.crashed or parser.leaked:
+                # On failure, dump logcat, check if the emulator is still
+                # running, and if it is still accessible via adb.
                 self.info('dumping logcat')
                 self.run_command(['cat', logcat], error_list=LogcatErrorList)
+
+                self.run_command(['ps', '-C', 'emulator'])
+                self.run_command([self.adb_path, 'devices'])
 
             # upload logcat to blobber
             self.copyfile(logcat, os.path.join(env['MOZ_UPLOAD_DIR'],
