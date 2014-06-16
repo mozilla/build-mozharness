@@ -362,8 +362,7 @@ class BaseConfig(object):
     def set_config(self, config, overwrite=False):
         """This is probably doable some other way."""
         if self._config and not overwrite:
-            for key, value in config.iteritems():
-                self._config[key] = value
+            self._config.update(config)
         else:
             self._config = config
         return self._config
@@ -394,9 +393,9 @@ class BaseConfig(object):
             raise SystemExit(-1)
 
     def list_actions(self):
-        print "Actions available: " + ', '.join(self.all_actions)
-        if self.default_actions != self.all_actions:
-            print "Default actions: " + ', '.join(self.default_actions)
+        print "Actions available:"
+        for a in self.all_actions:
+            print "    " + ("*" if a in self.default_actions else " "), a
         raise SystemExit(0)
 
     def get_cfgs_from_files(self, all_config_files, parser):

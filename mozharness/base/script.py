@@ -58,6 +58,7 @@ class ScriptMixin(object):
     """
 
     env = None
+    script_obj = None
 
     # Simple filesystem commands {{{2
     def mkdir_p(self, path, error_level=ERROR):
@@ -585,10 +586,10 @@ class ScriptMixin(object):
             default = exe_name
         exe = self.config.get(exe_dict, {}).get(exe_name, default)
         repl_dict = {}
-        if hasattr(self, 'query_abs_dirs'):
+        if hasattr(self.script_obj, 'query_abs_dirs'):
             # allow for 'make': '%(abs_work_dir)s/...' etc.
-            dirs = self.query_abs_dirs()
-            repl_dict['abs_work_dir'] = dirs['abs_work_dir']
+            dirs = self.script_obj.query_abs_dirs()
+            repl_dict.update(dirs)
         if isinstance(exe, list) or isinstance(exe, tuple):
             exe = [x % repl_dict for x in exe]
         elif isinstance(exe, str):
@@ -1001,6 +1002,7 @@ class BaseScript(ScriptMixin, LogMixin, object):
         self.all_actions = tuple(rw_config.all_actions)
         self.env = None
         self.new_log_obj(default_log_level=default_log_level)
+        self.script_obj = self
 
         # Set self.config to read-only.
         #
