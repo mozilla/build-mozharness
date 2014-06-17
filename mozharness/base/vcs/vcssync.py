@@ -46,7 +46,10 @@ class VCSSyncScript(VCSScript):
             )
         if fatal:
             subject = "[vcs2vcs] Failed conversion for %s" % job_name
-            text = message + '\n\n'
+            text = ''
+            if len(message) > 10240:
+                text += '*** Message below has been truncated: it was %s characters, and has been reduced to 10240 characters:\n\n' % len(message)
+            text += message[0:10240] + '\n\n' # limit message to 10KB in size (large emails fail to send)
         if not self.successful_repos:
             subject = "[vcs2vcs] Successful no-op conversion for %s" % job_name
         if error_contents and not fatal:
@@ -64,7 +67,9 @@ class VCSSyncScript(VCSScript):
         if not fatal and error_contents and not self.summary_list:
             text += 'Summary is empty; the below errors have probably been auto-corrected.\n\n'
         if error_contents:
-            text += '\n%s\n\n' % error_contents
+            if len(error_contents) > 10240:
+                text += '\n*** Message below has been truncated: it was %s characters, and has been reduced to 10240 characters:\n' % len(error_contents)
+            text += '\n%s\n\n' % error_contents[0:10240] # limit message to 10KB in size (large emails fail to send)
         if not text:
             subject += " <EOM>"
         for notify_config in c.get('notify_config', []):

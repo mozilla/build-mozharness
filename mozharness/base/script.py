@@ -732,7 +732,8 @@ class ScriptMixin(object):
                                 silent=False, log_level=INFO,
                                 tmpfile_base_path='tmpfile',
                                 return_type='output', save_tmpfiles=False,
-                                throw_exception=False, fatal_exit_code=2):
+                                throw_exception=False, fatal_exit_code=2,
+                                ignore_errors=False):
         """Similar to run_command, but where run_command is an
         os.system(command) analog, get_output_from_command is a `command`
         analog.
@@ -745,6 +746,10 @@ class ScriptMixin(object):
         every N seconds?
         TODO: optionally only keep the first or last (N) line(s) of output?
         TODO: optionally only return the tmp_stdout_filename?
+
+        ignore_errors=True is for the case where a command might produce standard
+        error output, but you don't particularly care; setting to True will
+        cause standard error to be logged at DEBUG rather than ERROR
         """
         if cwd:
             if not os.path.isdir(cwd):
@@ -810,16 +815,17 @@ class ScriptMixin(object):
                     self.log(' %s' % line, level=log_level)
                 output = '\n'.join(output_lines)
         if os.path.exists(tmp_stderr_filename) and os.path.getsize(tmp_stderr_filename):
-            return_level = ERROR
-            self.error("Errors received:")
+            if not ignore_errors:
+                return_level = ERROR
+            self.log("Errors received:", level=return_level)
             errors = self.read_from_file(tmp_stderr_filename,
                                          verbose=False)
             for line in errors.rstrip().splitlines():
                 if not line or line.isspace():
                     continue
                 line = line.decode("utf-8")
-                self.error(' %s' % line)
-        elif p.returncode:
+                self.log(' %s' % line, level=return_level)
+        elif p.returncode and not ignore_errors:
             return_level = ERROR
         # Clean up.
         if not save_tmpfiles:

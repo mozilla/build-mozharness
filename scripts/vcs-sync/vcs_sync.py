@@ -73,6 +73,8 @@ class HgGitScript(VirtualenvMixin, TooltoolMixin, TransferMixin, VCSSyncScript):
                 'create-virtualenv',
                 'update-stage-mirror',
                 'update-work-mirror',
+                'create-git-notes',
+                'publish-to-mapper',
                 'push',
                 'combine-mapfiles',
                 'upload',
@@ -474,6 +476,8 @@ intree=1
                 # branches from multiple hg repos, and the regexes may match
                 # too many things.
                 refs_list = []
+                if repo_config.get('generate_git_notes', False):
+                    refs_list.append('+refs/notes/commits:refs/notes/commits')
                 branch_map = self.query_branches(
                     target_config.get('branch_config', repo_config.get('branch_config', {})),
                     source_dir,
@@ -736,6 +740,30 @@ intree=1
         for repo_config in self.query_all_repos():
             self._update_stage_repo(repo_config)
 
+    def pull_out_new_sha_lookups(self, old_file, new_file):
+        """ This method will return an iterator which iterates through lines in file
+            new_file that do not exist in old_file. If old_file can't be read, all
+            lines in new_file are returned. It does not cause any problems if lines
+            exist in old_file that do not exist in new_file. Results are sorted by
+            the second field (text after first space in line).
+
+            This is somewhat equivalent to:
+               ( [ ! -f "${old_file}" ] && cat "${new_file}" || diff "${old_file}" "${new_file}" | sed -n 's/> //p' ) | sort -k2"""
+        with self.opened(old_file) as (old, err):
+            if err:
+                self.info('Map file %s not found - probably first time this has run.' % old_file)
+                old_set = frozenset()
+            else:
+                old_set = frozenset(old)
+        with self.opened(new_file, 'rt') as (new, err):
+            if err:
+                self.error('Could not read contents of map file %s:\n%s' % (new_file, err.message))
+                new_set = frozenset()
+            else:
+                new_set = frozenset(new)
+        for line in sorted(new_set.difference(old_set), key=lambda line: line.partition(' ')[2]):
+            yield line
+
     def update_work_mirror(self):
         """ Pull the latest changes into the work mirror, update the repo_map
             json, and run |hg gexport| to convert those latest changes into
@@ -835,6 +863,119 @@ intree=1
                 repo_map['repos'][repo_name]['branches'][branch]['git_revision'] = git_revision
         self._write_repo_update_json(repo_map)
 
+
+    def create_git_notes(self):
+        git = self.query_exe("git", return_type="list")
+        for repo_config in self.query_all_repos():
+            repo = repo_config['repo']
+            if repo_config.get('generate_git_notes', False):
+                dest = self.query_abs_conversion_dir(repo_config)
+                # 'git-mapfile' is created by hggit plugin, containing all the mappings
+                complete_mapfile = os.path.join(dest, '.hg', 'git-mapfile')
+                # 'added-to-git-notes' is the set of mappings known to be recorded in the git notes
+                # of the project (typically 'git-mapfile' from previous run)
+                added_to_git_notes = os.path.join(dest, '.hg', 'added-to-git-notes')
+                # 'delta-git-notes' is the set of new mappings found on this iteration, that
+                # now need to be added to the git notes of the project (the diff between the
+                # previous two files described)
+                delta_git_notes = os.path.join(dest, '.hg', 'delta-git-notes')
+                git_dir = os.path.join(dest, '.git')
+                self.rmtree(delta_git_notes)
+                git_notes_adding_successful = True
+                with self.opened(delta_git_notes, open_mode='w') as (delta_out, err):
+                    if err:
+                        git_notes_adding_successful = False
+                        self.warn("Could not write list of unprocessed git note mappings to file %s - not critical" % delta_git_notes)
+                    else:
+                        for sha_lookup in self.pull_out_new_sha_lookups(added_to_git_notes, complete_mapfile):
+                            print >>delta_out, sha_lookup,
+                            (git_sha, hg_sha) = sha_lookup.split()
+                            # only add git note if not already there - note
+                            # devs may have added their own notes, so don't
+                            # replace any existing notes, just add to them
+                            output = self.get_output_from_command(
+                                git + ['notes', 'show', git_sha],
+                                cwd=git_dir,
+                                ignore_errors=True
+                            )
+                            git_note_text='Upstream source: %s/rev/%s' % (repo, hg_sha)
+                            git_notes_add_return_code = 1
+                            if not output or output.find(git_note_text) < 0:
+                                git_notes_add_return_code = self.run_command(
+                                    git + ['notes', 'append', '-m', git_note_text, git_sha],
+                                    cwd=git_dir
+                                )
+                            # if note was successfully added, or it was already there, we can
+                            # mark it as added, by putting it in the delta file...
+                            if git_notes_add_return_code == 0 or output.find(git_note_text) >= 0:
+                                print >>delta_out, sha_lookup,
+                            else:
+                                self.error("Was not able to append required git note for git commit %s ('%s')" % (git_sha, git_note_text))
+                                git_notes_adding_successful = False
+                if git_notes_adding_successful:
+                    self.copyfile(complete_mapfile, added_to_git_notes)
+            else:
+                self.info("Not creating git notes for repo %s (generate_git_notes not set to True)" % repo)
+
+    def publish_to_mapper(self):
+        """ This method will attempt to create git notes for any new git<->hg mappings
+            found in the generated_mapfile file and also push new mappings to mapper service."""
+        for repo_config in self.query_all_repos():
+            dest = self.query_abs_conversion_dir(repo_config)
+            # 'git-mapfile' is created by hggit plugin, containing all the mappings
+            complete_mapfile = os.path.join(dest, '.hg', 'git-mapfile')
+            # 'published-to-mapper' is all the mappings that are known to be published
+            # to mapper, for this project (typically the 'git-mapfile' from the previous
+            # run)
+            published_to_mapper = os.path.join(dest, '.hg', 'published-to-mapper')
+            # 'delta-for-mapper' is the set of mappings that need to be published to
+            # mapper on this iteration, i.e. the diff between the previous two files
+            # described
+            delta_for_mapper = os.path.join(dest, '.hg', 'delta-for-mapper')
+            self.rmtree(delta_for_mapper)
+            # we only replace published_to_mapper if we successfully updated
+            # pushed to mapper
+            mapper_config = repo_config.get('mapper', {})
+            if mapper_config:
+                site_packages_path = self.query_python_site_packages_path()
+                if site_packages_path not in sys.path:
+                    sys.path.append(site_packages_path)
+                try:
+                    import requests
+                except ImportError as e:
+                    self.error("Can't import requests: %s\nDid you create-virtualenv?" % str(e))
+                mapper_url = mapper_config['url']
+                mapper_project = mapper_config['project']
+                insert_url = "%s/%s/insert/ignoredups" % (mapper_url, mapper_project)
+                headers = {
+                    'Content-Type': 'text/plain',
+                    'Authentication': 'Bearer %s' % os.environ["RELENGAPI_INSERT_HGGIT_MAPPINGS_AUTH_TOKEN"]
+                }
+                all_new_mappings = []
+                all_new_mappings.extend(self.pull_out_new_sha_lookups(published_to_mapper, complete_mapfile))
+                self.write_to_file(delta_for_mapper, "".join(all_new_mappings))
+                # due to timeouts on load balancer, we only push 200 lines at a time
+                # this means that we should get http response back within 30 seconds
+                # including the time it takes to insert the mappings in the database
+                publish_successful = True
+                for i in range(0, len(all_new_mappings), 200):
+                    r = requests.post(insert_url, data="".join(all_new_mappings[i:i+200]), headers=headers)
+                    if (r.status_code != 200):
+                        self.error("Could not publish mapfile ('%s') line range [%s, %s] to mapper (%s) - received http %s code" % (delta_for_mapper, i, i+200, insert_url, r.status_code))
+                        publish_successful = False
+                        # we won't break out, since we may be able to publish other mappings
+                        # and duplicates are allowed, so we will push the whole lot again next
+                        # time anyway
+                    else:
+                        self.info("Published mapfile ('%s') line range [%s, %s] to mapper (%s)" % (delta_for_mapper, i, i+200, insert_url))
+                if publish_successful:
+                    # if we get this far, we know we could successfully post to mapper, so now
+                    # we can copy the mapfile over "previously generated" version
+                    # so that we don't push to mapper for these commits again
+                    self.copyfile(complete_mapfile, published_to_mapper)
+            else:
+                self.copyfile(complete_mapfile, published_to_mapper)
+
     def combine_mapfiles(self):
         """ This method is for any job (l10n, project-branches) that needs to combine
             mapfiles.
@@ -877,6 +1018,7 @@ intree=1
         for repo_config in self.query_all_repos():
             if self.query_failure(repo_config['repo_name']):
                 self.info("Skipping %s." % repo_config['repo_name'])
+                # comment out continue below to force push
                 continue
             timestamp = int(time.time())
             datetime = time.strftime('%Y-%m-%d %H:%M %Z')
