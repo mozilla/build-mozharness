@@ -3,20 +3,20 @@ import socket
 hostname = socket.gethostname()
 
 build_repos = (
-    'autoland',
-    'buildapi',
-    'buildbot-configs',
-    'buildbotcustom',
-    'cloud-tools',
-    'mozharness',
-    'opsi-package-sources',
-    'partner-repacks',
-    'preproduction',
-    'puppet',
-    'puppet-manifests',
-    'rpm-sources',
-    'talos',
-    'tools'
+     'autoland',
+     'buildapi',
+     'buildbot-configs',
+     'buildbotcustom',
+     'cloud-tools',
+     'mozharness',
+     'opsi-package-sources',
+     'partner-repacks',
+     'preproduction',
+     'puppet',
+     'puppet-manifests',
+     'rpm-sources',
+     'talos',
+     'tools',
 )
 
 conversion_repos = []
@@ -33,7 +33,7 @@ for repo in build_repos:
         }],
         "vcs": "hg",
         "mapper": {
-            "url": "https://api.pub.build.mozilla.org/mapper",
+            "url": "https://api-pub-build.allizom.org/mapper",
             "project": "build-%s" % repo,
         },
         "branch_config": {
@@ -49,11 +49,11 @@ for repo in build_repos:
                 "^.*$"
             ]
         },
-        "generate_git_notes": True, # False by default
+        "generate_git_notes": True # False by default
     })
     remote_targets["build-%s-github" % repo] = {
-        "repo": "git@github.com:mozilla/build-%s.git" % repo,
-        "ssh_key": "~/.ssh/releng-github-id_rsa",
+        "repo": "git@github.com:petermoore/build-%s.git" % repo,
+        "ssh_key": "~/.ssh/github_mozilla_rsa",
         "vcs": "git",
     }
 
@@ -67,6 +67,7 @@ config = {
     "conversion_repos": conversion_repos,
     "remote_targets": remote_targets,
     "virtualenv_modules": [
+        "bottle==0.11.6",
         "dulwich==0.9.0",
         "ordereddict==1.1",
         "hg-git==0.4.0-moz2",
@@ -84,7 +85,7 @@ config = {
 
     "default_notify_from": "vcs2vcs@%s" % hostname,
     "notify_config": [{
-        "to": "release+vcs2vcs@mozilla.com",
+        "to": "pmoore@mozilla.com",
         "failure_only": False,
         "skip_empty_messages": True,
     }],
