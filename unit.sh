@@ -64,7 +64,7 @@ if [ $OS_TYPE != 'windows' ] ; then
     coverage run -a --branch $COVERAGE_ARGS $filename
   done
   for filename in $SCRIPTS_PY_FILES ; do
-    coverage run -a --branch $COVERAGE_ARGS $filename --list-actions | grep -v "Actions available" | grep -v "Default actions"
+    coverage run -a --branch $COVERAGE_ARGS $filename --list-actions > /dev/null
   done
   echo "### Running scripts/configtest.py --log-level warning"
   coverage run -a --branch $COVERAGE_ARGS scripts/configtest.py --log-level warning

@@ -119,8 +119,10 @@ def get_project_remote_url(manifest, project):
     else:
         default = get_default(manifest)
         remote = get_remote(manifest, default.getAttribute('remote'))
-    return "%s/%s" % (
-        remote.getAttribute('fetch'), project.getAttribute('name'))
+    fetch = remote.getAttribute('fetch')
+    if not fetch.endswith('/'):
+        fetch += '/'
+    return "%s%s" % (fetch, project.getAttribute('name'))
 
 
 def get_project_revision(manifest, project):
