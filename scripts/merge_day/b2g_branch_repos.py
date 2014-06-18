@@ -387,7 +387,11 @@ e.g. --branch-order v2.0,master"""
         new_branch = self.config['branch_name']
         # b2g-manifest is special
         if os.path.exists(dirs['abs_manifest_dir']):
-            for cmd in (git + ["clean", "-fdx"], git + ["checkout", self.config["manifest_repo_revision"]]):
+            for cmd in (
+                git + ["reset", "--hard"],
+                git + ["clean", "-fdx"],
+                git + ["checkout", self.config["manifest_repo_revision"]],
+            ):
                 self.run_command(
                     cmd,
                     cwd=dirs["abs_manifest_dir"],
