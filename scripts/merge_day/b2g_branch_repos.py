@@ -387,7 +387,7 @@ e.g. --branch-order v2.0,master"""
         new_branch = self.config['branch_name']
         # b2g-manifest is special
         if os.path.exists(dirs['abs_manifest_dir']):
-            for cmd in (git + ["reset", "--hard"], git + ["checkout", self.config["manifest_repo_revision"]]):
+            for cmd in (git + ["clean", "-fdx"], git + ["checkout", self.config["manifest_repo_revision"]]):
                 self.run_command(
                     cmd,
                     cwd=dirs["abs_manifest_dir"],
@@ -396,12 +396,12 @@ e.g. --branch-order v2.0,master"""
                 )
         for name, r in repos.iteritems():
             cwd = os.path.join(dirs['abs_work_dir'], name)
-            branch_status = self.check_existing_branch(new_branch, cwd)
-            if branch_status[0] and not branch_status[1]:
+            local_sha, remote_sha = self.check_existing_branch(new_branch, cwd)
+            if local_sha and not remote_sha:
                 # We have a local branch that doesn't exist on origin
                 self.info("Cleaning up existing %s branch from %s." % (new_branch, name))
                 self.run_command(
-                    git + ['branch', '-d', new_branch],
+                    git + ['branch', '-D', new_branch],
                     cwd=os.path.join(dirs['abs_work_dir'], name),
                     halt_on_failure=True,
                     error_list=GitErrorList,
@@ -417,11 +417,11 @@ e.g. --branch-order v2.0,master"""
         for name, r in repos.iteritems():
             revision = r["revision"]
             cwd = os.path.join(dirs['abs_work_dir'], name)
-            branch_status = self.check_existing_branch(new_branch, cwd)
-            if branch_status[0]:
+            local_sha, remote_sha = self.check_existing_branch(new_branch, cwd)
+            if local_sha:
                 self.warning("Local branch %s already exists in %s. Skipping." % (new_branch, name))
                 continue
-            if branch_status[1]:
+            if remote_sha:
                 self.error("Remote branch %s already exists in %s. Do you need to re- --pull-branch-repos? Skipping." % (new_branch, name))
                 continue
             self.info("Creating %s branch in %s based on %s" % (new_branch, name,
