@@ -77,10 +77,12 @@ config = {
         'https://git.mozilla.org/releases': 'https://git.mozilla.org/releases',
         'http://android.git.linaro.org/git-ro/': 'https://git.mozilla.org/external/linaro',
         'git://github.com/apitrace/': 'https://git.mozilla.org/external/apitrace',
+        'git://github.com/t2m-foxfone/': 'https://git.mozilla.org/external/t2m-foxfone',
         # Some mappings to ourself, we want to leave these as-is!
         'https://git.mozilla.org/external/aosp': 'https://git.mozilla.org/external/aosp',
         'https://git.mozilla.org/external/caf': 'https://git.mozilla.org/external/caf',
         'https://git.mozilla.org/b2g': 'https://git.mozilla.org/b2g',
         'https://git.mozilla.org/external/apitrace': 'https://git.mozilla.org/external/apitrace',
+        'https://git.mozilla.org/external/t2m-foxfone': 'https://git.mozilla.org/external/t2m-foxfone',
     },
 }
