@@ -2,6 +2,7 @@
 Module for performing gaia-specific tasks
 """
 
+import json
 import os
 
 from mozharness.base.errors import HgErrorList, BaseErrorList
@@ -131,17 +132,32 @@ class GaiaMixin(object):
 
             self.vcs_checkout_repos([repo], parent_dir=os.path.dirname(dest))
 
-    def make_gaia(self, gaia_dir, xre_dir, debug=False, noftu=True):
+    def make_gaia(self, gaia_dir, xre_dir, debug=False, noftu=True,
+                  build_config_path=None):
+        env = {'DEBUG': '1' if debug else '0',
+               'NOFTU': '1' if noftu else '0',
+               'DESKTOP': '0',
+               'DESKTOP_SHIMS': '1',
+               'USE_LOCAL_XULRUNNER_SDK': '1',
+               'XULRUNNER_DIRECTORY': xre_dir
+              }
+
+        # if tbpl_build_config.json exists, load it
+        if build_config_path:
+            if os.path.exists(build_config_path):
+                with self.opened(build_config_path) as (f, err):
+                    if err:
+                        self.fatal("Error while reading %s, aborting" %
+                                   build_config_path)
+                    else:
+                        contents = f.read()
+                        config = json.loads(contents)
+                        env.update(config.get('env', {}))
+
         make = self.query_exe('make', return_type="list")
         self.run_command(make,
                          cwd=gaia_dir,
-                         env={'DEBUG': '1' if debug else '0',
-                              'NOFTU': '1' if noftu else '0',
-                              'DESKTOP': '0',
-                              'DESKTOP_SHIMS': '1',
-                              'USE_LOCAL_XULRUNNER_SDK': '1',
-                              'XULRUNNER_DIRECTORY': xre_dir
-                              },
+                         env=env,
                          halt_on_failure=True)
 
     def make_node_modules(self):
