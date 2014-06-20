@@ -362,10 +362,15 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
 
         if self.config.get('gaiatest'):
             # make the gaia profile
+            build_config = os.path.join(dirs['abs_gaia_dir'], 'tests',
+                                        'python', 'gaia-ui-tests',
+                                        'build_config.json')
+
             self.make_gaia(dirs['abs_gaia_dir'],
                            self.config.get('xre_path'),
                            debug=False,
-                           noftu=False)
+                           noftu=False,
+                           build_config_path=build_config)
 
         # build the marionette command arguments
         python = self.query_python_path('python')
