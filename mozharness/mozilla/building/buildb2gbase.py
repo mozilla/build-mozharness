@@ -195,6 +195,17 @@ class B2GBuildBaseScript(BuildbotMixin, MockMixin,
         if self.gecko_config:
             return self.gecko_config
 
+        gecko_config = self._load_gecko_config()
+
+        # Set up mock immediately so any later run_command_m doesn't end up
+        # calling setup_mock with the wrong config.
+        self.setup_mock(gecko_config['mock_target'],
+                        gecko_config['mock_packages'],
+                        gecko_config.get('mock_files'))
+
+        return gecko_config
+
+    def _load_gecko_config(self):
         if 'gecko_config' not in self.config:
             # Grab from the remote if we're not overriding on the cmdline
             self.gecko_config = self.query_remote_gecko_config()

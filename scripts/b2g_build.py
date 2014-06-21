@@ -594,27 +594,16 @@ class B2GBuild(LocalesMixin, PurgeMixin,
             env['PYTHONPATH'] = os.environ.get('PYTHONPATH', '')
             env['PYTHONPATH'] += ':%s' % os.path.join(dirs['compare_locales_dir'], 'lib')
 
-        if 'mock_target' in gecko_config:
-            # initialize mock
-            self.setup_mock(gecko_config['mock_target'], gecko_config['mock_packages'], gecko_config.get('mock_files'))
-            if self.config['ccache']:
-                self.run_mock_command(gecko_config['mock_target'], 'ccache -z', cwd=dirs['work_dir'], env=env)
-
-            for cmd in cmds:
-                retval = self.run_mock_command(gecko_config['mock_target'], cmd, cwd=dirs['work_dir'], env=env, error_list=B2GMakefileErrorList)
-                if retval != 0:
-                    break
-            if self.config['ccache']:
-                self.run_mock_command(gecko_config['mock_target'], 'ccache -s', cwd=dirs['work_dir'], env=env)
-        else:
-            if self.config['ccache']:
-                self.run_command('ccache -z', cwd=dirs['work_dir'], env=env)
-            for cmd in cmds:
-                retval = self.run_command(cmd, cwd=dirs['work_dir'], env=env, error_list=B2GMakefileErrorList)
-                if retval != 0:
-                    break
-            if self.config['ccache']:
-                self.run_command('ccache -s', cwd=dirs['work_dir'], env=env)
+        self.enable_mock()
+        if self.config['ccache']:
+            self.run_command('ccache -z', cwd=dirs['work_dir'], env=env)
+        for cmd in cmds:
+            retval = self.run_command(cmd, cwd=dirs['work_dir'], env=env, error_list=B2GMakefileErrorList)
+            if retval != 0:
+                break
+        if self.config['ccache']:
+            self.run_command('ccache -s', cwd=dirs['work_dir'], env=env)
+        self.disable_mock()
 
         if retval != 0:
             self.fatal("failed to build", exit_code=2)
@@ -632,12 +621,9 @@ class B2GBuild(LocalesMixin, PurgeMixin,
         cmd = ['./build.sh', 'buildsymbols']
         env = self.query_build_env()
 
-        if 'mock_target' in gecko_config:
-            # initialize mock
-            self.setup_mock(gecko_config['mock_target'], gecko_config['mock_packages'], gecko_config.get('mock_files'))
-            retval = self.run_mock_command(gecko_config['mock_target'], cmd, cwd=dirs['work_dir'], env=env, error_list=B2GMakefileErrorList)
-        else:
-            retval = self.run_command(cmd, cwd=dirs['work_dir'], env=env, error_list=B2GMakefileErrorList)
+        self.enable_mock()
+        retval = self.run_command(cmd, cwd=dirs['work_dir'], env=env, error_list=B2GMakefileErrorList)
+        self.disable_mock()
 
         if retval != 0:
             self.fatal("failed to build symbols", exit_code=2)
@@ -646,10 +632,9 @@ class B2GBuild(LocalesMixin, PurgeMixin,
             # Upload symbols
             self.info("Uploading symbols")
             cmd = ['./build.sh', 'uploadsymbols']
-            if 'mock_target' in gecko_config:
-                retval = self.run_mock_command(gecko_config['mock_target'], cmd, cwd=dirs['work_dir'], env=env, error_list=B2GMakefileErrorList)
-            else:
-                retval = self.run_command(cmd, cwd=dirs['work_dir'], env=env, error_list=B2GMakefileErrorList)
+            self.enable_mock()
+            retval = self.run_command(cmd, cwd=dirs['work_dir'], env=env, error_list=B2GMakefileErrorList)
+            self.disable_mock()
 
             if retval != 0:
                 self.fatal("failed to upload symbols", exit_code=2)
@@ -663,12 +648,9 @@ class B2GBuild(LocalesMixin, PurgeMixin,
         cmd = self.make_updates_cmd[:]
         env = self.query_build_env()
 
-        if 'mock_target' in gecko_config:
-            # initialize mock
-            self.setup_mock(gecko_config['mock_target'], gecko_config['mock_packages'], gecko_config.get('mock_files'))
-            retval = self.run_mock_command(gecko_config['mock_target'], cmd, cwd=dirs['work_dir'], env=env, error_list=B2GMakefileErrorList)
-        else:
-            retval = self.run_command(cmd, cwd=dirs['work_dir'], env=env, error_list=B2GMakefileErrorList)
+        self.enable_mock()
+        retval = self.run_command(cmd, cwd=dirs['work_dir'], env=env, error_list=B2GMakefileErrorList)
+        self.disable_mock()
 
         if retval != 0:
             self.fatal("failed to create complete update", exit_code=2)
