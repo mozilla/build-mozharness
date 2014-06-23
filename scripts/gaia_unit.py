@@ -25,6 +25,8 @@ class GaiaUnitTest(GaiaTest):
         """
         dirs = self.query_abs_dirs()
 
+        self.make_node_modules()
+
         # make the gaia profile
         self.make_gaia(dirs['abs_gaia_dir'],
                        self.config.get('xre_path'),
