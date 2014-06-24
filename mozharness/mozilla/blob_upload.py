@@ -1,5 +1,4 @@
 import os
-import tempfile
 from mozharness.base.python import VirtualenvMixin
 from mozharness.base.script import PostScriptRun
 
@@ -28,7 +27,7 @@ class BlobUploadMixin(VirtualenvMixin):
     """
     def __init__(self, *args, **kwargs):
         requirements = [
-            'blobuploader==1.2.0',
+            'blobuploader==1.1.7',
         ]
         super(BlobUploadMixin, self).__init__(*args, **kwargs)
         for req in requirements:
@@ -76,25 +75,12 @@ class BlobUploadMixin(VirtualenvMixin):
             auth = ['-a', auth_file]
             branch = ['-b', blob_branch]
             dir_to_upload = ['-d', blob_dir]
-            # We want blobberc to tell us if a summary file was uploaded through this file
-            temp_file = tempfile.NamedTemporaryFile(delete = False)
-            temp_file.write('')
-            temp_file.close()
-            record_uploaded_files = ['--output-manifest-url', temp_file.name]
             self.info("Files from %s are to be uploaded with <%s> branch at "
                       "the following location(s): %s" % (blob_dir, blob_branch,
                       ", ".join(["%s" % s for s in blob_servers_list])))
 
             # call blob client to upload files to server
-            self.run_command(upload + servers + auth + branch + dir_to_upload + record_uploaded_files)
-            # if blobberc writes anything into the temp_file then it means that a manifest file has been uploaded
-            if os.path.getsize(temp_file.name) > 0:
-                temp_file = open(temp_file.name, 'r')
-                blobber_manifest_url = temp_file.read()
-                temp_file.close()
-                prop_name = "blobber_manifest_url"
-                self.set_buildbot_property(prop_name, blobber_manifest_url, write_to_file=True)
-            os.remove(temp_file.name)
+            self.run_command(upload + servers + auth + branch + dir_to_upload)
         else:
             self.warning("Blob upload gear skipped. Missing cmdline options.")
 
