@@ -186,8 +186,6 @@ class SpidermonkeyBuild(MockMixin,
                 os.path.join(abs_work_dir, self.config['analysis-dir']),
             'abs_analyzed_objdir':
                 os.path.join(abs_work_dir, self.config['srcdir'], self.config['analysis-objdir']),
-            'analysis_scriptdir':
-                os.path.join(self.config['srcdir'], self.config['analysis-scriptdir']),
             'abs_tools_dir':
                 os.path.join(abs_dirs['base_work_dir'], 'tools'),
         }
