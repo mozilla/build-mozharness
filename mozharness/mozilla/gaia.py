@@ -154,10 +154,13 @@ class GaiaMixin(object):
                         config = json.loads(contents)
                         env.update(config.get('env', {}))
 
-        make = self.query_exe('make', return_type="list")
-        self.run_command(make,
+        self.info('Sending environment as make vars because of bug 1028816')
+
+        cmd = self.query_exe('make', return_type="list")
+        for key, value in env.iteritems():
+            cmd.append('%s="%s"' % (key, value))
+        self.run_command(cmd,
                          cwd=gaia_dir,
-                         env=env,
                          halt_on_failure=True)
 
     def make_node_modules(self):
