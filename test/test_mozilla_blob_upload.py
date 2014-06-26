@@ -89,6 +89,10 @@ class TestBlobUploadMechanism(unittest.TestCase):
                            'http://blob_server.me', '-a',
                            os.path.abspath(__file__), '-b', 'test-branch', '-d']
         expected_result.append(self.s.query_abs_dirs()['abs_blob_upload_dir'])
+        expected_result += [
+                '--output-manifest-url',
+                os.path.join(self.s.query_abs_dirs()['abs_work_dir'], "blobber_manifest.txt")
+        ]
         self.assertEqual(expected_result, self.s.command)
 
 
