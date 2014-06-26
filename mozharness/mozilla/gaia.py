@@ -158,7 +158,7 @@ class GaiaMixin(object):
 
         cmd = self.query_exe('make', return_type="list")
         for key, value in env.iteritems():
-            cmd.append('%s="%s"' % (key, value))
+            cmd.append('%s=%s' % (key, value))
         self.run_command(cmd,
                          cwd=gaia_dir,
                          halt_on_failure=True)
