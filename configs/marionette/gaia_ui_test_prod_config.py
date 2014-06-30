@@ -5,9 +5,9 @@ import platform
 HG_SHARE_BASE_DIR = "/builds/hg-shared"
 
 if platform.system().lower() == 'darwin':
-    xre_url = "http://runtime-binaries.pvt.build.mozilla.org/tooltool/sha512/cb675b8a50a4df7c510d0ba09ddec99950aaa63373f69e69ee86b89755fd04944b140ce02ffdc9faa80e34f53752896a38c91fbab0febc81c583cb80e8515e9e"
+    xre_url = "http://runtime-binaries.pvt.build.mozilla.org/tooltool/sha512/441be719e6984d24e9eadca5d13a1cd7d22e81505b21a82d25a7da079a48211b5feb4525a6f32100a00748f8a824a341065d66a97be8e932c3a3e1e55ade0ede"
 else:
-    xre_url = "http://runtime-binaries.pvt.build.mozilla.org/tooltool/sha512/d4a0da54e75c27cd2f535e66b586f119ef08b3bde4a9eee03662d296b3434189c542c0a7e7a75954030c04396a9823e22e1f884f5d87c0f4017944cd50ff38de"
+    xre_url = "http://runtime-binaries.pvt.build.mozilla.org/tooltool/sha512/b48e7defed365b5899f4a782304e4c621e94c6759e32fdec66aa3e088688401e4c404b1778cd0c6b947d9faa874f60a68e1c7d8ccaa5f2d25077eafad5d533cc"
 
 config = {
     # marionette options
