@@ -189,3 +189,14 @@ class GaiaMixin(object):
             else:
                 self.info('npm-debug.log doesn\'t exist, not dumping')
             self.fatal('Errors during \'npm install\'', exit_code=code)
+
+        cmd = ['make',
+               'update-common']
+        kwargs = {
+            'cwd': dirs['abs_gaia_dir'],
+            'output_timeout': 300
+        }
+        code = self.retry(self.run_command, attempts=3, good_statuses=(0,),
+                          args=[cmd], kwargs=kwargs)
+        if code:
+            self.fatal('Errors during make update-common')
