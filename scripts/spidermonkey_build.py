@@ -216,14 +216,14 @@ class SpidermonkeyBuild(MockMixin,
 
     def query_compiler_manifest(self):
         dirs = self.query_abs_dirs()
-        manifest = os.path.join(dirs['abs_work_dir'], dirs['analysis_scriptdir'], "build", self.config['compiler_manifest'])
+        manifest = os.path.join(dirs['abs_work_dir'], dirs['analysis_scriptdir'], self.config['compiler_manifest'])
         if os.path.exists(manifest):
             return manifest
         return os.path.join(dirs['abs_work_dir'], self.config['compiler_manifest'])
 
     def query_sixgill_manifest(self):
         dirs = self.query_abs_dirs()
-        manifest = os.path.join(dirs['abs_work_dir'], dirs['analysis_scriptdir'], "build", self.config['sixgill_manifest'])
+        manifest = os.path.join(dirs['abs_work_dir'], dirs['analysis_scriptdir'], self.config['sixgill_manifest'])
         if os.path.exists(manifest):
             return manifest
         return os.path.join(dirs['abs_work_dir'], self.config['sixgill_manifest'])
