@@ -168,10 +168,10 @@ class GaiaMixin(object):
 
         self.run_command(['npm', 'cache', 'clean'])
 
-        # run 'make update-common' (previously, 'make node_modules') first,
-        # so we can separately handle errors that occur here
+        # run 'make node_modules' first, so we can separately handle
+        # errors that occur here
         cmd = ['make',
-               'update-common',
+               'node_modules',
                'NODE_MODULES_GIT_URL=https://git.mozilla.org/b2g/gaia-node-modules.git']
         kwargs = {
             'cwd': dirs['abs_gaia_dir'],
