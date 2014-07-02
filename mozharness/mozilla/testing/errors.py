@@ -18,13 +18,15 @@ import re
 from mozharness.base.log import INFO, WARNING, ERROR
 
 # ErrorLists {{{1
+_mochitest_summary = {
+    'regex': re.compile(r'''(\d+ INFO (Passed|Failed|Todo):\ +(\d+)|\t(Passed|Failed|Todo): (\d+))'''),
+    'pass_group': "Passed",
+    'fail_group': "Failed",
+    'known_fail_group': "Todo",
+}
+
 TinderBoxPrintRe = {
-    "mochitest_summary": {
-        'regex': re.compile(r'''(\d+ INFO (Passed|Failed|Todo):\ +(\d+)|\t(Passed|Failed|Todo): (\d+))'''),
-        'pass_group': "Passed",
-        'fail_group': "Failed",
-        'known_fail_group': "Todo",
-    },
+    "mochitest_summary": _mochitest_summary,
     "reftest_summary": {
         'regex': re.compile(r'''REFTEST INFO \| (Successful|Unexpected|Known problems): (\d+) \('''),
         'pass_group': "Successful",
@@ -49,12 +51,7 @@ TinderBoxPrintRe = {
         'fail_group': "Unexpected",
         'known_fail_group': "Known problems",
     },
-    "robocop_summary": {
-        'regex': re.compile(r'''(\d+ INFO (Passed|Failed|Todo):\ +(\d+)|\t(Passed|Failed|Todo): (\d+))'''),
-        'pass_group': "Passed",
-        'fail_group': "Failed",
-        'known_fail_group': "Todo",
-    },
+    "robocop_summary": _mochitest_summary,
     "cppunittest_summary": {
         'regex': re.compile(r'''cppunittests INFO \| (Passed|Failed): (\d+)'''),
         'pass_group': "Passed",
@@ -73,7 +70,7 @@ TinderBoxPrintRe = {
         'fail_group': "FAILED",
         'known_fail_group': None,
     },
-
+    "webapprt_summary": _mochitest_summary,
 
     "harness_error": {
         'full_regex': re.compile(r"(?:TEST-UNEXPECTED-FAIL|PROCESS-CRASH) \| .* \| (application crashed|missing output line for total leaks!|negative leaks caught!|\d+ bytes leaked)"),
