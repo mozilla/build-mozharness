@@ -514,6 +514,8 @@ jobs = 2
             self.info("Uploads disabled for this build. Skipping...")
             return
 
+        self.enable_mock()
+
         dirs = self.query_abs_dirs()
         upload_path = self.query_upload_path()
 
@@ -533,6 +535,8 @@ jobs = 2
                 upload_path=upload_path,
             )
             self.info("TinderboxPrint: upload <a title='hazards_results' href='%s'>results</a>: complete" % upload_url)
+
+        self.disable_mock()
 
     def check_expectations(self):
         if 'expect_file' not in self.config:
