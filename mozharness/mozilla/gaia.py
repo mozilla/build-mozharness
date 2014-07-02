@@ -32,7 +32,8 @@ class GaiaMixin(object):
         branch = repo.get('branch')
         gaia_json_path = self.config.get("gaia_json_path", "{repo_path}/raw-file/{revision}/b2g/config/gaia.json")
         git = False
-        pr_num = None
+        pr_git_revision = None
+        pr_remote = None
 
         self.info('dest: %s' % dest)
 
@@ -46,7 +47,11 @@ class GaiaMixin(object):
                 remote = contents['git']['remote']
                 branch = contents['git'].get('branch')
                 revision = contents['git'].get('git_revision')
-                pr_num = contents['git'].get('github_pr_number')
+                pr_git_revision = contents['git'].get('pr_git_revision')
+                pr_remote = contents['git'].get('pr_remote')
+                if pr_remote or pr_git_revision:
+                    if not (pr_remote and pr_git_revision):
+                        self.fatal('Pull request mode requres rev *and* remote')
                 if not (branch or revision):
                     self.fatal('Must specify branch or revision for git repo')
             elif contents.get('repo_path') and contents.get('revision'):
@@ -58,43 +63,59 @@ class GaiaMixin(object):
             git_cmd = self.query_exe('git')
             needs_clobber = True
 
-            if os.path.exists(dest) and os.path.exists(os.path.join(dest, '.git')):
+            # For pull requests, we only want to clobber when we can't find the
+            # two exact commit ids that we'll be working with.  As long as we
+            # have those two commits, we don't care about the rest of the repo
+            def has_needed_commit(commit, fatal=False):
+                cmd = [git_cmd, 'rev-parse', '--quiet', '--verify', '%s^{commit}' % commit]
+                rc = self.run_command(cmd, cwd=dest, halt_on_failure=False, success_codes=[1,0])
+                if rc != 0:
+                    return False
+                return True
+
+            if not pr_remote and os.path.exists(dest) and os.path.exists(os.path.join(dest, '.git')):
                 cmd = [git_cmd, 'remote', '-v']
                 output = self.get_output_from_command(cmd, cwd=dest)
                 for line in output:
                     if remote in line:
                         needs_clobber = False
 
+
+            # We want to do some cleanup logic differently for pull requests
+            if pr_git_revision and pr_remote:
+                needs_clobber = False
+                if os.path.exists(dest) and os.path.exists(os.path.join(dest, '.git')):
+                    cmd = [git_cmd, 'clean', '--force', '-x', '-d']
+                    self.run_command(cmd, cwd=dest, halt_on_failure=True,
+                                     fatal_exit_code=3)
+                    if not has_needed_commit(revision):
+                        cmd = [git_cmd, 'fetch', 'origin']
+                        self.run_command(cmd, cwd=dest, halt_on_failure=True,
+                                         fatal_exit_code=3)
+                    if not has_needed_commit(revision):
+                        self.warn('Repository does not contain required revisions, clobbering')
+                        needs_clobber = True
+
             if needs_clobber:
                 self.rmtree(dest)
 
-            # git clone
-            cmd = [git_cmd,
-                   'clone',
-                   remote]
-            self.run_command(cmd,
-                             cwd=os.path.dirname(dest),
-                             output_timeout=1760,
-                             halt_on_failure=True,
-                             fatal_exit_code=3)
+            # In pull request mode, we don't want to clone because we're satisfied
+            # that the base directory is good enough because
+            needs_clone = True
+            if pr_git_revision and pr_remote:
+                if os.path.exists(dest) and os.path.exists(os.path.join(dest, '.git')):
+                    needs_clone = False
 
-            if pr_num:
-                local_pr_branch = 'local_pr_%d' % pr_num
+            if needs_clone:
+                # git clone
                 cmd = [git_cmd,
-                       'fetch',
-                       'origin',
-                       '+refs/pull/%d/merge:%s' % (pr_num, local_pr_branch)]
+                       'clone',
+                       remote]
                 self.run_command(cmd,
-                                 cwd=dest,
+                                 cwd=os.path.dirname(dest),
                                  output_timeout=1760,
                                  halt_on_failure=True,
                                  fatal_exit_code=3)
-                # Ideally, we'd just use the merge_sha from the github api
-                # but the PR object that gets sent with the hook call is
-                # either an empty string for new PRs or an outdated value
-                # for synchronise events.  I guess Github doesn't generate
-                # a new merge sha before sending the webhook
-                branch = revision = local_pr_branch
 
             # checkout git branch
             cmd = [git_cmd,
@@ -102,6 +123,57 @@ class GaiaMixin(object):
                    revision or branch]
             self.run_command(cmd, cwd=dest, halt_on_failure=True,
                              fatal_exit_code=3)
+
+            # handle pull request magic
+            if pr_git_revision and pr_remote:
+                # Optimization opportunity: instead of fetching all remote references,
+                # pull only the single commit.  I don't know how to right now
+
+                # If the 'other' remote exists, get rid of it
+                cmd = [git_cmd, 'remote']
+                output = self.get_output_from_command(cmd, cwd=dest)
+                for line in output.split('\n'):
+                  if 'other' in line:
+                    cmd = [git_cmd, 'remote', 'rm', 'other']
+                    self.run_command(cmd, cwd=dest, halt_on_failure=True,
+                                     fatal_exit_code=3)
+                    break;
+                # Set the correct remote
+                cmd = [git_cmd, 'remote', 'add', 'other', pr_remote]
+                self.run_command(cmd, cwd=dest, halt_on_failure=True,
+                                 fatal_exit_code=3)
+                if not has_needed_commit(pr_git_revision):
+                    cmd = [git_cmd, 'fetch', 'other']
+                    self.run_command(cmd, cwd=dest, halt_on_failure=True,
+                                     fatal_exit_code=3)
+                if not has_needed_commit(pr_git_revision):
+                    self.fatal('Missing the Pull Request target revision')
+
+                # With these environment variables we should have deterministic
+                # merge commit identifiers
+                self.info('If you want to prove that this merge commit is the same')
+                self.info('you get, use this environment while doing the merge')
+                env = {
+                  'GIT_COMMITTER_DATE': "Wed Feb 16 14:00 2037 +0100",
+                  'GIT_AUTHOR_DATE': "Wed Feb 16 14:00 2037 +0100",
+                  'GIT_AUTHOR_NAME': 'automation',
+                  'GIT_AUTHOR_EMAIL': 'auto@mati.on',
+                  'GIT_COMMITTER_NAME': 'automation',
+                  'GIT_COMMITTER_EMAIL': 'auto@mati.on'
+                }
+                cmd = [git_cmd, 'reset', '--hard', 'HEAD']
+                self.run_command(cmd, cwd=dest, halt_on_failure=True,
+                                 fatal_exit_code=3)
+                cmd = [git_cmd, 'clean', '--force', '-x', '-d']
+                self.run_command(cmd, cwd=dest, halt_on_failure=True,
+                                 fatal_exit_code=3)
+                cmd = [git_cmd, 'merge', '--no-ff', pr_git_revision]
+                self.run_command(cmd, cwd=dest, env=env, halt_on_failure=True,
+                                 fatal_exit_code=3)
+                # So that people can verify that their merge commit is identical
+                cmd = [git_cmd, 'rev-parse', 'HEAD']
+                self.run_command(cmd, cwd=dest, halt_on_failure=True,
+                                 fatal_exit_code=3)
 
             # verify
             for cmd in ([git_cmd, 'log', '-1'], [git_cmd, 'branch']):
@@ -154,10 +226,13 @@ class GaiaMixin(object):
                         config = json.loads(contents)
                         env.update(config.get('env', {}))
 
-        make = self.query_exe('make', return_type="list")
-        self.run_command(make,
+        self.info('Sending environment as make vars because of bug 1028816')
+
+        cmd = self.query_exe('make', return_type="list")
+        for key, value in env.iteritems():
+            cmd.append('%s=%s' % (key, value))
+        self.run_command(cmd,
                          cwd=gaia_dir,
-                         env=env,
                          halt_on_failure=True)
 
     def make_node_modules(self):
@@ -186,3 +261,14 @@ class GaiaMixin(object):
             else:
                 self.info('npm-debug.log doesn\'t exist, not dumping')
             self.fatal('Errors during \'npm install\'', exit_code=code)
+
+        cmd = ['make',
+               'update-common']
+        kwargs = {
+            'cwd': dirs['abs_gaia_dir'],
+            'output_timeout': 300
+        }
+        code = self.retry(self.run_command, attempts=3, good_statuses=(0,),
+                          args=[cmd], kwargs=kwargs)
+        if code:
+            self.fatal('Errors during make update-common')

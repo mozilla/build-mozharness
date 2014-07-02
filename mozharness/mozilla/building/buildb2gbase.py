@@ -74,6 +74,11 @@ class B2GBuildBaseScript(BuildbotMixin, MockMixin,
             "dest": "checkout_revision",
             "help": "checkout a specific gecko revision.",
         }],
+        [["--disable-mock"], {
+            "dest": "disable_mock",
+            "action": "store_true",
+            "help": "do not run under mock despite what gecko-config says",
+        }],
     ]
 
     def __init__(self,
