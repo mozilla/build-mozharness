@@ -570,6 +570,15 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
                 (self.adb_path, emulator["device_id"], logcat_path)
             self.info(logcat_cmd)
             os.system(logcat_cmd)
+        # Create the /data/anr directory on each emulator image.
+        emulator_index = 0
+        for test in self.test_suites:
+            emulator = self.emulators[emulator_index]
+            emulator_index += 1
+            mkdir_cmd = [self.adb_path, '-s', emulator["device_id"], 'shell', 'mkdir', '/data/anr']
+            p = subprocess.Popen(mkdir_cmd, stdout=subprocess.PIPE)
+            out, err = p.communicate()
+            self.info('%s:\n%s\n%s' % (mkdir_cmd, out, err))
 
     def download_and_extract(self):
         # This will download and extract the fennec.apk and tests.zip
