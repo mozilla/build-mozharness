@@ -27,7 +27,7 @@ class BlobUploadMixin(VirtualenvMixin):
     """
     def __init__(self, *args, **kwargs):
         requirements = [
-            'blobuploader==1.2.0',
+            'blobuploader==1.2.1',
         ]
         super(BlobUploadMixin, self).__init__(*args, **kwargs)
         for req in requirements:
