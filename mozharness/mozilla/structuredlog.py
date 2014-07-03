@@ -81,7 +81,6 @@ class StructuredOutputParser(OutputParser):
         """Object that tracks the overall status of the test run"""
         super(StructuredOutputParser, self).__init__(**kwargs)
         self.unexpected_count = 0
-        self.parsing_failed = False
         self.formatter = self.formatter_cls()
 
         self.worst_log_level = INFO
@@ -102,7 +101,6 @@ class StructuredOutputParser(OutputParser):
             data = json.loads(line)
         except ValueError:
             self.critical("Failed to parse line '%s' as json" % line)
-            self.parsing_failed = True
             return
 
         if "action" not in data:
@@ -122,9 +120,6 @@ class StructuredOutputParser(OutputParser):
     def evaluate_parser(self, return_code):
         if self.unexpected_count > 0:
             self.update_levels(TBPL_WARNING, WARNING)
-
-        if self.parsing_failed:
-            self.update_levels(TBPL_FAILURE, CRITICAL)
 
         return self.tbpl_status, self.worst_log_level
 

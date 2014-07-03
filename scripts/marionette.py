@@ -24,26 +24,8 @@ from mozharness.mozilla.gaia import GaiaMixin
 from mozharness.mozilla.testing.errors import LogcatErrorList
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
 from mozharness.mozilla.testing.unittest import TestSummaryOutputParserHelper
+from mozharness.mozilla.structuredlog import StructuredOutputParser
 from mozharness.mozilla.tooltool import TooltoolMixin
-
-
-class MarionetteOutputParser(TestSummaryOutputParserHelper):
-    """
-    A class that extends TestSummaryOutputParserHelper such that it can parse
-    if gecko did not install properly
-    """
-
-    bad_gecko_install = re.compile(r'Error installing gecko!')
-
-    def __init__(self, **kwargs):
-        self.install_gecko_failed = False
-        super(MarionetteOutputParser, self).__init__(**kwargs)
-
-    def parse_single_line(self, line):
-        if self.bad_gecko_install.search(line):
-            self.install_gecko_failed = True
-        super(MarionetteOutputParser, self).parse_single_line(line)
-
 
 class MarionetteTest(TestingMixin, TooltoolMixin,
                      MercurialScript, BlobUploadMixin, TransferMixin, GaiaMixin):
@@ -174,6 +156,11 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
         self.installer_path = c.get('installer_path')
         self.binary_path = c.get('binary_path')
         self.test_url = c.get('test_url')
+
+        if c.get('structured_output'):
+            self.parser_class = StructuredOutputParser
+        else:
+            self.parser_class = TestSummaryOutputParserHelper
 
     def _pre_config_lock(self, rw_config):
         if not self.config.get('emulator') and not self.config.get('marionette_address'):
@@ -443,6 +430,14 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
             if self.config.get('app_arg'):
                 cmd.extend(['--app-arg', self.config['app_arg']])
 
+        if self.config.get("structured_output"):
+            # Make sure that the logging directory exists
+            if self.mkdir_p(dirs["abs_blob_upload_dir"]) == -1:
+                self.fatal("Could not create blobber upload directory")
+            cmd.append("--log-raw=-")
+            cmd.append("--log-raw=%s" % os.path.join(dirs["abs_blob_upload_dir"],
+                                                     "mn_structured_full.log"))
+
         cmd.append(manifest)
 
         env = {}
@@ -457,20 +452,12 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
             self.mkdir_p(env['MOZ_UPLOAD_DIR'])
         env = self.query_env(partial_env=env)
 
-        for i in range(0, 5):
-            # We retry the run because sometimes installing gecko on the
-            # emulator can cause B2G not to restart properly - Bug 812935.
-            marionette_parser = MarionetteOutputParser(config=self.config,
-                                                       log_obj=self.log_obj,
-                                                       error_list=self.error_list)
-            code = self.run_command(cmd, env=env,
-                                    output_timeout=1000,
-                                    output_parser=marionette_parser)
-            if not marionette_parser.install_gecko_failed:
-                break
-        else:
-            self.fatal("Failed to install gecko 5 times in a row, aborting")
-
+        marionette_parser = self.parser_class(config=self.config,
+                                              log_obj=self.log_obj,
+                                              error_list=self.error_list)
+        code = self.run_command(cmd, env=env,
+                                output_timeout=1000,
+                                output_parser=marionette_parser)
         level = INFO
         if code == 0 and marionette_parser.passed > 0 and marionette_parser.failed == 0:
             status = "success"

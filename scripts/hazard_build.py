@@ -250,6 +250,12 @@ class B2GHazardBuild(B2GBuildBaseScript):
         if not os.path.exists(dest):
             self.mkdir_p(dest)
 
+    # The gecko config is required before enabling mock, because it determines
+    # what mock target to use.
+    def enable_mock(self):
+        self.load_gecko_config()
+        super(B2GHazardBuild, self).enable_mock()
+
     # Actions {{{2
     def checkout_sources(self):
         self.make_source_dir()
@@ -271,6 +277,7 @@ class B2GHazardBuild(B2GBuildBaseScript):
         self.rmtree(dirs['shell_objdir'])
 
     def configure_shell(self):
+        self.enable_mock()
         dirs = self.query_abs_dirs()
 
         if not os.path.exists(dirs['shell_objdir']):
@@ -296,7 +303,10 @@ class B2GHazardBuild(B2GBuildBaseScript):
         if rc != 0:
             self.fatal("Configure failed, can't continue.", exit_code=FAILURE)
 
+        self.disable_mock()
+
     def build_shell(self):
+        self.enable_mock()
         dirs = self.query_abs_dirs()
 
         rc = self.run_command(['make', '-j', str(self.config.get('concurrency', 4)), '-s'],
@@ -305,6 +315,8 @@ class B2GHazardBuild(B2GBuildBaseScript):
                               error_list=MakefileErrorList)
         if rc != 0:
             self.fatal("Build failed, can't continue.", exit_code=FAILURE)
+
+        self.disable_mock()
 
     def clobber_analysis(self):
         dirs = self.query_abs_dirs()
@@ -352,7 +364,6 @@ jobs = 2
         analysis_dir = dirs['abs_analysis_dir']
         analysis_scriptdir = dirs['analysis_scriptdir']
 
-        gecko_config = self.load_gecko_config()
         env = self.query_build_env().copy()
         self.enable_mock()
 
@@ -360,7 +371,9 @@ jobs = 2
         build_command = os.path.abspath(os.path.join(analysis_dir, build_command))
         gonk_misc = os.path.join(dirs['b2g_src'], 'gonk-misc')
         mozconfig = os.path.join(gonk_misc, 'hazard-analysis-config')
-        mozconfig_text = '. "%s/default-gecko-config"\n' % gonk_misc
+        mozconfig_text = ''
+        mozconfig_text += 'CXXFLAGS="-Wno-attributes"\n'
+        mozconfig_text += '. "%s/default-gecko-config"\n' % gonk_misc
         basecc = os.path.join(dirs['abs_work_dir'], self.config['sixgill'], 'scripts', 'wrap_gcc', 'basecc')
         mozconfig_text += "ac_add_options --with-compiler-wrapper=" + basecc + "\n"
         mozconfig_text += "ac_add_options --without-ccache\n"
@@ -426,6 +439,7 @@ jobs = 2
             self.info("Uploads disabled for this build. Skipping...")
             return
 
+        self.enable_mock()
         dirs = self.query_abs_dirs()
         upload_path = self.query_upload_path()
 
@@ -445,6 +459,8 @@ jobs = 2
                 upload_path=upload_path,
             )
             self.info("TinderboxPrint: upload <a title='hazards_results' href='%s'>results</a>: complete" % upload_url)
+
+        self.disable_mock()
 
     def check_expectations(self):
         if 'expect_file' not in self.config:

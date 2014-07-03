@@ -59,6 +59,13 @@ testing_config_options = [
      "choices": ['ondemand', 'true'],
      "help": "Download and extract crash reporter symbols.",
       }],
+    [["--structured-output"],
+     {"action": "store_true",
+      "dest": "structured_output",
+      "default": False,
+      "help": "The structured output parser should be used to interpret "
+              "output from the test run."
+      }],
 ] + copy.deepcopy(virtualenv_config_options)
 
 
