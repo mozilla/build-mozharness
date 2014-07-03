@@ -371,7 +371,9 @@ jobs = 2
         build_command = os.path.abspath(os.path.join(analysis_dir, build_command))
         gonk_misc = os.path.join(dirs['b2g_src'], 'gonk-misc')
         mozconfig = os.path.join(gonk_misc, 'hazard-analysis-config')
-        mozconfig_text = '. "%s/default-gecko-config"\n' % gonk_misc
+        mozconfig_text = ''
+        mozconfig_text += 'CXXFLAGS="-Wno-attributes"\n'
+        mozconfig_text += '. "%s/default-gecko-config"\n' % gonk_misc
         basecc = os.path.join(dirs['abs_work_dir'], self.config['sixgill'], 'scripts', 'wrap_gcc', 'basecc')
         mozconfig_text += "ac_add_options --with-compiler-wrapper=" + basecc + "\n"
         mozconfig_text += "ac_add_options --without-ccache\n"
