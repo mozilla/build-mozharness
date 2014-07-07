@@ -161,17 +161,18 @@ class B2GBuildBaseScript(BuildbotMixin, MockMixin,
 
     def query_revision(self):
         if 'revision' in self.buildbot_properties:
-            return self.buildbot_properties['revision']
+            revision = self.buildbot_properties['revision']
+        elif self.buildbot_config and 'sourcestamp' in self.buildbot_config:
+            revision = self.buildbot_config['sourcestamp']['revision']
+        else:
+            # Look at what we have checked out
+            dirs = self.query_abs_dirs()
+            hg = self.query_exe('hg', return_type='list')
+            revision = self.get_output_from_command(
+                hg + ['parent', '--template', '{node|short}'], cwd=dirs['gecko_src']
+            )
 
-        if self.buildbot_config and 'sourcestamp' in self.buildbot_config:
-            return self.buildbot_config['sourcestamp']['revision']
-
-        # Look at what we have checked out
-        dirs = self.query_abs_dirs()
-        hg = self.query_exe('hg', return_type='list')
-        return self.get_output_from_command(
-            hg + ['parent', '--template', '{node|short}'], cwd=dirs['gecko_src']
-        )
+        return revision[0:12] if revision else None
 
     def query_gecko_config_path(self):
         conf_file = self.config.get('gecko_config')

@@ -197,13 +197,15 @@ class SpidermonkeyBuild(MockMixin,
 
     def query_revision(self):
         if 'revision' in self.buildbot_properties:
-            return self.buildbot_properties['revision']
+            revision = self.buildbot_properties['revision']
+        elif self.buildbot_config and 'sourcestamp' in self.buildbot_config:
+            revision = self.buildbot_config['sourcestamp']['revision']
+        else:
+            # Useful for local testing. In actual use, this would always be
+            # None.
+            revision = self.config.get('revision')
 
-        if self.buildbot_config and 'sourcestamp' in self.buildbot_config:
-            return self.buildbot_config['sourcestamp']['revision']
-
-        # Useful for local testing. In actual use, this would always be None.
-        return self.config.get('revision')
+        return revision[0:12] if revision else None
 
     def query_branch(self):
         if self.buildbot_config and 'properties' in self.buildbot_config:
