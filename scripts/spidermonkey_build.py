@@ -124,7 +124,7 @@ class SpidermonkeyBuild(MockMixin,
                             },
         )
 
-        self.buildtime = None
+        self.buildid = None
 
     def _pre_config_lock(self, rw_config):
         super(SpidermonkeyBuild, self)._pre_config_lock(rw_config)
@@ -197,13 +197,15 @@ class SpidermonkeyBuild(MockMixin,
 
     def query_revision(self):
         if 'revision' in self.buildbot_properties:
-            return self.buildbot_properties['revision']
+            revision = self.buildbot_properties['revision']
+        elif self.buildbot_config and 'sourcestamp' in self.buildbot_config:
+            revision = self.buildbot_config['sourcestamp']['revision']
+        else:
+            # Useful for local testing. In actual use, this would always be
+            # None.
+            revision = self.config.get('revision')
 
-        if self.buildbot_config and 'sourcestamp' in self.buildbot_config:
-            return self.buildbot_config['sourcestamp']['revision']
-
-        # Useful for local testing. In actual use, this would always be None.
-        return self.config.get('revision')
+        return revision[0:12] if revision else None
 
     def query_branch(self):
         if self.buildbot_config and 'properties' in self.buildbot_config:
@@ -228,11 +230,14 @@ class SpidermonkeyBuild(MockMixin,
             return manifest
         return os.path.join(dirs['abs_work_dir'], self.config['sixgill_manifest'])
 
-    def query_buildtime(self):
-        if self.buildtime:
-            return self.buildtime
-        self.buildtime = datetime.now().strftime("%Y%m%d%H%M%S")
-        return self.buildtime
+    def query_buildid(self):
+        if self.buildid:
+            return self.buildid
+        if self.buildbot_config and 'properties' in self.buildbot_config:
+            self.buildid = self.buildbot_config['properties'].get('buildid')
+        if not self.buildid:
+            self.buildid = datetime.now().strftime("%Y%m%d%H%M%S")
+        return self.buildid
 
     def query_upload_ssh_server(self):
         if self.buildbot_config and 'properties' in self.buildbot_config:
@@ -305,8 +310,8 @@ class SpidermonkeyBuild(MockMixin,
                 **common
             )
         else:
-            return "{basepath}/tinderbox-builds/{branch}-{target}/{buildtime}".format(
-                buildtime=self.query_buildtime(),
+            return "{basepath}/tinderbox-builds/{branch}-{target}/{buildid}".format(
+                buildid=self.query_buildid(),
                 **common
             )
 
