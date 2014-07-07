@@ -84,7 +84,7 @@ class B2GHazardBuild(B2GBuildBaseScript):
             default_actions=B2GHazardBuild.default_actions,
         )
 
-        self.buildtime = None
+        self.buildid = None
 
     def _pre_config_lock(self, rw_config):
         super(B2GHazardBuild, self)._pre_config_lock(rw_config)
@@ -157,11 +157,14 @@ class B2GHazardBuild(B2GBuildBaseScript):
         dirs = self.query_abs_dirs()
         return os.path.join(dirs['analysis_scriptdir'], self.config['sixgill_manifest'])
 
-    def query_buildtime(self):
-        if self.buildtime:
-            return self.buildtime
-        self.buildtime = datetime.now().strftime("%Y%m%d%H%M%S")
-        return self.buildtime
+    def query_buildid(self):
+        if self.buildid:
+            return self.buildid
+        if self.buildbot_config and 'properties' in self.buildbot_config:
+            self.buildid = self.buildbot_config['properties'].get('buildid')
+        if not self.buildid:
+            self.buildid = datetime.now().strftime("%Y%m%d%H%M%S")
+        return self.buildid
 
     def query_upload_ssh_server(self):
         if self.buildbot_config and 'properties' in self.buildbot_config:
@@ -234,8 +237,8 @@ class B2GHazardBuild(B2GBuildBaseScript):
                 **common
             )
         else:
-            return "{basepath}/tinderbox-builds/{branch}-{target}/{buildtime}".format(
-                buildtime=self.query_buildtime(),
+            return "{basepath}/tinderbox-builds/{branch}-{target}/{buildid}".format(
+                buildid=self.query_buildid(),
                 **common
             )
 
