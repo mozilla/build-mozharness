@@ -15,6 +15,7 @@ sys.path.insert(1, os.path.dirname(sys.path[0]))
 from mozharness.base.errors import MakefileErrorList
 from mozharness.mozilla.buildbot import TBPL_WARNING
 from mozharness.mozilla.building.buildb2gbase import B2GBuildBaseScript
+from mozharness.mozilla.purge import PurgeMixin
 
 from b2g_build import B2GMakefileErrorList
 
@@ -35,7 +36,7 @@ def requires(*queries):
     return make_wrapper
 
 
-class B2GHazardBuild(B2GBuildBaseScript):
+class B2GHazardBuild(PurgeMixin, B2GBuildBaseScript):
     all_actions = [
         'checkout-tools',
         'clobber',
@@ -55,6 +56,7 @@ class B2GHazardBuild(B2GBuildBaseScript):
 
     default_actions = [
         'checkout-tools',
+        'clobber',
         'checkout-sources',
         'get-blobs',
         'clobber-shell',
@@ -260,6 +262,15 @@ class B2GHazardBuild(B2GBuildBaseScript):
         super(B2GHazardBuild, self).enable_mock()
 
     # Actions {{{2
+    def clobber(self):
+        dirs = self.query_abs_dirs()
+        PurgeMixin.clobber(
+            self,
+            always_clobber_dirs=[
+                dirs['abs_upload_dir'],
+            ],
+        )
+
     def checkout_sources(self):
         self.make_source_dir()
         super(B2GHazardBuild, self).checkout_sources()
