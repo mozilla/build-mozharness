@@ -245,6 +245,7 @@ e.g. --branch-order v2.0,master"""
             """
         if self.branch_repo_dict is not None:
             return self.branch_repo_dict
+        self.info("Building branch_repo_dict...")
         branch_repo_dict = {
             'b2g-manifest': {
                 'fetch': self.config['manifest_repo_url'],
@@ -281,6 +282,7 @@ e.g. --branch-order v2.0,master"""
                     self._add_branch_revision(branch_repo_dict[name], name, revision, manifest)
                 else:
                     self._add_branch_revision(branch_repo_dict[name], name, revision, manifest)
+        self.info("Outputting branch_repo_dict:")
         self.info(pprint.pformat(branch_repo_dict))
         message = ""
         for name, r in branch_repo_dict.iteritems():
