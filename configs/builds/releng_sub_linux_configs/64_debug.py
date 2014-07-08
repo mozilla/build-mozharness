@@ -1,5 +1,3 @@
-import os
-
 MOZ_OBJDIR = 'obj-firefox'
 
 config = {
@@ -8,18 +6,26 @@ config = {
         'clone-tools',
         'setup-mock',
         'build',
+        'generate-build-props',
+        # 'generate-build-stats', debug skips this action
+        'symbols',
+        'packages',
+        'upload',
         'sendchanges',
-        # 'generate-build-stats',
+        # 'pretty-names', debug skips this action
+        # 'check-l10n', debug skips this action
+        'check-test',
         'update',  # decided by query_is_nightly()
+        'ccache-stats',
     ],
     'stage_platform': 'linux64-debug',
     'debug_build': True,
+    "enable_talos_sendchange": False,  # debug does not fire a talos sendchange
     'enable_signing': False,
-    'enable_talos_sendchange': False,
+    'upload_symbols': False,
+
     #### 64 bit build specific #####
     'env': {
-        'MOZBUILD_STATE_PATH': os.path.join(os.getcwd(), '.mozbuild'),
-        'MOZ_AUTOMATION': '1',
         'DISPLAY': ':2',
         'HG_SHARE_BASE_DIR': '/builds/hg-shared',
         'MOZ_OBJDIR': MOZ_OBJDIR,
@@ -38,5 +44,6 @@ config = {
         'TINDERBOX_OUTPUT': '1',
     },
     'src_mozconfig': 'browser/config/mozconfigs/linux64/debug',
+    'base_name': 'Linux x86-64 %(branch)s leak test',
     #######################
 }
