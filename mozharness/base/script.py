@@ -202,6 +202,12 @@ class ScriptMixin(object):
             raise
         except urllib2.URLError, e:
             self.warning("URL Error: %s" % url)
+
+            # Failures due to missing local files won't benefit from retry.
+            # Raise the original OSError.
+            if isinstance(e.args[0], OSError) and e.args[0].errno == errno.NOENT:
+                raise e.args[0]
+
             remote_host = urlparse.urlsplit(url)[1]
             if remote_host:
                 nslookup = self.query_exe('nslookup')

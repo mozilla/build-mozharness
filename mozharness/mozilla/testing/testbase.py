@@ -205,6 +205,14 @@ You can set this by:
         if message:
             self.fatal(message + "Can't run download-and-extract... exiting")
 
+        # If our URLs look like files, prefix them with file:// so they can
+        # be loaded like URLs.
+        if self.installer_url[0] == '/':
+            self.installer_url = 'file://%s' % self.installer_url
+
+        if self.test_url and self.test_url[0] == '/':
+            self.test_url = 'file://%s' % self.test_url
+
     def _download_test_zip(self):
         dirs = self.query_abs_dirs()
         file_name = None
