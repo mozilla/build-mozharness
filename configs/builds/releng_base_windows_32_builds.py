@@ -1,7 +1,6 @@
 import os
 import sys
 
-STAGE_PRODUCT = 'firefox'
 STAGE_USERNAME = 'ffxbld'
 STAGE_SSH_KEY = 'ffxbld_dsa'
 
@@ -11,28 +10,20 @@ config = {
     # if you are updating this with custom 32 bit keys/values please add them
     # below under the '32 bit specific' code block otherwise, update in this
     # code block and also make sure this is synced with
-    # releng_base_linux_64_builds.py
+    # releng_base_windows_64_builds.py
 
     'default_actions': [
         'clobber',
         'clone-tools',
         # 'setup-mock', windows do not use mock
         'build',
-        'generate-build-props',
-        # 'generate-build-stats',
-        'symbols',
-        'packages',
-        'upload',
         'sendchanges',
-        'pretty-names',
-        'check-l10n',
-        'check-test',
+        'generate-build-stats',
         'update',  # decided by query_is_nightly()
-        # 'ccache-stats',
     ],
     "buildbot_json_path": "buildprops.json",
     'exes': {
-        'python': sys.executable,
+        'python2.7': sys.executable,
         'hgtool.py': [
             sys.executable,
             os.path.join(
@@ -58,42 +49,21 @@ config = {
     'tooltool_script': [sys.executable,
                         'C:/mozilla-build/tooltool.py'],
     'tooltool_bootstrap': "setup.sh",
-    # only linux counts ctors
     'enable_count_ctors': False,
-    'package_targets': ['package', 'package-tests', 'installer'],
-    'stage_product': STAGE_PRODUCT,
-    "enable_talos_sendchange": True,
-    "do_pretty_name_l10n_check": True,
-    'upload_symbols': True,
-    'stage_username': STAGE_USERNAME,
-    'stage_ssh_key': STAGE_SSH_KEY,
-    'upload_env': {
-        # stage_server is dictated from build_pool_specifics.py
-        'UPLOAD_HOST': "%(stage_server)s",
-        'UPLOAD_USER': STAGE_USERNAME,
-        'UPLOAD_TO_TEMP': '1',
-        'UPLOAD_SSH_KEY': '~/.ssh/%s' % (STAGE_SSH_KEY,),
-    },
-    # TODO -- nightly
-#     'update_env': {
-#         'MAR': '../dist/host/bin/mar',
-#         'MBSDIFF': '../dist/host/bin/mbsdiff'
-#     },
-    # TODO -- nightly
-#     'latest_mar_dir': '/pub/mozilla.org/%s/nightly/latest-%%(branch)s' % (
-#         STAGE_PRODUCT,),
-#     #########################################################################
-#
-#
-#     #########################################################################
-#     ###### 32 bit specific ######
+    'enable_talos_sendchange': True,
+    'enable_unittest_sendchange': True,
+    #########################################################################
+
+
+     #########################################################################
+     ###### 32 bit specific ######
+    'base_name': 'WINNT 5.2 %(branch)s',
     'platform': 'win32',
     'stage_platform': 'win32',
-    # TODO -- nightly
-#     'platform_ftp_name': '',
-#     'update_platform': '',
     'enable_max_vsize': True,
     'env': {
+        'MOZBUILD_STATE_PATH': os.path.join(os.getcwd(), '.mozbuild'),
+        'MOZ_AUTOMATION': '1',
         'BINSCOPE': 'C:/Program Files (x86)/Microsoft/SDL BinScope/BinScope.exe',
         'HG_SHARE_BASE_DIR': 'C:/builds/hg-shared',
         'MOZ_CRASHREPORTER_NO_REPORT': '1',
@@ -108,16 +78,21 @@ config = {
         'SYMBOL_SERVER_PATH': '/mnt/netapp/breakpad/symbols_ffx/',
         'SYMBOL_SERVER_SSH_KEY': '/c/Users/cltbld/.ssh/ffxbld_dsa',
         'SYMBOL_SERVER_USER': 'ffxbld',
-        'TINDERBOX_OUTPUT': '1'
+        'TINDERBOX_OUTPUT': '1',
     },
-    'purge_minsize': 12,
-    'src_mozconfig': 'browser/config/mozconfigs/win32/nightly',
-    'tooltool_manifest_src': "browser/config/tooltool-manifests/win32/releng.manifest",
-    'package_filename': '*.win32.zip',
-
+    'upload_env': {
+        # UPLOAD_HOST is set to stage_server
+        # stage_server is dictated from build_pool_specifics.py
+        'UPLOAD_USER': STAGE_USERNAME,
+        'UPLOAD_TO_TEMP': '1',
+        'UPLOAD_SSH_KEY': '~/.ssh/%s' % (STAGE_SSH_KEY,),
+    },
     "check_test_env": {
         'MINIDUMP_STACKWALK': '%(abs_tools_dir)s/breakpad/win32/minidump_stackwalk.exe',
         'MINIDUMP_SAVE_PATH': '%(base_work_dir)s/minidumps',
     },
+    'purge_minsize': 12,
+    'src_mozconfig': 'browser/config/mozconfigs/win32/nightly',
+    'tooltool_manifest_src': "browser/config/tooltool-manifests/win32/releng.manifest",
     #########################################################################
 }
