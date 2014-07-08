@@ -4,6 +4,7 @@ config = {
 
   'default_actions': [
       'checkout-tools',
+      'clobber',
       'checkout-sources',
       'get-blobs',
       'clobber-shell',
