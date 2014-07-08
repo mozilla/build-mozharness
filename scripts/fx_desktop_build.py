@@ -32,17 +32,9 @@ class FxDesktopBuild(BuildScript, object):
                 'clone-tools',
                 'setup-mock',
                 'build',
-                'generate-build-props',
-                'generate-build-stats',
-                'symbols',
-                'packages',
-                'upload',
                 'sendchanges',
-                'pretty-names',
-                'check-l10n',
-                'check-test',
+                'generate-build-stats',
                 'update',
-                'ccache-stats',
             ],
             'require_config_file': True,
             # Default configuration
@@ -51,53 +43,24 @@ class FxDesktopBuild(BuildScript, object):
                 "pgo_build": False,
                 "debug_build": False,
                 "pgo_platforms": ['linux', 'linux64', 'win32'],
-
                 # nightly stuff
                 "nightly_build": False,
-                # create_snippets will be decided by
-                # configs/builds/branch_specifics.py
-                # and used only if this is a nightly build
-                "create_snippets": True,
-                "create_partial": True,
-                # We have "platform_supports_{snippets, partial}" to dictate
-                # whether the platform even supports creating_{snippets,
-                # partial}. In other words: we create {snippets, partial} if
-                # the branch wants it AND the platform supports it. So eg:
-                # For nightlies, the 'mozilla-central' branch may set
-                # create_snippets to true but if it's a linux asan platform,
-                # platform_supports_snippets will be False
-                "platform_supports_snippets": True,
-                "platform_supports_partials": True,
-
-                'complete_mar_pattern': '*.complete.mar',
-                'partial_mar_pattern': '*.partial.*.mar',
-                # if nightly and our platform is not an ASAN or Stat Analysis
-                # variant, use --release-to-latest in post upload cmd
-                'platform_supports_post_upload_to_latest': True,
-                'aus2_ssh_key': 'ffxbld_dsa',
-                'aus2_user': 'ffxbld',
-                'aus2_base_upload_dir': '/opt/aus2/incoming/2/Firefox',
                 'balrog_credentials_file': 'oauth.txt',
                 'periodic_clobber': 168,
-
                 # hg tool stuff
                 'default_vcs': 'hgtool',
                 'clone_with_purge': False,  # eg: try will impl this
                 'clone_by_revision': False,  # eg: try will impl this
-                "tools_repo": "https://hg.mozilla.org/build/tools",
-                "repo_base": "https://hg.mozilla.org",
-
-                "graph_selector": "/server/collect.cgi",
-                'hash_type': 'sha512',
-                'tooltool_url': 'http://runtime-binaries.pvt.build.mozilla'
-                                '.org/tooltool',
-                # only used for make uploadsymbols
-                'use_branch_in_symbols_extra_buildid': True,
-                'enable_checktests': True,
-                'tinderbox_build_dir': None,  # eg: try will impl this
+                'tinderbox_build_dir': None, # eg: try will impl this
                 'to_tinderbox_dated': True,  # eg: try will False this
                 'release_to_try_builds': False,  # eg: try will True this
                 'include_post_upload_builddir': False,
+                "tools_repo": "https://hg.mozilla.org/build/tools",
+                "repo_base": "https://hg.mozilla.org/users/mshal_mozilla.com",
+                'tooltool_url': 'http://runtime-binaries.pvt.build.mozilla'
+                                '.org/tooltool',
+                "graph_selector": "/server/collect.cgi",
+                # only used for make uploadsymbols
                 'old_packages': [
                     "%(objdir)s/dist/firefox-*",
                     "%(objdir)s/dist/fennec*",
@@ -105,6 +68,9 @@ class FxDesktopBuild(BuildScript, object):
                     "%(objdir)s/dist/thunderbird*",
                     "%(objdir)s/dist/install/sea/*.exe"
                 ],
+                'stage_product': 'firefox',
+                'platform_supports_post_upload_to_latest': True,
+                'use_branch_in_symbols_extra_buildid': True,
             },
             'ConfigClass': BuildingConfig,
         }
