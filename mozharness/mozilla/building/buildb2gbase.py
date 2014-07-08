@@ -241,6 +241,9 @@ class B2GBuildBaseScript(BuildbotMixin, MockMixin,
             v = v.format(workdir=dirs['abs_work_dir'],
                          srcdir=os.path.abspath(dirs['gecko_src']))
             env[k] = v
+        if self.config.get('env', {}).get('B2G_UPDATE_CHANNEL'):
+            v = str(self.config['env']['B2G_UPDATE_CHANNEL'])
+            env['B2G_UPDATE_CHANNEL'] = v
         if self.config.get('variant'):
             v = str(self.config['variant'])
             env['VARIANT'] = v
