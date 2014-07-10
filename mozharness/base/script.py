@@ -12,6 +12,7 @@ mozharness.
 
 import codecs
 from contextlib import contextmanager
+import errno
 import gzip
 import inspect
 import os
