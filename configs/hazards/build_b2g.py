@@ -3,8 +3,8 @@ config = {
   'expect_file': "expect.b2g.json",
 
   'default_actions': [
-      'checkout-tools',
       'clobber',
+      'checkout-tools',
       'checkout-sources',
       'get-blobs',
       'clobber-shell',

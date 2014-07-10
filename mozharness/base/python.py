@@ -318,11 +318,13 @@ class VirtualenvMixin(object):
         self.info("Creating virtualenv %s" % venv_path)
         virtualenv = c.get('virtualenv', self.query_exe('virtualenv'))
         if isinstance(virtualenv, str):
-            if not os.path.exists(virtualenv) and not self.which(virtualenv):
-                self.add_summary("The executable '%s' is not found; not creating virtualenv!" % virtualenv, level=FATAL)
-                return -1
             # allow for [python, virtualenv] in config
             virtualenv = [virtualenv]
+
+        if not os.path.exists(virtualenv[0]) and not self.which(virtualenv[0]):
+            self.add_summary("The executable '%s' is not found; not creating "
+                "virtualenv!" % virtualenv[0], level=FATAL)
+            return -1
 
         # https://bugs.launchpad.net/virtualenv/+bug/352844/comments/3
         # https://bugzilla.mozilla.org/show_bug.cgi?id=700415#c50

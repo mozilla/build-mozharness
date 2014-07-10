@@ -38,8 +38,8 @@ def requires(*queries):
 
 class B2GHazardBuild(PurgeMixin, B2GBuildBaseScript):
     all_actions = [
-        'checkout-tools',
         'clobber',
+        'checkout-tools',
         'checkout-sources',
         'get-blobs',
         'update-source-manifest',
@@ -55,8 +55,8 @@ class B2GHazardBuild(PurgeMixin, B2GBuildBaseScript):
     ]
 
     default_actions = [
-        'checkout-tools',
         'clobber',
+        'checkout-tools',
         'checkout-sources',
         'get-blobs',
         'clobber-shell',

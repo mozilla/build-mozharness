@@ -32,8 +32,8 @@ config = {
     ### release branches
     "mozilla-central": {
         "update_channel": "nightly",
-        "graph_server_branch_name": "Firefox",
         "repo_path": 'mozilla-central',
+        "graph_server_branch_name": "Firefox",
         'use_branch_in_symbols_extra_buildid': False,
     },
     'mozilla-release': {
@@ -42,6 +42,7 @@ config = {
         # nightlies for mozilla-release
         'update_channel': 'release',
         'branch_uses_per_checkin_strategy': True,
+        'use_branch_in_symbols_extra_buildid': False,
     },
     'mozilla-beta': {
         'repo_path': 'releases/mozilla-beta',
@@ -49,27 +50,27 @@ config = {
         # nightlies for mozilla-beta
         'update_channel': 'beta',
         'branch_uses_per_checkin_strategy': True,
+        'use_branch_in_symbols_extra_buildid': False,
     },
     'mozilla-aurora': {
         'repo_path': 'releases/mozilla-aurora',
         'update_channel': 'aurora',
         'branch_uses_per_checkin_strategy': True,
+        'use_branch_in_symbols_extra_buildid': False,
     },
     'mozilla-esr24': {
         'repo_path': 'releases/mozilla-esr24',
         'update_channel': 'nightly-esr24',
         'branch_uses_per_checkin_strategy': True,
+        'use_branch_in_symbols_extra_buildid': False,
     },
     'mozilla-b2g28_v1_3': {
         'repo_path': 'releases/mozilla-b2g28_v1_3',
-        'update_channel': 'nightly-b2g28',
-        # in automation we will run this branch with nightly but we do not
-        # create snippets or partials
-        "create_snippets": False,
-        "create_partial": False
+        'use_branch_in_symbols_extra_buildid': False,
     },
     'mozilla-b2g28_v1_3t': {
         'repo_path': 'releases/mozilla-b2g28_v1_3t',
+        'use_branch_in_symbols_extra_buildid': False,
     },
     'try': {
         'repo_path': 'try',
@@ -86,34 +87,12 @@ config = {
             'UPLOAD_TO_TEMP': '1',
             'UPLOAD_SSH_KEY': '~/.ssh/%s' % ("trybld_dsa",),
         },
+        'use_branch_in_symbols_extra_buildid': False,
     },
 
     ### project branches
     'b2g-inbound': {
         'repo_path': 'integration/b2g-inbound',
-        'platform_overrides': {
-            'win32': {
-                'enable_checktests': False,
-            },
-            'win32-debug': {
-                'enable_checktests': False,
-            },
-            'macosx64': {
-                'enable_checktests': False,
-            },
-            'macosx64-debug': {
-                'enable_checktests': False,
-            },
-        },
-    },
-    'date': {
-        'platform_overrides': {
-            # Bug 950206 - Enable 32-bit Windows builds on Date, test those
-            # builds on tst-w64-ec2-XXXX
-            'win32': {
-                'unittest_platform': 'win64',
-            },
-        },
     },
     'fx-team': {
         'repo_path': 'integration/fx-team',
@@ -125,7 +104,16 @@ config = {
         'repo_path': 'services/services-central',
     },
     'ux': {
-        "graph_server_branch_name": "UX",
+         "graph_server_branch_name": "UX",
+     },
+    'date': {
+        'platform_overrides': {
+            # Bug 950206 - Enable 32-bit Windows builds on Date, test those
+            # builds on tst-w64-ec2-XXXX
+            'win32': {
+                'unittest_platform': 'win64',
+            },
+        },
     },
 
     ### other branches that do not require anything special:

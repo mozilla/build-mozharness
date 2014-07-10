@@ -1,3 +1,5 @@
+import os
+
 MOZ_OBJDIR = 'obj-firefox'
 
 config = {
@@ -6,32 +8,22 @@ config = {
         'clone-tools',
         'setup-mock',
         'build',
-        'generate-build-props',
-        # 'generate-build-stats', asan_and_debug skips this action
-        'symbols',
-        'packages',
-        'upload',
         'sendchanges',
-        # 'pretty-names', asan_and_debug skips this action
-        # 'check-l10n', asan_and_debug skips this action
-        'check-test',
+        # 'generate-build-stats',
         'update',  # decided by query_is_nightly()
-        'ccache-stats',
     ],
     'stage_platform': 'linux64-asan-debug',
     'debug_build': True,
     'purge_minsize': 12,
-    "enable_talos_sendchange": False,  # asan/debug doesn't do talos sendchange
-    'enable_signing': False,  # asan and debug has no MOZ_SIGN_CMD
     'tooltool_manifest_src': "browser/config/tooltool-manifests/linux64/\
 asan.manifest",
-    'upload_symbols': False,
-    "platform_supports_partial": False,
-    "platform_supports_snippets": False,
     'platform_supports_post_upload_to_latest': False,
-
+    'enable_signing': False,
+    'enable_talos_sendchange': False,
     #### 64 bit build specific #####
     'env': {
+        'MOZBUILD_STATE_PATH': os.path.join(os.getcwd(), '.mozbuild'),
+        'MOZ_AUTOMATION': '1',
         'DISPLAY': ':2',
         'HG_SHARE_BASE_DIR': '/builds/hg-shared',
         'MOZ_OBJDIR': 'obj-firefox',
@@ -55,6 +47,5 @@ asan.manifest",
 /tools/python27-mercurial/bin:/home/cltbld/bin',
     },
     'src_mozconfig': 'browser/config/mozconfigs/linux64/debug-asan',
-    'base_name': 'Linux x86-64 %(branch)s debug asan',
     #######################
 }
