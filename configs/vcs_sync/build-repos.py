@@ -44,11 +44,14 @@ for repo in build_repos:
                 "^.*$"
             ]
         },
-        "tag_config": {
-            "tag_regexes": [
-                "^.*$"
-            ]
-        },
+# Bug 1036819 - build/* repos currently not able to push tags to github 
+# temporarily disable tags in conversion.
+# When bug 1020613 is resolved, this tag_config below can be enabled again.
+#       "tag_config": {
+#           "tag_regexes": [
+#               "^.*$"
+#           ]
+#       },
         "generate_git_notes": True, # False by default
     })
     remote_targets["build-%s-github" % repo] = {
