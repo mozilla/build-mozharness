@@ -1,8 +1,8 @@
 # This config contains dev values that will replace
 # the values specified in the production config
 # if specified like this (order matters):
-# --cfg configs/automation_emulator_config.py
-# --cfg configs/automation_emulator_config_dev.py
+# --cfg marionette/automation_emulator_config.py
+# --cfg marionette/automation_emulator_config_dev.py
 config = {
     "tooltool_servers": ["https://secure.pub.build.mozilla.org/tooltool/pvt/build"],
     "exes": {},
