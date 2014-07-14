@@ -85,7 +85,7 @@ class GaiaMixin(object):
             if pr_git_revision and pr_remote:
                 needs_clobber = False
                 if os.path.exists(dest) and os.path.exists(os.path.join(dest, '.git')):
-                    cmd = [git_cmd, 'clean', '--force', '-x', '-d']
+                    cmd = [git_cmd, 'clean', '-f', '-f', '-x', '-d']
                     self.run_command(cmd, cwd=dest, halt_on_failure=True,
                                      fatal_exit_code=3)
                     if not has_needed_commit(revision):
@@ -96,15 +96,19 @@ class GaiaMixin(object):
                         self.warn('Repository does not contain required revisions, clobbering')
                         needs_clobber = True
 
-            if needs_clobber:
-                self.rmtree(dest)
-
             # In pull request mode, we don't want to clone because we're satisfied
             # that the base directory is good enough because
             needs_clone = True
             if pr_git_revision and pr_remote:
-                if os.path.exists(dest) and os.path.exists(os.path.join(dest, '.git')):
-                    needs_clone = False
+                if os.path.exists(dest):
+                    if os.path.exists(os.path.join(dest, '.git')):
+                        needs_clone = False
+                    else:
+                        needs_clobber = True
+
+            if needs_clobber:
+                self.rmtree(dest)
+                needs_clone = True
 
             if needs_clone:
                 # git clone
@@ -117,12 +121,8 @@ class GaiaMixin(object):
                                  halt_on_failure=True,
                                  fatal_exit_code=3)
 
-            # checkout git branch
-            cmd = [git_cmd,
-                   'checkout',
-                   revision or branch]
-            self.run_command(cmd, cwd=dest, halt_on_failure=True,
-                             fatal_exit_code=3)
+            self.run_command([git_cmd, 'status'], cwd=dest);
+
 
             # handle pull request magic
             if pr_git_revision and pr_remote:
@@ -161,10 +161,10 @@ class GaiaMixin(object):
                   'GIT_COMMITTER_NAME': 'automation',
                   'GIT_COMMITTER_EMAIL': 'auto@mati.on'
                 }
-                cmd = [git_cmd, 'reset', '--hard', 'HEAD']
+                cmd = [git_cmd, 'reset', '--hard', revision or branch]
                 self.run_command(cmd, cwd=dest, halt_on_failure=True,
                                  fatal_exit_code=3)
-                cmd = [git_cmd, 'clean', '--force', '-x', '-d']
+                cmd = [git_cmd, 'clean', '-f', '-f', '-x', '-d']
                 self.run_command(cmd, cwd=dest, halt_on_failure=True,
                                  fatal_exit_code=3)
                 cmd = [git_cmd, 'merge', '--no-ff', pr_git_revision]
@@ -174,6 +174,15 @@ class GaiaMixin(object):
                 cmd = [git_cmd, 'rev-parse', 'HEAD']
                 self.run_command(cmd, cwd=dest, halt_on_failure=True,
                                  fatal_exit_code=3)
+
+            else:
+                # checkout git branch
+                cmd = [git_cmd,
+                       'checkout',
+                       revision or branch]
+                self.run_command(cmd, cwd=dest, halt_on_failure=True,
+                                 fatal_exit_code=3)
+
 
             # verify
             for cmd in ([git_cmd, 'log', '-1'], [git_cmd, 'branch']):
