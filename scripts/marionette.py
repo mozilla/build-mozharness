@@ -269,13 +269,18 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
 
         super(MarionetteTest, self).pull(**kwargs)
 
-    def _build_arg(self, option, value):
+    def _get_options_group(self, is_emulator, is_gaiatest):
         """
-        Build a command line argument
+        Determine which in tree options group to use and return the
+        appropriate key.
         """
-        if not value:
-            return []
-        return [str(option), str(value)]
+        platform = 'emulator' if is_emulator else 'desktop'
+        testsuite = 'gaiatest' if is_gaiatest else 'marionette'
+        # Currently running marionette on an emulator means webapi
+        # tests. This method will need to change if this does.
+        if is_emulator and not is_gaiatest:
+            testsuite = 'webapi'
+        return '_'.join([testsuite, platform, 'options'])
 
     def extract_xre(self, filename, parent_dir=None):
         m = re.search('\.tar\.(bz2|gz)$', filename)
@@ -361,6 +366,7 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
 
         # build the marionette command arguments
         python = self.query_python_path('python')
+        testvars = None
         if self.config.get('gaiatest'):
             # write a testvars.json file
             testvars = os.path.join(dirs['abs_gaiatest_dir'],
@@ -386,21 +392,6 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
                 if not os.access(binary, os.F_OK):
                     binary = os.path.join(binary_path, 'b2g')
 
-            cmd.append('--restart')
-
-            # emulator builds require a longer timeout
-            timeout = self.config.get('emulator') and 60000 or 10000
-            cmd.extend(self._build_arg('--timeout', timeout))
-
-            cmd.extend(self._build_arg('--type', self.config['test_type']))
-            cmd.extend(self._build_arg('--testvars', testvars))
-            cmd.extend(self._build_arg('--profile', os.path.join(dirs['abs_gaia_dir'],
-                                                                 'profile')))
-            cmd.extend(self._build_arg('--symbols-path', self.symbols_path))
-            cmd.extend(self._build_arg('--xml-output',
-                                       os.path.join(dirs['abs_work_dir'], 'output.xml')))
-            cmd.extend(self._build_arg('--html-output',
-                                       os.path.join(dirs['abs_blob_upload_dir'], 'output.html')))
             manifest = os.path.join(dirs['abs_gaiatest_dir'], 'gaiatest', 'tests',
                                     'tbpl-manifest.ini')
         else:
@@ -408,35 +399,41 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
             cmd = [python, '-u', os.path.join(dirs['abs_marionette_dir'],
                                               'runtests.py')]
 
-            if self.config.get('emulator'):
-                # emulator Marionette-webapi tests
-                cmd.extend(self._build_arg('--symbols-path', self.symbols_path))
-
-            cmd.extend(self._build_arg('--type', self.config['test_type']))
             manifest = os.path.join(dirs['abs_marionette_tests_dir'],
                                     self.config['test_manifest'])
 
-        if self.config.get('emulator'):
-            cmd.extend(self._build_arg('--logcat-dir', dirs['abs_work_dir']))
-            cmd.extend(self._build_arg('--emulator', self.config['emulator']))
-            cmd.extend(self._build_arg('--homedir',
-                                       os.path.join(dirs['abs_emulator_dir'],
-                                                    'b2g-distro')))
-        else:
-            # tests for Firefox or b2g desktop
-            cmd.extend(self._build_arg('--binary', binary))
-            cmd.extend(self._build_arg('--address',
-                                       self.config['marionette_address']))
             if self.config.get('app_arg'):
                 cmd.extend(['--app-arg', self.config['app_arg']])
 
-        if self.config.get("structured_output"):
+        config_fmt_args = {
+            'type': self.config.get('test_type'),
+            'testvars': testvars,
+            # emulator builds require a longer timeout
+            'timeout': 60000 if self.config.get('emulator') else 10000,
+            'profile': os.path.join(dirs['abs_gaia_dir'], 'profile'),
+            'xml_output': os.path.join(dirs['abs_work_dir'], 'output.xml'),
+            'html_output': os.path.join(dirs['abs_blob_upload_dir'], 'output.html'),
+            'symbols_path': self.symbols_path if self.config.get('emulator') else None,
+            'logcat_dir': dirs['abs_work_dir'],
+            'emulator': self.config.get('emulator'),
+            'homedir': os.path.join(dirs['abs_emulator_dir'], 'b2g-distro'),
+            'binary': binary,
+            'address': self.config.get('marionette_address'),
+            'raw_log_file': os.path.join(dirs["abs_blob_upload_dir"],
+                                         "mn_structured_full.log")
+        }
+
+        options_group = self._get_options_group(self.config.get('emulator'),
+                                                self.config.get('gaiatest'))
+        for s in self.tree_config[options_group]:
+            cmd.append(s % config_fmt_args)
+
+        if self.mkdir_p(dirs["abs_blob_upload_dir"]) == -1:
             # Make sure that the logging directory exists
-            if self.mkdir_p(dirs["abs_blob_upload_dir"]) == -1:
-                self.fatal("Could not create blobber upload directory")
+            self.fatal("Could not create blobber upload directory")
+
+        if self.config.get("structured_output"):
             cmd.append("--log-raw=-")
-            cmd.append("--log-raw=%s" % os.path.join(dirs["abs_blob_upload_dir"],
-                                                     "mn_structured_full.log"))
 
         cmd.append(manifest)
 

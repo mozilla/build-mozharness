@@ -47,4 +47,5 @@ config = {
     ],
     "blob_uploader_auth_file": os.path.join(os.getcwd(), "oauth.txt"),
     "vcs_output_timeout": 1760,
+    "in_tree_config": "config/mozharness/marionette.py",
 }
