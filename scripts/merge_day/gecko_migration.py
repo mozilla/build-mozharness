@@ -158,7 +158,7 @@ class GeckoMigration(MercurialScript):
                force=None, halt_on_failure=True):
         if isinstance(tags, basestring):
             tags = [tags]
-        message = "Tagging %s" % cwd
+        message = "Tagging %s" % os.path.basename(cwd)
         if revision:
             message = "%s %s" % (message, revision)
         message = "%s with %s" % (message, ', '.join(tags))
