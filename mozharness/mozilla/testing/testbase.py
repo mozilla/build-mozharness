@@ -176,6 +176,8 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin):
         '''
         if url.startswith("http://pvtbuilds.pvt.build") and self._query_outside_vpn(url):
             url = url.replace("http://pvtbuilds.pvt.build", "https://pvtbuilds")
+        if url.startswith("http://runtime-binaries.pvt.build.mozilla.org/tooltool") and self._query_outside_vpn(url):
+            url = url.replace("http://runtime-binaries.pvt.build.mozilla.org/tooltool", "https://secure.pub.build.mozilla.org/tooltool/pvt/build")
         return super(TestingMixin, self).download_file(url, *args, **kwargs)
 
     def _download_file(self, url, filename):
@@ -183,6 +185,8 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin):
         '''
         if url.startswith("http://pvtbuilds.pvt.build") and self._query_outside_vpn(url):
             url = url.replace("http://pvtbuilds.pvt.build", "https://pvtbuilds")
+        if url.startswith("http://runtime-binaries.pvt.build.mozilla.org/tooltool") and self._query_outside_vpn(url):
+            url = url.replace("http://runtime-binaries.pvt.build.mozilla.org/tooltool", "https://secure.pub.build.mozilla.org/tooltool/pvt/build")
         return super(TestingMixin, self)._download_file(url, filename)
 
     # read_buildbot_config is in BuildbotMixin.
