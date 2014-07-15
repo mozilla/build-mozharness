@@ -158,10 +158,11 @@ class GeckoMigration(MercurialScript):
                force=None, halt_on_failure=True):
         if isinstance(tags, basestring):
             tags = [tags]
-        message = "Tagging %s" % cwd
+        message = "Tagging %s" % os.path.basename(cwd)
         if revision:
             message = "%s %s" % (message, revision)
         message = "%s with %s" % (message, ', '.join(tags))
+        message += " a=release DONTBUILD CLOSED TREE"
         self.info(message)
         cmd = self.query_exe('hg', return_type='list') + ['tag']
         if user:
@@ -561,8 +562,11 @@ the script (--clean-repos --pull --migrate).  The second run will be faster."""
         dirs = self.query_abs_dirs()
         hg = self.query_exe("hg", return_type="list")
         for cwd in (dirs['abs_from_dir'], dirs['abs_to_dir']):
+            push_cmd = hg + ['push']
+            if cwd == dirs['abs_to_dir'] and self.config['migration_behavior'] == 'beta_to_release':
+                push_cmd.append('--new-branch')
             status = self.run_command(
-                hg + ['push'],
+                push_cmd,
                 cwd=cwd,
                 error_list=HgErrorList,
                 success_codes=[0, 1],
