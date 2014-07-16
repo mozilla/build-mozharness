@@ -6,11 +6,12 @@
 import json
 
 from mozharness.base import log
-from mozharness.base.log import OutputParser, WARNING, INFO, CRITICAL
-from mozharness.mozilla.buildbot import TBPL_WARNING, TBPL_FAILURE
+from mozharness.base.log import OutputParser, WARNING, INFO
+from mozharness.mozilla.buildbot import TBPL_WARNING
 from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_WORST_LEVEL_TUPLE
 
-#TODO: reuse the formatter in mozlog
+# TODO: reuse the formatter in mozlog
+
 
 class StructuredFormatter(object):
     def __init__(self):
