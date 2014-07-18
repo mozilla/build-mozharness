@@ -77,7 +77,7 @@ class BlobUploadMixin(VirtualenvMixin):
             dir_to_upload = ['-d', blob_dir]
             # We want blobberc to tell us if a summary file was uploaded through this manifest file
             manifest_path = os.path.join(dirs['abs_work_dir'], "blobber_manifest.txt")
-            f = open(manifest_path, 'w').close() # Create empty file
+            open(manifest_path, 'w').close()  # Create empty file
             record_uploaded_files = ['--output-manifest-url', manifest_path]
             self.info("Files from %s are to be uploaded with <%s> branch at "
                       "the following location(s): %s" % (blob_dir, blob_branch,

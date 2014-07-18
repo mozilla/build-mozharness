@@ -644,7 +644,7 @@ class B2GBuild(LocalesMixin, PurgeMixin,
             self.info("Not a nightly build. Skipping...")
             return
         dirs = self.query_abs_dirs()
-        gecko_config = self.load_gecko_config()
+        self.load_gecko_config()
         cmd = self.make_updates_cmd[:]
         env = self.query_build_env()
 

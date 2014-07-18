@@ -38,10 +38,8 @@ class BalrogMixin(object):
             cmd.append("--verbose")
 
         self.info("Calling Balrog submission script")
-        self.retry(
+        return_code = self.retry(
             self.run_command, args=(cmd,),
-            kwargs={
-                "halt_on_failure": False,
-                "fatal_exit_code": 3,
-            },
         )
+        if return_code not in [0]:
+            self.return_code = 1

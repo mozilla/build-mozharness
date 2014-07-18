@@ -212,7 +212,7 @@ class ScriptMixin(object):
 
             # Failures due to missing local files won't benefit from retry.
             # Raise the original OSError.
-            if isinstance(e.args[0], OSError) and e.args[0].errno == errno.NOENT:
+            if isinstance(e.args[0], OSError) and e.args[0].errno == errno.ENOENT:
                 raise e.args[0]
 
             remote_host = urlparse.urlsplit(url)[1]
