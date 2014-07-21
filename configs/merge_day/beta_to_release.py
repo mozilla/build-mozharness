@@ -19,4 +19,5 @@ config = {
 
     "migration_behavior": "beta_to_release",
     "require_remove_locales": True,
+    "pull_all_branches": True,
 }

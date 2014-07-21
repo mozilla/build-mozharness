@@ -476,6 +476,20 @@ class GeckoMigration(MercurialScript):
             self.fatal("Cannot transplant %s from %s properly" %
                        (changeset, repo))
 
+    def pull_from_repo(self, from_dir, to_dir, revision=None):
+        """ Pull from one repo to another. """
+        hg = self.query_exe("hg", return_type="list")
+        cmd = hg + ["pull"]
+        if revision:
+            cmd.extend(["-r", revision])
+        cmd.append(from_dir)
+        self.run_command(
+            cmd,
+            cwd=to_dir,
+            error_list=HgErrorList,
+            halt_on_failure=True,
+        )
+
 # Actions {{{1
     def clean_repos(self):
         """ We may end up with contaminated local repos at some point, but
@@ -555,8 +569,10 @@ class GeckoMigration(MercurialScript):
         )
         new_from_rev = self.query_from_revision()
         self.info("New revision %s" % new_from_rev)
-        m = MercurialVCS(log_obj=self.log_obj, config=self.config)
-        m.pull(dirs['abs_from_dir'], dirs['abs_to_dir'])
+        pull_revision = None
+        if not self.config.get("pull_all_branches"):
+            pull_revision = new_from_rev
+        self.pull_from_repo(dirs['abs_from_dir'], dirs['abs_to_dir'], revision=pull_revision)
         if self.config.get("requires_head_merge") is not False:
             self.hg_merge_via_debugsetparents(
                 dirs['abs_to_dir'], old_head=base_to_rev, new_head=new_from_rev,
