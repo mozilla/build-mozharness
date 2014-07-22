@@ -276,6 +276,7 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, VCSMixin, BaseScript, BlobUpl
             'this_chunk': self.config.get('this_chunk'),
             'test_path': self.config.get('test_path'),
             'certificate_path': dirs['abs_certs_dir'],
+            'raw_log_file': os.path.join(dirs['abs_blob_upload_dir'], 'raw_structured_logs.log')
         }
 
         # Bug 978233 - hack to get around multiple mochitest manifest arguments

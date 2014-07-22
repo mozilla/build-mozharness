@@ -403,6 +403,7 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
             'symbols_path': self.symbols_path,
             'modules_dir': dirs['abs_modules_dir'],
             'installer_path': self.installer_path,
+            'raw_log_file': os.path.join(dirs['abs_blob_upload_dir'], 'raw_structured_logs.log')
         }
         for option in self.tree_config["suite_definitions"][suite_category]["options"]:
             cmd.extend([option % str_format_values])

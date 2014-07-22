@@ -157,6 +157,7 @@ class B2GDesktopTest(BlobUploadMixin, TestingMixin, TooltoolMixin, MercurialScri
             'this_chunk': self.config.get('this_chunk'),
             'cert_path': dirs['abs_certs_dir'],
             'browser_arg': self.config.get('browser_arg'),
+            'raw_log_file': os.path.join(dirs['abs_blob_upload_dir'], 'raw_structured_logs.log')
         }
 
         # Bug 978233 - hack to get around multiple mochitest manifest arguments
