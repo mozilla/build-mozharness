@@ -158,7 +158,7 @@ class GeckoMigration(MercurialScript):
                force=None, halt_on_failure=True):
         if isinstance(tags, basestring):
             tags = [tags]
-        message = "Tagging %s" % os.path.basename(cwd)
+        message = "No bug - Tagging %s" % os.path.basename(cwd)
         if revision:
             message = "%s %s" % (message, revision)
         message = "%s with %s" % (message, ', '.join(tags))
@@ -246,7 +246,6 @@ class GeckoMigration(MercurialScript):
                     message="Preserve old tags after debugsetparents. "
                     "CLOSED TREE DONTBUILD a=release",
                     user=user,
-                    ignore_no_changes=True,
                 )
 
     def replace(self, file_name, from_, to_):
