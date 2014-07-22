@@ -4,9 +4,8 @@ import socket
 hostname = socket.gethostname()
 
 GECKO_BRANCHES = {
-#    'v1.4': 'mozilla-beta',
-#    'v2.0': 'mozilla-aurora',
-#    'v2.1': 'mozilla-central',
+    'v2.0': 'mozilla-beta',
+    'v2.1': 'mozilla-central',
 }
 
 GECKO_CONFIG_TEMPLATE = {
