@@ -6,9 +6,9 @@ config = {
         "hgtool.py": ["/usr/local/bin/hgtool.py"],
         "gittool.py": ["/usr/local/bin/gittool.py"],
     },
-    'gecko_pull_url': 'https://hg.mozilla.org/releases/mozilla-aurora',
-    'gecko_push_url': 'ssh://hg.mozilla.org/releases/mozilla-aurora',
-    'gecko_local_dir': 'mozilla-aurora',
+    'gecko_pull_url': 'https://hg.mozilla.org/releases/mozilla-b2g32_v2_0',
+    'gecko_push_url': 'ssh://hg.mozilla.org/releases/mozilla-b2g32_v2_0',
+    'gecko_local_dir': 'mozilla-b2g32_v2_0',
 
     'manifests_repo': 'https://git.mozilla.org/b2g/b2g-manifest.git',
     'manifests_revision': 'origin/v2.0',
