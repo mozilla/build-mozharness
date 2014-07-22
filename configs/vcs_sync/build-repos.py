@@ -16,7 +16,7 @@ build_repos = (
     'puppet-manifests',
     'rpm-sources',
     'talos',
-    'tools'
+    'tools',
 )
 
 conversion_repos = []

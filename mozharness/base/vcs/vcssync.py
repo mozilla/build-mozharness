@@ -37,6 +37,7 @@ class VCSSyncScript(VCSScript):
         subject = "[vcs2vcs] Successful conversion for %s" % job_name
         text = ''
         error_contents = ''
+        max_log_sample_size = c.get('email_max_log_sample_size') # default defined in vcs_sync.py
         error_log = os.path.join(dirs['abs_log_dir'], self.log_obj.log_files[ERROR])
         info_log = os.path.join(dirs['abs_log_dir'], self.log_obj.log_files[INFO])
         if os.path.exists(error_log) and os.path.getsize(error_log) > 0:
@@ -47,9 +48,9 @@ class VCSSyncScript(VCSScript):
         if fatal:
             subject = "[vcs2vcs] Failed conversion for %s" % job_name
             text = ''
-            if len(message) > 10240:
-                text += '*** Message below has been truncated: it was %s characters, and has been reduced to 10240 characters:\n\n' % len(message)
-            text += message[0:10240] + '\n\n' # limit message to 10KB in size (large emails fail to send)
+            if len(message) > max_log_sample_size:
+                text += '*** Message below has been truncated: it was %s characters, and has been reduced to %s characters:\n\n' % (len(message), max_log_sample_size)
+            text += message[0:max_log_sample_size] + '\n\n' # limit message to max_log_sample_size in size (large emails fail to send)
         if not self.successful_repos:
             subject = "[vcs2vcs] Successful no-op conversion for %s" % job_name
         if error_contents and not fatal:
@@ -67,9 +68,9 @@ class VCSSyncScript(VCSScript):
         if not fatal and error_contents and not self.summary_list:
             text += 'Summary is empty; the below errors have probably been auto-corrected.\n\n'
         if error_contents:
-            if len(error_contents) > 10240:
-                text += '\n*** Message below has been truncated: it was %s characters, and has been reduced to 10240 characters:\n' % len(error_contents)
-            text += '\n%s\n\n' % error_contents[0:10240] # limit message to 10KB in size (large emails fail to send)
+            if len(error_contents) > max_log_sample_size:
+                text += '\n*** Message below has been truncated: it was %s characters, and has been reduced to %s characters:\n' % (len(error_contents), max_log_sample_size)
+            text += '\n%s\n\n' % error_contents[0:max_log_sample_size] # limit message to 100KB in size (large emails fail to send)
         if not text:
             subject += " <EOM>"
         for notify_config in c.get('notify_config', []):

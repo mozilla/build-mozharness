@@ -56,12 +56,22 @@ class HgGitScript(VirtualenvMixin, TooltoolMixin, TransferMixin, VCSSyncScript):
     all_repos = None
     successful_repos = []
     config_options = [
-        [["--no-check-incoming"], {
+        [["--no-check-incoming", ], {
             "action": "store_false",
             "dest": "check_incoming",
             "default": True,
-            "help": "Don't check for incoming changesets"
-        }]
+            "help": "Don't check for incoming changesets",
+        }],
+        [["--max-log-sample-size", ], {
+            "action": "store",
+            "dest": "email_max_log_sample_size",
+            "type": "int",
+            "default": 102400,
+            "help": "Specify the maximum number of characters from a log file to be "
+                    "embedded in the email body, per embedding (not total - note we "
+                    "embed two separate log samples into the email - so maximum "
+                    "email body size can end up a little over 2x this amount).",
+         }],
     ]
 
     def __init__(self, require_config_file=True):
@@ -95,6 +105,7 @@ class HgGitScript(VirtualenvMixin, TooltoolMixin, TransferMixin, VCSSyncScript):
             ],
             require_config_file=require_config_file
         )
+        self.remote_targets = None
 
     # Helper methods {{{1
     def query_abs_dirs(self):
@@ -165,14 +176,58 @@ intree=1
 """
             self.write_to_file(hgrc, hgrc_update, open_mode='a')
 
+    def _process_locale(self, locale, type, config, l10n_remote_targets, name, l10n_repos):
+        """ This contains the common processing that we do on both gecko_config
+            and gaia_config for a given locale.
+            """
+        replace_dict = {'locale': locale}
+        new_targets = deepcopy(config.get('targets', {}))
+        for target in new_targets:
+            dest = target['target_dest']
+            if '%(locale)s' in dest:
+                new_dest = dest % replace_dict
+                target['target_dest'] = new_dest
+                remote_target = l10n_remote_targets.get(new_dest)
+                if remote_target is None:  # generate target if not seen before
+                    possible_remote_target = l10n_remote_targets.get(dest)
+                    # target may be remote, or local - we can tell by seeing
+                    # local targets will be none - remote targets will not,
+                    # so we can use this to test if it is local or remote
+                    if possible_remote_target is not None:
+                        remote_target = deepcopy(possible_remote_target)
+                        remote_repo = remote_target.get('repo')
+                        if '%(locale)s' in remote_repo:
+                            remote_target['repo'] = remote_repo % replace_dict
+                        l10n_remote_targets[new_dest] = remote_target
+        long_name = '%s_%s_%s' % (type, name, locale)
+        repo_dict = {
+            'repo': config['hg_url'] % replace_dict,
+            'revision': 'default',
+            'repo_name': long_name,
+            'conversion_dir': long_name,
+            'mapfile_name': '%s-mapfile' % long_name,
+            'targets': new_targets,
+            'vcs': 'hg',
+            'branch_config': {
+                'branches': {
+                    'default': config['git_branch_name'],
+                },
+            },
+            'tag_config': config.get('tag_config', {}),
+            'mapper': config.get('mapper', {}),
+            'generate_git_notes': config.get('generate_git_notes', {}),
+        }
+        l10n_repos.append(repo_dict)
+
     def _query_l10n_repos(self):
         """ Since I didn't want to have to build a huge static list of l10n
             repos, and since it would be nicest to read the list of locales
             from their SSoT files.
             """
         l10n_repos = []
-        gecko_dict = deepcopy(self.config['l10n_config'].get('gecko_config', {}))
+        l10n_remote_targets = deepcopy(self.config['remote_targets'])
         dirs = self.query_abs_dirs()
+        gecko_dict = deepcopy(self.config['l10n_config'].get('gecko_config', {}))
         for name, gecko_config in gecko_dict.items():
             file_name = self.download_file(gecko_config['locales_file_url'],
                                            parent_dir=dirs['abs_work_dir'])
@@ -181,38 +236,9 @@ intree=1
                 continue
             contents = self.read_from_file(file_name)
             for locale in contents.splitlines():
-                replace_dict = {'locale': locale}
-                long_name = 'gecko_%s_%s' % (name, locale)
-                repo_dict = {
-                    'repo': gecko_config['hg_url'] % replace_dict,
-                    'revision': 'default',
-                    'repo_name': long_name,
-                    'conversion_dir': long_name,
-                    'mapfile_name': '%s-mapfile' % long_name,
-                    'targets': [{
-                        'target_dest': 'releases-l10n-%s-gecko/.git' % locale,
-                        'vcs': 'git',
-                        'test_push': True,
-                    }],
-                    'vcs': 'hg',
-                    'branch_config': {
-                        'branches': {
-                            'default': gecko_config['git_branch_name'],
-                        },
-                    },
-                    'tag_config': gecko_config.get('tag_config', {}),
-                }
-                for remote_target in gecko_config.get('targets', []):
-                    if not remote_target.get('target_dest') or remote_target['target_dest'] not in self.config['remote_targets']:
-                        self.fatal("Can't figure out remote target for %s!" % long_name)
-#                    target_config = deepcopy(self.config['remote_targets'][remote_target['target_dest']])
-#                    target_config['repo'] = target_config['repo'] % replace_dict
-#                    repo_dict['targets'].append(target_config)
-                l10n_repos.append(repo_dict)
+                self._process_locale(locale, 'gecko', gecko_config, l10n_remote_targets, name, l10n_repos)
 
         gaia_dict = deepcopy(self.config['l10n_config'].get('gaia_config', {}))
-        # TODO other than locales and long_name I think these are the same; I
-        # need to un-dup code.
         for name, gaia_config in gaia_dict.items():
             contents = self.retry(
                 self.load_json_from_url,
@@ -222,36 +248,12 @@ intree=1
                 self.error("Can't download locales from %s; skipping!" % gaia_config['locales_file_url'])
                 continue
             for locale in dict(contents).keys():
-                replace_dict = {'locale': locale}
-                long_name = 'gaia_%s_%s' % (name, locale)
-                repo_dict = {
-                    'repo': gaia_config['hg_url'] % replace_dict,
-                    'revision': 'default',
-                    'repo_name': long_name,
-                    'conversion_dir': long_name,
-                    'mapfile_name': '%s-mapfile' % long_name,
-                    'targets': [{
-                        'target_dest': 'releases-l10n-%s-gaia/.git' % locale,
-                        'vcs': 'git',
-                        'test_push': True,
-                    }],
-                    'vcs': 'hg',
-                    'branch_config': {
-                        'branches': {
-                            'default': gaia_config['git_branch_name'],
-                        },
-                    },
-                    'tag_config': gaia_config.get('tag_config', {}),
-                }
-                for remote_target in gaia_config.get('targets', []):
-                    if not remote_target.get('target_dest') or remote_target['target_dest'] not in self.config['remote_targets']:
-                        self.fatal("Can't figure out remote target for %s!" % long_name)
-#                    target_config = deepcopy(self.config['remote_targets'][remote_target['target_dest']])
-#                    target_config['repo'] = target_config['repo'] % replace_dict
-#                    repo_dict['targets'].append(target_config)
-                l10n_repos.append(repo_dict)
+                self._process_locale(locale, 'gaia', gaia_config, l10n_remote_targets, name, l10n_repos)
         self.info("Built l10n_repos...")
         self.info(pprint.pformat(l10n_repos, indent=4))
+        self.info("Remote targets...")
+        self.info(pprint.pformat(l10n_remote_targets, indent=4))
+        self.remote_targets = l10n_remote_targets
         return l10n_repos
 
     def _query_project_repos(self):
@@ -295,6 +297,14 @@ intree=1
         if self.config.get('conversion_type') == 'project-branches':
             self.all_repos += self._query_project_repos()
         return self.all_repos
+
+    def query_all_non_failed_repos(self):
+        """ Same as query_all_repos(self) but filters out repos that failed in an earlier
+            action - so use this for downstream actions that require earlier actions did
+            not fail for a given repo.
+            """
+        all_repos = self.query_all_repos()
+        return [repo for repo in all_repos if repo.get('repo_name') not in self.failures]
 
     def _query_repo_previous_status(self, repo_name, repo_map=None):
         """ Return False if previous run was unsuccessful.
@@ -343,7 +353,11 @@ intree=1
                     # Don't leave a failed clone behind
                     self.rmtree(source_dest)
                     self._update_repo_previous_status(repo_name, successful_flag=False, write_update=True)
-                    self.fatal("Can't clone %s!" % repo_config['repo'])
+                    self.add_failure(
+                        repo_name,
+                        message="Can't clone %s!" % repo_config['repo'],
+                        level=ERROR,
+                    )
         elif self.config['check_incoming'] and repo_config.get("check_incoming", True):
             previous_status = self._query_repo_previous_status(repo_name)
             if previous_status is None:
@@ -396,7 +410,11 @@ intree=1
                     repo_config, retry=False, clobber=True)
             else:
                 self._update_repo_previous_status(repo_name, successful_flag=False, write_update=True)
-                self.fatal("Can't pull %s!" % repo_config['repo'])
+                self.add_failure(
+                    repo_name,
+                    message="Can't pull %s!" % repo_config['repo'],
+                    level=ERROR,
+                )
         # commenting out hg verify since it takes ~5min per repo; hopefully
         # exit codes will save us
 #        if self.run_command(hg + ["verify"], cwd=source_dest):
@@ -453,7 +471,9 @@ intree=1
                 target_vcs = target_config.get("vcs")
             else:
                 target_name = target_config['target_dest']
-                remote_config = self.config.get('remote_targets', {}).get(target_name, target_config)
+                if self.remote_targets is None:
+                    self.remote_targets = self.config.get('remote_targets', {})
+                remote_config = self.remote_targets.get(target_name, target_config)
                 force_push = remote_config.get("force_push", target_config.get("force_push"))
                 target_vcs = remote_config.get("vcs", target_config.get("vcs"))
             if target_vcs == "git":
@@ -462,12 +482,13 @@ intree=1
                 if force_push:
                     base_command.append("-f")
                 if test_push:
-                    base_command.append(target_name)
+                    target_git_repo = target_name
                 else:
-                    base_command.append(remote_config['repo'])
+                    target_git_repo = remote_config['repo']
                     # Allow for using a custom git ssh key.
                     env['GIT_SSH_KEY'] = remote_config['ssh_key']
                     env['GIT_SSH'] = os.path.join(external_tools_path, 'git-ssh-wrapper.sh')
+                base_command.append(target_git_repo)
                 # Allow for pushing a subset of repo branches to the target.
                 # If we specify that subset, we can also specify different
                 # names for those branches (e.g. b2g18 -> master for a
@@ -509,19 +530,20 @@ intree=1
                         hg + ['tags'],
                         cwd=source_dir,
                     )
-                    for tag_line in tag_list.splitlines():
-                        if not tag_line:
-                            continue
-                        tag_parts = tag_line.split()
-                        if not tag_parts:
-                            self.warning("Bogus tag_line? %s" % str(tag_line))
-                            continue
-                        tag_name = tag_parts[0]
-                        for regex in regex_list:
-                            if tag_name != 'tip' and regex.search(tag_name) is not None:
-                                refs_list += ['+refs/tags/%s:refs/tags/%s' % (tag_name, tag_name)]
+                    if tag_list is not None:
+                        for tag_line in tag_list.splitlines():
+                            if not tag_line:
                                 continue
-                error_msg = "%s: Can't push %s to %s!\n" % (repo_config['repo_name'], conversion_dir, target_name)
+                            tag_parts = tag_line.split()
+                            if not tag_parts:
+                                self.error("Bogus tag_line? %s" % str(tag_line))
+                                continue
+                            tag_name = tag_parts[0]
+                            for regex in regex_list:
+                                if tag_name != 'tip' and regex.search(tag_name) is not None:
+                                    refs_list += ['+refs/tags/%s:refs/tags/%s' % (tag_name, tag_name)]
+                                    continue
+                error_msg = "%s: Can't push %s to %s!\n" % (repo_config['repo_name'], conversion_dir, target_git_repo)
                 if self._do_push_repo(
                     base_command,
                     refs_list=refs_list,
@@ -712,7 +734,7 @@ intree=1
         """ This action creates local directories to do test pushes to.
             """
         dirs = self.query_abs_dirs()
-        for repo_config in self.query_all_repos():
+        for repo_config in self.query_all_non_failed_repos():
             for target_config in repo_config['targets']:
                 if not target_config.get('test_push'):
                     continue
@@ -737,7 +759,7 @@ intree=1
             We pull the stage mirror into the work mirror, where the conversion
             is done.
             """
-        for repo_config in self.query_all_repos():
+        for repo_config in self.query_all_non_failed_repos():
             self._update_stage_repo(repo_config)
 
     def pull_out_new_sha_lookups(self, old_file, new_file):
@@ -777,28 +799,30 @@ intree=1
         datetime = time.strftime('%Y-%m-%d %H:%M %Z')
         repo_map['last_pull_timestamp'] = timestamp
         repo_map['last_pull_datetime'] = datetime
-        for repo_config in self.query_all_repos():
+        for repo_config in self.query_all_non_failed_repos():
             repo_name = repo_config['repo_name']
             source = os.path.join(dirs['abs_source_dir'], repo_name)
             dest = self.query_abs_conversion_dir(repo_config)
             if not dest:
                 self.fatal("No conversion_dir for %s!" % repo_name)
             if not os.path.exists(dest):
-#                self.run_command(hg + ["init", dest], halt_on_failure=True)
-#                self.run_command(hg + ['pull', source],
-#                                 cwd=os.path.dirname(dest))
                 self.mkdir_p(os.path.dirname(dest))
                 self.run_command(hg + ['clone', '--noupdate', source, dest],
                                  error_list=HgErrorList,
-                                 halt_on_failure=True)
-                self.write_hggit_hgrc(dest)
-                self.init_git_repo('%s/.git' % dest, additional_args=['--bare'])
-                self.run_command(
+                                 halt_on_failure=False)
+                if os.path.exists(dest):
+                    self.write_hggit_hgrc(dest)
+                    self.init_git_repo('%s/.git' % dest, additional_args=['--bare'])
+                    self.run_command(
                     git + ['--git-dir', '%s/.git' % dest, 'config', 'gc.auto', '0'],
-                )
-            elif self.query_failure(repo_name):
-                self.info("Skipping %s." % repo_config['repo_name'])
-                continue
+                    )
+                else:
+                    self.add_failure(
+                        repo_name,
+                        message="Failed to clone %s!" % source,
+                        level=ERROR,
+                    )
+                    continue
             # Build branch map.
             branch_map = self.query_branches(
                 repo_config.get('branch_config', {}),
@@ -812,7 +836,12 @@ intree=1
                 if output:
                     rev = output.split(' ')[0]
                 else:
-                    self.fatal("Branch %s doesn't exist in %s!" % (branch, repo_name))
+                    self.add_failure(
+                        repo_name,
+                        message="Branch %s doesn't exist in %s (%s cloned into staging directory %s)!" % (branch, repo_name, repo_config.get('repo'), source),
+                        level=ERROR,
+                    )
+                    continue
                 timestamp = int(time.time())
                 datetime = time.strftime('%Y-%m-%d %H:%M %Z')
                 if self.run_command(hg + ['pull', '-r', rev, source], cwd=dest,
@@ -824,6 +853,7 @@ intree=1
                         level=ERROR,
                     )
                     self._update_repo_previous_status(repo_name, successful_flag=False, write_update=True)
+                    # don't leave a dirty checkout behind, and skip remaining branches
                     self.rmtree(source)
                     break
                 self.run_command(
@@ -866,7 +896,7 @@ intree=1
 
     def create_git_notes(self):
         git = self.query_exe("git", return_type="list")
-        for repo_config in self.query_all_repos():
+        for repo_config in self.query_all_non_failed_repos():
             repo = repo_config['repo']
             if repo_config.get('generate_git_notes', False):
                 dest = self.query_abs_conversion_dir(repo_config)
@@ -920,7 +950,7 @@ intree=1
     def publish_to_mapper(self):
         """ This method will attempt to create git notes for any new git<->hg mappings
             found in the generated_mapfile file and also push new mappings to mapper service."""
-        for repo_config in self.query_all_repos():
+        for repo_config in self.query_all_non_failed_repos():
             dest = self.query_abs_conversion_dir(repo_config)
             # 'git-mapfile' is created by hggit plugin, containing all the mappings
             complete_mapfile = os.path.join(dest, '.hg', 'git-mapfile')
@@ -986,7 +1016,7 @@ intree=1
         dirs = self.query_abs_dirs()
         mapfiles = []
         if self.config.get('conversion_type') == 'b2g-l10n':
-            for repo_config in self.query_all_repos():
+            for repo_config in self.query_all_non_failed_repos():
                 if repo_config.get("mapfile_name"):
                     mapfiles.append(repo_config['mapfile_name'])
         else:
@@ -1015,11 +1045,7 @@ intree=1
         datetime = time.strftime('%Y-%m-%d %H:%M %Z')
         repo_map['last_push_timestamp'] = timestamp
         repo_map['last_push_datetime'] = datetime
-        for repo_config in self.query_all_repos():
-            if self.query_failure(repo_config['repo_name']):
-                self.info("Skipping %s." % repo_config['repo_name'])
-                # comment out continue below to force push
-                continue
+        for repo_config in self.query_all_non_failed_repos():
             timestamp = int(time.time())
             datetime = time.strftime('%Y-%m-%d %H:%M %Z')
             status = self._push_repo(repo_config)
