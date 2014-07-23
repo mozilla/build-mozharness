@@ -34,28 +34,32 @@ class VCSSyncScript(VCSScript):
         end_time = time.time()
         seconds = int(end_time - self.start_time)
         self.info("Job took %d seconds." % seconds)
+        subject = "[vcs2vcs] Successful conversion for %s" % job_name
         text = ''
         error_contents = ''
         max_log_sample_size = c.get('email_max_log_sample_size') # default defined in vcs_sync.py
         error_log = os.path.join(dirs['abs_log_dir'], self.log_obj.log_files[ERROR])
         info_log = os.path.join(dirs['abs_log_dir'], self.log_obj.log_files[INFO])
-        failures = False
         if os.path.exists(error_log) and os.path.getsize(error_log) > 0:
-            failures = True
             error_contents = self.get_output_from_command(
-                # writing CRI[T]ICAL ensures that the egrep itself will not be included
-                ["egrep", "-C5", "^[0-9:]+ +(ERROR|CRI[T]ICAL|FATAL) -", info_log],
+                ["egrep", "-C5", "^[0-9:]+ +(ERROR|CRITICAL|FATAL) -", info_log],
                 silent=True,
             )
         if fatal:
-            failures = True
-        if len(message) > max_log_sample_size:
-            text += '*** Message below has been truncated: it was %s characters, and has been reduced to %s characters:\n\n' % (len(message), max_log_sample_size)
-        text += message[0:max_log_sample_size] + '\n\n' # limit message to max_log_sample_size in size (large emails fail to send)
-        if failures:
             subject = "[vcs2vcs] Failed conversion for %s" % job_name
-        else:
-            subject = "[vcs2vcs] Successful conversion for %s" % job_name
+            text = ''
+            if len(message) > max_log_sample_size:
+                text += '*** Message below has been truncated: it was %s characters, and has been reduced to %s characters:\n\n' % (len(message), max_log_sample_size)
+            text += message[0:max_log_sample_size] + '\n\n' # limit message to max_log_sample_size in size (large emails fail to send)
+        if not self.successful_repos:
+            subject = "[vcs2vcs] Successful no-op conversion for %s" % job_name
+        if error_contents and not fatal:
+            subject += " with warnings"
+        if self.successful_repos:
+            if len(self.successful_repos) <= 5:
+                subject += ' (' + ','.join(self.successful_repos) + ')'
+            else:
+                text += "Successful repos: %s\n\n" % ', '.join(self.successful_repos)
         subject += ' (%ds)' % seconds
         if self.summary_list:
             text += 'Summary is non-zero:\n\n'
@@ -70,7 +74,7 @@ class VCSSyncScript(VCSScript):
         if not text:
             subject += " <EOM>"
         for notify_config in c.get('notify_config', []):
-            if not failures:
+            if not fatal:
                 if notify_config.get('failure_only'):
                     self.info("Skipping notification for %s (failure_only)" % notify_config['to'])
                     continue
