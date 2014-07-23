@@ -413,7 +413,6 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
             'profile': os.path.join(dirs['abs_gaia_dir'], 'profile'),
             'xml_output': os.path.join(dirs['abs_work_dir'], 'output.xml'),
             'html_output': os.path.join(dirs['abs_blob_upload_dir'], 'output.html'),
-            'symbols_path': self.symbols_path if self.config.get('emulator') else None,
             'logcat_dir': dirs['abs_work_dir'],
             'emulator': self.config.get('emulator'),
             'homedir': os.path.join(dirs['abs_emulator_dir'], 'b2g-distro'),
@@ -422,6 +421,9 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
             'raw_log_file': os.path.join(dirs["abs_blob_upload_dir"],
                                          "mn_structured_full.log")
         }
+
+        if self.config.get('emulator') or self.config.get('gaiatest'):
+            config_fmt_args['symbols_path'] = self.symbols_path
 
         options_group = self._get_options_group(self.config.get('emulator'),
                                                 self.config.get('gaiatest'))
