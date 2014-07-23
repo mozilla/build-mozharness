@@ -8,7 +8,7 @@ config = {
         'clone-tools',
         'setup-mock',
         'build',
-        'sendchanges',
+        # 'sendchanges',
         # 'generate-build-stats',
         'update',  # decided by query_is_nightly()
     ],
@@ -19,8 +19,6 @@ config = {
 clang.manifest",
     'platform_supports_post_upload_to_latest': False,
     'enable_signing': False,
-    'enable_talos_sendchange': False,
-    'enable_unittest_sendchange': False,
     #### 64 bit build specific #####
     'env': {
         'MOZBUILD_STATE_PATH': os.path.join(os.getcwd(), '.mozbuild'),
@@ -28,12 +26,6 @@ clang.manifest",
         'DISPLAY': ':2',
         'HG_SHARE_BASE_DIR': '/builds/hg-shared',
         'MOZ_OBJDIR': MOZ_OBJDIR,
-        # SYMBOL_SERVER_HOST is dictated from build_pool_specifics.py
-        'SYMBOL_SERVER_HOST': "%(symbol_server_host)s",
-        'SYMBOL_SERVER_USER': 'ffxbld',
-        'SYMBOL_SERVER_PATH': '/mnt/netapp/breakpad/symbols_ffx/',
-        'SYMBOL_SERVER_SSH_KEY': "/home/mock_mozilla/.ssh/ffxbld_dsa",
-        'POST_SYMBOL_UPLOAD_CMD': '/usr/local/bin/post-symbol-upload.py',
         'TINDERBOX_OUTPUT': '1',
         'TOOLTOOL_CACHE': '/builds/tooltool_cache',
         'TOOLTOOL_HOME': '/builds',

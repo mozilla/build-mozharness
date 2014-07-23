@@ -26,7 +26,7 @@ import sys
 from datetime import datetime
 import re
 from mozharness.base.config import BaseConfig, parse_config_file
-from mozharness.base.log import ERROR, OutputParser
+from mozharness.base.log import ERROR, OutputParser, FATAL
 from mozharness.base.script import PostScriptRun
 from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.buildbot import BuildbotMixin, TBPL_STATUS_DICT, \
@@ -240,6 +240,7 @@ class BuildOptionParser(object):
         'non-unified': 'builds/releng_sub_%s_configs/%s_non_unified.py',
         'debug-and-non-unified':
                 'builds/releng_sub_%s_configs/%s_debug_and_non_unified.py',
+        'mulet': 'builds/releng_sub_%s_configs/%s_mulet.py',
     }
     build_pools = {
         'staging': 'builds/build_pool_specifics.py',
@@ -469,6 +470,7 @@ class BuildScript(BuildbotMixin, PurgeMixin, MockMixin, BalrogMixin,
         self.builduid = None
         self.query_buildid()  # sets self.buildid
         self.query_builduid()  # sets self.builduid
+        self.generated_build_props = False
 
     def _pre_config_lock(self, rw_config):
         c = self.config
@@ -710,11 +712,15 @@ or run without that action (ie: --no-{action})"
                 env["MOZ_UPDATE_CHANNEL"] = "nightly-%s" % (self.branch,)
 
         if self.config.get('pgo_build'):
-            env['IS_PGO'] = '1'
+            env['MOZ_PGO'] = '1'
 
         if c.get('enable_signing'):
-            moz_sign_cmd = self.query_moz_sign_cmd()
-            env["MOZ_SIGN_CMD"] = subprocess.list2cmdline(moz_sign_cmd)
+            moz_sign_cmd = subprocess.list2cmdline(
+                self.query_moz_sign_cmd(formats=None)
+            )
+            # windows fix. This is passed to mach build env and we call that
+            # with python, not with bash so we need to fix the slashes here
+            env['MOZ_SIGN_CMD'] = moz_sign_cmd.replace('\\', '\\\\\\\\')
 
         # we can't make env an attribute of self because env can change on
         # every call for reasons like MOZ_SIGN_CMD
@@ -914,7 +920,7 @@ or run without that action (ie: --no-{action})"
         ]
         cmd.extend(c['tooltool_script'])
         self.info(str(cmd))
-        self.run_command(cmd, cwd=dirs['abs_src_dir'])
+        self.run_command(cmd, cwd=dirs['abs_src_dir'], halt_on_failure=True)
 
     def query_revision(self, source_path=None):
         """ returns the revision of the build
@@ -1009,8 +1015,8 @@ or run without that action (ie: --no-{action})"
             dirs['abs_obj_dir'], 'toolkit', 'library', 'linker-vsize'
         )
         cmd = ['cat', vsize_path]
-        vsize = int(self.get_output_from_command(cmd, cwd=dirs['abs_src_dir']))
-        testresults = [('libxul_link', 'libxul_link', vsize, str(vsize))]
+        vsize = self.get_output_from_command(cmd, cwd=dirs['abs_src_dir'])
+        testresults = [('libxul_link', 'libxul_link', int(vsize), str(vsize))]
         self.set_buildbot_property('vsize', vsize, write_to_file=True)
         self.set_buildbot_property('testresults',
                                    testresults,
@@ -1024,6 +1030,11 @@ or run without that action (ie: --no-{action})"
         )
         c = self.config
         dirs = self.query_abs_dirs()
+
+        # grab any props available from previous run
+        self.generate_build_props(console_output=False,
+                                  halt_on_failure=False)
+
         graph_server_post_path = os.path.join(dirs['abs_tools_dir'],
                                               'buildfarm',
                                               'utils',
@@ -1087,20 +1098,60 @@ or run without that action (ie: --no-{action})"
             branch_list = [elem.capitalize() for elem in branch_list]
             return '-'.join(branch_list)
 
-    def _generate_build_props(self):
-        """set buildid, sourcestamp, appVersion, and appName."""
+    def _query_props_set_by_mach(self, console_output, error_level):
+        mach_properties_path = os.path.join(
+            self.query_abs_dirs()['abs_obj_dir'], 'mach_build_properties.json'
+        )
+        self.info("setting properties set by mach build. Looking in path: %s"
+                  % mach_properties_path)
+        if os.path.exists(mach_properties_path):
+            with self.opened(mach_properties_path, error_level=error_level) as (fh, err):
+                build_props = json.load(fh)
+                if not build_props or err:
+                    self.log("%s exists but there was an error finding any "
+                             "properties. props: `%s` - error: "
+                             "`%s`" % (mach_properties_path,
+                                       build_props or 'None',
+                                       err or 'No error'),
+                             error_level)
+                if console_output:
+                    self.info("Properties set from 'mach build'")
+                    self.info(pprint.pformat(build_props))
+            for key, prop in build_props.iteritems():
+                self.set_buildbot_property(key, prop, write_to_file=True)
+        else:
+            self.log("Could not determine path for build properties. "
+                     "Does this exist: `%s` ?" % mach_properties_path,
+                     level=error_level)
+
+    def generate_build_props(self, console_output=True, halt_on_failure=False):
+        """sets props found from mach build and, in addition, buildid,
+        sourcestamp,  appVersion, and appName."""
+
+        error_level = ERROR
+        if halt_on_failure:
+            error_level = FATAL
+
+        if self.generated_build_props:
+            return
+
+        # grab props set by mach if any
+        self._query_props_set_by_mach(console_output=console_output,
+                                      error_level=error_level)
+
         dirs = self.query_abs_dirs()
         print_conf_setting_path = os.path.join(dirs['abs_src_dir'],
                                                'config',
                                                'printconfigsetting.py')
         if (not os.path.exists(print_conf_setting_path) or
                 not os.path.exists(dirs['abs_app_ini_path'])):
-            self.error("Can't set the following properties: "
-                       "buildid, sourcestamp, appVersion, and appName. "
-                       "Required paths missing. Verify both %s and %s "
-                       "exist. These paths require the 'build' action to be "
-                       "run prior to this" % (print_conf_setting_path,
-                                              dirs['abs_app_ini_path']))
+            self.log("Can't set the following properties: "
+                     "buildid, sourcestamp, appVersion, and appName. "
+                     "Required paths missing. Verify both %s and %s "
+                     "exist. These paths require the 'build' action to be "
+                     "run prior to this" % (print_conf_setting_path,
+                                            dirs['abs_app_ini_path']),
+                     level=error_level)
         self.info("Setting properties found in: %s" % dirs['abs_app_ini_path'])
         base_cmd = [
             'python', print_conf_setting_path, dirs['abs_app_ini_path'], 'App'
@@ -1112,11 +1163,187 @@ or run without that action (ie: --no-{action})"
         ]
         for prop in properties_needed:
             prop_val = self.get_output_from_command(
-                base_cmd + [prop['ini_name']], cwd=dirs['base_work_dir']
+                base_cmd + [prop['ini_name']], cwd=dirs['base_work_dir'],
+                halt_on_failure=halt_on_failure
             )
             self.set_buildbot_property(prop['prop_name'],
                                        prop_val,
                                        write_to_file=True)
+        self.generated_build_props = True
+
+    def _set_file_properties(self, file_name, find_dir, prop_type,
+                             error_level=ERROR):
+        c = self.config
+        dirs = self.query_abs_dirs()
+
+        # windows fix. even bash -c loses two single slashes.
+        find_dir = find_dir.replace('\\', '\\\\\\\\')
+
+        error_msg = "Not setting props: %s{Filename, Size, Hash}" % prop_type
+        cmd = ["bash", "-c",
+               "find %s -maxdepth 1 -type f -name %s" % (find_dir, file_name)]
+        file_path = self.get_output_from_command(cmd, dirs['abs_work_dir'])
+        if not file_path:
+            self.error(error_msg)
+            self.error("Can't determine filepath with cmd: %s" % (str(cmd),))
+            return
+
+        cmd = [
+            self.query_exe('openssl'), 'dgst',
+            '-%s' % (c.get("hash_type", "sha512"),), file_path
+        ]
+        hash_prop = self.get_output_from_command(cmd, dirs['abs_work_dir'])
+        if not hash_prop:
+            self.log("undetermined hash_prop with cmd: %s" % (str(cmd),),
+                     level=error_level)
+            self.log(error_msg, level=error_level)
+            return
+        self.set_buildbot_property(prop_type + 'Filename',
+                                   os.path.split(file_path)[1],
+                                   write_to_file=True)
+        self.set_buildbot_property(prop_type + 'Size',
+                                   os.path.getsize(file_path),
+                                   write_to_file=True)
+        self.set_buildbot_property(prop_type + 'Hash',
+                                   hash_prop.strip().split(' ', 2)[1],
+                                   write_to_file=True)
+
+    def _query_previous_buildid(self):
+        dirs = self.query_abs_dirs()
+        previous_buildid = self.query_buildbot_property('previous_buildid')
+        if previous_buildid:
+            return previous_buildid
+        cmd = [
+            "bash", "-c", "find previous -maxdepth 4 -type f -name application.ini"
+        ]
+        self.info("finding previous mar's inipath...")
+        prev_ini_path = self.get_output_from_command(cmd,
+                                                     cwd=dirs['abs_obj_dir'],
+                                                     halt_on_failure=True,
+                                                     fatal_exit_code=3)
+        print_conf_path = os.path.join(dirs['abs_src_dir'],
+                                       'config',
+                                       'printconfigsetting.py')
+        abs_prev_ini_path = os.path.join(dirs['abs_obj_dir'], prev_ini_path)
+        previous_buildid = self.get_output_from_command(['python',
+                                                         print_conf_path,
+                                                         abs_prev_ini_path,
+                                                         'App', 'BuildID'])
+        if not previous_buildid:
+            self.fatal("Could not determine previous_buildid. This property"
+                       "requires the upload action creating a partial mar.")
+        self.set_buildbot_property("previous_buildid",
+                                   previous_buildid,
+                                   write_to_file=True)
+        return previous_buildid
+
+    def _create_partial_mar(self):
+        # TODO use mar.py MIXINs and make this simpler
+        self._assert_cfg_valid_for_action(
+            ['update_env', 'platform_ftp_name', 'stage_server',
+             'stage_username', 'stage_ssh_key', 'latest_mar_dir'],
+            'upload'
+        )
+        self.info('Creating a partial mar:')
+        c = self.config
+        dirs = self.query_abs_dirs()
+        generic_env = self.query_build_env()
+        update_env = dict(chain(generic_env.items(), c['update_env'].items()))
+        abs_unwrap_update_path = os.path.join(dirs['abs_src_dir'],
+                                              'tools',
+                                              'update-packaging',
+                                              'unwrap_full_update.pl')
+        dist_update_dir = os.path.join(dirs['abs_obj_dir'],
+                                       'dist',
+                                       'update')
+        self.info('removing old unpacked dirs...')
+        for f in ['current', 'current.work', 'previous']:
+            self.rmtree(os.path.join(dirs['abs_obj_dir'], f),
+                        error_level=FATAL)
+        self.info('making unpacked dirs...')
+        for f in ['current', 'previous']:
+            self.mkdir_p(os.path.join(dirs['abs_obj_dir'], f),
+                         error_level=FATAL)
+        self.info('unpacking current mar...')
+        mar_file = self.query_buildbot_property('completeMarFilename')
+        cmd = '%s %s %s' % (self.query_exe('perl'),
+                            abs_unwrap_update_path,
+                            os.path.join(dist_update_dir, mar_file))
+        self.run_command_m(command=cmd,
+                           cwd=os.path.join(dirs['abs_obj_dir'], 'current'),
+                           env=update_env,
+                           halt_on_failure=True,
+                           fatal_exit_code=3)
+        # The mar file name will be the same from one day to the next,
+        # *except* when we do a version bump for a release. To cope with
+        # this, we get the name of the previous complete mar directly
+        # from staging. Version bumps can also often involve multiple mars
+        # living in the latest dir, so we grab the latest one.
+        self.info('getting previous mar filename...')
+        latest_mar_dir = c['latest_mar_dir'] % {'branch': self.branch}
+        cmd = 'ssh -l %s -i ~/.ssh/%s %s ls -1t %s | grep %s$ | head -n 1' % (
+            c['stage_username'], c['stage_ssh_key'], c['stage_server'],
+            latest_mar_dir, c['platform_ftp_name']
+        )
+        previous_mar_name = self.get_output_from_command(cmd)
+        if re.search(r'\.mar$', previous_mar_name or ""):
+            previous_mar_url = "http://%s%s/%s" % (c['stage_server'],
+                                                   latest_mar_dir,
+                                                   previous_mar_name)
+            self.info('downloading previous mar...')
+            previous_mar_file = self.download_file(previous_mar_url,
+                                                   file_name='previous.mar',
+                                                   parent_dir=dist_update_dir)
+            if not previous_mar_file:
+                # download_file will send error logs if this does not download
+                return
+        else:
+            self.warning('could not determine the previous complete mar file')
+            return
+        self.info('unpacking previous mar...')
+        cmd = '%s %s %s' % (self.query_exe('perl'),
+                            abs_unwrap_update_path,
+                            os.path.join(dist_update_dir, 'previous.mar'))
+        self.run_command_m(command=cmd,
+                           cwd=os.path.join(dirs['abs_obj_dir'], 'previous'),
+                           env=update_env)
+        # Extract the build ID from the unpacked previous complete mar.
+        previous_buildid = self._query_previous_buildid()
+        self.info('removing pgc files from previous and current dirs')
+        for mar_dir in ['current', 'previous']:
+            target_path = os.path.join(dirs['abs_obj_dir'], mar_dir)
+            if os.path.exists(target_path):
+                for root, target_dirs, file_names in os.walk(target_path):
+                    for file_name in file_names:
+                        if file_name.endswith('.pgc'):
+                            self.info('removing file: %s' % (file_name,))
+                            os.remove(file_name)
+        self.info("removing existing partial mar...")
+        mar_file_results = glob.glob(
+            os.path.join(dist_update_dir, '*.partial.*.mar')
+        )
+        if not mar_file_results:
+            self.warning("Could not determine an existing partial mar from "
+                         "%s pattern in %s dir" % ('*.partial.*.mar',
+                                                   dist_update_dir))
+        for mar_file in mar_file_results:
+            self.rmtree(mar_file)
+
+        self.info('generating partial patch from two complete mars...')
+        update_env.update({
+            'STAGE_DIR': '../../dist/update',
+            'SRC_BUILD': '../../previous',
+            'SRC_BUILD_ID': previous_buildid,
+            'DST_BUILD': '../../current',
+            'DST_BUILD_ID': self.query_buildid()
+        })
+        cmd = '%s -C tools/update-packaging partial-patch' % (
+            self.query_exe('make', return_type='string')
+        )
+        self.run_command_m(command=cmd,
+                           cwd=dirs['abs_obj_dir'],
+                           env=update_env)
+        self.rmtree(os.path.join(dist_update_dir, 'previous.mar'))
 
     def clone_tools(self):
         """clones the tools repo."""
@@ -1171,33 +1398,29 @@ or run without that action (ie: --no-{action})"
         if symbols_extra_buildid:
             env['MOZ_SYMBOLS_EXTRA_BUILDID'] = symbols_extra_buildid
 
+        # XXX Bug 1037883 - mozconfigs can not find buildprops.json when builds
+        # are through mozharness. This is not pretty but it is a stopgap
+        # until an alternative solution is made or all builds that touch
+        # mozconfig.cache are converted to mozharness.
+        dirs = self.query_abs_dirs()
+        self.copyfile(os.path.join(dirs['base_work_dir'], 'buildprops.json'),
+                      os.path.join(dirs['abs_work_dir'], 'buildprops.json'))
+
         python = self.query_exe('python2.7')
-        self.return_code = self.run_command_m(
-            command=[python, 'mach', 'build'], cwd=self.query_abs_dirs()[
-                'abs_src_dir'],
+        return_code = self.run_command_m(
+            command=[python, 'mach', 'build'],
+            cwd=self.query_abs_dirs()['abs_src_dir'],
             env=env
         )
+        if return_code:  # set the return code to red, failure
+            self.return_code = self.worst_level(
+                2,  self.return_code, AUTOMATION_EXIT_CODES[::-1]
+            )
 
     def postflight_build(self, console_output=True):
-        """grabs properties set by mach build."""
-        mach_properties_path = os.path.join(
-            self.query_abs_dirs()['abs_obj_dir'], 'mach_build_properties.json'
-        )
-        self.info("setting properties set by mach build. Looking in path: %s"
-                  % mach_properties_path)
-        if os.path.exists(mach_properties_path):
-            with open(mach_properties_path) as build_property_file:
-                build_props = json.load(build_property_file)
-                if console_output:
-                    self.info("Properties set from 'mach build'")
-                    pprint.pformat(build_props)
-            for key, prop in build_props.iteritems():
-                self.set_buildbot_property(key, prop, write_to_file=True)
-        else:
-            self.fatal("Could not find any properties set from mach build. "
-                       "Path does not exist: %s" % mach_properties_path)
-        # now set the additional properties that mach did not set...
-        self._generate_build_props()
+        """grabs properties from post build and calls ccache -s"""
+        self.generate_build_props(console_output=console_output,
+                                  halt_on_failure=True)
         if self.config.get('enable_ccache'):
             self._ccache_s()
 
@@ -1209,9 +1432,17 @@ or run without that action (ie: --no-{action})"
         We only post to graph server for non nightly build
         """
         c = self.config
+
+        # grab any props available from this or previous unclobbered runs
+        self.generate_build_props(console_output=False,
+                                  halt_on_failure=False)
+
         # enable_max_vsize will be True for builds like pgo win32 builds
-        enable_max_vsize = c.get('enable_max_vsize') and c.get('pgo_build')
-        if not enable_max_vsize or c.get('enable_count_ctors'):
+        # but not for nightlies (nightlies are pgo builds too so the
+        # check is needed).
+        enable_max_vsize = (c.get('enable_max_vsize') and c.get('pgo_build')
+                            and not self.query_is_nightly())
+        if enable_max_vsize or c.get('enable_count_ctors'):
             if c.get('enable_count_ctors'):
                 self.info("counting ctors...")
                 self._count_ctors()
@@ -1233,7 +1464,20 @@ or run without that action (ie: --no-{action})"
         # TODO rip out this logic and put it in build configs
         c = self.config
 
+        # grab any props available from this or previous unclobbered runs
+        self.generate_build_props(console_output=False,
+                                  halt_on_failure=False)
+
         installer_url = self.query_buildbot_property('packageUrl')
+        if not installer_url:
+            # don't burn the job but we should turn orange
+            self.error("could not determine packageUrl property to use "
+                       "against sendchange. Was it set after 'mach build'?")
+            self.return_code = self.worst_level(
+                1,  self.return_code, AUTOMATION_EXIT_CODES[::-1]
+            )
+            self.return_code = 1
+            return
         tests_url = self.query_buildbot_property('testsUrl')
         sendchange_props = {
             'buildid': self.query_buildid(),
@@ -1293,6 +1537,22 @@ or run without that action (ie: --no-{action})"
         if not self.query_is_nightly():
             self.info("Not a nightly build, skipping balrog submission.")
             return
+
+        # grab any props available from this or previous unclobbered runs
+        self.generate_build_props(console_output=False,
+                                  halt_on_failure=False)
+
+        # platform_supports_partials: is False for things like asan
+        # branch_supports_partials: is False for things like some b2g branches
+        if (c.get('platform_supports_partials') and
+                c.get('branch_supports_partials')):
+            self._create_partial_mar()
+            dist_update_dir = os.path.join(self.query_abs_dirs()['abs_obj_dir'],
+                                           'dist',
+                                           'update')
+            self._set_file_properties(file_name='*.partial.*.mar',
+                                      find_dir=dist_update_dir,
+                                      prop_type='partialMar')
 
         if not self.config.get("balrog_api_root"):
             self.fatal("balrog_api_root not set; skipping balrog submission.")

@@ -22,4 +22,5 @@ config = {
          "changeset": OLD_ESR_CHANGESET},
     ],
     "requires_head_merge": False,
+    "pull_all_branches": True,
 }

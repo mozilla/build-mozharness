@@ -13,7 +13,7 @@ GECKO_CONFIG_TEMPLATE = {
         'generate_git_notes': False, # we can change this when bug 1034725 is resolved
         'mapper': {
             'project': 'gitmo-gecko-l10n',
-            'url': 'https://api.pub.build.mozilla.org/mapper'
+            'url': 'https://api-pub-build.allizom.org/mapper'
         },
         'locales_file_url': 'https://hg.mozilla.org/releases/mozilla-release/raw-file/default/b2g/locales/all-locales',
         'hg_url': 'https://hg.mozilla.org/releases/l10n/mozilla-release/%(locale)s',
@@ -35,7 +35,7 @@ GECKO_CONFIG_TEMPLATE = {
         'generate_git_notes': False, # we can change this when bug 1034725 is resolved
         'mapper': {
             'project': 'gitmo-gecko-l10n',
-            'url': 'https://api.pub.build.mozilla.org/mapper'
+            'url': 'https://api-pub-build.allizom.org/mapper'
         },
         'locales_file_url': 'https://hg.mozilla.org/releases/mozilla-beta/raw-file/default/b2g/locales/all-locales',
         'hg_url': 'https://hg.mozilla.org/releases/l10n/mozilla-beta/%(locale)s',
@@ -57,7 +57,7 @@ GECKO_CONFIG_TEMPLATE = {
         'generate_git_notes': False, # we can change this when bug 1034725 is resolved
         'mapper': {
             'project': 'gitmo-gecko-l10n',
-            'url': 'https://api.pub.build.mozilla.org/mapper'
+            'url': 'https://api-pub-build.allizom.org/mapper'
         },
         'locales_file_url': 'https://hg.mozilla.org/releases/mozilla-aurora/raw-file/default/b2g/locales/all-locales',
         'hg_url': 'https://hg.mozilla.org/releases/l10n/mozilla-aurora/%(locale)s',
@@ -79,7 +79,7 @@ GECKO_CONFIG_TEMPLATE = {
         'generate_git_notes': False, # we can change this when bug 1034725 is resolved
         'mapper': {
             'project': 'gitmo-gecko-l10n',
-            'url': 'https://api.pub.build.mozilla.org/mapper'
+            'url': 'https://api-pub-build.allizom.org/mapper'
         },
         'locales_file_url': 'https://hg.mozilla.org/mozilla-central/raw-file/default/b2g/locales/all-locales',
         'hg_url': 'https://hg.mozilla.org/l10n-central/%(locale)s',
@@ -120,7 +120,7 @@ config = {
                 'generate_git_notes': False, # we can change this when bug 1034725 is resolved
                 'mapper': {
                     'project': 'gitmo-gaia-l10n',
-                    'url': 'https://api.pub.build.mozilla.org/mapper'
+                    'url': 'https://api-pub-build.allizom.org/mapper'
                 },
                 'locales_file_url': 'https://raw.github.com/mozilla-b2g/gaia/v2.0/locales/languages_all.json',
                 'hg_url': 'https://hg.mozilla.org/releases/gaia-l10n/v2_0/%(locale)s',
@@ -142,7 +142,7 @@ config = {
                 'generate_git_notes': False, # we can change this when bug 1034725 is resolved
                 'mapper': {
                     'project': 'gitmo-gaia-l10n',
-                    'url': 'https://api.pub.build.mozilla.org/mapper'
+                    'url': 'https://api-pub-build.allizom.org/mapper'
                 },
                 'locales_file_url': 'https://raw.github.com/mozilla-b2g/gaia/v1.4/locales/languages_all.json',
                 'hg_url': 'https://hg.mozilla.org/releases/gaia-l10n/v1_4/%(locale)s',
@@ -164,7 +164,7 @@ config = {
                 'generate_git_notes': False, # we can change this when bug 1034725 is resolved
                 'mapper': {
                     'project': 'gitmo-gaia-l10n',
-                    'url': 'https://api.pub.build.mozilla.org/mapper'
+                    'url': 'https://api-pub-build.allizom.org/mapper'
                 },
                 'locales_file_url': 'https://raw.github.com/mozilla-b2g/gaia/v1.3/locales/languages_dev.json',
                 'hg_url': 'https://hg.mozilla.org/releases/gaia-l10n/v1_3/%(locale)s',
@@ -186,7 +186,7 @@ config = {
                 'generate_git_notes': False, # we can change this when bug 1034725 is resolved
                 'mapper': {
                     'project': 'gitmo-gaia-l10n',
-                    'url': 'https://api.pub.build.mozilla.org/mapper'
+                    'url': 'https://api-pub-build.allizom.org/mapper'
                 },
                 'locales_file_url': 'https://raw.github.com/mozilla-b2g/gaia/v1.2/locales/languages_all.json',
                 'hg_url': 'https://hg.mozilla.org/releases/gaia-l10n/v1_2/%(locale)s',
@@ -208,7 +208,7 @@ config = {
                 'generate_git_notes': False, # we can change this when bug 1034725 is resolved
                 'mapper': {
                     'project': 'gitmo-gaia-l10n',
-                    'url': 'https://api.pub.build.mozilla.org/mapper'
+                    'url': 'https://api-pub-build.allizom.org/mapper'
                 },
                 'locales_file_url': 'https://raw.github.com/mozilla-b2g/gaia/master/locales/languages_all.json',
                 'hg_url': 'https://hg.mozilla.org/gaia-l10n/%(locale)s',
@@ -231,13 +231,13 @@ config = {
 
     "remote_targets": {
         "gitmo-gecko-l10n-%(locale)s": {
-            "repo": 'gitolite3@git.mozilla.org:releases/l10n/%(locale)s/gecko.git',
-            "ssh_key": "~/.ssh/vcs-sync_rsa",
+            "repo": 'git@github.com:petermoore/l10n-%(locale)s-gecko.git',
+            "ssh_key": "~/.ssh/github_mozilla_rsa",
             "vcs": "git",
         },
         "gitmo-gaia-l10n-%(locale)s": {
-            "repo": 'gitolite3@git.mozilla.org:releases/l10n/%(locale)s/gaia.git',
-            "ssh_key": "~/.ssh/vcs-sync_rsa",
+            "repo": 'git@github.com:petermoore/l10n-%(locale)s-gaia.git',
+            "ssh_key": "~/.ssh/github_mozilla_rsa",
             "vcs": "git",
         },
     },
@@ -259,16 +259,9 @@ config = {
     ],
     "pip_index": False,
 
-    "upload_config": [{
-        "ssh_key": "~/.ssh/vcs-sync_rsa",
-        "ssh_user": "asasaki",
-        "remote_host": "people.mozilla.org",
-        "remote_path": "/home/asasaki/public_html/vcs2vcs/l10n",
-    }],
-
     "default_notify_from": "vcs2vcs@%s" % hostname,
     "notify_config": [{
-        "to": "release+vcs2vcs@mozilla.com",
+        "to": "pmoore@mozilla.com",
         "failure_only": False,
         "skip_empty_messages": True,
     }],

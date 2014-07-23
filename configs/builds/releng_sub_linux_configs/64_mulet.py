@@ -10,17 +10,15 @@ config = {
         'build',
         'sendchanges',
         # 'generate-build-stats',
-        # 'update',
+        'update',  # decided by query_is_nightly()
     ],
-    'stage_platform': 'linux64-asan-debug',
-    'debug_build': True,
-    'purge_minsize': 12,
+    'stage_platform': 'linux64-mulet',
     'tooltool_manifest_src': "browser/config/tooltool-manifests/linux64/\
 asan.manifest",
     'platform_supports_post_upload_to_latest': False,
     'enable_signing': False,
     'enable_talos_sendchange': False,
-    'platform_supports_partials': False,
+    'enable_count_ctors': False,
     #### 64 bit build specific #####
     'env': {
         'MOZBUILD_STATE_PATH': os.path.join(os.getcwd(), '.mozbuild'),
@@ -41,6 +39,6 @@ asan.manifest",
 /usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/tools/git/bin:/tools/python27/bin:\
 /tools/python27-mercurial/bin:/home/cltbld/bin',
     },
-    'src_mozconfig': 'browser/config/mozconfigs/linux64/debug-asan',
+    'src_mozconfig': 'b2g/dev/config/mozconfigs/linux64/mulet',
     #######################
 }

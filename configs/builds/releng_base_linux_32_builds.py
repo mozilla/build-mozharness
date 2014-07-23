@@ -51,6 +51,7 @@ config = {
     'enable_count_ctors': True,
     'enable_talos_sendchange': True,
     'enable_unittest_sendchange': True,
+    'platform_supports_partials': True,
     #########################################################################
 
 
@@ -67,10 +68,10 @@ config = {
         'HG_SHARE_BASE_DIR': '/builds/hg-shared',
         'MOZ_OBJDIR': 'obj-firefox',
         # SYMBOL_SERVER_HOST is dictated from build_pool_specifics.py
-        'SYMBOL_SERVER_HOST': "%(symbol_server_host)s",
+        'SYMBOL_SERVER_HOST': '%(symbol_server_host)s',
+        'SYMBOL_SERVER_SSH_KEY': "/home/mock_mozilla/.ssh/ffxbld_dsa",
         'SYMBOL_SERVER_USER': 'ffxbld',
         'SYMBOL_SERVER_PATH': '/mnt/netapp/breakpad/symbols_ffx/',
-        'SYMBOL_SERVER_SSH_KEY': "/home/mock_mozilla/.ssh/ffxbld_dsa",
         'POST_SYMBOL_UPLOAD_CMD': '/usr/local/bin/post-symbol-upload.py',
         'TINDERBOX_OUTPUT': '1',
         'TOOLTOOL_CACHE': '/builds/tooltool_cache',
@@ -148,5 +149,6 @@ config = {
     'src_mozconfig': 'browser/config/mozconfigs/linux32/nightly',
     'tooltool_manifest_src': "browser/config/tooltool-manifests/linux32/\
 releng.manifest",
+    'platform_ftp_name': 'linux-i686.complete.mar',
     #########################################################################
 }

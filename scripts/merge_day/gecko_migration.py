@@ -158,7 +158,7 @@ class GeckoMigration(MercurialScript):
                force=None, halt_on_failure=True):
         if isinstance(tags, basestring):
             tags = [tags]
-        message = "Tagging %s" % os.path.basename(cwd)
+        message = "No bug - Tagging %s" % os.path.basename(cwd)
         if revision:
             message = "%s %s" % (message, revision)
         message = "%s with %s" % (message, ', '.join(tags))
@@ -179,15 +179,21 @@ class GeckoMigration(MercurialScript):
             error_list=HgErrorList
         )
 
-    def hg_commit(self, cwd, message, user=None):
+    def hg_commit(self, cwd, message, user=None, ignore_no_changes=False):
         """ Commit changes to hg.
             """
         cmd = self.query_exe('hg', return_type='list') + [
             'commit', '-m', message]
         if user:
             cmd.extend(['-u', user])
-        self.run_command(cmd, cwd=cwd, error_list=HgErrorList,
-                         halt_on_failure=True)
+        success_codes = [0]
+        if ignore_no_changes:
+            success_codes.append(1)
+        self.run_command(
+            cmd, cwd=cwd, error_list=HgErrorList,
+            halt_on_failure=True,
+            success_codes=success_codes
+        )
         return self.query_hg_revision(cwd)
 
     def hg_merge_via_debugsetparents(self, cwd, old_head, new_head,
@@ -239,7 +245,7 @@ class GeckoMigration(MercurialScript):
                     cwd,
                     message="Preserve old tags after debugsetparents. "
                     "CLOSED TREE DONTBUILD a=release",
-                    user=user
+                    user=user,
                 )
 
     def replace(self, file_name, from_, to_):
@@ -476,6 +482,29 @@ class GeckoMigration(MercurialScript):
             self.fatal("Cannot transplant %s from %s properly" %
                        (changeset, repo))
 
+    def pull_from_repo(self, from_dir, to_dir, revision=None, branch=None):
+        """ Pull from one repo to another. """
+        hg = self.query_exe("hg", return_type="list")
+        cmd = hg + ["pull"]
+        if revision:
+            cmd.extend(["-r", revision])
+        cmd.append(from_dir)
+        self.run_command(
+            cmd,
+            cwd=to_dir,
+            error_list=HgErrorList,
+            halt_on_failure=True,
+        )
+        cmd = hg + ["update", "-C"]
+        if branch or revision:
+            cmd.extend(["-r", branch or revision])
+        self.run_command(
+            cmd,
+            cwd=to_dir,
+            error_list=HgErrorList,
+            halt_on_failure=True,
+        )
+
 # Actions {{{1
     def clean_repos(self):
         """ We may end up with contaminated local repos at some point, but
@@ -555,8 +584,14 @@ class GeckoMigration(MercurialScript):
         )
         new_from_rev = self.query_from_revision()
         self.info("New revision %s" % new_from_rev)
-        m = MercurialVCS(log_obj=self.log_obj, config=self.config)
-        m.pull(dirs['abs_from_dir'], dirs['abs_to_dir'])
+        pull_revision = None
+        if not self.config.get("pull_all_branches"):
+            pull_revision = new_from_rev
+        self.pull_from_repo(
+            dirs['abs_from_dir'], dirs['abs_to_dir'],
+            revision=pull_revision,
+            branch="default",
+        )
         if self.config.get("requires_head_merge") is not False:
             self.hg_merge_via_debugsetparents(
                 dirs['abs_to_dir'], old_head=base_to_rev, new_head=new_from_rev,

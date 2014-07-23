@@ -24,8 +24,6 @@ config = {
         'DISPLAY': ':2',
         'HG_SHARE_BASE_DIR': '/builds/hg-shared',
         'MOZ_OBJDIR': MOZ_OBJDIR,
-        # not sure if this will always be server host
-        'POST_SYMBOL_UPLOAD_CMD': '/usr/local/bin/post-symbol-upload.py',
         'MOZ_CRASHREPORTER_NO_REPORT': '1',
         'CCACHE_DIR': '/builds/ccache',
         'CCACHE_COMPRESS': '1',

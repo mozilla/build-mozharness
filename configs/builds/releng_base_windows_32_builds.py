@@ -30,11 +30,14 @@ config = {
                 os.getcwd(), 'build', 'tools', 'buildfarm', 'utils', 'hgtool.py'
             )
         ],
-        "buildbot": "/tools/buildbot/bin/buildbot",
+        "buildbot": [
+            sys.executable,
+            'c:\\mozilla-build\\buildbotve\\scripts\\buildbot'
+        ],
         "make": [
             sys.executable,
             os.path.join(
-                os.getcwd(), 'build', 'source', 'build', 'pymake', 'make.py'
+                os.getcwd(), 'build', 'src', 'build', 'pymake', 'make.py'
             )
         ]
     },
@@ -52,12 +55,13 @@ config = {
     'enable_count_ctors': False,
     'enable_talos_sendchange': True,
     'enable_unittest_sendchange': True,
+    'platform_supports_partials': True,
     #########################################################################
 
 
      #########################################################################
      ###### 32 bit specific ######
-    'base_name': 'WINNT 5.2 %(branch)s',
+    'base_name': 'WINNT_5.2_%(branch)s',
     'platform': 'win32',
     'stage_platform': 'win32',
     'enable_max_vsize': True,
@@ -72,12 +76,13 @@ config = {
                 'C:/mozilla-build/buildbotve/scripts;'
                 '%s' % (os.environ.get('path')),
         'PDBSTR_PATH': '/c/Program Files (x86)/Windows Kits/8.0/Debuggers/x64/srcsrv/pdbstr.exe',
-        'POST_SYMBOL_UPLOAD_CMD': '/usr/local/bin/post-symbol-upload.py',
         'PROPERTIES_FILE': os.path.join(os.getcwd(), 'buildprops.json'),
-        'SYMBOL_SERVER_HOST': 'symbolpush.mozilla.org',
-        'SYMBOL_SERVER_PATH': '/mnt/netapp/breakpad/symbols_ffx/',
+        # SYMBOL_SERVER_HOST is dictated from build_pool_specifics.py
+        'SYMBOL_SERVER_HOST': '%(symbol_server_host)s',
         'SYMBOL_SERVER_SSH_KEY': '/c/Users/cltbld/.ssh/ffxbld_dsa',
         'SYMBOL_SERVER_USER': 'ffxbld',
+        'SYMBOL_SERVER_PATH': '/mnt/netapp/breakpad/symbols_ffx/',
+        'POST_SYMBOL_UPLOAD_CMD': '/usr/local/bin/post-symbol-upload.py',
         'TINDERBOX_OUTPUT': '1',
     },
     'upload_env': {
@@ -94,5 +99,6 @@ config = {
     'purge_minsize': 12,
     'src_mozconfig': 'browser/config/mozconfigs/win32/nightly',
     'tooltool_manifest_src': "browser/config/tooltool-manifests/win32/releng.manifest",
+    'platform_ftp_name': 'win32.complete.mar',
     #########################################################################
 }

@@ -3,20 +3,20 @@ import socket
 hostname = socket.gethostname()
 
 build_repos = (
-     'autoland',
-     'buildapi',
-     'buildbot-configs',
-     'buildbotcustom',
-     'cloud-tools',
-     'mozharness',
-     'opsi-package-sources',
-     'partner-repacks',
-     'preproduction',
-     'puppet',
-     'puppet-manifests',
-     'rpm-sources',
-     'talos',
-     'tools',
+    'autoland',
+    'buildapi',
+    'buildbot-configs',
+    'buildbotcustom',
+    'cloud-tools',
+    'mozharness',
+    'opsi-package-sources',
+    'partner-repacks',
+    'preproduction',
+    'puppet',
+    'puppet-manifests',
+    'rpm-sources',
+    'talos',
+    'tools',
 )
 
 conversion_repos = []
@@ -49,7 +49,7 @@ for repo in build_repos:
                 "^.*$"
             ]
         },
-        "generate_git_notes": True # False by default
+        "generate_git_notes": True, # False by default
     })
     remote_targets["build-%s-github" % repo] = {
         "repo": "git@github.com:petermoore/build-%s.git" % repo,
@@ -67,7 +67,6 @@ config = {
     "conversion_repos": conversion_repos,
     "remote_targets": remote_targets,
     "virtualenv_modules": [
-        "bottle==0.11.6",
         "dulwich==0.9.0",
         "ordereddict==1.1",
         "hg-git==0.4.0-moz2",

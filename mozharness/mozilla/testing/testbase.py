@@ -330,7 +330,7 @@ You can set this by:
 
             if not os.path.isfile(tree_config_path):
                 self.fatal("The in-tree configuration file '%s' does not exist!"
-                           "It must be added to '%s'. See bug 981030 for more details." %
+                           "It must be added to '%s'. See bug 1035551 for more details." %
                            (tree_config_path, os.path.join('gecko', 'testing', rel_tree_config_path)))
 
             try:

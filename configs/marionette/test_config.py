@@ -17,4 +17,5 @@ config = {
         'install',
         'run-marionette',
     ],
+    "in_tree_config": "config/mozharness/marionette.py",
 }
