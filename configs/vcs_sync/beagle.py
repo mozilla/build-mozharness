@@ -47,7 +47,7 @@ config = {
     "backup_dir": "/mnt/netapp/github_sync/aki/%s" % hostname,
     "cvs_manifest": CVS_MANIFEST,
     "tooltool_servers": ["http://runtime-binaries.pvt.build.mozilla.org/tooltool/"],
-    "cvs_history_tarball": "/home/asasaki/mozilla-cvs-history.tar.bz2",
+    "cvs_history_tarball": "/home/pmoore/mozilla-cvs-history.tar.bz2",
     "env": {
         "PATH": "%(PATH)s:/usr/libexec/git-core",
     },
@@ -596,9 +596,9 @@ config = {
 
     "upload_config": [{
         "ssh_key": "~/.ssh/vcs-sync_rsa",
-        "ssh_user": "asasaki",
+        "ssh_user": "pmoore",
         "remote_host": "people.mozilla.org",
-        "remote_path": "/home/asasaki/public_html/vcs2vcs/gecko-dev",
+        "remote_path": "/home/pmoore/public_html/vcs2vcs/gecko-dev",
     }],
 
     "default_notify_from": "vcs2vcs@%s" % hostname,
