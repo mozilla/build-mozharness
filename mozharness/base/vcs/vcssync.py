@@ -25,7 +25,7 @@ class VCSSyncScript(VCSScript):
     def __init__(self, **kwargs):
         super(VCSSyncScript, self).__init__(**kwargs)
 
-    def notify(self, message='', fatal=False):
+    def notify(self, message=None, fatal=False):
         """ Email people in the notify_config (depending on status and failure_only)
             """
         c = self.config
