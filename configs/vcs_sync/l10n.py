@@ -261,9 +261,9 @@ config = {
 
     "upload_config": [{
         "ssh_key": "~/.ssh/vcs-sync_rsa",
-        "ssh_user": "asasaki",
+        "ssh_user": "pmoore",
         "remote_host": "people.mozilla.org",
-        "remote_path": "/home/asasaki/public_html/vcs2vcs/l10n",
+        "remote_path": "/home/pmoore/public_html/vcs2vcs/l10n",
     }],
 
     "default_notify_from": "vcs2vcs@%s" % hostname,
