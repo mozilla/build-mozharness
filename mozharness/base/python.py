@@ -90,11 +90,16 @@ class VirtualenvMixin(object):
     def query_virtualenv_path(self):
         c = self.config
         dirs = self.query_abs_dirs()
+        virtualenv = None
         if 'abs_virtualenv_dir' in dirs:
-            return dirs['abs_virtualenv_dir']
-        if os.path.isabs(c['virtualenv_path']):
-            return c['virtualenv_path']
-        return os.path.join(dirs['abs_work_dir'], c['virtualenv_path'])
+            virtualenv = dirs['abs_virtualenv_dir']
+        elif c.get('virtualenv_path'):
+            if os.path.isabs(c['virtualenv_path']):
+                virtualenv = c['virtualenv_path']
+            else:
+                virtualenv = os.path.join(dirs['abs_work_dir'],
+                                          c['virtualenv_path'])
+        return virtualenv
 
     def query_python_path(self, binary="python"):
         """Return the path of a binary inside the virtualenv, if

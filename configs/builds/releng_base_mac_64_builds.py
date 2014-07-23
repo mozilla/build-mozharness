@@ -38,6 +38,7 @@ config = {
     'enable_count_ctors': False,
     'enable_talos_sendchange': True,
     'enable_unittest_sendchange': True,
+    'platform_supports_partials': True,
     #########################################################################
 
 
@@ -54,11 +55,11 @@ config = {
         'HG_SHARE_BASE_DIR': '/builds/hg-shared',
         'MOZ_OBJDIR': 'obj-firefox',
         # SYMBOL_SERVER_HOST is dictated from build_pool_specifics.py
-        'SYMBOL_SERVER_HOST': "%(symbol_server_host)s",
+        'SYMBOL_SERVER_HOST': '%(symbol_server_host)s',
+        'SYMBOL_SERVER_SSH_KEY': "/Users/cltbld/.ssh/ffxbld_dsa",
         'SYMBOL_SERVER_USER': 'ffxbld',
         'SYMBOL_SERVER_PATH': '/mnt/netapp/breakpad/symbols_ffx/',
         'POST_SYMBOL_UPLOAD_CMD': '/usr/local/bin/post-symbol-upload.py',
-        'SYMBOL_SERVER_SSH_KEY': "/home/mock_mozilla/.ssh/ffxbld_dsa",
         'CHOWN_ROOT': '~/bin/chown_root',
         'CHOWN_REVERT': '~/bin/chown_revert',
         'TINDERBOX_OUTPUT': '1',
@@ -88,5 +89,6 @@ config = {
     'purge_minsize': 12,
     'src_mozconfig': 'browser/config/mozconfigs/macosx-universal/nightly',
     'tooltool_manifest_src': 'browser/config/tooltool-manifests/macosx64/releng.manifest',
+    'platform_ftp_name': 'mac.complete.mar',
     #########################################################################
 }

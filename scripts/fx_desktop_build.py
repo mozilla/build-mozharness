@@ -49,12 +49,6 @@ class FxDesktopBuild(BuildScript, object):
                 'periodic_clobber': 168,
                 # hg tool stuff
                 'default_vcs': 'hgtool',
-                'clone_with_purge': False,  # eg: try will impl this
-                'clone_by_revision': False,  # eg: try will impl this
-                'tinderbox_build_dir': None, # eg: try will impl this
-                'to_tinderbox_dated': True,  # eg: try will False this
-                'release_to_try_builds': False,  # eg: try will True this
-                'include_post_upload_builddir': False,
                 "tools_repo": "https://hg.mozilla.org/build/tools",
                 "repo_base": "https://hg.mozilla.org",
                 'tooltool_url': 'http://runtime-binaries.pvt.build.mozilla'
@@ -71,6 +65,24 @@ class FxDesktopBuild(BuildScript, object):
                 'stage_product': 'firefox',
                 'platform_supports_post_upload_to_latest': True,
                 'use_branch_in_symbols_extra_buildid': True,
+                'update_env': {
+                    'MAR': '../dist/host/bin/mar',
+                    'MBSDIFF': '../dist/host/bin/mbsdiff'
+                },
+                'latest_mar_dir': '/pub/mozilla.org/firefox/nightly/latest-%(branch)s',
+                'branch_supports_partials': True,  # check branch_specifics.py
+
+                # try will overwrite these
+                'clone_with_purge': False,
+                'clone_by_revision': False,
+                'tinderbox_build_dir': None,
+                'to_tinderbox_dated': True,
+                'release_to_try_builds': False,
+                'include_post_upload_builddir': False,
+                'stage_username': 'ffxbld',
+                'stage_ssh_key': 'ffxbld_dsa',
+                #
+
             },
             'ConfigClass': BuildingConfig,
         }
@@ -106,14 +118,14 @@ class FxDesktopBuild(BuildScript, object):
             # '{mozharness_repo}/build/build/', I have '{
             # mozharness_repo}/build/source/'
             'abs_src_dir': os.path.join(abs_dirs['abs_work_dir'],
-                                        'source'),
+                                        'src'),
             'abs_obj_dir': os.path.join(abs_dirs['abs_work_dir'],
-                                        'source',
+                                        'src',
                                         self._query_objdir()),
             'abs_tools_dir': os.path.join(abs_dirs['abs_work_dir'], 'tools'),
             'abs_app_ini_path': c['app_ini_path'] % {
                 'obj_dir': os.path.join(abs_dirs['abs_work_dir'],
-                                        'source',
+                                        'src',
                                         self._query_objdir())
             },
         }

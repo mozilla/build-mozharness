@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # vim:sts=2 sw=2
 import sys
 import shutil
