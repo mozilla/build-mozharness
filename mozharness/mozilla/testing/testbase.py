@@ -8,8 +8,6 @@
 import copy
 import os
 import platform
-import urllib2
-import getpass
 
 from mozharness.base.config import ReadOnlyDict, parse_config_file
 from mozharness.base.errors import BaseErrorList
@@ -125,65 +123,6 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin):
                 return self.symbols_url
         else:
             self.fatal("Can't figure out symbols_url from installer_url %s!" % self.installer_url)
-
-    def _query_outside_vpn(self, url):
-        ''' This function determines if the file needs basic http authentication.
-            If it needs it is because we're retrieving the file outside of the releng vpn.
-        '''
-        try:
-            response = urllib2.urlopen(url)
-            return False
-        except urllib2.URLError, e:
-            self.debug("We are running outside the releng network: %s" % str(e))
-            return True
-
-    def _urlopen(self, url, **kwargs):
-        '''
-        This function helps dealing with downloading files while outside
-        of the releng network.
-        '''
-        def _get_credentials():
-            if not hasattr(self, "https_username"):
-                self.https_username = raw_input("Please enter your full LDAP email address: ")
-                self.info("Please enter your LDAP password: ")
-                self.https_password = getpass.getpass()
-            return self.https_username, self.https_password
-
-        # Code based on http://code.activestate.com/recipes/305288-http-basic-authentication
-        def _urlopen_basic_auth(url, **kwargs):
-            self.info("NOTICE: Files downloaded from Release Engineering network require LDAP credentials.")
-            self.info("        We want to download this file %s" % url)
-            username, password = _get_credentials()
-            # This creates a password manager
-            passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
-            # Because we have put None at the start it will use this username/password combination from here on
-            passman.add_password(None, url, username, password)
-            authhandler = urllib2.HTTPBasicAuthHandler(passman)
-
-            return urllib2.build_opener(authhandler).open(url, **kwargs)
-
-        # We first try urlopen() normally; If we have http authentication failure,
-        # we will ask for credentials
-        try:
-            return urllib2.urlopen(url, **kwargs)
-        except urllib2.HTTPError, e:
-            if e.code == 401:
-                return _urlopen_basic_auth(url, **kwargs)
-            raise
-
-    def download_file(self, url, *args, **kwargs):
-        ''' To be able to reach pvtbuilds files we need to hit a different domain
-        '''
-        if url.startswith("http://pvtbuilds.pvt.build") and self._query_outside_vpn(url):
-            url = url.replace("http://pvtbuilds.pvt.build", "https://pvtbuilds")
-        return super(TestingMixin, self).download_file(url, *args, **kwargs)
-
-    def _download_file(self, url, filename):
-        ''' To be able to reach pvtbuilds files we need to hit a different domain
-        '''
-        if url.startswith("http://pvtbuilds.pvt.build") and self._query_outside_vpn(url):
-            url = url.replace("http://pvtbuilds.pvt.build", "https://pvtbuilds")
-        return super(TestingMixin, self)._download_file(url, filename)
 
     # read_buildbot_config is in BuildbotMixin.
 
