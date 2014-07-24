@@ -42,7 +42,8 @@ config = {
         "mochitest": "runtestsb2g.py",
         "reftest": "runreftestb2g.py",
         "crashtest": "runreftestb2g.py",
-        "xpcshell": "runtestsb2g.py"
+        "xpcshell": "runtestsb2g.py",
+        "cppunittest": "remotecppunittests.py"
     },
     # test harness options are located in the gecko tree
     "in_tree_config": "config/mozharness/b2g_emulator_config.py",
