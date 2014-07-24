@@ -5,7 +5,7 @@
 # --cfg android/androidarm_dev.py
 import os
 config = {
-    "tooltool_url": "https://secure.pub.build.mozilla.org/tooltool/pvt/build/",
+    "tooltool_url": "http://tooltool.pvt.build.mozilla.org/build/sha512",
     "exes": {},
     ".avds_dir": os.path.join(os.getenv("HOME"), ".android"),
     "tooltool_cache_path": os.path.join(os.getenv("HOME"), "cache"),
