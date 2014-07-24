@@ -28,7 +28,7 @@ from mozharness.mozilla.tooltool import TooltoolMixin
 
 
 class B2GEmulatorTest(TestingMixin, TooltoolMixin, VCSMixin, BaseScript, BlobUploadMixin):
-    test_suites = ('jsreftest', 'reftest', 'mochitest', 'xpcshell', 'crashtest')
+    test_suites = ('jsreftest', 'reftest', 'mochitest', 'xpcshell', 'crashtest', 'cppunittest')
     config_options = [[
         ["--type"],
         {"action": "store",
@@ -179,6 +179,8 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, VCSMixin, BaseScript, BlobUpl
             dirs['abs_test_install_dir'], 'reftest')
         dirs['abs_xpcshell_dir'] = os.path.join(
             dirs['abs_test_install_dir'], 'xpcshell')
+        dirs['abs_cppunittest_dir'] = os.path.join(
+            dirs['abs_test_install_dir'], 'cppunittests')
         for key in dirs.keys():
             if key not in abs_dirs:
                 abs_dirs[key] = dirs[key]
@@ -330,6 +332,8 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, VCSMixin, BaseScript, BlobUpl
             elif suite == 'jsreftest':
                 self.test_manifest = os.path.join('jsreftest', 'tests',
                                                   'jstests.list')
+            elif suite == 'cppunittest':
+                self.test_manifest = None
 
         if not os.path.isfile(self.adb_path):
             self.fatal("The adb binary '%s' is not a valid file!" % self.adb_path)
