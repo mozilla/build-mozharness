@@ -177,18 +177,12 @@ class ScriptMixin(object):
         else:
             return parsed.netloc
 
-    def _urlopen(self, url, **kwargs):
-        """ This method can be overwritten to extend its complexity
-        """
-        return urllib2.urlopen(url, **kwargs)
-
     def _download_file(self, url, file_name):
         """ Helper script for download_file()
-        """
+            """
         try:
             f_length = None
-            f = self._urlopen(url, timeout=30)
-
+            f = urllib2.urlopen(url, timeout=30)
             if f.info().get('content-length') is not None:
                 f_length = int(f.info()['content-length'])
                 got_length = 0
