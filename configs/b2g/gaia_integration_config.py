@@ -4,9 +4,9 @@ import platform
 HG_SHARE_BASE_DIR = "/builds/hg-shared"
 
 if platform.system().lower() == 'darwin':
-    xre_url = "http://runtime-binaries.pvt.build.mozilla.org/tooltool/sha512/441be719e6984d24e9eadca5d13a1cd7d22e81505b21a82d25a7da079a48211b5feb4525a6f32100a00748f8a824a341065d66a97be8e932c3a3e1e55ade0ede"
+    xre_url = "http://runtime-binaries.pvt.build.mozilla.org/tooltool/sha512/ce54c2f5abb8b8bae67b129e1218e3c3fe46ed965992987b991d5b401e47db07a894da203978a710ea5498321c3b3d39538db2bca7db230c326af6ff060d7c98"
 else:
-    xre_url = "http://runtime-binaries.pvt.build.mozilla.org/tooltool/sha512/b48e7defed365b5899f4a782304e4c621e94c6759e32fdec66aa3e088688401e4c404b1778cd0c6b947d9faa874f60a68e1c7d8ccaa5f2d25077eafad5d533cc"
+    xre_url = "http://runtime-binaries.pvt.build.mozilla.org/tooltool/sha512/3287d784370e5459b1bc65781f7dd7aa6ef391a3f20d1ba0754aa5eb0394ea88a4c078ab27157d0011cb028a6a11f3c450a5b3d5d89bf0e0ef7a0bd1069ae319"
 
 config = {
     # mozharness script options
