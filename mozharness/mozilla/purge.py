@@ -49,10 +49,16 @@ class PurgeMixin(object):
             if self.config.get('purge_basedirs'):
                 basedirs.extend(self.config.get('purge_basedirs'))
 
+        cmd = []
+        if self._is_windows():
+            # add the python interpreter explicitly
+            try:
+                cmd.append(self.query_python_path())
+            except AttributeError:
+                # we are not inheriting from VirtualenvMixin
+                cmd.append(self.query_exe('python'))
         # Add --dry-run if you don't want to do this for realz
-        cmd = [self.purge_tool,
-               '-s', str(min_size),
-               ]
+        cmd.extend([self.purge_tool, '-s', str(min_size)])
 
         if max_age:
             cmd.extend(['--max-age', str(max_age)])
@@ -86,8 +92,16 @@ class PurgeMixin(object):
         slave = self.buildbot_config['properties']['slavename']
         master = self.buildbot_config['properties']['master']
 
+        cmd = []
+        if self._is_windows():
+            # add the python interpreter explicitly
+            try:
+                cmd.append(self.query_python_path())
+            except AttributeError:
+                # we are not inheriting from VirtualenvMixin
+                cmd.append(self.query_exe('python'))
         # Add --dry-run if you don't want to do this for realz
-        cmd = [self.clobber_tool]
+        cmd.extend([self.clobber_tool])
         # TODO configurable list
         cmd.extend(['-s', 'scripts'])
         cmd.extend(['-s', 'logs'])
