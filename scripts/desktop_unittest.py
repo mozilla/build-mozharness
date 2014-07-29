@@ -258,7 +258,8 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
                 'binary_path': self.binary_path,
                 'symbols_path': self._query_symbols_url(),
                 'abs_app_dir': abs_app_dir,
-                'app_path': webapprt_path
+                'app_path': webapprt_path,
+                'raw_log_file': os.path.join(dirs['abs_blob_upload_dir'], 'raw_structured_logs.log')
             }
             # TestingMixin._download_and_extract_symbols() will set
             # self.symbols_path when downloading/extracting.

@@ -440,7 +440,8 @@ class PandaTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixin, Bu
             'ssl_port':  ssl_port,
             'app_name':  self.app_name,
             'apk_name':  self.filename_apk,
-            'apk_path':  self.apk_path
+            'apk_path':  self.apk_path,
+            'raw_log_file': os.path.join(dirs['abs_blob_upload_dir'], 'raw_structured_logs.log')
         }
         if self.tree_config['%s_options' % suite_category]:
             for option in self.tree_config['%s_options' % suite_category]:
