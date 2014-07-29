@@ -7,7 +7,7 @@ import json
 
 from mozharness.base import log
 from mozharness.base.log import OutputParser, WARNING, INFO
-from mozharness.mozilla.buildbot import TBPL_WARNING
+from mozharness.mozilla.buildbot import TBPL_WARNING, TBPL_FAILURE
 from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_WORST_LEVEL_TUPLE
 
 # TODO: reuse the formatter in mozlog
@@ -102,10 +102,12 @@ class StructuredOutputParser(OutputParser):
             data = json.loads(line)
         except ValueError:
             self.critical("Failed to parse line '%s' as json" % line)
+            self.update_levels(TBPL_FAILURE, log.CRITICAL)
             return
 
         if "action" not in data:
-            self.error(line)
+            self.critical("Parsed JSON was not a valid structured log message: %s" % line)
+            self.update_levels(TBPL_FAILURE, log.CRITICAL)
             return
 
         action = data["action"]
