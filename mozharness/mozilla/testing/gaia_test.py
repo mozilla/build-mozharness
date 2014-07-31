@@ -217,7 +217,8 @@ class GaiaTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin,
                              halt_on_failure=True,
                              fatal_exit_code=3)
 
-    def _retry_download_file(self, url, file_name, error_level=FATAL):
+    def _retry_download_file(self, url, file_name, attempts=None, sleeptime=60,
+                             error_level=FATAL):
         if self.config.get("bypass_download_cache"):
             n = 0
             max_attempts = 5
