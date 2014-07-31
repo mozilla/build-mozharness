@@ -600,7 +600,9 @@ or run without that action (ie: --no-{action})"
         # let's see if it's in buildbot_properties
         if in_buildbot_props:
             self.info("Determining builduid from buildbot properties")
-            self.builduid = self.buildbot_config['properties']['builduid']
+            self.builduid = self.buildbot_config['properties']['builduid'].encode(
+                'ascii', 'replace'
+            )
         else:
             self.info("Creating builduid through uuid hex")
             self.builduid = uuid.uuid4().hex
@@ -632,7 +634,9 @@ or run without that action (ie: --no-{action})"
         # now let's see if it's in buildbot_properties
         elif in_buildbot_props:
             self.info("Determining buildid from buildbot properties")
-            self.buildid = self.buildbot_config['properties']['buildid']
+            self.buildid = self.buildbot_config['properties']['buildid'].encode(
+                'ascii', 'replace'
+            )
         else:
             # finally, let's resort to making a buildid this will happen when
             #  buildbot has not made one, and we are running this script for
@@ -791,10 +795,6 @@ or run without that action (ie: --no-{action})"
         return _who
 
     def _query_post_upload_cmd(self):
-        # TODO support more from postUploadCmdPrefix()
-        # as needed (as we introduce builds that use it)
-        # h.m.o/build/buildbotcustom/process/factory.py#l119
-
         c = self.config
         post_upload_cmd = ["post_upload.py"]
         buildid = self.query_buildid()
@@ -806,7 +806,7 @@ or run without that action (ie: --no-{action})"
 
         if c.get('tinderbox_build_dir'):
             # TODO find out if we should fail here like we are
-            if not who and revision:
+            if not who and not revision:
                 self.fatal("post upload failed. --tinderbox-builds-dir could "
                            "not be determined. 'who' and/or 'revision unknown")
             # branches like try will use 'tinderbox_build_dir
@@ -827,7 +827,8 @@ or run without that action (ie: --no-{action})"
         post_upload_cmd.extend(["--tinderbox-builds-dir", tinderbox_build_dir])
         post_upload_cmd.extend(["-p", c['stage_product']])
         post_upload_cmd.extend(['-i', buildid])
-        post_upload_cmd.extend(['--revision', revision])
+        if revision:
+            post_upload_cmd.extend(['--revision', revision])
         if c.get('to_tinderbox_dated'):
             post_upload_cmd.append('--release-to-tinderbox-dated-builds')
         if c.get('release_to_try_builds'):
@@ -931,27 +932,26 @@ or run without that action (ie: --no-{action})"
         """
         # this is basically a copy from b2g_build.py
         # TODO get b2g_build.py to use this version of query_revision
+        revision = None
         if 'revision' in self.buildbot_properties:
-            return self.buildbot_properties['revision']
+            revision = self.buildbot_properties['revision']
+        elif (self.buildbot_config and
+                  self.buildbot_config.get('sourcestamp', {}).get('revision')):
+            revision = self.buildbot_config['sourcestamp']['revision']
+        elif self.buildbot_config and self.buildbot_config.get('revision'):
+            revision = self.buildbot_config['revision']
+        else:
+            if not source_path:
+                dirs = self.query_abs_dirs()
+                source_path = dirs['abs_src_dir']  # let's take the default
 
-        if self.buildbot_config and self.buildbot_config.get('revision'):
-            return self.buildbot_config['revision']
-
-        if self.buildbot_config and self.buildbot_config.get('sourcestamp'):
-            return self.buildbot_config['sourcestamp']['revision']
-
-        if not source_path:
-            dirs = self.query_abs_dirs()
-            source_path = dirs['abs_src_dir']  # let's take the default
-
-        # Look at what we have checked out
-        if os.path.exists(source_path):
-            hg = self.query_exe('hg', return_type='list')
-            return self.get_output_from_command(
-                hg + ['parent', '--template', '{node|short}'], cwd=source_path
-            )
-
-        return None
+            # Look at what we have checked out
+            if os.path.exists(source_path):
+                hg = self.query_exe('hg', return_type='list')
+                revision = self.get_output_from_command(
+                    hg + ['parent', '--template', '{node|short}'], cwd=source_path
+                )
+        return revision[0:12].encode('ascii', 'replace') if revision else None
 
     def _checkout_source(self):
         """use vcs_checkout to grab source needed for build."""
