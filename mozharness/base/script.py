@@ -26,6 +26,7 @@ import sys
 import time
 import traceback
 import urllib2
+import httplib
 import urlparse
 if os.name == 'nt':
     try:
@@ -238,6 +239,7 @@ class ScriptMixin(object):
             args=(url, file_name),
             failure_status=None,
             retry_exceptions=(urllib2.HTTPError, urllib2.URLError,
+                              httplib.BadStatusLine,
                               socket.timeout, socket.error),
             error_message="Can't download from %s to %s!" % (url, file_name),
             error_level=error_level,
