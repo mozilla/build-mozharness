@@ -229,7 +229,7 @@ class ScriptMixin(object):
             raise
 
     def _retry_download_file(self, url, file_name, error_level,
-                             attempts=None, sleeptime=None):
+                             attempts=None, sleeptime=60):
         """ Helper method to retry _download_file().
 
             Split out so we can alter the retry logic in
@@ -250,7 +250,7 @@ class ScriptMixin(object):
     # TODO thinking about creating a transfer object.
     def download_file(self, url, file_name=None, parent_dir=None,
                       create_parent_dir=True, error_level=ERROR,
-                      exit_code=3, attempts=None, sleeptime=None):
+                      exit_code=3, attempts=None, sleeptime=60):
         """ Python wget.
         """
         if not file_name:
