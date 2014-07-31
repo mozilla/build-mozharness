@@ -232,7 +232,7 @@ class GaiaTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin,
                     if n >= max_attempts:
                         self.log("Can't download from %s to %s!" % (url, file_name),
                                  level=error_level, exit_code=3)
-                        return -1
+                        return None
                     self.info("Sleeping 60 before retrying...")
                     time.sleep(60)
         else:
