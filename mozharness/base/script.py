@@ -228,7 +228,8 @@ class ScriptMixin(object):
             self.warning("Socket error when accessing %s: %s" % (url, str(e)))
             raise
 
-    def _retry_download_file(self, url, file_name, error_level):
+    def _retry_download_file(self, url, file_name, error_level,
+                             attempts=None, sleeptime=None):
         """ Helper method to retry _download_file().
 
             Split out so we can alter the retry logic in
@@ -242,14 +243,14 @@ class ScriptMixin(object):
                               httplib.BadStatusLine,
                               socket.timeout, socket.error),
             error_message="Can't download from %s to %s!" % (url, file_name),
-            error_level=error_level,
+            error_level=error_level, attempts=attempts, sleeptime=sleeptime
         )
 
     # http://www.techniqal.com/blog/2008/07/31/python-file-read-write-with-urllib2/
     # TODO thinking about creating a transfer object.
     def download_file(self, url, file_name=None, parent_dir=None,
                       create_parent_dir=True, error_level=ERROR,
-                      exit_code=3):
+                      exit_code=3, attempts=None, sleeptime=None):
         """ Python wget.
         """
         if not file_name:
@@ -264,7 +265,9 @@ class ScriptMixin(object):
             if create_parent_dir:
                 self.mkdir_p(parent_dir, error_level=error_level)
         self.info("Downloading %s to %s" % (url, file_name))
-        status = self._retry_download_file(url, file_name, error_level)
+        status = self._retry_download_file(
+            url, file_name, error_level, attempts=attempts, sleeptime=sleeptime
+        )
         if status == file_name:
             self.info("Downloaded %d bytes." % os.path.getsize(file_name))
         return status

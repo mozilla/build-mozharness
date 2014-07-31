@@ -88,7 +88,7 @@ class ProxxyMixin:
             retval = self.download_file(
                 u, file_name=file_name, parent_dir=parent_dir,
                 create_parent_dir=create_parent_dir, error_level=ERROR,
-                exit_code=exit_code)
+                exit_code=exit_code, attempts=3, sleeptime=30)
             if retval:
                 return retval
 
