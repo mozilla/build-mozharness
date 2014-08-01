@@ -465,8 +465,9 @@ class B2GBuild(LocalesMixin, PurgeMixin,
 
     def _generate_git_locale_manifest(self, locale, url, git_repo,
                                       revision, git_base_url, local_path):
+        # increase timeout from 15m to 60m until bug 1044515 is resolved (attempts = 120)
         l10n_git_sha = self.query_mapper_git_revision(url, 'l10n', revision, project_name="l10n %s" % locale,
-                                                      require_answer=self.config.get('require_git_rev', True))
+                                                      require_answer=self.config.get('require_git_rev', True), attempts=120)
         return '  <project name="%s" path="%s" remote="mozillaorg" revision="%s"/>' % (git_repo.replace(git_base_url, ''), local_path, l10n_git_sha)
 
     def _generate_locale_manifest(self, git_base_url="https://git.mozilla.org/release/"):
@@ -552,10 +553,12 @@ class B2GBuild(LocalesMixin, PurgeMixin,
 
             manifest.appendChild(dom.createTextNode("\n  "))
             url = manifest_config['translate_base_url']
+            # increase timeout from 15m to 60m until bug 1044515 is resolved (attempts = 120)
             gecko_git = self.query_mapper_git_revision(url, 'gecko',
                                                        self.query_revision(),
                                                        require_answer=self.config.get('require_git_rev',
-                                                                                      True))
+                                                                                      True),
+                                                       attempts=120)
             project_name = "https://git.mozilla.org/releases/gecko.git".replace(git_base_url, '')
             # XXX This assumes that we have a mozillaorg remote
             add_project(dom, name=project_name, path="gecko", remote="mozillaorg", revision=gecko_git)
