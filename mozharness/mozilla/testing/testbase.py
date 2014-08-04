@@ -18,6 +18,7 @@ from mozharness.base.python import (
     virtualenv_config_options,
 )
 from mozharness.mozilla.buildbot import BuildbotMixin
+from mozharness.mozilla.proxxy import ProxxyMixin
 
 INSTALLER_SUFFIXES = ('.tar.bz2', '.zip', '.dmg', '.exe', '.apk', '.tar.gz')
 
@@ -70,7 +71,7 @@ testing_config_options = [
 
 
 # TestingMixin {{{1
-class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin):
+class TestingMixin(ProxxyMixin, VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin):
     """
     The steps to identify + download the proper bits for [browser] unit
     tests and Talos.
@@ -218,7 +219,7 @@ You can set this by:
         file_name = None
         if self.test_zip_path:
             file_name = self.test_zip_path
-        source = self.download_file(self.test_url, file_name=file_name,
+        source = self.download_proxied_file(self.test_url, file_name=file_name,
                                     parent_dir=dirs['abs_work_dir'],
                                     error_level=FATAL)
         self.test_zip_path = os.path.realpath(source)
@@ -228,7 +229,7 @@ You can set this by:
         This is hardcoded to halt on failure.
         We should probably change some other methods to call this."""
         dirs = self.query_abs_dirs()
-        zipfile = self.download_file(url, parent_dir=dirs['abs_work_dir'],
+        zipfile = self.download_proxied_file(url, parent_dir=dirs['abs_work_dir'],
                                      error_level=FATAL)
         command = self.query_exe('unzip', return_type='list')
         command.extend(['-q', '-o', zipfile])
@@ -284,7 +285,7 @@ You can set this by:
         if self.installer_path:
             file_name = self.installer_path
         dirs = self.query_abs_dirs()
-        source = self.download_file(self.installer_url, file_name=file_name,
+        source = self.download_proxied_file(self.installer_url, file_name=file_name,
                                     parent_dir=dirs['abs_work_dir'],
                                     error_level=FATAL)
         self.installer_path = os.path.realpath(source)
@@ -299,7 +300,7 @@ You can set this by:
         if not self.symbols_path:
             self.symbols_path = os.path.join(dirs['abs_work_dir'], 'symbols')
         self.mkdir_p(self.symbols_path)
-        source = self.download_file(self.symbols_url,
+        source = self.download_proxied_file(self.symbols_url,
                                     parent_dir=self.symbols_path,
                                     error_level=FATAL)
         self.set_buildbot_property("symbols_url", self.symbols_url,

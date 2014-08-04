@@ -217,10 +217,20 @@ class GaiaTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin,
                              halt_on_failure=True,
                              fatal_exit_code=3)
 
-    def _retry_download_file(self, url, file_name, error_level=FATAL):
+    def query_proxxy_config(self):
+        # this is overriding ProxxyMixin's base impl
+        # gaia test by default does not use ProxxyMixin
+        cfg = self.config.get('proxxy', {})
+        self.debug("proxxy config: %s" % cfg)
+        return cfg
+
+    def _retry_download_file(self, url, file_name, error_level=FATAL, retry_config=None):
         if self.config.get("bypass_download_cache"):
             n = 0
+            # ignore retry_config in this case
             max_attempts = 5
+            sleeptime = 60
+
             while n < max_attempts:
                 n += 1
                 try:
@@ -232,12 +242,12 @@ class GaiaTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin,
                     if n >= max_attempts:
                         self.log("Can't download from %s to %s!" % (url, file_name),
                                  level=error_level, exit_code=3)
-                        return -1
-                    self.info("Sleeping 60 before retrying...")
-                    time.sleep(60)
+                        return None
+                    self.info("Sleeping %s before retrying..." % sleeptime)
+                    time.sleep(sleeptime)
         else:
             return super(GaiaTest, self)._retry_download_file(
-                url, file_name, error_level
+                url, file_name, error_level, retry_config=retry_config,
             )
 
     def download_and_extract(self):
