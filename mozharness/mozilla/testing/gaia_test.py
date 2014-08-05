@@ -217,19 +217,14 @@ class GaiaTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin,
                              halt_on_failure=True,
                              fatal_exit_code=3)
 
-    def query_proxxy_config(self):
-        # this is overriding ProxxyMixin's base impl
-        # gaia test by default does not use ProxxyMixin
-        cfg = self.config.get('proxxy', {})
-        self.debug("proxxy config: %s" % cfg)
-        return cfg
-
     def _retry_download_file(self, url, file_name, error_level=FATAL, retry_config=None):
         if self.config.get("bypass_download_cache"):
             n = 0
-            # ignore retry_config in this case
             max_attempts = 5
             sleeptime = 60
+            if retry_config:
+                max_attempts = retry_config.get('attempts', max_attempts)
+                sleeptime = retry_config.get('sleeptime', sleeptime)
 
             while n < max_attempts:
                 n += 1
