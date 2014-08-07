@@ -47,8 +47,15 @@ class GaiaUnitTest(GaiaTest):
         output_parser = TestSummaryOutputParserHelper(config=self.config,
                                                       log_obj=self.log_obj,
                                                       error_list=self.error_list)
+
+        upload_dir = self.query_abs_dirs()['abs_blob_upload_dir']
+        if not os.path.isdir(upload_dir):
+            self.mkdir_p(upload_dir)
+
+        env = self.query_env()
+        env['MOZ_UPLOAD_DIR'] = upload_dir
         # I don't like this output_timeout hardcode, but bug 920153
-        code = self.run_command(cmd,
+        code = self.run_command(cmd, env=env,
                                 output_parser=output_parser,
                                 output_timeout=1760)
 

@@ -1,5 +1,6 @@
 # This is a template config file for b2g emulator unittest testing
 import platform
+import os
 
 HG_SHARE_BASE_DIR = "/builds/hg-shared"
 
@@ -39,5 +40,9 @@ config = {
         'install',
         'run-tests',
     ],
+    "default_blob_upload_servers": [
+        "https://blobupload.elasticbeanstalk.com",
+    ],
+    "blob_uploader_auth_file": os.path.join(os.getcwd(), "oauth.txt"),
     "vcs_output_timeout": 1760,
 }
