@@ -22,6 +22,7 @@ from mozharness.base.log import FATAL
 from mozharness.base.script import BaseScript
 from mozharness.base.vcs.vcsbase import VCSMixin
 from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_options
+from mozharness.mozilla.mozbase import MozbaseMixin
 from mozharness.mozilla.buildbot import TBPL_WORST_LEVEL_TUPLE
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
 from mozharness.mozilla.testing.unittest import DesktopUnittestOutputParser, EmulatorMixin
@@ -30,7 +31,7 @@ from mozharness.mozilla.tooltool import TooltoolMixin
 from mozharness.mozilla.testing.device import ADBDeviceHandler
 
 
-class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, BaseScript):
+class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, BaseScript, MozbaseMixin):
     config_options = [[
         ["--robocop-url"],
         {"action": "store",

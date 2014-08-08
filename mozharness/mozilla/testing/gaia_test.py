@@ -18,6 +18,7 @@ from mozharness.base.log import INFO, ERROR, WARNING, FATAL
 from mozharness.base.script import PreScriptAction
 from mozharness.base.transfer import TransferMixin
 from mozharness.base.vcs.vcsbase import MercurialScript
+from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_options
 from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_WARNING, TBPL_FAILURE
 from mozharness.mozilla.gaia import GaiaMixin
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
@@ -25,7 +26,7 @@ from mozharness.mozilla.tooltool import TooltoolMixin
 
 
 class GaiaTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin,
-               GaiaMixin):
+               GaiaMixin, BlobUploadMixin):
     config_options = [[
         ["--gaia-dir"],
         {"action": "store",
@@ -82,7 +83,8 @@ class GaiaTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin,
          "default": "http://npm-mirror.pub.build.mozilla.org",
          "help": "where to go for node packages"
          }
-    ]] + copy.deepcopy(testing_config_options)
+    ]] + copy.deepcopy(testing_config_options) + \
+         copy.deepcopy(blobupload_config_options)
 
     error_list = [
         {'substr': 'FAILED (errors=', 'level': WARNING},
@@ -155,6 +157,7 @@ class GaiaTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin,
                                               'tests', 'python', 'gaia-unit-tests')
         dirs['abs_test_install_dir'] = os.path.join(
             abs_dirs['abs_work_dir'], 'tests')
+        dirs['abs_blob_upload_dir'] = os.path.join(abs_dirs['abs_work_dir'], 'blobber_upload_dir')
 
         for key in dirs.keys():
             if key not in abs_dirs:
