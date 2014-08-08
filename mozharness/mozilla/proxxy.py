@@ -24,6 +24,7 @@ class ProxxyMixin:
             ('http://ftp.mozilla.org', 'ftp.mozilla.org'),
             ('https://ftp.mozilla.org', 'ftp.mozilla.org'),
             ('https://ftp-ssl.mozilla.org', 'ftp.mozilla.org'),
+            ('http://pvtbuilds.pvt.build.mozilla.org', 'pvtbuilds.mozilla.org'),
         ],
         "instances": [
             'proxxy.srv.releng.use1.mozilla.com',
