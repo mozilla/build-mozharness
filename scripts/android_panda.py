@@ -470,10 +470,13 @@ class PandaTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixin, Bu
                                "like:\n '--mochitest-suite browser-chrome'")
 
     def close_request(self):
-        mph = self.query_mozpool_handler(self.mozpool_device)
-        mph.close_request(self.request_url)
-        self.info("Request '%s' deleted on cleanup" % self.request_url)
-        self.request_url = None
+        if self.request_url:
+            mph = self.query_mozpool_handler(self.mozpool_device)
+            mph.close_request(self.request_url)
+            self.info("Request '%s' deleted on cleanup" % self.request_url)
+            self.request_url = None
+        else:
+            self.info("request_url doesn't exist. Already closed?")
 
     def _build_arg(self, option, value):
         """
