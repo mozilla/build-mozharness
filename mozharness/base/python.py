@@ -209,6 +209,10 @@ class VirtualenvMixin(object):
             virtualenv_cache_dir = c.get("virtualenv_cache_dir", os.path.join(venv_path, "cache"))
             if virtualenv_cache_dir:
                 command += ["--download-cache", virtualenv_cache_dir]
+            # To avoid timeouts with our pypi server, increase default timeout:
+            # https://bugzilla.mozilla.org/show_bug.cgi?id=1007230#c802
+            if '--timeout' not in command:
+                command += ['--timeout', c.get('pip_timeout', 120)]
             for requirement in requirements:
                 command += ["-r", requirement]
             if c.get('find_links') and not c["pip_index"]:
@@ -261,10 +265,19 @@ class VirtualenvMixin(object):
 
         # Allow for errors while building modules, but require a
         # return status of 0.
-        if self.run_command(command,
-                            error_list=VirtualenvErrorList,
-                            success_codes=success_codes,
-                            cwd=cwd) != 0:
+        kwargs={
+            'error_list': VirtualenvErrorList,
+            'success_codes': success_codes,
+            'cwd': cwd,
+            # Need to throw exception for retry mechanism to work
+            'throw_exception': True,
+        }
+        if optional:
+            attempts = 1
+        else:
+            # None will cause default value to be used
+            attempts = None
+        if self.retry(self.run_command, args=[command,], attempts=attempts, kwargs=kwargs) != 0:
             if optional:
                 self.warning("Error running install of optional package, %s." %
                              ' '.join(command))
