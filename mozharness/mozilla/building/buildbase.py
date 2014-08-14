@@ -241,6 +241,7 @@ class BuildOptionParser(object):
         'debug-and-non-unified':
                 'builds/releng_sub_%s_configs/%s_debug_and_non_unified.py',
         'mulet': 'builds/releng_sub_%s_configs/%s_mulet.py',
+        'code-coverage': 'builds/releng_sub_%s_configs/%s_code_coverage.py',
     }
     build_pools = {
         'staging': 'builds/build_pool_specifics.py',
