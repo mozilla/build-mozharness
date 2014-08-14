@@ -17,7 +17,7 @@ from mozharness.base.script import (
     PreScriptAction,
 )
 from mozharness.base.errors import VirtualenvErrorList
-from mozharness.base.log import WARNING, FATAL
+from mozharness.base.log import WARNING, ERROR, FATAL
 
 # Virtualenv {{{1
 virtualenv_config_options = [
@@ -269,6 +269,7 @@ class VirtualenvMixin(object):
             # None will cause default value to be used
             attempts=1 if optional else None,
             good_statuses=(0,),
+            error_level=WARNING if optional else ERROR,
             args=[command,],
             kwargs={
                 'error_list': VirtualenvErrorList,
