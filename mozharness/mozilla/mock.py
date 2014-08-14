@@ -67,10 +67,15 @@ class MockMixin(object):
                 halt_on_failure=True,
                 fatal_exit_code=3)
 
+    def get_mock_target(self):
+        if self.config.get('disable_mock'):
+            return None
+        return self.default_mock_target or self.config.get('mock_target')
+
     def enable_mock(self):
         """Wrap self.run_command and self.get_output_from_command to run inside
         the mock environment given by self.config['mock_target']"""
-        if not self.default_mock_target and 'mock_target' not in self.config:
+        if not self.get_mock_target():
             return
         self.mock_enabled = True
         self.run_command = self.run_command_m
@@ -79,7 +84,7 @@ class MockMixin(object):
     def disable_mock(self):
         """Restore self.run_command and self.get_output_from_command to their
         original versions. This is the opposite of self.enable_mock()"""
-        if not self.default_mock_target and 'mock_target' not in self.config:
+        if not self.get_mock_target():
             return
         self.mock_enabled = False
         self.run_command = super(MockMixin, self).run_command
@@ -159,7 +164,7 @@ class MockMixin(object):
         environment is given by self.config['mock_target'], the list of packges
         to install given by self.config['mock_packages'], and the list of files
         to copy in is self.config['mock_files']."""
-        if self.done_mock_setup:
+        if self.done_mock_setup or self.config.get('disable_mock'):
             return
 
         c = self.config
@@ -226,9 +231,9 @@ class MockMixin(object):
         self.done_mock_setup = True
 
     def run_command_m(self, *args, **kwargs):
-        """Executes self.run_mock_command if self.config['mock_target'] is set,
+        """Executes self.run_mock_command if we have a mock target set,
         otherwise executes self.run_command."""
-        mock_target = self.default_mock_target or self.config.get('mock_target')
+        mock_target = self.get_mock_target()
         if mock_target:
             self.setup_mock()
             return self.run_mock_command(mock_target, *args, **kwargs)
@@ -236,10 +241,9 @@ class MockMixin(object):
             return super(MockMixin, self).run_command(*args, **kwargs)
 
     def get_output_from_command_m(self, *args, **kwargs):
-        """Executes self.get_mock_output_from_command if
-        self.config['mock_target'] is set, otherwise executes
-        self.get_output_from_command."""
-        mock_target = self.default_mock_target or self.config.get('mock_target')
+        """Executes self.get_mock_output_from_command if we have a mock target
+        set, otherwise executes self.get_output_from_command."""
+        mock_target = self.get_mock_target()
         if mock_target:
             self.setup_mock()
             return self.get_mock_output_from_command(mock_target, *args, **kwargs)
