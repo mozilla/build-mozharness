@@ -15,14 +15,14 @@ from mozharness.mozilla.testing.gaia_test import GaiaTest
 from mozharness.mozilla.testing.unittest import TestSummaryOutputParserHelper
 
 
-class GaiaBuildIntegrationTest(GaiaTest):
+class GaiaBuildUnitTest(GaiaTest):
 
     def __init__(self, require_config_file=False):
       GaiaTest.__init__(self, require_config_file)
 
     def run_tests(self):
         """
-        Run the integration test suite.
+        Run the gaia build unit test suite.
         """
         dirs = self.query_abs_dirs()
 
@@ -33,16 +33,16 @@ class GaiaBuildIntegrationTest(GaiaTest):
 
         code = self.run_command([
             'make',
-            'build-test-integration',
+            'build-test-unit',
             'NPM_REGISTRY=' + self.config.get('npm_registry'),
             'REPORTER=mocha-tbpl-reporter'
         ], cwd=dirs['abs_gaia_dir'],
            output_parser=output_parser,
            output_timeout=330)
 
-        output_parser.print_summary('gaia-build-integration-tests')
+        output_parser.print_summary('gaia-build-unit-tests')
         self.publish(code)
 
 if __name__ == '__main__':
-    gaia_build_integration_test = GaiaBuildIntegrationTest()
-    gaia_build_integration_test.run_and_exit()
+    gaia_build_unit_test = GaiaBuildUnitTest()
+    gaia_build_unit_test.run_and_exit()

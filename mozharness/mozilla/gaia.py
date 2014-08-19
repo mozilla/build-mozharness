@@ -281,3 +281,19 @@ class GaiaMixin(object):
                           args=[cmd], kwargs=kwargs)
         if code:
             self.fatal('Errors during make update-common')
+
+    def node_setup(self):
+        """
+        Set up environment for node-based Gaia tests.
+        """
+        dirs = self.query_abs_dirs()
+
+        # Copy the b2g desktop we built to the gaia directory so that it
+        # gets used by the marionette-js-runner.
+        self.copytree(
+            os.path.join(os.path.dirname(self.binary_path)),
+            os.path.join(dirs['abs_gaia_dir'], 'b2g'),
+            overwrite='clobber'
+        )
+
+        self.make_node_modules()

@@ -7,91 +7,31 @@ import json
 
 from mozharness.base import log
 from mozharness.base.log import OutputParser, WARNING, INFO
-from mozharness.mozilla.buildbot import TBPL_WARNING
+from mozharness.mozilla.buildbot import TBPL_WARNING, TBPL_FAILURE
 from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_WORST_LEVEL_TUPLE
-
-# TODO: reuse the formatter in mozlog
-
-
-class StructuredFormatter(object):
-    def __init__(self):
-        self.suite_start_time = None
-        self.test_start_times = {}
-
-    def format(self, data):
-        return getattr(self, "format_%s" % data["action"])(data)
-
-    def format_log(self, data):
-        return str(data["message"])
-
-    def format_process_output(self, data):
-        return "PROCESS | %(process)s | %(data)s" % data
-
-    def format_suite_start(self, data):
-        self.suite_start_time = data["time"]
-        return "SUITE-START | Running %i tests" % len(data["tests"])
-
-    def format_test_start(self, data):
-        self.test_start_times[self.test_id(data["test"])] = data["time"]
-        return "TEST-START | %s" % self.id_str(data["test"])
-
-    def format_test_status(self, data):
-        if "expected" in data:
-            return "TEST-UNEXPECTED-%s | %s | %s | expected %s | %s" % (
-                data["status"], self.id_str(data["test"]), data["subtest"], data["expected"],
-                data.get("message", ""))
-        else:
-            return "TEST-%s | %s | %s | %s" % (
-                data["status"], self.id_str(data["test"]), data["subtest"], data.get("message", ""))
-
-    def format_test_end(self, data):
-        start_time = self.test_start_times.pop(self.test_id(data["test"]))
-        time = data["time"] - start_time
-
-        if "expected" in data:
-            return "TEST-END TEST-UNEXPECTED-%s | %s | expected %s | %s | took %ims" % (
-                data["status"], self.id_str(data["test"]), data["expected"],
-                data.get("message", ""), time)
-        else:
-            return "TEST-END %s | %s | took %ims" % (
-                data["status"], self.id_str(data["test"]), time)
-
-    def format_suite_end(self, data):
-        start_time = self.suite_start_time
-        time = int((data["time"] - start_time) / 1000)
-
-        return "SUITE-END | took %is" % time
-
-    def test_id(self, test_id):
-        if isinstance(test_id, (str, unicode)):
-            return test_id
-        else:
-            return tuple(test_id)
-
-    def id_str(self, test_id):
-        if isinstance(test_id, (str, unicode)):
-            return test_id
-        else:
-            return " ".join(test_id)
 
 
 class StructuredOutputParser(OutputParser):
-    formatter_cls = StructuredFormatter
-
+    # The script class using this must inherit the MozbaseMixin to ensure
+    # that mozlog is available.
     def __init__(self, **kwargs):
         """Object that tracks the overall status of the test run"""
         super(StructuredOutputParser, self).__init__(**kwargs)
         self.unexpected_count = 0
-        self.formatter = self.formatter_cls()
+        self.formatter = self._get_formatter()
 
         self.worst_log_level = INFO
         self.tbpl_status = TBPL_SUCCESS
+
+    def _get_formatter(self):
+        from mozlog.structured.formatters import TbplFormatter
+        return TbplFormatter()
 
     def parse_single_line(self, line):
         """
         Parse a line of log output from the child process and
         use this to update the overall status of the run. Then re-emit the
-        logged line in humand-readable format for the tbpl logs.
+        logged line in human-readable format for the tbpl logs.
 
         The raw logs are uploaded seperately.
         """
@@ -102,10 +42,12 @@ class StructuredOutputParser(OutputParser):
             data = json.loads(line)
         except ValueError:
             self.critical("Failed to parse line '%s' as json" % line)
+            self.update_levels(TBPL_FAILURE, log.CRITICAL)
             return
 
         if "action" not in data:
-            self.error(line)
+            self.critical("Parsed JSON was not a valid structured log message: %s" % line)
+            self.update_levels(TBPL_FAILURE, log.CRITICAL)
             return
 
         action = data["action"]
@@ -115,7 +57,7 @@ class StructuredOutputParser(OutputParser):
             self.unexpected_count += 1
             level = WARNING
             tbpl_level = TBPL_WARNING
-        self.log(self.formatter.format(data), level=level)
+        self.log(self.formatter(data), level=level)
         self.update_levels(tbpl_level, level)
 
     def evaluate_parser(self, return_code):
