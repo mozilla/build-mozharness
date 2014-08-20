@@ -4,8 +4,6 @@
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 # ***** END LICENSE BLOCK *****
 
-# This is a template config file for web-platform-tests test.
-
 import os
 import sys
 
