@@ -28,6 +28,10 @@ config = {
     'mapper_url': 'http://cruncher.build.mozilla.org/mapper/{project}/{vcs}/{rev}',
 
     'devices': {
+        'dolphin': {
+            'ignore_projects': ['gecko'],
+            'ignore_groups': ['darwin'],
+        },
         'emulator-kk': {
             'ignore_projects': ['gecko'],
             'ignore_groups': ['darwin'],
@@ -76,6 +80,7 @@ config = {
         'git://github.com/mozilla/': 'https://git.mozilla.org/b2g',
         'https://git.mozilla.org/releases': 'https://git.mozilla.org/releases',
         'http://android.git.linaro.org/git-ro/': 'https://git.mozilla.org/external/linaro',
+        'http://sprdsource.spreadtrum.com:8085/b2g/android': 'https://git.mozilla.org/external/sprd-aosp',
         'git://github.com/apitrace/': 'https://git.mozilla.org/external/apitrace',
         'git://github.com/t2m-foxfone/': 'https://git.mozilla.org/external/t2m-foxfone',
         # Some mappings to ourself, we want to leave these as-is!
