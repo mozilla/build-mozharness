@@ -4,8 +4,6 @@
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 # ***** END LICENSE BLOCK *****
 
-# This is a template config file for web-platform-tests test.
-
 config = {
     # test harness options are located in the gecko tree
     "in_tree_config": "config/mozharness/web_platform_tests_config.py",
