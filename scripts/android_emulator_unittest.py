@@ -236,7 +236,7 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
         attempts = 0
         tn = None
         contacted_sut = False
-        while attempts < 4 and not contacted_sut:
+        while attempts < 8 and not contacted_sut:
             if attempts != 0:
                 self.info("Sleeping 30 seconds")
                 time.sleep(30)
