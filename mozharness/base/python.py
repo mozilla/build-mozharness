@@ -8,6 +8,7 @@
 '''
 
 import os
+import subprocess
 import sys
 import traceback
 
@@ -17,7 +18,7 @@ from mozharness.base.script import (
     PreScriptAction,
 )
 from mozharness.base.errors import VirtualenvErrorList
-from mozharness.base.log import WARNING, ERROR, FATAL
+from mozharness.base.log import WARNING, FATAL
 
 # Virtualenv {{{1
 virtualenv_config_options = [
@@ -252,36 +253,32 @@ class VirtualenvMixin(object):
                     self.fatal("editable installs not supported for install_method %s" % install_method)
             command += [module_url]
 
-        # Prevents a return code of 1 being marked as an ERROR in the log
-        # for optional packages.
-        success_codes = [0, 1] if optional else [0]
-
         # If we're only installing a single requirements file, use
         # the file's directory as cwd, so relative paths work correctly.
         cwd = dirs['abs_work_dir']
         if not module and len(requirements) == 1:
             cwd = os.path.dirname(requirements[0])
 
+        quoted_command = subprocess.list2cmdline(command)
         # Allow for errors while building modules, but require a
         # return status of 0.
-        if self.retry(
+        self.retry(
             self.run_command,
             # None will cause default value to be used
             attempts=1 if optional else None,
             good_statuses=(0,),
-            error_level=WARNING if optional else ERROR,
+            error_level=WARNING if optional else FATAL,
+            error_message='Could not install python package: ' + quoted_command + ' failed after %(attempts)d tries!',
             args=[command,],
             kwargs={
                 'error_list': VirtualenvErrorList,
-                'success_codes': success_codes,
                 'cwd': cwd,
+                # WARNING only since retry will raise final FATAL if all
+                # retry attempts are unsuccessful - and we only want
+                # an ERROR of FATAL if *no* retry attempt works
+                'error_level': WARNING,
             }
-        ) != 0:
-            if optional:
-                self.warning("Error running install of optional package, %s." %
-                             ' '.join(command))
-            else:
-                self.fatal("Error running install of package, %s!" % ' '.join(command))
+        )
 
     def create_virtualenv(self, modules=(), requirements=()):
         """

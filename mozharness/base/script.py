@@ -630,14 +630,14 @@ class ScriptMixin(object):
                     halt_on_failure=False, success_codes=None,
                     env=None, partial_env=None, return_type='status',
                     throw_exception=False, output_parser=None,
-                    output_timeout=None, fatal_exit_code=2, **kwargs):
+                    output_timeout=None, fatal_exit_code=2,
+                    error_level=ERROR, **kwargs):
         """Run a command, with logging and error parsing.
 
         output_timeout is the number of seconds without output before the process
         is killed.
 
         TODO: context_lines
-        TODO: error_level_override?
 
         output_parser lets you provide an instance of your own OutputParser
         subclass, or pass None to use OutputParser.
@@ -653,7 +653,7 @@ class ScriptMixin(object):
             success_codes = [0]
         if cwd is not None:
             if not os.path.isdir(cwd):
-                level = ERROR
+                level = error_level
                 if halt_on_failure:
                     level = FATAL
                 self.log("Can't run command %s in non-existent directory '%s'!" %
@@ -698,7 +698,10 @@ class ScriptMixin(object):
                 p.run(outputTimeout=output_timeout)
                 p.wait()
                 if p.timedOut:
-                    self.error('timed out after %s seconds of no output' % output_timeout)
+                    self.log(
+                        'timed out after %s seconds of no output' % output_timeout,
+                        level=error_level
+                    )
                 returncode = int(p.proc.returncode)
             else:
                 p = subprocess.Popen(command, shell=shell, stdout=subprocess.PIPE,
@@ -715,7 +718,7 @@ class ScriptMixin(object):
                         parser.add_lines(line)
                 returncode = p.returncode
         except OSError, e:
-            level = ERROR
+            level = error_level
             if halt_on_failure:
                 level = FATAL
             self.log('caught OS error %s: %s while running %s' % (e.errno,
@@ -724,7 +727,7 @@ class ScriptMixin(object):
 
         return_level = INFO
         if returncode not in success_codes:
-            return_level = ERROR
+            return_level = error_level
             if throw_exception:
                 raise subprocess.CalledProcessError(returncode, command)
         self.log("Return code: %d" % returncode, level=return_level)
@@ -732,11 +735,13 @@ class ScriptMixin(object):
         if halt_on_failure:
             _fail = False
             if returncode not in success_codes:
-                self.error("%s not in success codes: %s" % (returncode,
-                                                            success_codes))
+                self.log(
+                    "%s not in success codes: %s" % (returncode, success_codes),
+                    level=error_level
+                )
                 _fail = True
             if parser.num_errors:
-                self.error("failures found while parsing output")
+                self.log("failures found while parsing output", level=error_level)
                 _fail = True
             if _fail:
                 self.return_code = fatal_exit_code

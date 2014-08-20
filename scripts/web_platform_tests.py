@@ -122,7 +122,11 @@ class WebPlatformTest(TestingMixin, MercurialScript, BlobUploadMixin):
         base_cmd += ["--log-raw=-",
                      "--log-raw=%s" % os.path.join(dirs["abs_blob_upload_dir"],
                                                    "wpt_structured_full.log"),
-                     "--binary=%s" % self.binary_path]
+                     "--binary=%s" % self.binary_path,
+                     "--symbols-path=%s" % self.query_symbols_url()]
+
+        if c.get('minidump_stackwalk_path'):
+            base_cmd.append('--stackwalk-binary=%s' % c['minidump_stackwalk_path'])
 
         for test_type in c.get("test_type", []):
             base_cmd.append("--test-type=%s" % test_type)
