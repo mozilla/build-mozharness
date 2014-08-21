@@ -36,12 +36,15 @@ from mozharness.mozilla.tooltool import TooltoolMixin
 from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.l10n.locales import LocalesMixin
 from mozharness.mozilla.mock import MockMixin
+from mozharness.mozilla.updates.balrog import BalrogMixin
+from mozharness.base.vcs.vcsbase import VCSMixin
+from mozharness.base.script import BaseScript
 
 
 # MobileSingleLocale {{{1
 class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
                          MobileSigningMixin, TransferMixin, TooltoolMixin,
-                         BuildbotMixin, PurgeMixin, MercurialScript):
+                         BuildbotMixin, PurgeMixin, MercurialScript, BalrogMixin):
     config_options = [[
         ['--locale', ],
         {"action": "extend",
@@ -116,6 +119,7 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
                 "upload-repacks",
                 "create-nightly-snippets",
                 "upload-nightly-snippets",
+                "submit-to-balrog",
                 "summary",
             ],
             require_config_file=require_config_file
@@ -263,6 +267,21 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
             return self.config['snippet_base_url'] % {'locale': locale}
         self.error("Can't determine the upload url for %s!" % locale)
         self.error("You either need to run --upload-repacks before --create-nightly-snippets, or specify the 'snippet_base_url' in self.config!")
+
+    def query_abs_dirs(self):
+         if self.abs_dirs:
+             return self.abs_dirs
+         abs_dirs = super(MobileSingleLocale, self).query_abs_dirs()
+
+         abs_work_dir = abs_dirs['abs_work_dir']
+         dirs = {
+             'abs_tools_dir':
+                 os.path.join(abs_dirs['base_work_dir'], 'tools'),
+         }
+
+         abs_dirs.update(dirs)
+         self.abs_dirs = abs_dirs
+         return self.abs_dirs
 
     def add_failure(self, locale, message, **kwargs):
         self.locales_property[locale] = "Failed"
@@ -519,6 +538,73 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
                                        c['aus_upload_base_dir']):
             self.return_code += 1
 
+    def checkout_tools(self):
+        dirs = self.query_abs_dirs()
+
+        # We need hg.m.o/build/tools checked out
+        self.info("Checking out tools")
+        repos = [{
+            'repo': self.config['tools_repo'],
+            'vcs': "hg",  # May not have hgtool yet
+            'dest': dirs['abs_tools_dir'],
+        }]
+        rev = self.vcs_checkout(**repos[0])
+        self.set_buildbot_property("tools_revision", rev, write_to_file=True)
+
+    def query_apkfile_path(self,locale):
+      
+        c = self.config
+        dirs = self.query_abs_dirs()
+        apkdir = os.path.join(dirs['abs_objdir'], 'dist')
+        r  = r"(\.)" + re.escape(locale) + r"(\.*)"
+
+        apks = []
+        for f in os.listdir(apkdir):
+            if f.endswith(".apk") and re.search(r, f):
+                apks.append(f)
+        if len(apks) == 0:
+            fatal("Found no apks files in %s, don't know what to do:\n%s" % (apkdir, apks), exit_code=1)
+         
+        return os.path.join(apkdir, apks[0])
+
+    def submit_to_balrog(self):
+        if not self.query_is_nightly():
+            self.info("Not a nightly build, skipping balrog submission.")
+            return
+
+        if not self.config.get("balrog_api_root"):
+            self.info("balrog_api_root not set; skipping balrog submission.")
+            return
+
+
+        self.checkout_tools()
+
+        locales = self.query_locales()  
+        for locale in locales:
+            apkfile = self.query_apkfile_path(locale)
+            apk_url = self.query_upload_url(locale)
+
+            # Set other necessary properties for Balrog submission. None need to
+            # be passed back to buildbot, so we won't write them to the properties
+            #files.
+            self.set_buildbot_property("locale", locale)
+            
+            self.set_buildbot_property("appVersion", self.query_version())
+            # The Balrog submitter translates this platform into a build target
+            # via https://github.com/mozilla/build-tools/blob/master/lib/python/release/platforms.py#L23
+            self.set_buildbot_property("platform", self.buildbot_config["properties"]["platform"])
+            #TODO: Is there a better way to get this?
+
+            self.set_buildbot_property("appName", "Fennec")
+            # TODO: don't hardcode
+            self.set_buildbot_property("hashType", "sha512")
+            self.set_buildbot_property("completeMarSize", self.query_filesize(apkfile))            
+            self.set_buildbot_property("completeMarHash", self.query_sha512sum(apkfile))
+            self.set_buildbot_property("completeMarUrl", apk_url)
+            self.set_buildbot_property("isOSUpdate", False)
+            self.set_buildbot_property("buildid", self.query_buildid())
+
+            self.submit_balrog_updates()
 
 # main {{{1
 if __name__ == '__main__':
