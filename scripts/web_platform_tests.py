@@ -123,7 +123,8 @@ class WebPlatformTest(TestingMixin, MercurialScript, BlobUploadMixin):
                      "--log-raw=%s" % os.path.join(dirs["abs_blob_upload_dir"],
                                                    "wpt_structured_full.log"),
                      "--binary=%s" % self.binary_path,
-                     "--symbols-path=%s" % self.query_symbols_url()]
+                     "--symbols-path=%s" % self.query_symbols_url(),
+                     "--stackwalk-binary=%s" % self.query_minidump_stackwalk()]
 
         for test_type in c.get("test_type", []):
             base_cmd.append("--test-type=%s" % test_type)
@@ -145,6 +146,14 @@ class WebPlatformTest(TestingMixin, MercurialScript, BlobUploadMixin):
         opt_cmd = [item % str_format_values for item in options]
 
         return base_cmd + opt_cmd
+
+    def download_and_extract(self):
+        self.install_minidump_stackwalk()
+        super(WebPlatformTest, self).download_and_extract(
+            target_unzip_dirs=["config/*",
+                               "mozbase/*",
+                               "marionette/*",
+                               "web-platform/*"])
 
     def run_tests(self):
         dirs = self.query_abs_dirs()
