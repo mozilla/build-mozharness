@@ -4,5 +4,6 @@ config = {
         'b2g': 'stage-b2gbld',
         'firefox': 'stage-ffxbld',
         'thunderbird': 'stage-tbirdbld',
+        'mobile': 'stage-ffxbld',
     }
 }
