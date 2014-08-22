@@ -4,5 +4,6 @@ config = {
         'b2g': 'b2gbld',
         'firefox': 'ffxbld',
         'thunderbird': 'tbirdbld',
+        'mobile': 'ffxbld',
     }
 }
