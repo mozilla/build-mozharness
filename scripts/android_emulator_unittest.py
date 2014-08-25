@@ -469,11 +469,15 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
         for artifact_name in artifacts.keys():
             file_name = artifacts[artifact_name][0]
             file_path = os.path.join(c["tooltool_cache_path"], file_name)
-            if not os.path.exists(file_path):
+            if not os.path.exists(file_path) or self.file_sha512sum(file_path) != file_shasum:
+                if os.path.exists(file_path):
+                    os.remove(file_path)
                 # We store files in tooltool as their shasum representation
                 file_shasum = artifacts[artifact_name][1]
                 file_url = os.path.join(c["tooltool_url"], file_shasum)
                 self.download_file(file_url, file_path, c["tooltool_cache_path"])
+                if self.file_sha512sum(file_path) != file_shasum:
+                    return ""
 
     def setup_avds(self):
         '''
