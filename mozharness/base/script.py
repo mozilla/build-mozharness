@@ -28,6 +28,7 @@ import traceback
 import urllib2
 import httplib
 import urlparse
+import hashlib
 if os.name == 'nt':
     try:
         import win32file
@@ -1462,6 +1463,16 @@ class BaseScript(ScriptMixin, LogMixin, object):
         else:
             self.log("%s doesn't exist after copy!" % dest, level=error_level)
             return None
+
+    def file_sha512sum(self, file_path):
+        bs = 65536
+        hasher = hashlib.sha512()
+        with open(file_path, 'rb') as fh:
+            buf = fh.read(bs)
+            while len(buf) > 0:
+                hasher.update(buf)
+                buf = fh.read(bs)
+        return hasher.hexdigest()
 
 
 # __main__ {{{1
