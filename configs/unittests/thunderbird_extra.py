@@ -1,0 +1,4 @@
+#####
+config = {
+    "application": "thunderbird",
+}
