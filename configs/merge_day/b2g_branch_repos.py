@@ -30,6 +30,7 @@ config = {
         "b2g-jellybean",  # most of our builds use jb
         "ics_chocolate_rb4.2",  # prefer wasabi's hardware_qcom_display over
                                 # otoro's
+        "foxfone-one",  # prefer flame's kernel_lm ove flame-kk's
     ],
 
     "exes": {
