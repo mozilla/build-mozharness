@@ -169,6 +169,7 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
         dirs = {}
         dirs['abs_app_install_dir'] = os.path.join(abs_dirs['abs_work_dir'], 'application')
         dirs['abs_test_install_dir'] = os.path.join(abs_dirs['abs_work_dir'], 'tests')
+        dirs['abs_test_extensions_dir'] = os.path.join(dirs['abs_test_install_dir'], 'extensions')
         dirs['abs_test_bin_dir'] = os.path.join(dirs['abs_test_install_dir'], 'bin')
         dirs['abs_test_bin_plugins_dir'] = os.path.join(dirs['abs_test_bin_dir'],
                                                         'plugins')
@@ -381,6 +382,7 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
         abs_app_dir = self.query_abs_app_dir()
         abs_app_components_dir = os.path.join(abs_app_dir, 'components')
         abs_app_plugins_dir = os.path.join(abs_app_dir, 'plugins')
+        abs_app_extensions_dir = os.path.join(abs_app_dir, 'extensions')
         if suites:  # there are xpcshell suites to run
             self.mkdir_p(abs_app_plugins_dir)
             self.info('copying %s to %s' % (os.path.join(dirs['abs_test_bin_dir'],
@@ -394,6 +396,10 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
             self.copytree(dirs['abs_test_bin_plugins_dir'],
                           abs_app_plugins_dir,
                           overwrite='overwrite_if_exists')
+            if os.path.isdir(dirs['abs_test_extensions_dir']):
+                self.copytree(dirs['abs_test_extensions_dir'],
+                              abs_app_extensions_dir,
+                              overwrite='overwrite_if_exists')
 
     def preflight_cppunittest(self, suites):
         abs_app_dir = self.query_abs_app_dir()

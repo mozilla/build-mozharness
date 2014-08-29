@@ -56,6 +56,10 @@ config = {
             'ignore_projects': ['gecko'],
             'ignore_groups': ['darwin'],
         },
+        'flame-kk': {
+            'ignore_projects': ['gecko'],
+            'ignore_groups': ['darwin'],
+        },
         'hamachi': {
             'ignore_projects': ['gecko'],
             'ignore_groups': ['darwin'],
