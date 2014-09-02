@@ -13,16 +13,10 @@ config = {
     ],
     "no_branch_repos": [
         "gecko",
-        "gaia",  # branched the week before, but we want to update the manifests
     ],
     "extra_branch_manifest_repos": [
         "gecko",
         "gaia",
-    ],
-    "no_lock_revision_repos": [
-        "gecko",
-        "gaia",
-        "b2g-manifest",
     ],
     "branch_order": [
         "master",
