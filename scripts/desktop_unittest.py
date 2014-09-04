@@ -402,23 +402,9 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
                               overwrite='overwrite_if_exists')
 
     def preflight_cppunittest(self, suites):
-        if not suites or not 'cppunittest' in suites:
-            return
-
         abs_app_dir = self.query_abs_app_dir()
         dirs = self.query_abs_dirs()
         abs_cppunittest_dir = dirs['abs_cppunittest_dir']
-
-        # depending upon the branch we're building, the cppunit tests
-        # might be packaged with the main test zip, so we don't halt on
-        # failure here.
-        try:
-            self._download_unzip(self.test_url.replace('tests', 'cppunit.tests'), dirs['abs_test_install_dir'], error_level=INFO)
-        except OSError:
-            pass
-
-        if not os.path.isdir(abs_cppunittest_dir):
-            self.log('cppunit test dir: %s does not exit' % abs_cppunittest_dir, level=FATAL)
 
         # move manifest and js fils to app dir, where tests expect them
         files = glob.glob(os.path.join(abs_cppunittest_dir, '*.js'))

@@ -224,14 +224,13 @@ You can set this by:
                                     error_level=FATAL)
         self.test_zip_path = os.path.realpath(source)
 
-    def _download_unzip(self, url, parent_dir, error_level=FATAL):
+    def _download_unzip(self, url, parent_dir):
         """Generic download+unzip.
+        This is hardcoded to halt on failure.
         We should probably change some other methods to call this."""
         dirs = self.query_abs_dirs()
         zipfile = self.download_proxied_file(url, parent_dir=dirs['abs_work_dir'],
-                                     error_level=error_level)
-        if zipfile is None:
-            return
+                                     error_level=FATAL)
         command = self.query_exe('unzip', return_type='list')
         command.extend(['-q', '-o', zipfile])
         self.run_command(command, cwd=parent_dir, halt_on_failure=True,

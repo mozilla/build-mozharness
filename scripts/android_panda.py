@@ -220,17 +220,6 @@ class PandaTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixin, Bu
                 should_install_app = True
                 if 'cppunittest' in suite:
                     should_install_app = False
-                    # depending upon the branch we're building, the cppunit
-                    # tests  might be packaged with the main test zip, so
-                    # we don't halt on failure here.
-                    try:
-                        self._download_unzip(self.test_url.replace('tests',
-                                             'cppunit.tests'),
-                                             dirs['abs_test_install_dir'],
-                                             error_level=INFO)
-                    except OSError:
-                        pass
-
                 if 'robocop' in suite:
                     self._download_robocop_apk()
                 if 'jittest' in suite:
