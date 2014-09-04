@@ -48,7 +48,6 @@ config = {
         "ssh_key": os.path.expanduser("~/.ssh/b2gbld_dsa"),
         "ssh_user": "b2gbld",
         "branches": {
-            'mozilla-b2g28_v1_3': '1.3.0',
             'mozilla-b2g28_v1_3t': '1.3.0t',
             'mozilla-b2g30_v1_4': '1.4.0',
             'mozilla-b2g32_v2_0': '2.0.0',
