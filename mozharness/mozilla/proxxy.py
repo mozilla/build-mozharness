@@ -104,7 +104,7 @@ class ProxxyMixin:
             self.info("trying %s" % url)
             retval = self.download_file(
                 url, file_name=file_name, parent_dir=parent_dir,
-                create_parent_dir=create_parent_dir, error_level=error_level,
+                create_parent_dir=create_parent_dir, error_level=ERROR,
                 exit_code=exit_code,
                 retry_config=dict(
                     attempts=3,
