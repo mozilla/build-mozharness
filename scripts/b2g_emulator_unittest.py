@@ -14,7 +14,7 @@ import sys
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
 from mozharness.base.errors import BaseErrorList, TarErrorList
-from mozharness.base.log import ERROR, WARNING
+from mozharness.base.log import ERROR, WARNING, INFO
 from mozharness.base.script import (
     BaseScript,
     PreScriptAction,
@@ -377,6 +377,18 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, VCSMixin, BaseScript, BlobUpl
         success_codes = None
         if suite_name == 'xpcshell':
             success_codes = [0, 1]
+
+        if suite_name == 'cppunittest':
+            # depending upon the branch we're building, the cppunit
+            # tests  might be packaged with the main test zip, so
+            # we don't halt on failure here.
+            try:
+                self._download_unzip(self.test_url.replace('tests',
+                                     'cppunit.tests'),
+                                     dirs['abs_test_install_dir'],
+                                     error_level=INFO)
+            except OSError:
+                pass
 
         env = {}
         if self.query_minidump_stackwalk():
