@@ -58,6 +58,7 @@ config = {
         "browser-chrome-2": ["--browser-chrome", "--chunk-by-dir=5", "--total-chunks=3", "--this-chunk=2"],
         "browser-chrome-3": ["--browser-chrome", "--chunk-by-dir=5", "--total-chunks=3", "--this-chunk=3"],
         "browser-chrome-chunked": ["--browser-chrome", "--chunk-by-dir=5"],
+        "mochitest-webgl": ["--manifest=tests/mochitest/tests/dom/canvas/test/webgl-mochitest/mochitest.ini"],
         "mochitest-devtools-chrome": ["--browser-chrome", "--subsuite=devtools"],
         "mochitest-devtools-chrome-1": ["--browser-chrome", "--subsuite=devtools", "--chunk-by-dir=5", "--total-chunks=3", "--this-chunk=1"],
         "mochitest-devtools-chrome-2": ["--browser-chrome", "--subsuite=devtools", "--chunk-by-dir=5", "--total-chunks=3", "--this-chunk=2"],
