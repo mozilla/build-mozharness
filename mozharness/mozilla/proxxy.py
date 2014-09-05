@@ -1,10 +1,10 @@
 """Proxxy module"""
 import urlparse
 import socket
-from mozharness.base.log import ERROR, LogMixin
+from mozharness.base.log import ERROR
 
 
-class ProxxyMixin(LogMixin):
+class ProxxyMixin:
     """
     Support downloading files from HTTP caching proxies
 
@@ -18,8 +18,6 @@ class ProxxyMixin(LogMixin):
     self.config['proxxy']['instances'] lists current hostnames for proxxy instances. wildcard DNS
     is set up so that *.proxxy.domain.com is a CNAME to the proxxy instance
     """
-    # NOTE: this class is used by mozharness.base.python as a standalone class
-    # not as mixin
 
     # Default configuration. Can be overridden via self.config
     PROXXY_CONFIG = {
@@ -30,10 +28,6 @@ class ProxxyMixin(LogMixin):
             ('http://pvtbuilds.pvt.build.mozilla.org', 'pvtbuilds.mozilla.org'),
             # tooltool
             ('http://runtime-binaries.pvt.build.mozilla.org', 'runtime-binaries.pvt.build.mozilla.org'),
-            # pypi
-            ('http://pypi.pvt.build.mozilla.org', 'pypi.pvt.build.mozilla.org'),
-            ('http://pypi.pub.build.mozilla.org', 'pypi.pub.build.mozilla.org'),
-
         ],
         "instances": [
             'proxxy.srv.releng.use1.mozilla.com',
@@ -45,13 +39,7 @@ class ProxxyMixin(LogMixin):
     def query_proxxy_config(self):
         """returns the 'proxxy' configuration from config. If 'proxxy' is not
         defined, returns PROXXY_CONFIG instead"""
-        try:
-            cfg = self.config.get('proxxy', self.PROXXY_CONFIG)
-        except AttributeError:
-            # no self.config, proxxy mixin has been created
-            # inside another object, just forget about self.config and use
-            # the default values.
-            cfg = self.PROXXY_CONFIG
+        cfg = self.config.get('proxxy', self.PROXXY_CONFIG)
         self.debug("proxxy config: %s" % cfg)
         return cfg
 
