@@ -1325,11 +1325,12 @@ class BaseScript(ScriptMixin, LogMixin, object):
 
     # logging {{{2
     def new_log_obj(self, default_log_level="info"):
-        dirs = self.query_abs_dirs()
+        c = self.config
+        log_dir = os.path.join(c['base_work_dir'], c.get('log_dir', 'logs'))
         log_config = {
             "logger_name": 'Simple',
             "log_name": 'log',
-            "log_dir": dirs['abs_log_dir'],
+            "log_dir": log_dir,
             "log_level": default_log_level,
             "log_format": '%(asctime)s %(levelname)8s - %(message)s',
             "log_to_console": True,
