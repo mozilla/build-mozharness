@@ -19,6 +19,7 @@ from mozharness.base.script import (
 )
 from mozharness.base.errors import VirtualenvErrorList
 from mozharness.base.log import WARNING, FATAL
+from mozharness.mozilla.proxxy import ProxxyMixin
 
 # Virtualenv {{{1
 virtualenv_config_options = [
@@ -241,7 +242,11 @@ class VirtualenvMixin(object):
             self.fatal("install_module() doesn't understand an install_method of %s!" % install_method)
 
         # Add --find-links pages to look at
-        for link in c.get('find_links', []):
+        # create a proxxy object and pass it our config and our logger
+        proxxy = ProxxyMixin()
+        proxxy.config = self.config
+        proxxy.log_obj = self.log_obj
+        for link in proxxy.get_proxies_and_urls(c.get('find_links', [])):
             command.extend(["--find-links", link])
 
         # module_url can be None if only specifying requirements files
@@ -269,7 +274,7 @@ class VirtualenvMixin(object):
             good_statuses=(0,),
             error_level=WARNING if optional else FATAL,
             error_message='Could not install python package: ' + quoted_command + ' failed after %(attempts)d tries!',
-            args=[command,],
+            args=[command, ],
             kwargs={
                 'error_list': VirtualenvErrorList,
                 'cwd': cwd,
@@ -337,7 +342,7 @@ class VirtualenvMixin(object):
 
         if not os.path.exists(virtualenv[0]) and not self.which(virtualenv[0]):
             self.add_summary("The executable '%s' is not found; not creating "
-                "virtualenv!" % virtualenv[0], level=FATAL)
+                             "virtualenv!" % virtualenv[0], level=FATAL)
             return -1
 
         # https://bugs.launchpad.net/virtualenv/+bug/352844/comments/3
