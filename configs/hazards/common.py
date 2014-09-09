@@ -23,7 +23,7 @@ config = {
         'tooltool.py': '/tools/tooltool.py',
     },
 
-    "purge_minsize": 15,
+    "purge_minsize": 18,
     "force_clobber": True,
     'vcs_share_base': HG_SHARE_BASE_DIR,
 
