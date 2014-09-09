@@ -220,6 +220,10 @@ class PandaTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixin, Bu
                 should_install_app = True
                 if 'cppunittest' in suite:
                     should_install_app = False
+                    # check if separate test package required
+                    if not os.path.isdir(dirs['abs_cppunittest_dir']):
+                        self._download_unzip(self.test_url.replace('tests', 'cppunit.tests'), dirs['abs_test_install_dir'])
+
                 if 'robocop' in suite:
                     self._download_robocop_apk()
                 if 'jittest' in suite:
