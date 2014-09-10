@@ -8,6 +8,8 @@
 import copy
 import os
 import platform
+import urllib2
+import getpass
 
 from mozharness.base.config import ReadOnlyDict, parse_config_file
 from mozharness.base.errors import BaseErrorList
@@ -124,6 +126,83 @@ class TestingMixin(ProxxyMixin, VirtualenvMixin, BuildbotMixin, ResourceMonitori
                 return self.symbols_url
         else:
             self.fatal("Can't figure out symbols_url from installer_url %s!" % self.installer_url)
+
+    def _get_credentials(self):
+        if not hasattr(self, "https_username"):
+            self.info("NOTICE: Files downloaded from outside of "
+                    "Release Engineering network require LDAP credentials.")
+            self.https_username = raw_input("Please enter your full LDAP email address: ")
+            self.https_password = getpass.getpass()
+        return self.https_username, self.https_password
+
+    def _pre_config_lock(self, rw_config):
+        for i, (target_file, target_dict) in enumerate(rw_config.all_cfg_files_and_dicts):
+            if 'developer_config' in target_file:
+                self._developer_mode_changes(rw_config)
+
+    def _developer_mode_changes(self, rw_config):
+        """ This function is called when you append the config called
+            developer_config.py. This allows you to run a job
+            outside of the Release Engineering infrastructure.
+
+            What this functions accomplishes is:
+            * read-buildbot-config is removed from the list of actions
+            * --installer-url is set
+            * --test-url is set if needed
+            * every url is substituted by another external to the
+                Release Engineering network
+        """
+        c = self.config
+        self.warning("When you use developer_config.py, we drop " \
+                "'read-buildbot-config' from the list of actions.")
+        rw_config.actions.remove("read-buildbot-config")
+        self.actions = tuple(rw_config.actions)
+
+        def _replace_url(url, changes):
+            for from_, to_ in changes:
+                if url.startswith(from_):
+                    new_url = url.replace(from_, to_)
+                    self.info("Replacing url %s -> %s" % (url, new_url))
+                    return new_url
+            return url
+
+        assert c["installer_url"], "You must use --installer-url with developer_config.py"
+        if c.get("require_test_zip"):
+            assert c["test_url"], "You must use --test-url with developer_config.py"
+
+        c["installer_url"] = _replace_url(c["installer_url"], c["replace_urls"])
+        if c.get("test_url"):
+            c["test_url"] = _replace_url(c["test_url"], c["replace_urls"])
+
+        for key, value in self.config.iteritems():
+            if type(value) == str and value.startswith("http"):
+                self.config[key] = _replace_url(value, c["replace_urls"])
+
+        self._get_credentials()
+
+    def _urlopen(self, url, **kwargs):
+        '''
+        This function helps dealing with downloading files while outside
+        of the releng network.
+        '''
+        # Code based on http://code.activestate.com/recipes/305288-http-basic-authentication
+        def _urlopen_basic_auth(url, **kwargs):
+            self.info("We want to download this file %s" % url)
+            username, password = self._get_credentials()
+            # This creates a password manager
+            passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
+            # Because we have put None at the start it will use this username/password combination from here on
+            passman.add_password(None, url, username, password)
+            authhandler = urllib2.HTTPBasicAuthHandler(passman)
+
+            return urllib2.build_opener(authhandler).open(url, **kwargs)
+
+        # If we have the developer_run flag enabled then we will switch
+        # URLs to the right place and enable http authentication
+        if "developer_config.py" in self.config["config_files"]:
+            return _urlopen_basic_auth(url, **kwargs)
+        else:
+            return urllib2.urlopen(url, **kwargs)
 
     # read_buildbot_config is in BuildbotMixin.
 
