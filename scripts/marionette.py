@@ -431,6 +431,9 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
         for s in self.tree_config[options_group]:
             cmd.append(s % config_fmt_args)
 
+        if config_fmt_args.has_key('binary'):
+            cmd.append("--gecko-log=%s" % self.query_abs_dirs()['abs_blob_upload_dir'])
+
         if self.mkdir_p(dirs["abs_blob_upload_dir"]) == -1:
             # Make sure that the logging directory exists
             self.fatal("Could not create blobber upload directory")
