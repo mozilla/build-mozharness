@@ -16,6 +16,7 @@ config = {
         "crashtest": "remotereftest.py",
         "jsreftest": "remotereftest.py",
         "robocop": "runtestsremote.py",
+        "instrumentation": "runinstrumentation.py",
         "xpcshell": "remotexpcshelltests.py",
         "jittest": "jit_test.py",
         "cppunittest": "remotecppunittests.py"
@@ -61,6 +62,10 @@ config = {
         "robocop-3": ["--total-chunks=5", "--this-chunk=3"],
         "robocop-4": ["--total-chunks=5", "--this-chunk=4"],
         "robocop-5": ["--total-chunks=5", "--this-chunk=5"],
+    },
+    "all_instrumentation_suites": {
+        "browser": ["--suite", "browser"],
+        "background": ["--suite", "background"],
     },
     "all_xpcshell_suites": {
         "xpcshell": []
