@@ -83,6 +83,18 @@ class GaiaTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin,
          "default": "http://npm-mirror.pub.build.mozilla.org",
          "help": "where to go for node packages"
          }
+   ], [ 
+        ["--total-chunks"],
+        {"action": "store",
+         "dest": "total_chunks",
+         "help": "Number of total chunks",
+        }
+    ], [
+         ["--this-chunk"],
+         {"action": "store",
+         "dest": "this_chunk",
+         "help": "Number of this chunk",
+         }
     ]] + copy.deepcopy(testing_config_options) + \
          copy.deepcopy(blobupload_config_options)
 

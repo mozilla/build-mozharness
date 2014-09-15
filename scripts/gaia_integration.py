@@ -31,6 +31,15 @@ class GaiaIntegrationTest(GaiaTest):
         output_parser = TestSummaryOutputParserHelper(
           config=self.config, log_obj=self.log_obj, error_list=self.error_list)
 
+        # Bug 1046694 - add environment variables which govern test chunking
+        env = {}
+        if self.config.get('this_chunk') and self.config.get('total_chunks'):
+            env["PART"] = self.config.get('this_chunk')
+            env["NBPARTS"] = self.config.get('total_chunks')
+        env = self.query_env(partial_env=env)
+
+
+
         # `make test-integration \
         #      MOCHA_REPORTER=mocha-tbpl-reporter \
         #      NPM_REGISTRY=http://npm-mirror.pub.build.mozilla.org`
@@ -40,7 +49,7 @@ class GaiaIntegrationTest(GaiaTest):
             'NPM_REGISTRY=' + self.config.get('npm_registry'),
             'REPORTER=mocha-tbpl-reporter',
             'TEST_MANIFEST=./shared/test/integration/tbpl-manifest.json'
-        ], cwd=dirs['abs_gaia_dir'],
+        ], cwd=dirs['abs_gaia_dir'], env=env,
            output_parser=output_parser,
            output_timeout=330)
 
