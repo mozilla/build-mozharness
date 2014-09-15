@@ -117,6 +117,25 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
          "default": None,
          "help": "url of desktop xre archive"
          }
+     ], [
+           ["--gip-suite"],
+           {"action": "store",
+            "dest": "gip_suite",
+            "default": None,
+            "help": "gip suite to be executed. If no value is provided, manifest tbpl-manifest.ini will be used. the See Bug 1046694"
+           }
+     ], [ 
+        ["--total-chunks"],
+        {"action": "store",
+         "dest": "total_chunks",
+         "help": "Number of total chunks",
+        }
+     ], [
+        ["--this-chunk"],
+        {"action": "store",
+         "dest": "this_chunk",
+         "help": "Number of this chunk",
+        }
     ]] + copy.deepcopy(testing_config_options) \
        + copy.deepcopy(blobupload_config_options)
 
@@ -395,6 +414,22 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
 
             manifest = os.path.join(dirs['abs_gaiatest_dir'], 'gaiatest', 'tests',
                                     'tbpl-manifest.ini')
+
+
+            if self.config.get('this_chunk') and self.config.get('total_chunks'):
+                cmd.extend(self._build_arg('--this-chunk', self.config.get('this_chunk')))
+                cmd.extend(self._build_arg('--total-chunks', self.config.get('total_chunks')))                
+
+            # Bug 1046694
+            # using a different manifest if a specific gip-suite is specified
+            # --type parameter depends on gip-suite
+            if self.config.get('gip_suite'):
+                manifest = os.path.join(dirs['abs_gaiatest_dir'], 'gaiatest', 'tests', self.config.get('gip_suite'),
+                                        'manifest.ini')
+                if self.config.get('gip_suite') == "functional":
+                    cmd.extend(self._build_arg('--type', "b2g-external"))
+                else:
+                    cmd.extend(self._build_arg('--type', "b2g"))
         else:
             # Marionette or Marionette-webapi tests
             cmd = [python, '-u', os.path.join(dirs['abs_marionette_dir'],
@@ -430,6 +465,9 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
                                                 self.config.get('gaiatest'))
         for s in self.tree_config[options_group]:
             cmd.append(s % config_fmt_args)
+
+        if config_fmt_args.has_key('binary'):
+            cmd.append("--gecko-log=%s" % self.query_abs_dirs()['abs_blob_upload_dir'])
 
         if self.mkdir_p(dirs["abs_blob_upload_dir"]) == -1:
             # Make sure that the logging directory exists

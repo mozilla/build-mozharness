@@ -52,6 +52,7 @@ TinderBoxPrintRe = {
         'known_fail_group': "Known problems",
     },
     "robocop_summary": _mochitest_summary,
+    "instrumentation_summary": _mochitest_summary,
     "cppunittest_summary": {
         'regex': re.compile(r'''cppunittests INFO \| (Passed|Failed): (\d+)'''),
         'pass_group': "Passed",
