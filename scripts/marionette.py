@@ -417,8 +417,8 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
 
 
             if self.config.get('this_chunk') and self.config.get('total_chunks'):
-                cmd.extend(self._build_arg('--this-chunk', self.config.get('this_chunk')))
-                cmd.extend(self._build_arg('--total-chunks', self.config.get('total_chunks')))                
+                cmd.extend(['--this-chunk', self.config.get('this_chunk')])
+                cmd.extend(['--total-chunks', self.config.get('total_chunks')])
 
             # Bug 1046694
             # using a different manifest if a specific gip-suite is specified
@@ -427,9 +427,9 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
                 manifest = os.path.join(dirs['abs_gaiatest_dir'], 'gaiatest', 'tests', self.config.get('gip_suite'),
                                         'manifest.ini')
                 if self.config.get('gip_suite') == "functional":
-                    cmd.extend(self._build_arg('--type', "b2g-external"))
+                    cmd.extend(['--type', "b2g-external"])
                 else:
-                    cmd.extend(self._build_arg('--type', "b2g"))
+                    cmd.extend(['--type', "b2g"])
         else:
             # Marionette or Marionette-webapi tests
             cmd = [python, '-u', os.path.join(dirs['abs_marionette_dir'],
