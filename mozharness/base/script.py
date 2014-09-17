@@ -187,11 +187,6 @@ class ScriptMixin(object):
     def _download_file(self, url, file_name):
         """ Helper script for download_file()
         """
-        if not url.startswith("http://") and \
-                not url.startswith("file://"):
-            assert os.path.isfile(url), "The file %s does not exist" % url
-            url = 'file://%s' % url
-
         try:
             f_length = None
             f = self._urlopen(url, timeout=30)
