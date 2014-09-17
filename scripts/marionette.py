@@ -182,7 +182,7 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
             self.parser_class = TestSummaryOutputParserHelper
 
     def _pre_config_lock(self, rw_config):
-        super(TestingMixin, self)._pre_config_lock(rw_config)
+        super(MarionetteTest, self)._pre_config_lock(rw_config)
         if not self.config.get('emulator') and not self.config.get('marionette_address'):
                 self.fatal("You need to specify a --marionette-address for non-emulator tests! (Try --marionette-address localhost:2828 )")
 
@@ -465,6 +465,9 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
                                                 self.config.get('gaiatest'))
         for s in self.tree_config[options_group]:
             cmd.append(s % config_fmt_args)
+
+        if config_fmt_args.has_key('binary'):
+            cmd.append("--gecko-log=%s" % self.query_abs_dirs()['abs_blob_upload_dir'])
 
         if self.mkdir_p(dirs["abs_blob_upload_dir"]) == -1:
             # Make sure that the logging directory exists

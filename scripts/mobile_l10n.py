@@ -37,8 +37,6 @@ from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.l10n.locales import LocalesMixin
 from mozharness.mozilla.mock import MockMixin
 from mozharness.mozilla.updates.balrog import BalrogMixin
-from mozharness.base.vcs.vcsbase import VCSMixin
-from mozharness.base.script import BaseScript
 
 
 # MobileSingleLocale {{{1
@@ -273,7 +271,6 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
              return self.abs_dirs
          abs_dirs = super(MobileSingleLocale, self).query_abs_dirs()
 
-         abs_work_dir = abs_dirs['abs_work_dir']
          dirs = {
              'abs_tools_dir':
                  os.path.join(abs_dirs['base_work_dir'], 'tools'),
@@ -552,8 +549,7 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
         self.set_buildbot_property("tools_revision", rev, write_to_file=True)
 
     def query_apkfile_path(self,locale):
-      
-        c = self.config
+
         dirs = self.query_abs_dirs()
         apkdir = os.path.join(dirs['abs_objdir'], 'dist')
         r  = r"(\.)" + re.escape(locale) + r"(\.*)"
@@ -563,7 +559,7 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
             if f.endswith(".apk") and re.search(r, f):
                 apks.append(f)
         if len(apks) == 0:
-            fatal("Found no apks files in %s, don't know what to do:\n%s" % (apkdir, apks), exit_code=1)
+            self.fatal("Found no apks files in %s, don't know what to do:\n%s" % (apkdir, apks), exit_code=1)
          
         return os.path.join(apkdir, apks[0])
 

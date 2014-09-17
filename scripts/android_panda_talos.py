@@ -374,7 +374,7 @@ class PandaTalosTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixi
 
     ###### helper methods
     def _pre_config_lock(self, rw_config):
-        super(TestingMixin, self)._pre_config_lock(rw_config)
+        super(PandaTalosTest, self)._pre_config_lock(rw_config)
         c = self.config
         if not c.get('run_all_suites'):
             return  # configs are valid
