@@ -182,7 +182,7 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
             self.parser_class = TestSummaryOutputParserHelper
 
     def _pre_config_lock(self, rw_config):
-        super(TestingMixin, self)._pre_config_lock(rw_config)
+        super(MarionetteTest, self)._pre_config_lock(rw_config)
         if not self.config.get('emulator') and not self.config.get('marionette_address'):
                 self.fatal("You need to specify a --marionette-address for non-emulator tests! (Try --marionette-address localhost:2828 )")
 
