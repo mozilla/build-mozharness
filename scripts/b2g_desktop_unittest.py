@@ -235,11 +235,6 @@ class B2GDesktopTest(BlobUploadMixin, TestingMixin, TooltoolMixin, MercurialScri
         if suite_name == 'xpcshell':
             success_codes = [0, 1]
 
-        if suite_name == 'cppunittest':
-            # check if separate test package required
-            if not os.path.isdir(dirs['abs_cppunittest_dir']):
-                self._download_unzip(self.test_url.replace('tests', 'cppunit.tests'), dirs['abs_tests_dir'])
-
         env = {}
         if self.query_minidump_stackwalk():
             env['MINIDUMP_STACKWALK'] = self.minidump_stackwalk_path
