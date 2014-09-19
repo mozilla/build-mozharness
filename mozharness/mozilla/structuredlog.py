@@ -18,14 +18,19 @@ class StructuredOutputParser(OutputParser):
         """Object that tracks the overall status of the test run"""
         super(StructuredOutputParser, self).__init__(**kwargs)
         self.unexpected_count = 0
-        self.formatter = self._get_formatter()
+        structured = self._get_mozlog_module()
+        self.formatter = structured.formatters.TbplFormatter()
 
         self.worst_log_level = INFO
         self.tbpl_status = TBPL_SUCCESS
 
-    def _get_formatter(self):
-        from mozlog.structured.formatters import TbplFormatter
-        return TbplFormatter()
+    def _get_mozlog_module(self):
+        try:
+            from mozlog import structured
+        except ImportError:
+            self.fatal("A script class using structured logging must inherit "
+                       "from the MozbaseMixin to ensure that mozlog is available.")
+        return structured
 
     def parse_single_line(self, line):
         """
