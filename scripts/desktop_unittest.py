@@ -105,6 +105,12 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
             "default": False,
             "help": "Run tests with multiple processes."}
          ],
+        [['--no-random', ], {
+            "action": "store_true",
+            "dest": "no_random",
+            "default": False,
+            "help": "Run tests with no random intermittents and bisect in case of real failure."}
+         ],
         [["--total-chunks"], {
             "action": "store",
             "dest": "total_chunks",
@@ -274,6 +280,12 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
             if c.get('total_chunks') and c.get('this_chunk'):
                 base_cmd.extend(['--total-chunks', c['total_chunks'],
                                  '--this-chunk', c['this_chunk']])
+
+            if c['no_random']:
+                if suite_category == "mochitest":
+                    base_cmd.append('--bisect-chunk=default')
+                else:
+                    self.warning("--no-random does not currently work with suites other than mochitest.")
 
             # set pluginsPath
             abs_app_plugins_dir = os.path.join(abs_app_dir, 'plugins')
