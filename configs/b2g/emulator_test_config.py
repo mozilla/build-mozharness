@@ -15,7 +15,7 @@ config = {
     #"adb_path": "path/to/adb",           # defaults - os.environ['ADB_PATH']
     #"test_manifest": "path/to/manifest", # defaults - mochitest: "b2g.json"
                                           #              reftest: "tests/layout/reftests/reftest.list"
-                                          #             xpcshell: "tests/xpcshell_b2g.ini"
+                                          #             xpcshell: "tests/xpcshell.ini"
     "total_chunks": 1,
     "this_chunk": 1,
 }

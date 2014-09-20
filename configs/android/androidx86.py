@@ -82,29 +82,29 @@ config = {
         },
         "mochitest-1": {
             "category": "mochitest",
-            "extra_args": ["--total-chunks", "2", "--this-chunk", "1", "--run-only-tests", "androidx86.json"],
+            "extra_args": ["--total-chunks=2", "--this-chunk=1", "--run-only-tests=androidx86.json"],
         },
         "mochitest-2": {
             "category": "mochitest",
-            "extra_args": ["--total-chunks", "2", "--this-chunk", "2", "--run-only-tests", "androidx86.json"],
+            "extra_args": ["--total-chunks=2", "--this-chunk=2", "--run-only-tests=androidx86.json"],
         },
         "mochitest-gl": {
             "category": "mochitest",
-            "extra_args": ["--test-manifest", "gl.json"],
+            "extra_args": ["--test-manifest=gl.json"],
         },
         "reftest-1": {
             "category": "reftest",
-            "extra_args": ["--total-chunks", "3", "--this-chunk", "1",
+            "extra_args": ["--total-chunks=3", "--this-chunk=1",
                 "tests/layout/reftests/reftest.list"]
         },
         "reftest-2": {
             "category": "reftest",
-            "extra_args": ["--total-chunks", "3", "--this-chunk", "2",
+            "extra_args": ["--total-chunks=3", "--this-chunk=2",
                 "tests/layout/reftests/reftest.list"]
         },
         "reftest-3": {
             "category": "reftest",
-            "extra_args": ["--total-chunks", "3", "--this-chunk", "3",
+            "extra_args": ["--total-chunks=3", "--this-chunk=3",
                 "tests/layout/reftests/reftest.list"]
         },
         "crashtest": {
@@ -113,21 +113,23 @@ config = {
         },
         "xpcshell": {
             "category": "xpcshell",
-            "extra_args": ["--manifest", "tests/xpcshell_android.ini"]
+            # XXX --manifest is superceded by testing/config/mozharness/android_x86_config.py.
+            # Remove when Gecko 35 no longer in tbpl.
+            "extra_args": ["--manifest=tests/xpcshell_android.ini"]
         },
         "robocop-1": {
             "category": "mochitest",
-            "extra_args": ["--total-chunks", "3", "--this-chunk", "1", "--robocop-path=../..",
+            "extra_args": ["--total-chunks=3", "--this-chunk=1", "--robocop-path=../..",
                 "--robocop-ids=fennec_ids.txt", "--robocop=robocop.ini"],
         },
         "robocop-2": {
             "category": "mochitest",
-            "extra_args": ["--total-chunks", "3", "--this-chunk", "2", "--robocop-path=../..",
+            "extra_args": ["--total-chunks=3", "--this-chunk=2", "--robocop-path=../..",
                 "--robocop-ids=fennec_ids.txt", "--robocop=robocop.ini"],
         },
         "robocop-3": {
             "category": "mochitest",
-            "extra_args": ["--total-chunks", "3", "--this-chunk", "3", "--robocop-path=../..",
+            "extra_args": ["--total-chunks=3", "--this-chunk=3", "--robocop-path=../..",
                 "--robocop-ids=fennec_ids.txt", "--robocop=robocop.ini"],
         },
     }, # end of "test_definitions"
