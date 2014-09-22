@@ -187,6 +187,13 @@ class ScriptMixin(object):
     def _download_file(self, url, file_name):
         """ Helper script for download_file()
         """
+        # If our URLs look like files, prefix them with file:// so they can
+        # be loaded like URLs.
+        if not (url.startswith("http") or url.startswith("file://")):
+            if not os.path.isfile(url):
+                self.fatal("The file %s does not exist" % url)
+            url = 'file://%s' % url
+
         try:
             f_length = None
             f = self._urlopen(url, timeout=30)

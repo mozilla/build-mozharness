@@ -146,6 +146,7 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
         self.installer_url = c.get('installer_url')
         self.test_url = c.get('test_url')
         self.symbols_url = c.get('symbols_url')
+        self.jsshell_url = c.get('jsshell_url')
         # this is so mozinstall in install() doesn't bug out if we don't run
         # the download_and_extract action
         self.installer_path = c.get('installer_path')
