@@ -408,7 +408,13 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
         }
         for option in self.tree_config["suite_definitions"][suite_category]["options"]:
             cmd.extend([option % str_format_values])
-        cmd.extend(self.test_suite_definitions[suite_name]["extra_args"])
+
+        for arg in self.test_suite_definitions[suite_name]["extra_args"]:
+            argname = arg.split('=')[0]
+            # only add the extra arg if it wasn't already defined by in-tree configs
+            if any(a.split('=')[0] == argname for a in cmd):
+                continue
+            cmd.append(arg)
 
         return cmd
 

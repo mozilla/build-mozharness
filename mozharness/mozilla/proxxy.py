@@ -1,10 +1,15 @@
-"""Proxxy module"""
+"""Proxxy module. Defines a Proxxy element that fetches files using local
+   proxxy instances (if available). The goal of Proxxy is to lower the traffic
+   from the cloud to internal servers.
+"""
 import urlparse
 import socket
-from mozharness.base.log import ERROR
+from mozharness.base.log import ERROR, LogMixin
+from mozharness.base.script import ScriptMixin
 
 
-class ProxxyMixin:
+# Proxxy {{{1
+class Proxxy(ScriptMixin, LogMixin):
     """
     Support downloading files from HTTP caching proxies
 
@@ -36,24 +41,30 @@ class ProxxyMixin:
         "regions": [".use1.", ".usw2."],
     }
 
-    def query_proxxy_config(self):
-        """returns the 'proxxy' configuration from config. If 'proxxy' is not
-        defined, returns PROXXY_CONFIG instead"""
-        cfg = self.config.get('proxxy', self.PROXXY_CONFIG)
-        self.debug("proxxy config: %s" % cfg)
-        return cfg
+    def __init__(self, config, log_obj):
+        # proxxy does not need the need the full configuration,
+        # just the 'proxxy' element
+        # if configuration has no 'proxxy' section use the default
+        # configuration instead
+        self.config = config.get('proxxy', self.PROXXY_CONFIG)
+        self.log_obj = log_obj
 
     def get_proxies_for_url(self, url):
-        """A generic method to map a url and its proxy urls
-           Returns a list of proxy URLs to try, in sorted order. The original
-           url is NOT included in this list."""
+        """Maps url to its proxxy urls
+
+           Args:
+               url (str): url to be proxxied
+           Returns:
+               list: of proxy URLs to try, in sorted order.
+               please note that url is NOT included in this list.
+        """
+        config = self.config
         urls = []
 
-        cfg = self.query_proxxy_config()
-        self.info("proxxy config: %s" % cfg)
+        self.info("proxxy config: %s" % config)
 
-        proxxy_urls = cfg.get('urls', [])
-        proxxy_instances = cfg.get('instances', [])
+        proxxy_urls = config.get('urls', [])
+        proxxy_instances = config.get('instances', [])
 
         url_parts = urlparse.urlsplit(url)
         url_path = url_parts.path
@@ -77,7 +88,15 @@ class ProxxyMixin:
 
     def get_proxies_and_urls(self, urls):
         """Gets a list of urls and returns a list of proxied urls, the list
-           of input urls is appended at the end of the return values"""
+           of input urls is appended at the end of the return values
+
+            Args:
+                urls (list, tuple): urls to be mapped to proxxy urls
+
+            Returns:
+                list: proxxied urls and urls. urls are appended to the proxxied
+                    urls list and they are the last elements of the list.
+           """
         proxxy_list = []
         for url in urls:
             # get_proxies_for_url returns always a list...
@@ -86,17 +105,45 @@ class ProxxyMixin:
         return proxxy_list
 
     def query_is_proxxy_local(self, url):
-        """Returns a list of base proxxy urls local to the machine"""
+        """Checks is url is 'proxxable' for the local instance
+
+            Args:
+                url (string): url to check
+
+            Returns:
+                bool: True if url maps to a usable proxxy,
+                    False in any other case
+        """
         fqdn = socket.getfqdn()
-        regions = self.query_proxxy_config().get('regions', [])
+        config = self.config
+        regions = config.get('regions', [])
 
         return any(r in fqdn and r in url for r in regions)
 
-    def download_proxied_file(self, url, file_name=None, parent_dir=None,
+    def download_proxied_file(self, url, file_name, parent_dir=None,
                               create_parent_dir=True, error_level=ERROR,
                               exit_code=3):
         """
         Wrapper around BaseScript.download_file that understands proxies
+        retry dict is set to 3 attempts, sleeping time 30 seconds.
+
+            Args:
+                url (string): url to fetch
+                file_name (string, optional): output filename, defaults to None
+                    if file_name is not defined, the output name is taken from
+                    the url.
+                parent_dir (string, optional): name of the parent directory
+                create_parent_dir (bool, optional): if True, creates the parent
+                    directory. Defaults to True
+                error_level (mozharness log level, optional): log error level
+                    defaults to ERROR
+                exit_code (int, optional): return code to log if file_name
+                    is not defined and it cannot be determined from the url
+            Returns:
+                string: file_name if the download has succeded, None in case of
+                    error. In case of error, if error_level is set to FATAL,
+                    this method interrupts the execution of the script
+
         """
         urls = self.get_proxies_and_urls([url])
 
@@ -113,5 +160,6 @@ class ProxxyMixin:
             if retval:
                 return retval
 
-        self.log("Failed to download from all available URLs, aborting", level=error_level, exit_code=exit_code)
+        self.log("Failed to download from all available URLs, aborting",
+                 level=error_level, exit_code=exit_code)
         return retval

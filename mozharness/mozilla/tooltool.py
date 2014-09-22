@@ -3,14 +3,14 @@ import os
 
 from mozharness.base.errors import PythonErrorList
 from mozharness.base.log import ERROR, FATAL
-from mozharness.mozilla.proxxy import ProxxyMixin
+from mozharness.mozilla.proxxy import Proxxy
 
 TooltoolErrorList = PythonErrorList + [{
     'substr': 'ERROR - ', 'level': ERROR
 }]
 
 
-class TooltoolMixin(ProxxyMixin):
+class TooltoolMixin(object):
     """Mixin class for handling tooltool manifests.
     Requires self.config['tooltool_servers'] to be a list of base urls
     """
@@ -21,7 +21,8 @@ class TooltoolMixin(ProxxyMixin):
         cmd = tooltool
         # get the tooltools servers from configuration
         default_urls = self.config['tooltool_servers']
-        proxxy_urls = self.get_proxies_and_urls(default_urls)
+        proxxy = Proxxy(self.config, self.log_obj)
+        proxxy_urls = proxxy.get_proxies_and_urls(default_urls)
 
         for proxyied_url in proxxy_urls:
             cmd.extend(['--url', proxyied_url])
