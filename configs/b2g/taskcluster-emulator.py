@@ -6,9 +6,6 @@ config = {
         'build-symbols',
     ],
     "env": {
-        "CCACHE_DIR": "/home/worker/ccache",
-        "CCACHE_COMPRESS": "1",
-        "CCACHE_UMASK": "002",
         "GAIA_OPTIMIZE": "1",
         "WGET_OPTS": "-c -q"
     },
