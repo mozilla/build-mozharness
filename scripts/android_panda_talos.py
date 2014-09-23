@@ -8,6 +8,7 @@
 import copy
 import getpass
 import os
+import pprint
 import sys
 import time
 import socket
@@ -16,6 +17,7 @@ import socket
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
 from mozharness.mozilla.buildbot import BuildbotMixin
+from mozharness.base.config import parse_config_file
 from mozharness.base.log import INFO, FATAL
 from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_options
@@ -115,6 +117,14 @@ class PandaTalosTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixi
         self.mozpool_device = self.config.get("mozpool_device")
         self.talos_branch = self.config.get("talos_branch")
 
+        self.read_buildbot_config()
+        self.revision = self.config.get('revision',
+                                        self.buildbot_config.get('properties')["revision"])
+        self.repo_path = self.config.get('repo_path',
+                                         self.buildbot_config.get('properties')["repo_path"])
+        self.talos_json_url = (self.config.get("talos_json_url") % (self.repo_path, self.revision))
+        self.talos_json_config = None
+
     def postflight_read_buildbot_config(self):
         super(PandaTalosTest, self).postflight_read_buildbot_config()
         self.mozpool_device = self.config.get('mozpool_device', self.buildbot_config.get('properties')["slavename"])
@@ -126,6 +136,19 @@ class PandaTalosTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixi
             open(shutdown_file, 'w').close()
         except Exception, e:
             self.warning("We failed to create the shutdown file: str(%s)" % str(e))
+
+    def query_talos_json_config(self):
+        if self.talos_json_config:
+            return self.talos_json_config
+
+        dirs = self.query_abs_dirs()
+        self.talos_json = self.download_file(self.talos_json_url,
+                                             parent_dir=dirs['abs_talosdata_dir'],
+                                             error_level=FATAL)
+        self.talos_json_config = parse_config_file(self.talos_json)
+        self.info(pprint.pformat(self.talos_json_config))
+
+        return self.talos_json_config
 
     def request_device(self):
         self.retrieve_android_device(b2gbase="")
@@ -301,13 +324,9 @@ class PandaTalosTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixi
         self._download_unzip(self.config['retry_url'],
                              dirs['abs_talosdata_dir'])
 
-        revision = self.config.get('revision', self.buildbot_config.get('properties')["revision"])
-        repo_path = self.config.get('repo_path', self.buildbot_config.get('properties')["repo_path"])
         taloscode = self.config.get("talos_from_code_url")
-        talosjson = self.config.get("talos_json_url")
 
-        talos_from_code_url = (taloscode % (repo_path, revision))
-        talos_json_url = (talosjson % (repo_path, revision))
+        talos_from_code_url = (taloscode % (self.repo_path, self.revision))
 
         self.download_file(talos_from_code_url, file_name='talos_from_code.py',
                            parent_dir=dirs['abs_talosdata_dir'],
@@ -318,7 +337,7 @@ class PandaTalosTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixi
         talos_zip_path = (os.path.join(dirs['abs_talosdata_dir'], "talos.zip"))
         talos_base_cmd.append(talos_code_path)
         talos_base_cmd.append("--talos-json-url")
-        talos_base_cmd.append(talos_json_url)
+        talos_base_cmd.append(self.talos_json_url)
         env = self.query_env()
         self.run_command(talos_base_cmd, dirs['abs_talosdata_dir'], env=env, halt_on_failure=True, fatal_exit_code=3)
         unzip = self.query_exe("unzip")
@@ -354,6 +373,13 @@ class PandaTalosTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixi
             'app_name':  self.app_name,
             'talos_branch':  self.talos_branch,
         }
+        talos_json_config = self.query_talos_json_config()
+        if talos_json_config.get('extra_options') and \
+           talos_json_config['extra_options'].get('android'):
+            for option in self.talos_json_config['extra_options']['android']:
+                options.append(option % {
+                    'apk_path': self.apk_path })
+
         if self.config['%s_options' % suite_category]:
             for option in self.config['%s_options' % suite_category]:
                 options.append(option % str_format_values)
