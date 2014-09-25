@@ -33,6 +33,9 @@ class Proxxy(ScriptMixin, LogMixin):
             ('http://pvtbuilds.pvt.build.mozilla.org', 'pvtbuilds.mozilla.org'),
             # tooltool
             ('http://runtime-binaries.pvt.build.mozilla.org', 'runtime-binaries.pvt.build.mozilla.org'),
+            # pypi
+            ('http://pypi.pvt.build.mozilla.org', 'pypi.pvt.build.mozilla.org'),
+            ('http://pypi.pub.build.mozilla.org', 'pypi.pub.build.mozilla.org'),
         ],
         "instances": [
             'proxxy.srv.releng.use1.mozilla.com',
