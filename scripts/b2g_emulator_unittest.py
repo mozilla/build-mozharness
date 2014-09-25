@@ -25,6 +25,7 @@ from mozharness.mozilla.testing.errors import LogcatErrorList
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
 from mozharness.mozilla.testing.unittest import DesktopUnittestOutputParser
 from mozharness.mozilla.tooltool import TooltoolMixin
+from mozharness.mozilla.buildbot import TBPL_SUCCESS
 
 
 class B2GEmulatorTest(TestingMixin, TooltoolMixin, VCSMixin, BaseScript, BlobUploadMixin):
@@ -403,8 +404,16 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, VCSMixin, BaseScript, BlobUpl
                                        success_codes=success_codes)
 
         logcat = os.path.join(dirs['abs_work_dir'], 'emulator-5554.log')
+
+        qemu = os.path.join(dirs['abs_work_dir'], 'qemu.log')
+        if os.path.isfile(qemu):
+            self.copyfile(qemu, os.path.join(env['MOZ_UPLOAD_DIR'],
+                                             os.path.basename(qemu)))
+
+        tbpl_status, log_level = parser.evaluate_parser(return_code)
+
         if os.path.isfile(logcat):
-            if parser.fail_count != 0 or parser.crashed or parser.leaked:
+            if tbpl_status != TBPL_SUCCESS:
                 # On failure, dump logcat, check if the emulator is still
                 # running, and if it is still accessible via adb.
                 self.info('dumping logcat')
@@ -419,12 +428,6 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, VCSMixin, BaseScript, BlobUpl
         else:
             self.info('no logcat file found')
 
-        qemu = os.path.join(dirs['abs_work_dir'], 'qemu.log')
-        if os.path.isfile(qemu):
-            self.copyfile(qemu, os.path.join(env['MOZ_UPLOAD_DIR'],
-                                             os.path.basename(qemu)))
-
-        tbpl_status, log_level = parser.evaluate_parser(return_code)
         parser.append_tinderboxprint_line(suite_name)
 
         self.buildbot_status(tbpl_status, level=log_level)
