@@ -192,7 +192,7 @@ class ScriptMixin(object):
         if not (url.startswith("http") or url.startswith("file://")):
             if not os.path.isfile(url):
                 self.fatal("The file %s does not exist" % url)
-            url = 'file://%s' % url
+            url = 'file://%s' % os.path.abspath(url)
 
         try:
             f_length = None
