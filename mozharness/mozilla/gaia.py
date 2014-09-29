@@ -8,6 +8,24 @@ import os
 from mozharness.base.errors import HgErrorList, BaseErrorList
 from mozharness.base.log import ERROR
 
+gaia_config_options = [
+    [["--gaia-dir"],
+    {"action": "store",
+     "dest": "gaia_dir",
+     "help": "directory where gaia repo should be cloned"
+     }],
+    [["--gaia-repo"],
+    {"action": "store",
+     "dest": "gaia_repo",
+     "help": "url of gaia repo to clone"
+    }],
+    [["--gaia-branch"],
+    {"action": "store",
+     "dest": "gaia_branch",
+     "default": "default",
+     "help": "branch of gaia repo to clone"
+    }],
+]
 
 class GaiaMixin(object):
 
@@ -212,6 +230,45 @@ class GaiaMixin(object):
             }
 
             self.vcs_checkout_repos([repo], parent_dir=os.path.dirname(dest))
+
+    def preflight_pull(self):
+        if not self.buildbot_config:
+            if not self.config.get('gaia_repo'):
+                # gaia_branch by default is set to default
+                self.fatal("You're trying to run this outside of buildbot, " \
+                    "therefore, you need to specify --gaia-repo.")
+            if not self.config.get('gaia_branch'):
+                # gaia_branch by default is set to default
+                self.fatal("You're trying to run this outside of buildbot, " \
+                    "therefore, you need to specify --gaia-branch.")
+
+    def pull(self, **kwargs):
+        '''
+        Two ways of using this function:
+        - The user specifies --gaia-repo or in a config file
+        - The buildbot propeties exist and we query the gaia json url
+          for the current gecko tree
+        '''
+        dirs = self.query_abs_dirs()
+        dest = dirs['abs_gaia_dir']
+        repo = {}
+
+        if self.buildbot_config is not None:
+            # get gaia commit via hgweb (gecko's gaia.json)
+            repo = {
+                'revision': self.buildbot_config['properties']['revision'],
+                'repo_path': 'https://hg.mozilla.org/%s' % self.buildbot_config['properties']['repo_path'],
+                'branch': None,
+            }
+        else:
+            repo = {
+                'repo_path': self.config['gaia_repo'],
+                'revision': 'default',
+                'branch': self.config['gaia_branch']
+            }
+
+        self.clone_gaia(dest, repo,
+                        use_gaia_json=self.buildbot_config is not None)
 
     def make_gaia(self, gaia_dir, xre_dir, debug=False, noftu=True,
                   build_config_path=None):

@@ -19,6 +19,9 @@ class GaiaUnitTest(GaiaTest):
     def __init__(self, require_config_file=False):
         GaiaTest.__init__(self, require_config_file)
 
+    def pull(self, **kwargs):
+        GaiaTest.pull(self, **kwargs)
+
     def run_tests(self):
         """
         Run the unit test suite.

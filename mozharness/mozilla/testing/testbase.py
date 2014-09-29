@@ -115,6 +115,13 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin):
                                             error_level=error_level,
                                             exit_code=exit_code)
 
+    def query_value(self, key):
+        """
+        This function allows us to check for a value
+        in the self.tree_config first and then on self.config
+        """
+        return self.tree_config.get(key, self.config.get(key))
+
     def query_jsshell_url(self):
         """
         Attempt to determine the url of the js shell package given
