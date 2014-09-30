@@ -71,11 +71,12 @@ class B2GDesktopTest(BlobUploadMixin, TestingMixin, TooltoolMixin, MercurialScri
         {'regex': re.compile(r'''(Timeout|NoSuchAttribute|Javascript|NoSuchElement|XPathLookup|NoSuchWindow|StaleElement|ScriptTimeout|ElementNotVisible|NoSuchFrame|InvalidElementState|NoAlertPresent|InvalidCookieDomain|UnableToSetCookie|InvalidSelector|MoveTargetOutOfBounds)Exception'''), 'level': ERROR},
     ]
 
-    def __init__(self, require_config_file=False):
+    def __init__(self, options=[], require_config_file=False):
         super(B2GDesktopTest, self).__init__(
-            config_options=self.config_options,
+            config_options=self.config_options + copy.deepcopy(options),
             all_actions=['clobber',
                          'read-buildbot-config',
+                         'pull',
                          'download-and-extract',
                          'create-virtualenv',
                          'install',
@@ -97,6 +98,10 @@ class B2GDesktopTest(BlobUploadMixin, TestingMixin, TooltoolMixin, MercurialScri
         self.installer_path = c.get('installer_path')
         self.test_url = c.get('test_url')
         self.test_manifest = c.get('test_manifest')
+
+        suite = self.config['test_suite']
+        if suite not in self.test_suites:
+            self.fatal("Don't know how to run --test-suite '%s'!" % suite)
 
     # TODO detect required config items and fail if not set
 
@@ -145,7 +150,7 @@ class B2GDesktopTest(BlobUploadMixin, TestingMixin, TooltoolMixin, MercurialScri
     def _query_abs_base_cmd(self, suite):
         dirs = self.query_abs_dirs()
         cmd = [self.query_python_path('python')]
-        cmd.append(self.config['run_file_names'][suite])
+        cmd.append(self.query_value("run_file_names")[suite])
 
         str_format_values = {
             'application': self.binary_path,

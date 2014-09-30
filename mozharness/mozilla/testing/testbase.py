@@ -8,6 +8,7 @@
 import copy
 import os
 import platform
+import re
 import urllib2
 import getpass
 
@@ -113,6 +114,13 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin):
                                             create_parent_dir=create_parent_dir,
                                             error_level=error_level,
                                             exit_code=exit_code)
+
+    def query_value(self, key):
+        """
+        This function allows us to check for a value
+        in the self.tree_config first and then on self.config
+        """
+        return self.tree_config.get(key, self.config.get(key))
 
     def query_jsshell_url(self):
         """
@@ -286,6 +294,10 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin):
         else:
             self.fatal("self.buildbot_config isn't set after running read_buildbot_config!")
 
+    def _query_binary_version(self, regex, cmd):
+        output = self.get_output_from_command(cmd, silent=False)
+        return regex.search(output).group(0)
+
     def preflight_download_and_extract(self):
         message = ""
         if not self.installer_url:
@@ -308,6 +320,17 @@ You can set this by:
 """
         if message:
             self.fatal(message + "Can't run download-and-extract... exiting")
+
+        if self.config.get("developer_mode") and os.uname()[0] == 'Darwin':
+            # Bug 1066700 only affects Mac users that try to run mozharness locally
+            version = self._query_binary_version(
+                    regex=re.compile("UnZip\ (\d+\.\d+)\ .*",re.MULTILINE),
+                    cmd=[self.query_exe('unzip'), '-v']
+            )
+            if not version >= 6:
+                self.fatal("We require a more recent version of unzip to unpack our tests.zip files.\n" \
+                        "You are currently using version %s. Please update to at least 6.0.\n" \
+                        "You can visit http://www.info-zip.org/UnZip.html" % version)
 
     def _download_test_zip(self):
         dirs = self.query_abs_dirs()

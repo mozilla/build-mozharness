@@ -8,6 +8,7 @@
 # Using this config file should be accompanied with using
 # --test-url and --installer-url where appropiate
 config = {
+    "developer_mode": True,
     "exes": {},
     "find_links": ["http://pypi.pub.build.mozilla.org/pub"],
     "tooltool_servers": ["https://secure.pub.build.mozilla.org/tooltool/pvt/build"],

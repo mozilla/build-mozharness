@@ -20,7 +20,7 @@ from mozharness.base.transfer import TransferMixin
 from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_options
 from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_WARNING, TBPL_FAILURE
-from mozharness.mozilla.gaia import GaiaMixin
+from mozharness.mozilla.gaia import GaiaMixin, gaia_config_options
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
 from mozharness.mozilla.tooltool import TooltoolMixin
 from mozharness.mozilla.proxxy import Proxxy
@@ -29,27 +29,6 @@ from mozharness.mozilla.proxxy import Proxxy
 class GaiaTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin,
                GaiaMixin, BlobUploadMixin):
     config_options = [[
-        ["--gaia-dir"],
-        {"action": "store",
-         "dest": "gaia_dir",
-         "default": None,
-         "help": "directory where gaia repo should be cloned"
-         }
-    ], [
-        ["--gaia-repo"],
-        {"action": "store",
-         "dest": "gaia_repo",
-         "default": "https://hg.mozilla.org/integration/gaia-central",
-         "help": "url of gaia repo to clone"
-         }
-    ], [
-        ["--gaia-branch"],
-        {"action": "store",
-         "dest": "gaia_branch",
-         "default": "default",
-         "help": "branch of gaia repo to clone"
-         }
-    ], [
         ["--application"],
         {"action": "store",
          "dest": "application",
@@ -97,7 +76,8 @@ class GaiaTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin,
          "help": "Number of this chunk",
          }
     ]] + copy.deepcopy(testing_config_options) + \
-        copy.deepcopy(blobupload_config_options)
+        copy.deepcopy(blobupload_config_options) + \
+        copy.deepcopy(gaia_config_options)
 
     error_list = [
         {'substr': 'FAILED (errors=', 'level': WARNING},
@@ -136,26 +116,7 @@ class GaiaTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin,
         self.test_url = c.get('test_url')
 
     def pull(self, **kwargs):
-        dirs = self.query_abs_dirs()
-        dest = dirs['abs_gaia_dir']
-
-        repo = {
-            'repo_path': self.config.get('gaia_repo'),
-            'revision': 'default',
-            'branch': self.config.get('gaia_branch')
-        }
-
-        if self.buildbot_config is not None:
-            # get gaia commit via hgweb
-            repo.update({
-                'revision': self.buildbot_config['properties']['revision'],
-                'repo_path': 'https://hg.mozilla.org/%s' % self.buildbot_config['properties']['repo_path']
-            })
-
-        self.clone_gaia(dest, repo,
-                        use_gaia_json=self.buildbot_config is not None)
-
-        super(GaiaTest, self).pull(**kwargs)
+        GaiaMixin.pull(self, **kwargs)
 
     def query_abs_dirs(self):
         if self.abs_dirs:
