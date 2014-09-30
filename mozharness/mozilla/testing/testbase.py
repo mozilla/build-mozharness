@@ -22,6 +22,8 @@ from mozharness.base.python import (
 )
 from mozharness.mozilla.buildbot import BuildbotMixin
 from mozharness.mozilla.proxxy import Proxxy
+from mozharness.mozilla.structuredlog import StructuredOutputParser
+from mozharness.mozilla.testing.unittest import DesktopUnittestOutputParser
 
 INSTALLER_SUFFIXES = ('.tar.bz2', '.zip', '.dmg', '.exe', '.apk', '.tar.gz')
 
@@ -68,13 +70,6 @@ testing_config_options = [
      "type": "choice",
      "choices": ['ondemand', 'true'],
      "help": "Download and extract crash reporter symbols.",
-      }],
-    [["--structured-output"],
-     {"action": "store_true",
-      "dest": "structured_output",
-      "default": False,
-      "help": "The structured output parser should be used to interpret "
-              "output from the test run."
       }],
 ] + copy.deepcopy(virtualenv_config_options)
 
@@ -399,6 +394,28 @@ You can set this by:
             self.dump_config(file_path=os.path.join(dirs['abs_log_dir'], 'treeconfig.json'),
                              config=self.tree_config)
         self.tree_config.lock()
+
+    def structured_output(self, suite_category):
+        """Defines whether structured logging is in use in this configuration. This
+        may need to be replaced with data from a different config at the resolution
+        of bug 1070041 and related bugs.
+        """
+        return ('structured_suites' in self.tree_config and
+                suite_category in self.tree_config['structured_suites'])
+
+    def get_test_output_parser(self, suite_category, strict=False,
+                               fallback_parser_class=DesktopUnittestOutputParser,
+                               **kwargs):
+        """Derive and return an appropriate output parser, either the structured
+        output parser or a fallback based on the type of logging in use as determined by
+        configuration.
+        """
+        if not self.structured_output(suite_category):
+            if fallback_parser_class is DesktopUnittestOutputParser:
+                return DesktopUnittestOutputParser(suite_category=suite_category, **kwargs)
+            return fallback_parser_class(**kwargs)
+        self.info("Structured output parser in use for %s." % suite_category)
+        return StructuredOutputParser(suite_category=suite_category, strict=strict, **kwargs)
 
     def _download_installer(self):
         file_name = None

@@ -23,7 +23,6 @@ from mozharness.base.vcs.vcsbase import VCSMixin
 from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_options
 from mozharness.mozilla.testing.errors import LogcatErrorList
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
-from mozharness.mozilla.testing.unittest import DesktopUnittestOutputParser
 from mozharness.mozilla.tooltool import TooltoolMixin
 from mozharness.mozilla.buildbot import TBPL_SUCCESS
 
@@ -394,14 +393,14 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, VCSMixin, BaseScript, BlobUpl
             self.mkdir_p(env['MOZ_UPLOAD_DIR'])
         env = self.query_env(partial_env=env)
 
-        parser = DesktopUnittestOutputParser(suite_category=suite_name,
+        parser = self.get_test_output_parser(suite_name,
                                              config=self.config,
                                              log_obj=self.log_obj,
                                              error_list=error_list)
-        return_code = self.run_command(cmd, cwd=cwd, env=env,
-                                       output_timeout=1000,
-                                       output_parser=parser,
-                                       success_codes=success_codes)
+        self.run_command(cmd, cwd=cwd, env=env,
+                         output_timeout=1000,
+                         output_parser=parser,
+                         success_codes=success_codes)
 
         logcat = os.path.join(dirs['abs_work_dir'], 'emulator-5554.log')
 
@@ -410,7 +409,7 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, VCSMixin, BaseScript, BlobUpl
             self.copyfile(qemu, os.path.join(env['MOZ_UPLOAD_DIR'],
                                              os.path.basename(qemu)))
 
-        tbpl_status, log_level = parser.evaluate_parser(return_code)
+        tbpl_status, log_level = parser.evaluate_parser(0)
 
         if os.path.isfile(logcat):
             if tbpl_status != TBPL_SUCCESS:
