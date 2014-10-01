@@ -251,14 +251,18 @@ class GaiaTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin,
         """
         pass
 
-    def publish(self, code):
+    def publish(self, code, passed=None, failed=None):
         """
         Publish the results of the test suite.
         """
         if code == 0:
             level = INFO
-            status = 'success'
-            tbpl_status = TBPL_SUCCESS
+            if passed == 0 or failed > 0:
+                status = 'test failures'
+                tbpl_status = TBPL_WARNING
+            else:
+                status = 'success'
+                tbpl_status = TBPL_SUCCESS
         elif code == 10:
             level = INFO
             status = 'test failures'

@@ -54,7 +54,7 @@ class GaiaIntegrationTest(GaiaTest):
            output_timeout=330)
 
         output_parser.print_summary('gaia-integration-tests')
-        self.publish(code)
+        self.publish(code, passed=output_parser.passed, failed=output_parser.failed)
 
 if __name__ == '__main__':
     gaia_integration_test = GaiaIntegrationTest()
