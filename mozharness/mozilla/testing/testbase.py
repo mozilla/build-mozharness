@@ -321,7 +321,7 @@ You can set this by:
         if message:
             self.fatal(message + "Can't run download-and-extract... exiting")
 
-        if self.config.get("developer_mode") and os.uname()[0] == 'Darwin':
+        if self.config.get("developer_mode") and self.is_darwin():
             # Bug 1066700 only affects Mac users that try to run mozharness locally
             version = self._query_binary_version(
                     regex=re.compile("UnZip\ (\d+\.\d+)\ .*",re.MULTILINE),
