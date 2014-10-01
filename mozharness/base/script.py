@@ -128,6 +128,9 @@ class ScriptMixin(object):
         if os.name == 'nt':
             return True
 
+    def is_darwin(self):
+        return sys.platform.startswith("darwin")
+
     def query_msys_path(self, path):
         if not isinstance(path, basestring):
             return path
