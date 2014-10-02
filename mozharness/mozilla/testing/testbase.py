@@ -568,6 +568,10 @@ Did you run with --create-virtualenv? Is mozinstall in virtualenv_modules?""")
 
     def preflight_run_tests(self):
         """preflight commands for all tests"""
+        # If the in tree config hasn't been loaded by a previous step, load it here.
+        if len(self.tree_config) == 0:
+            self._read_tree_config()
+
         c = self.config
         if c.get('run_cmd_checks_enabled'):
             self._run_cmd_checks(c.get('preflight_run_cmd_suites', []))
