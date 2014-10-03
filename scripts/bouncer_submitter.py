@@ -5,15 +5,18 @@
 
 import os
 import sys
+import httplib
 import urllib
 import urllib2
 import base64
 import traceback
+import socket
 
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
 from mozharness.base.script import BaseScript
 from mozharness.mozilla.purge import PurgeMixin
+from mozharness.base.log import FATAL
 
 
 class BouncerSubmitter(BaseScript, PurgeMixin):
@@ -121,7 +124,26 @@ class BouncerSubmitter(BaseScript, PurgeMixin):
                             local_dict["tuxedoPassword"])
         return self.credentials
 
-    def api_call(self, route, data):
+    def api_call(self, route, data, error_level=FATAL, retry_config=None):
+        retry_args = dict(
+            failure_status=None,
+            retry_exceptions=(urllib2.HTTPError, urllib2.URLError,
+                              httplib.BadStatusLine,
+                              socket.timeout, socket.error),
+            error_message="call to %s failed" % (route),
+            error_level=error_level,
+        )
+
+        if retry_config:
+            retry_args.update(retry_config)
+
+        return self.retry(
+            self._api_call,
+            args=(route, data),
+            **retry_args
+        )
+
+    def _api_call(self, route, data):
         api_prefix = self.config["bouncer-api-prefix"]
         api_url = "%s/%s" % (api_prefix, route)
         request = urllib2.Request(api_url)
@@ -138,15 +160,26 @@ class BouncerSubmitter(BaseScript, PurgeMixin):
             self.info("Server response")
             self.info(res)
         except urllib2.HTTPError as e:
-            self.critical("Cannot access %s POST data:\n%s" % (api_url,
-                                                               post_data))
+            self.warning("Cannot access %s POST data:\n%s" % (api_url,
+                                                              post_data))
             traceback.print_exc(file=sys.stdout)
-            self.critical("Returned page source:")
-            self.fatal(e.read())
+            self.warning("Returned page source:")
+            self.warning(e.read())
+            raise
         except urllib2.URLError:
             traceback.print_exc(file=sys.stdout)
-            self.fatal("Cannot access %s POST data:\n%s" % (api_url,
-                                                            post_data))
+            self.warning("Cannot access %s POST data:\n%s" % (api_url,
+                                                              post_data))
+            raise
+        except socket.timeout as e:
+            self.warning("Timed out accessing %s: %s" % (api_url, str(e)))
+            raise
+        except socket.error as e:
+            self.warning("Socket error when accessing %s: %s" % (api_url, str(e)))
+            raise
+        except httplib.BadStatusLine as e:
+            self.warning('BadStatusLine accessing %s: %s' % (api_url, str(e)))
+            raise
 
     def api_add_product(self, product_name, add_locales, ssl_only=False):
         data = {
