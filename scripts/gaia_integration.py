@@ -38,18 +38,19 @@ class GaiaIntegrationTest(GaiaTest):
             env["NBPARTS"] = self.config.get('total_chunks')
         env = self.query_env(partial_env=env)
 
-
-
         # `make test-integration \
         #      MOCHA_REPORTER=mocha-tbpl-reporter \
         #      NPM_REGISTRY=http://npm-mirror.pub.build.mozilla.org`
-        code = self.run_command([
+        cmd = [
             'make',
             'test-integration',
             'NPM_REGISTRY=' + self.config.get('npm_registry'),
             'REPORTER=mocha-tbpl-reporter',
-            'TEST_MANIFEST=./shared/test/integration/tbpl-manifest.json'
-        ], cwd=dirs['abs_gaia_dir'], env=env,
+            'TEST_MANIFEST=./shared/test/integration/tbpl-manifest.json',
+            'RUNTIME=%s' % self.binary_path
+        ]
+
+        code = self.run_command(cmd, cwd=dirs['abs_gaia_dir'], env=env,
            output_parser=output_parser,
            output_timeout=330)
 
