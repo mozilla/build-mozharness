@@ -39,7 +39,7 @@ class BalrogMixin(object):
 
         self.info("Calling Balrog submission script")
         return_code = self.retry(
-            self.run_command, args=(cmd,),
+            self.run_command, attempts=5, args=(cmd,),
         )
         if return_code not in [0]:
             self.return_code = 1
