@@ -934,19 +934,22 @@ class B2GBuild(LocalesMixin, PurgeMixin,
             # TODO unhardcode
             download_url = "http://pvtbuilds.pvt.build.mozilla.org%s" % upload_path
 
-            if self.config["target"] == "panda" and self.config.get('sendchange_masters'):
-                self.sendchange(downloadables=[download_url, "%s/%s" % (download_url, "gaia-tests.zip")])
             if self.config["target"].startswith("emulator") and self.config.get('sendchange_masters'):
                 # yay hardcodes
                 downloadables = [
                     '%s/%s' % (download_url, 'emulator.tar.gz'),
                 ]
+                self.set_buildbot_property('packageUrl', downloadables[0], write_to_file=True)
                 matches = glob.glob(os.path.join(dirs['abs_upload_dir'], 'b2g*crashreporter-symbols.zip'))
                 if matches:
-                    downloadables.append("%s/%s" % (download_url, os.path.basename(matches[0])))
+                    symbols_url = "%s/%s" % (download_url, os.path.basename(matches[0]))
+                    downloadables.append(symbols_url)
+                    self.set_buildbot_property('symbolsUrl', symbols_url, write_to_file=True)
                 matches = glob.glob(os.path.join(dirs['abs_upload_dir'], 'b2g*tests.zip'))
                 if matches:
-                    downloadables.append("%s/%s" % (download_url, os.path.basename(matches[0])))
+                    tests_url = "%s/%s" % (download_url, os.path.basename(matches[0]))
+                    downloadables.append(tests_url)
+                    self.set_buildbot_property('testsUrl', tests_url, write_to_file=True)
                     self.sendchange(downloadables=downloadables)
 
         if self.query_is_nightly() and os.path.exists(dirs['abs_public_upload_dir']) and self.config['upload'].get('public'):
