@@ -51,7 +51,7 @@ config = {
             'mozilla-b2g28_v1_3t': '1.3.0t',
             'mozilla-b2g30_v1_4': '1.4.0',
             'mozilla-b2g32_v2_0': '2.0.0',
-            'mozilla-aurora': '2.1.0',
+            'mozilla-b2g34_v2_1': '2.1.0',
             'mozilla-central': '2.2.0',
         },
         "translate_hg_to_git": True,
