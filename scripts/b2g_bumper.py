@@ -410,7 +410,7 @@ class B2GBumper(VCSScript, MapperMixin):
         "Return True if we can land based on treestatus"
         c = self.config
         dirs = self.query_abs_dirs()
-        tree = c.get('treestatus_tree', os.path.basename(c['gecko_pull_url']))
+        tree = c.get('treestatus_tree', os.path.basename(c['gecko_pull_url'].rstrip("/")))
         treestatus_url = "%s/%s?format=json" % (c['treestatus_base_url'], tree)
         treestatus_json = os.path.join(dirs['abs_work_dir'], 'treestatus.json')
         if not os.path.exists(dirs['abs_work_dir']):
