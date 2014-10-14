@@ -1,6 +1,6 @@
 FTP_SERVER = "dev-stage01.srv.releng.scl3.mozilla.com"
 FTP_USER = "ffxbld"
-FTP_SSH_KEY = "~/.ssh/ffxbld_rsa"
+FTP_SSH_KEY = "~/.ssh/ffxbld_dsa"
 FTP_UPLOAD_BASE_DIR = "/pub/mozilla.org/mobile/candidates/%(version)s-candidates/build%(buildnum)d"
 #DOWNLOAD_BASE_URL = "http://%s%s" % (FTP_SERVER, FTP_UPLOAD_BASE_DIR)
 DOWNLOAD_BASE_URL = "https://ftp-ssl.mozilla.org/pub/mozilla.org/mobile/candidates/%(version)s-candidates/build%(buildnum)d"
