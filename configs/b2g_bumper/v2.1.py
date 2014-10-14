@@ -14,7 +14,7 @@ config = {
     'manifests_revision': 'origin/v2.1',
 
     'hg_user': 'B2G Bumper Bot <release+b2gbumper@mozilla.com>',
-    "ssh_key": "~/.ssh/ffxbld_rsa",
+    "ssh_key": "~/.ssh/ffxbld_dsa",
     "ssh_user": "ffxbld",
 
     'hgtool_base_bundle_urls': ['https://ftp-ssl.mozilla.org/pub/mozilla.org/firefox/bundles'],
