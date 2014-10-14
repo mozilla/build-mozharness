@@ -26,7 +26,7 @@ config = {
             "upload_dep_target_exclusions": [],
         },
         "public": {
-            "ssh_key": os.path.expanduser("~/.ssh/ffxbld_dsa"),
+            "ssh_key": os.path.expanduser("~/.ssh/ffxbld_rsa"),
             "ssh_user": "ffxbld",
             "upload_remote_host": "stage.mozilla.org",
             "post_upload_cmd": "post_upload.py --tinderbox-builds-dir %(branch)s-%(target)s -p b2g -i %(buildid)s --revision %(revision)s --release-to-tinderbox-dated-builds",
