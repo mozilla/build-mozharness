@@ -81,6 +81,13 @@ config = {
         'branch_supports_partials': False,
         'graph_server_branch_name': 'Mozilla-B2g30-v1.4',
     },
+    'mozilla-b2g32_v2_0': {
+        'repo_path': 'releases/mozilla-b2g32_v2_0',
+        'use_branch_in_symbols_extra_buildid': False,
+        'update_channel': 'nightly-b2g32',
+        'branch_supports_partials': False,
+        'graph_server_branch_name': 'Mozilla-B2g32-v2.0',
+    },
     'try': {
         'repo_path': 'try',
         'clone_by_revision': True,
@@ -91,7 +98,6 @@ config = {
         'release_to_try_builds': True,
         'upload_env': {
             # stage_server is dictated from build_pool_specifics.py
-            'UPLOAD_HOST': "%(stage_server)s",
             'UPLOAD_USER': "trybld",
             'UPLOAD_TO_TEMP': '1',
             'UPLOAD_SSH_KEY': '~/.ssh/%s' % ("trybld_dsa",),
@@ -143,5 +149,5 @@ config = {
     # 'larch': {},
     # 'maple': {},
     # 'oak': {},
-    #'pine': {}
+    # 'pine': {}
 }
