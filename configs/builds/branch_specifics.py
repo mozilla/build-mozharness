@@ -121,16 +121,7 @@ config = {
         'repo_path': 'services/services-central',
     },
     'ux': {
-         "graph_server_branch_name": "UX",
-     },
-    'date': {
-        'platform_overrides': {
-            # Bug 950206 - Enable 32-bit Windows builds on Date, test those
-            # builds on tst-w64-ec2-XXXX
-            'win32': {
-                'unittest_platform': 'win64',
-            },
-        },
+        "graph_server_branch_name": "UX",
     },
 
     ### other branches that do not require anything special:
@@ -140,6 +131,7 @@ config = {
     # 'build-system': {}
     # 'cedar': {},
     # "cypress": {},
+    # 'date': {},
     # 'elm': {},
     # 'fig': {},
     # 'graphics': {}
