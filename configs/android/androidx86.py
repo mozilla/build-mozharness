@@ -7,18 +7,16 @@ config = {
     "device_ip": "127.0.0.1",
     "default_sut_port1": "20701",
     "default_sut_port2": "20700", # does not prompt for commands
-    "tooltool_url": "http://tooltool.pvt.build.mozilla.org/build/sha512",
-    "tooltool_cache_path": "/builds/slave/talos-slave/cached",
-    "tooltool_cacheable_artifacts": {
-        "avd_tar_ball": ("AVDs-x86-android-4.2_r1-build-2013-11-13-ubuntu.tar.gz",
-            "3b2d18eb0194d82c70c5ee17487ccbac309f9b2e9839fe7ca4a27a9a06f6338bb24394476da78559685d99151fccc85fdde03297aa73ee2f7fb3183e11925c4d"),
-    },
+    "tooltool_manifest_path": "testing/config/tooltool-manifests/androidx86/releng.manifest",
+    "tooltool_cache": "/builds/tooltool_cache",
+    "tooltool_servers": ["http://runtime-binaries.pvt.build.mozilla.org/tooltool/"],
     ".avds_dir": "/home/cltbld/.android",
     "emulator_process_name": "emulator64-x86",
     "exes": {
         'adb': '/tools/android-sdk18/platform-tools/adb',
         'python': '/tools/buildbot/bin/python',
         'virtualenv': ['/tools/buildbot/bin/python', '/tools/misc-python/virtualenv.py'],
+        'tooltool.py': "/tools/tooltool.py",
     },
     "env": {
         "DISPLAY": ":0.0",
@@ -27,7 +25,6 @@ config = {
     "default_actions": [
         'clobber',
         'read-buildbot-config',
-        'download-cacheable-artifacts',
         'setup-avds',
         'start-emulators',
         'download-and-extract',
