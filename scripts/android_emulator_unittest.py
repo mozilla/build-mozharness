@@ -77,6 +77,7 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
             config_options=self.config_options,
             all_actions=['clobber',
                          'read-buildbot-config',
+                         'download-cacheable-artifacts',
                          'setup-avds',
                          'start-emulators',
                          'download-and-extract',
@@ -85,6 +86,7 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
                          'run-tests',
                          'stop-emulators'],
             default_actions=['clobber',
+                             'download-cacheable-artifacts',
                              'start-emulators',
                              'download-and-extract',
                              'create-virtualenv',
@@ -463,38 +465,38 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
     ##########################################
     ### Actions for AndroidEmulatorTest ###
     ##########################################
-    def setup_avds(self):
+    def download_cacheable_artifacts(self):
         '''
-        If tooltool cache mechanism is enabled, the cached version is used by the fetch command
-        If the manifest includes an "unpack" field, tooltool will unpack all compressed archives mentioned in the manifest
+        This will cache every downloadable artifact specified in
+        "tooltool_cacheable_artifacts" to "tooltool_cache_path"
         '''
         c = self.config
+        artifacts = c["tooltool_cacheable_artifacts"]
+        for artifact_name in artifacts.keys():
+            file_name = artifacts[artifact_name][0]
+            file_path = os.path.join(c["tooltool_cache_path"], file_name)
+            file_shasum = artifacts[artifact_name][1]
+            if not os.path.exists(file_path) or self.file_sha512sum(file_path) != file_shasum:
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+                # We store files in tooltool as their shasum representation
+                file_url = os.path.join(c["tooltool_url"], file_shasum)
+                self.download_file(file_url, file_path, c["tooltool_cache_path"])
+                if self.file_sha512sum(file_path) != file_shasum:
+                    return ""
 
-        # TODO
-        # the following code cleans the folder previously (pre bug 1058286) used as cache for tooltool artifacts
-        # it can be removed when the folder has been clobbered on all slaves
-        old_tooltool_cache = "/builds/slave/talos-slave/cached"
-        try:
-            self.rmtree(old_tooltool_cache)
-            self.info("Folder %s is no longer used to cache tooltool artifacts and has been deleted" % old_tooltool_cache)
-        except OSError as e:
-            self.warning("Folder %s has not been clobbered: %s" % (old_tooltool_cache, str(e)))
-
-        # FIXME
-        # clobbering and re-unpacking would not be needed if we had a way to check whether
-        # the unpacked content already present match the contents of the tar ball
-
+    def setup_avds(self):
+        '''
+        We have a tar ball in ToolTool with the pristine templates.
+        Let's unpack them every time.
+        '''
+        c = self.config
         self.rmtree(c[".avds_dir"])
+        avd_tar_ball_path = os.path.join(
+            c["tooltool_cache_path"],
+            c["tooltool_cacheable_artifacts"]["avd_tar_ball"][0])
         self.mkdir_p(c[".avds_dir"])
-        if self.buildbot_config and 'properties' in self.buildbot_config:
-            url = 'https://hg.mozilla.org/%s/raw-file/%s/%s' % (self.buildbot_config['properties']['repo_path'], self.buildbot_config['properties']['revision'], c["tooltool_manifest_path"])
-        else:
-            self.fatal("properties in self.buildbot_config are required to retrieve tooltool manifest to be used for avds setup")
-        manifest_path = self.download_file(url, file_name='releng.manifest',
-                                           parent_dir=c[".avds_dir"])
-        if not os.path.exists(manifest_path):
-            self.fatal("Could not retrieve manifest needed to retrieve avds artifacts from %s" % manifest_path)
-        self.tooltool_fetch(manifest_path, output_dir=c[".avds_dir"], cache=c.get("tooltool_cache", None))
+        self.unpack(avd_tar_ball_path, c[".avds_dir"])
 
     def start_emulators(self):
         '''

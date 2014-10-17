@@ -7,9 +7,12 @@ config = {
     "device_ip": "127.0.0.1",
     "default_sut_port1": "20701",
     "default_sut_port2": "20700", # does not prompt for commands
-    "tooltool_manifest_path": "testing/config/tooltool-manifests/androidarm/releng.manifest",
-    "tooltool_cache": "/builds/tooltool_cache",
-    "tooltool_servers": ["http://runtime-binaries.pvt.build.mozilla.org/tooltool/"],
+    "tooltool_url": "http://tooltool.pvt.build.mozilla.org/build/sha512",
+    "tooltool_cache_path": "/builds/slave/talos-slave/cached",
+    "tooltool_cacheable_artifacts": {
+        "avd_tar_ball": ("AVDs-armv7a-gingerbread-build-2014-01-23-ubuntu.tar.gz",
+            "7140e026b7b747236545dc30e377a959b0bdf91bb4d70efd7f97f92fce12a9196042503124b8df8d30c2d97b7eb5f9df9556afdffa0b5d9625008aead305c32b"),
+    },
     ".avds_dir": "/home/cltbld/.android",
     "emulator_process_name": "emulator64-arm",
     "emulator_cpu": "cortex-a9",
@@ -17,7 +20,6 @@ config = {
         'adb': '/tools/android-sdk18/platform-tools/adb',
         'python': '/tools/buildbot/bin/python',
         'virtualenv': ['/tools/buildbot/bin/python', '/tools/misc-python/virtualenv.py'],
-        'tooltool.py': "/tools/tooltool.py",
     },
     "env": {
         "DISPLAY": ":0.0",
@@ -27,6 +29,7 @@ config = {
     "default_actions": [
         'clobber',
         'read-buildbot-config',
+        'download-cacheable-artifacts',
         'setup-avds',
         'start-emulators',
         'download-and-extract',
