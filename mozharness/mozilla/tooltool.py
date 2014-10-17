@@ -15,7 +15,7 @@ class TooltoolMixin(object):
     Requires self.config['tooltool_servers'] to be a list of base urls
     """
     def tooltool_fetch(self, manifest, bootstrap_cmd=None,
-                       output_dir=None, privileged=False):
+                       output_dir=None, privileged=False, cache=None):
         """docstring for tooltool_fetch"""
         tooltool = self.query_exe('tooltool.py', return_type='list')
         cmd = tooltool
@@ -28,6 +28,10 @@ class TooltoolMixin(object):
             cmd.extend(['--url', proxyied_url])
 
         cmd.extend(['fetch', '-m', manifest, '-o'])
+
+        if cache:
+            cmd.extend(['-c', cache])
+
         self.retry(
             self.run_command,
             args=(cmd, ),
