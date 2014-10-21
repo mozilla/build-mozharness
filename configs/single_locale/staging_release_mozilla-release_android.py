@@ -5,7 +5,7 @@ OBJDIR = "obj-l10n"
 STAGE_SERVER = "dev-stage01.srv.releng.scl3.mozilla.com"
 EN_US_BINARY_URL = "http://" + STAGE_SERVER + "/pub/mozilla.org/mobile/candidates/%(version)s-candidates/build%(buildnum)d/android/en-US"
 STAGE_USER = "ffxbld"
-STAGE_SSH_KEY = "~/.ssh/ffxbld_dsa"
+STAGE_SSH_KEY = "~/.ssh/ffxbld_rsa"
 HG_SHARE_BASE_DIR = "/builds/hg-shared"
 
 config = {

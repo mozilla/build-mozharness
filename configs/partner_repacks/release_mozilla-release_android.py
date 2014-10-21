@@ -1,6 +1,6 @@
 FTP_SERVER = "stage.mozilla.org"
 FTP_USER = "ffxbld"
-FTP_SSH_KEY = "~/.ssh/ffxbld_dsa"
+FTP_SSH_KEY = "~/.ssh/ffxbld_rsa"
 FTP_UPLOAD_BASE_DIR = "/pub/mozilla.org/mobile/candidates/%(version)s-candidates/build%(buildnum)d"
 DOWNLOAD_BASE_URL = "http://%s%s" % (FTP_SERVER, FTP_UPLOAD_BASE_DIR)
 APK_BASE_NAME = "fennec-%(version)s.%(locale)s.android-arm.apk"

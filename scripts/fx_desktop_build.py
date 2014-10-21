@@ -80,7 +80,7 @@ class FxDesktopBuild(BuildScript, object):
                 'release_to_try_builds': False,
                 'include_post_upload_builddir': False,
                 'stage_username': 'ffxbld',
-                'stage_ssh_key': 'ffxbld_dsa',
+                'stage_ssh_key': 'ffxbld_rsa',
                 #
 
             },
