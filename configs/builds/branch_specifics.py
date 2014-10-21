@@ -58,12 +58,6 @@ config = {
         'branch_uses_per_checkin_strategy': True,
         'use_branch_in_symbols_extra_buildid': False,
     },
-    'mozilla-esr24': {
-        'repo_path': 'releases/mozilla-esr24',
-        'update_channel': 'nightly-esr24',
-        'branch_uses_per_checkin_strategy': True,
-        'use_branch_in_symbols_extra_buildid': False,
-    },
     'mozilla-esr31': {
         'repo_path': 'releases/mozilla-esr31',
         'update_channel': 'nightly-esr31',
