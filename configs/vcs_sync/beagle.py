@@ -506,35 +506,6 @@ config = {
             ],
         },
     }, {
-        "repo": "https://hg.mozilla.org/releases/mozilla-esr24",
-        "revision": "default",
-        "repo_name": "mozilla-esr24",
-        "targets": [{
-            "target_dest": "beagle/.git",
-            "vcs": "git",
-            "test_push": True,
-        }, {
-            "target_dest": "gitmo-beagle",
-        }, {
-            "target_dest": "gitmo-staging",
-        }, {
-            "target_dest": "github-beagle",
-        }],
-        "vcs": "hg",
-        "branch_config": {
-            "branches": {
-                "default": "esr24",
-            },
-            "branch_regexes": [
-                "^GECKO[0-9]+esr_[0-9]+_RELBRANCH$",
-            ],
-        },
-        "tag_config": {
-            "tag_regexes": [
-                "^B2G_",
-            ],
-        },
-    }, {
         "repo": "https://hg.mozilla.org/releases/mozilla-esr31",
         "revision": "default",
         "repo_name": "mozilla-esr31",
