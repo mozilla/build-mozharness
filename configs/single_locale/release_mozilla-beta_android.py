@@ -6,7 +6,7 @@ EN_US_BINARY_URL = "http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/%(v
 #STAGE_SERVER = "dev-stage01.srv.releng.scl3.mozilla.com"
 STAGE_SERVER = "stage.mozilla.org"
 STAGE_USER = "ffxbld"
-STAGE_SSH_KEY = "~/.ssh/ffxbld_dsa"
+STAGE_SSH_KEY = "~/.ssh/ffxbld_rsa"
 HG_SHARE_BASE_DIR = "/builds/hg-shared"
 
 config = {
