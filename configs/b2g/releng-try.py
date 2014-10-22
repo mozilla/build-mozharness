@@ -39,7 +39,7 @@ config = {
         "PATH": "/tools/python27/bin:%(PATH)s",
     },
     "purge_minsize": 20,
-    #"clobberer_url": "http://clobberer-stage.pvt.build.mozilla.org/index.php",
+    #"clobberer_url": "https://api-pub-build.allizom.org/clobberer/lastclobber",
     #"clobberer_url": "http://clobberer.pvt.build.mozilla.org/index.php",
     "is_automation": True,
     "force_clobber": True,
