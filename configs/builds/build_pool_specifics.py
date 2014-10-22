@@ -11,7 +11,7 @@ config = {
         # if not clobberer_url, only clobber 'abs_work_dir'
         # if true: possibly clobber, clobberer, and purge_builds
         # see PurgeMixin for clobber() conditions
-        'clobberer_url': 'http://clobberer-stage.pvt.build.mozilla.org/index.php',
+        'clobberer_url': 'https://api-pub-build.allizom.org/clobberer/lastclobber',
         # staging we should use MozillaTest
         # but in production we let the self.branch decide via
         # self._query_graph_server_branch_name()

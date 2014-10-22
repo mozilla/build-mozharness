@@ -15,7 +15,7 @@ config = {
     "buildbot_json_path": "buildprops.json",
     "purge_minsize": 10,
     "force_clobber": True,
-    "clobberer_url": "http://clobberer-stage.pvt.build.mozilla.org/index.php",
+    "clobberer_url": "https://api-pub-build.allizom.org/clobberer/lastclobber",
     "locales_file": "buildbot-configs/mozilla/l10n-changesets_mobile-release.json",
     "locales_dir": "mobile/android/locales",
     "locales_platform": "android",
