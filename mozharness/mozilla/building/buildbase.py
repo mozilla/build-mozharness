@@ -30,8 +30,7 @@ from mozharness.base.log import ERROR, OutputParser, FATAL, WARNING
 from mozharness.base.script import PostScriptRun
 from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.buildbot import BuildbotMixin, TBPL_STATUS_DICT, \
-    TBPL_EXCEPTION, TBPL_SUCCESS, TBPL_WORST_LEVEL_TUPLE, TBPL_RETRY, \
-    EXIT_STATUS_DICT
+    TBPL_EXCEPTION, TBPL_RETRY, EXIT_STATUS_DICT, TBPL_WARNING, TBPL_FAILURE
 from mozharness.mozilla.purge import PurgeMixin
 from mozharness.mozilla.mock import MockMixin
 from mozharness.mozilla.signing import SigningMixin
@@ -443,6 +442,14 @@ BUILD_BASE_CONFIG_OPTIONS = [
 ]
 
 
+def generate_build_ID():
+    return time.strftime("%Y%m%d%H%M%S", time.localtime(time.time()))
+
+
+def generate_build_UID():
+    return uuid.uuid4().hex
+
+
 class BuildScript(BuildbotMixin, PurgeMixin, MockMixin, BalrogMixin,
                   SigningMixin, MercurialScript):
     def __init__(self, **kwargs):
@@ -587,73 +594,55 @@ or run without that action (ie: --no-{action})"
             ]
             return self.get_output_from_command(cmd, cwd=dirs['base_work_dir'])
         else:
-            return ''
+            return None
 
     def query_builduid(self):
         c = self.config
         if self.builduid:
             return self.builduid
-        in_buildbot_props = False
+
+        builduid = None
         if c.get("is_automation"):
             if self.buildbot_config['properties'].get('builduid'):
-                in_buildbot_props = True
+                self.info("Determining builduid from buildbot properties")
+                builduid = self.buildbot_config['properties']['builduid'].encode(
+                    'ascii', 'replace'
+                )
 
-        # let's see if it's in buildbot_properties
-        if in_buildbot_props:
-            self.info("Determining builduid from buildbot properties")
-            self.builduid = self.buildbot_config['properties']['builduid'].encode(
-                'ascii', 'replace'
-            )
-        else:
+        if not builduid:
             self.info("Creating builduid through uuid hex")
-            self.builduid = uuid.uuid4().hex
+            builduid = generate_build_UID()
 
-        if self.builduid:
-            if c.get('is_automation') and not in_buildbot_props:
-                self.set_buildbot_property('builduid',
-                                           self.builduid,
-                                           write_to_file=True)
-        else:
-            # something went horribly wrong
-            self.fatal("Could not determine builduid!")
+        if c.get('is_automation'):
+            self.set_buildbot_property('builduid',
+                                       builduid,
+                                       write_to_file=True)
+        self.builduid = builduid
         return self.builduid
 
     def query_buildid(self):
         c = self.config
         if self.buildid:
             return self.buildid
-        in_buildbot_props = False
+
+        buildid = None
         if c.get("is_automation"):
             if self.buildbot_config['properties'].get('buildid'):
-                in_buildbot_props = True
+                self.info("Determining buildid from buildbot properties")
+                buildid = self.buildbot_config['properties']['buildid'].encode(
+                    'ascii', 'replace'
+                )
 
-        # first let's see if we have already built ff
-        # in which case we would have a buildid
-        if self._query_build_prop_from_app_ini('BuildID'):
-            self.info("Determining buildid from application.ini")
-            self.buildid = self._query_build_prop_from_app_ini('BuildID')
-        # now let's see if it's in buildbot_properties
-        elif in_buildbot_props:
-            self.info("Determining buildid from buildbot properties")
-            self.buildid = self.buildbot_config['properties']['buildid'].encode(
-                'ascii', 'replace'
-            )
-        else:
-            # finally, let's resort to making a buildid this will happen when
-            #  buildbot has not made one, and we are running this script for
-            # the first time in a clean clobbered state
+        if not buildid:
             self.info("Creating buildid through current time")
-            self.buildid = time.strftime("%Y%m%d%H%M%S",
-                                         time.localtime(time.time()))
-        if self.buildid:
-            if c.get('is_automation') and not in_buildbot_props:
-                self.set_buildbot_property('buildid',
-                                           self.buildid,
-                                           write_to_file=True)
-        else:
-            # something went horribly wrong
-            self.fatal("Could not determine Buildid!")
+            buildid = generate_build_ID()
 
+        if c.get('is_automation'):
+            self.set_buildbot_property('buildid',
+                                       buildid,
+                                       write_to_file=True)
+
+        self.buildid = buildid
         return self.buildid
 
     def _query_objdir(self):
@@ -1170,6 +1159,30 @@ or run without that action (ie: --no-{action})"
             self.set_buildbot_property(prop['prop_name'],
                                        prop_val,
                                        write_to_file=True)
+
+        if self.config.get('is_automation'):
+            self.info("Verifying buildid from application.ini matches buildid "
+                      "from buildbot")
+            app_ini_buildid = self._query_build_prop_from_app_ini('BuildID')
+            # it would be hard to imagine query_buildid evaluating to a falsey
+            #  value (e.g. 0), but incase it does, force it to None
+            buildbot_buildid = self.query_buildid() or None
+            self.info(
+                'buildid from application.ini: "%s". buildid from buildbot '
+                'properties: "%s"' % (app_ini_buildid, buildbot_buildid)
+            )
+            if app_ini_buildid == buildbot_buildid != None:
+                self.info('buildids match.')
+            else:
+                self.error(
+                    'buildids do not match or values could not be determined'
+                )
+                # set the build to orange if not already worse
+                self.return_code = self.worst_level(
+                    EXIT_STATUS_DICT[TBPL_WARNING], self.return_code,
+                    AUTOMATION_EXIT_CODES[::-1]
+                )
+
         self.generated_build_props = True
 
     def _set_file_properties(self, file_name, find_dir, prop_type,
