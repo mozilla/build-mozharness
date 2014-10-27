@@ -22,7 +22,7 @@ config = {
     "buildbot_json_path": "buildprops.json",
     "purge_minsize": 10,
     "force_clobber": True,
-    "clobberer_url": "http://clobberer.pvt.build.mozilla.org/index.php",
+    "clobberer_url": "https://api.pub.build.mozilla.org/clobberer/lastclobber",
     "locales_file": "%s/mobile/android/locales/all-locales" % MOZILLA_DIR,
     "locales_dir": "mobile/android/locales",
     "ignore_locales": ["en-US"],

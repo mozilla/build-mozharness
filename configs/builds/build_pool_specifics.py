@@ -34,7 +34,7 @@ config = {
         # if not clobberer_url, only clobber 'abs_work_dir'
         # if true: possibly clobber, clobberer, and purge_builds
         # see PurgeMixin for clobber() conditions
-        'clobberer_url': 'http://clobberer.pvt.build.mozilla.org/index.php',
+        'clobberer_url': 'https://api.pub.build.mozilla.org/clobberer/lastclobber',
         'graph_server': 'graphs.mozilla.org',
         "hgtool_base_bundle_urls": [
             'https://ftp-ssl.mozilla.org/pub/mozilla.org/firefox/bundles'
