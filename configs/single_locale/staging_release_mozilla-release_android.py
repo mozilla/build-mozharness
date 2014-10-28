@@ -20,6 +20,12 @@ config = {
     "locales_dir": "mobile/android/locales",
     "locales_platform": "android",
     "ignore_locales": ["en-US"],
+    "balrog_credentials_file": "oauth.txt",
+    "tools_repo": "https://hg.mozilla.org/build/tools",
+    "is_release": True,
+    "balrog_credentials_file": "oauth.txt",
+    "tools_repo": "https://hg.mozilla.org/build/tools",
+    "is_release": True,
     "tooltool_config": {
         "manifest": "mobile/android/config/tooltool-manifests/android/releng.manifest",
         "output_dir": "%(abs_work_dir)s/" + MOZILLA_DIR,
@@ -82,8 +88,10 @@ config = {
         "setup",
         "repack",
         "upload-repacks",
+        "submit-to-balrog",
         "summary",
     ],
+
     # Mock
     "mock_target": "mozilla-centos6-x86_64",
     "mock_packages": ['autoconf213', 'python', 'zip', 'mozilla-python27-mercurial', 'git', 'ccache',

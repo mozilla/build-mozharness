@@ -51,8 +51,24 @@ class BalrogMixin(object):
         return_code = self.retry(
             self.run_command, attempts=5, args=(cmd,),
         )
-        if return_code not in [0]:
-            self.return_code = 1
+        return return_code
+
+    def submit_balrog_release_pusher(self, dirs):
+        product = self.buildbot_config["properties"]["product"]
+        cmd = [self.query_exe("python"), os.path.join(os.path.join(dirs['abs_tools_dir'], "scripts/updates/balrog-release-pusher.py"))]
+        cmd.extend(["--build-properties", os.path.join(dirs["base_work_dir"], "balrog_props.json")])
+        cmd.extend(["--api-root", self.config.get("balrog_api_root")])
+        cmd.extend(["--buildbot-configs", "https://hg.mozilla.org/build/buildbot-configs"])
+        cmd.extend(["--release-config", os.path.join(dirs['build_dir'], self.config.get("release_config_file"))])
+        cmd.extend(["--credentials-file", os.path.join(dirs['base_work_dir'], self.config.get("balrog_credentials_file"))])
+        cmd.extend(["--username", self.config.get("balrog_usernames")[product]])
+
+        self.info("Calling Balrog release pusher script")
+        return_code = self.retry(self.run_command,
+                                 args=(cmd,),
+                                 kwargs={'cwd': dirs['abs_work_dir']})
+
+        return return_code
 
     def lock_balrog_rules(self, rule_ids):
         c = self.config

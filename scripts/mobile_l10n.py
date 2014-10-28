@@ -274,6 +274,8 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
          dirs = {
              'abs_tools_dir':
                  os.path.join(abs_dirs['base_work_dir'], 'tools'),
+             'build_dir':
+                 os.path.join(abs_dirs['base_work_dir'], 'build'),
          }
 
          abs_dirs.update(dirs)
@@ -562,20 +564,25 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
             self.fatal("Found no apks files in %s, don't know what to do:\n%s" % (apkdir, apks), exit_code=1)
          
         return os.path.join(apkdir, apks[0])
-
-    def submit_to_balrog(self):
-        if not self.query_is_nightly():
-            self.info("Not a nightly build, skipping balrog submission.")
+     
+    def query_is_release(self):
+        
+        return bool(self.config.get("is_release"))
+        
+    def submit_to_balrog(self):        
+        
+        if not self.query_is_nightly() and not self.query_is_release():
+            self.info("Not a nightly or release build, skipping balrog submission.")
             return
 
         if not self.config.get("balrog_api_root"):
             self.info("balrog_api_root not set; skipping balrog submission.")
             return
 
-
         self.checkout_tools()
-
-        locales = self.query_locales()  
+  
+        dirs = self.query_abs_dirs()
+        locales = self.query_locales()
         for locale in locales:
             apkfile = self.query_apkfile_path(locale)
             apk_url = self.query_upload_url(locale)
@@ -594,14 +601,19 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
             self.set_buildbot_property("appName", "Fennec")
             # TODO: don't hardcode
             self.set_buildbot_property("hashType", "sha512")
-            self.set_buildbot_property("completeMarSize", self.query_filesize(apkfile))            
+            self.set_buildbot_property("completeMarSize", self.query_filesize(apkfile))
             self.set_buildbot_property("completeMarHash", self.query_sha512sum(apkfile))
             self.set_buildbot_property("completeMarUrl", apk_url)
             self.set_buildbot_property("isOSUpdate", False)
             self.set_buildbot_property("buildid", self.query_buildid())
 
-            self.submit_balrog_updates()
-
+            if self.query_is_nightly():  
+                self.submit_balrog_updates(release_type="nightly")
+            else:
+                self.submit_balrog_updates(release_type="release")              
+        if not self.query_is_nightly():
+            self.submit_balrog_release_pusher(dirs)
+          
 # main {{{1
 if __name__ == '__main__':
     single_locale = MobileSingleLocale()
