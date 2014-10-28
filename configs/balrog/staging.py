@@ -5,5 +5,6 @@ config = {
         'firefox': 'stage-ffxbld',
         'thunderbird': 'stage-tbirdbld',
         'mobile': 'stage-ffxbld',
+        'Fennec': 'stage-ffxbld',
     }
 }

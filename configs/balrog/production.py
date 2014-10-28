@@ -5,5 +5,6 @@ config = {
         'firefox': 'ffxbld',
         'thunderbird': 'tbirdbld',
         'mobile': 'ffxbld',
+        'Fennec': 'ffxbld',
     }
 }
