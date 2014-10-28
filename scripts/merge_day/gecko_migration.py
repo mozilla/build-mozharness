@@ -27,6 +27,7 @@ from mozharness.base.errors import HgErrorList
 from mozharness.base.log import INFO, FATAL
 from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.base.vcs.mercurial import MercurialVCS
+from mozharness.mozilla.updates.balrog import BalrogMixin
 
 VALID_MIGRATION_BEHAVIORS = (
     "beta_to_release", "aurora_to_beta", "central_to_aurora", "release_to_esr"
@@ -34,7 +35,7 @@ VALID_MIGRATION_BEHAVIORS = (
 
 
 # GeckoMigration {{{1
-class GeckoMigration(MercurialScript):
+class GeckoMigration(MercurialScript, BalrogMixin):
     config_options = [
         [['--hg-user', ], {
             "action": "store",
@@ -42,6 +43,19 @@ class GeckoMigration(MercurialScript):
             "type": "string",
             "default": "ffxbld <release@mozilla.com>",
             "help": "Specify what user to use to commit to hg.",
+        }],
+        [['--balrog-username', ], {
+            "action": "store",
+            "dest": "balrog_username",
+            "type": "string",
+            "default": "ffxbld",
+            "help": "Specify what user to connect to Balrog with.",
+        }],
+        [['--balrog-credentials-file', ], {
+            "action": "store",
+            "dest": "balrog_credentials_file",
+            "type": "string",
+            "help": "The file containing the Balrog credentials.",
         }],
         [['--remove-locale', ], {
             "action": "extend",
@@ -59,6 +73,7 @@ class GeckoMigration(MercurialScript):
                 'clobber',
                 'clean-repos',
                 'pull',
+                'lock-update-paths',
                 'migrate',
                 'commit-changes',
                 'push',
@@ -565,6 +580,9 @@ class GeckoMigration(MercurialScript):
             "vcs": "hg",
         }] + self.query_gecko_repos()
         super(GeckoMigration, self).pull(repos=repos)
+
+    def lock_update_paths(self):
+        self.lock_balrog_rules(self.config["balrog_rules_to_lock"])
 
     def migrate(self):
         """ Perform the migration.
