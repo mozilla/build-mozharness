@@ -40,7 +40,7 @@ class BalrogMixin(object):
             submitter_script,
             "--build-properties", props_path,
             "--api-root", c["balrog_api_root"],
-            "--username", self.query_balrog_username(product),
+            "--username", self._query_balrog_username(product),
             "-t", release_type,
             "--credentials-file", credentials_file,
         ]
