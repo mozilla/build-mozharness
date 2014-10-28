@@ -76,7 +76,7 @@ config = {
         "B2G_UPDATE_CHANNEL": "default",
     },
     "purge_minsize": 15,
-    "clobberer_url": "http://clobberer.pvt.build.mozilla.org/index.php",
+    "clobberer_url": "https://api.pub.build.mozilla.org/clobberer/lastclobber",
     "is_automation": True,
     "variant": "eng",
     "target_suffix": "-eng",

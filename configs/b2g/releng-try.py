@@ -40,7 +40,7 @@ config = {
     },
     "purge_minsize": 20,
     #"clobberer_url": "https://api-pub-build.allizom.org/clobberer/lastclobber",
-    #"clobberer_url": "http://clobberer.pvt.build.mozilla.org/index.php",
+    #"clobberer_url": "https://api.pub.build.mozilla.org/clobberer/lastclobber",
     "is_automation": True,
     "force_clobber": True,
     "repo_mirror_dir": "/builds/git-shared/repo",
