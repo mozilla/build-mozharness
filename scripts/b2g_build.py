@@ -32,13 +32,16 @@ from mozharness.mozilla.signing import SigningMixin
 from mozharness.mozilla.repo_manifest import add_project
 from mozharness.mozilla.mapper import MapperMixin
 from mozharness.mozilla.updates.balrog import BalrogMixin
+from mozharness.base.python import VirtualenvMixin
+from mozharness.base.python import InfluxRecordingMixin
 from mozharness.mozilla.building.buildbase import MakeUploadOutputParser
 from mozharness.mozilla.building.buildb2gbase import B2GBuildBaseScript, B2GMakefileErrorList
 
 
 class B2GBuild(LocalesMixin, PurgeMixin,
                B2GBuildBaseScript,
-               GaiaLocalesMixin, SigningMixin, MapperMixin, BalrogMixin):
+               GaiaLocalesMixin, SigningMixin, MapperMixin, BalrogMixin,
+               VirtualenvMixin, InfluxRecordingMixin):
     all_actions = [
         'clobber',
         'checkout-sources',
@@ -155,9 +158,14 @@ class B2GBuild(LocalesMixin, PurgeMixin,
             'repo_repo': "https://git.mozilla.org/external/google/gerrit/git-repo.git",
             'repo_rev': 'stable',
             'repo_remote_mappings': {},
+            'influx_credentials_file': 'oauth.txt',
             # XXX: Remove me after all devices/branches are switched to Balrog
             'update_channel': 'default',
             'balrog_credentials_file': 'oauth.txt',
+            'virtualenv_modules': [
+                'requests==2.2.1',
+            ],
+            'virtualenv_path': 'venv',
         }
         default_config.update(config)
 
@@ -184,6 +192,10 @@ class B2GBuild(LocalesMixin, PurgeMixin,
             self.extra_update_attrs = None
             self.isOSUpdate = False
         self.package_urls = {}
+
+        # We need to create the virtualenv directly (without using an action) in
+        # order to use python modules in PreScriptRun/Action listeners
+        self.create_virtualenv()
 
     def query_abs_dirs(self):
         if self.abs_dirs:
