@@ -8,7 +8,6 @@ config = {
         'clone-tools',
         # 'setup-mock', windows do not use mock
         'build',
-        # 'sendchanges',
         # 'generate-build-stats',
         'update',  # decided by query_is_nightly()
     ],
@@ -16,6 +15,7 @@ config = {
     'debug_build': True,
     'enable_talos_sendchange': False,
     'enable_unittest_sendchange': False,
+    'enable_check_test': False,
     #### 32 bit build specific #####
     'env': {
         'BINSCOPE': 'C:/Program Files (x86)/Microsoft/SDL BinScope/BinScope.exe',

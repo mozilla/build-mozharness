@@ -17,7 +17,6 @@ config = {
         'clone-tools',
         # 'setup-mock', windows do not use mock
         'build',
-        'sendchanges',
         'generate-build-stats',
         'update',  # decided by query_is_nightly()
     ],
@@ -47,6 +46,7 @@ config = {
     'purge_skip': ['info', 'rel-*:45d', 'tb-rel-*:45d'],
     'purge_basedirs':  [],
     'enable_ccache': False,
+    'enable_check_test': True,
     'vcs_share_base': 'C:/builds/hg-shared',
     'objdir': 'obj-firefox',
     'tooltool_script': [sys.executable,
@@ -55,7 +55,6 @@ config = {
     'enable_count_ctors': False,
     'enable_talos_sendchange': True,
     'enable_unittest_sendchange': True,
-    'platform_supports_partials': True,
     #########################################################################
 
 
@@ -86,19 +85,19 @@ config = {
         'TINDERBOX_OUTPUT': '1',
     },
     'upload_env': {
-        # UPLOAD_HOST is set to stage_server
         # stage_server is dictated from build_pool_specifics.py
-        'UPLOAD_USER': STAGE_USERNAME,
+        'UPLOAD_HOST': '%(stage_server)s',
+        'UPLOAD_USER': '%(stage_username)s',
+        'UPLOAD_SSH_KEY': '/c/Users/cltbld/.ssh/%(stage_ssh_key)s',
         'UPLOAD_TO_TEMP': '1',
-        'UPLOAD_SSH_KEY': '~/.ssh/%s' % (STAGE_SSH_KEY,),
     },
     "check_test_env": {
         'MINIDUMP_STACKWALK': '%(abs_tools_dir)s/breakpad/win32/minidump_stackwalk.exe',
         'MINIDUMP_SAVE_PATH': '%(base_work_dir)s/minidumps',
     },
+    'enable_pymake': True,
     'purge_minsize': 12,
     'src_mozconfig': 'browser/config/mozconfigs/win32/nightly',
     'tooltool_manifest_src': "browser/config/tooltool-manifests/win32/releng.manifest",
-    'platform_ftp_name': 'win32.complete.mar',
     #########################################################################
 }
