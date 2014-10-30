@@ -10,12 +10,15 @@
 import os
 import subprocess
 import sys
+import time
+import json
 import traceback
 
 from mozharness.base.script import (
     PostScriptAction,
     PostScriptRun,
     PreScriptAction,
+    PreScriptRun,
 )
 from mozharness.base.errors import VirtualenvErrorList
 from mozharness.base.log import WARNING, FATAL
@@ -537,6 +540,109 @@ class ResourceMonitoringMixin(object):
             start_time, end_time = rm.phases[phase]
             cpu_percent, cpu_times, io = resources(phase)
             log_usage(phase, end_time - start_time, cpu_percent, cpu_times, io)
+
+
+class InfluxRecordingMixin(object):
+    """Provides InfluxDB stat recording to scripts.
+
+    This class records stats to an InfluxDB server, if enabled. Stat recording
+    is enabled in a script by inheriting from this class, and adding an
+    influxdb_credentials line to the influx_credentials_file (usually oauth.txt
+    in automation).  This line should look something like:
+
+        influxdb_credentials = 'http://goldiewilson-onepointtwentyone-1.c.influxdb.com:8086/db/DBNAME/series?u=DBUSERNAME&p=DBPASSWORD'
+
+    Where DBNAME, DBUSERNAME, and DBPASSWORD correspond to the database name,
+    and user/pw credentials for recording to the database. The stats from
+    mozharness are recorded in the 'mozharness' table.
+    """
+
+    @PreScriptRun
+    def influxdb_recording_init(self):
+        self.recording = False
+        self.post = None
+        self.posturl = None
+
+        try:
+            site_packages_path = self.query_python_site_packages_path()
+            if site_packages_path not in sys.path:
+                sys.path.append(site_packages_path)
+
+            import requests
+            self.post = requests.post
+
+            auth = os.path.join(os.getcwd(), self.config['influx_credentials_file'])
+            credentials = {}
+            execfile(auth, credentials)
+            self.posturl = credentials['influxdb_credentials']
+
+            self.recording = True
+        except Exception:
+            # The exact reason for failing to start stats doesn't really matter.
+            # If anything fails, we just won't record stats for this job.
+            self.warning("Unable to start influxdb recording: %s" %
+                         traceback.format_exc())
+
+    @PreScriptAction
+    def influxdb_recording_pre_action(self, action):
+        if not self.recording:
+            return
+
+        self.start_time = time.time()
+
+    @PostScriptAction
+    def influxdb_recording_post_action(self, action, success=None):
+        if not self.recording:
+            return
+
+        elapsed_time = time.time() - self.start_time
+
+        c = {}
+        p = {}
+        if self.buildbot_config:
+            c = self.buildbot_config.get('properties', {})
+        if self.buildbot_properties:
+            p = self.buildbot_properties
+        self.record_influx_stat([{
+            "points": [[
+                action,
+                elapsed_time,
+                c.get('buildername'),
+                c.get('product'),
+                c.get('platform'),
+                c.get('branch'),
+                c.get('slavename'),
+                c.get('revision'),
+                p.get('gaia_revision'),
+                c.get('buildid'),
+            ]],
+            "name": "mozharness",
+            "columns": [
+                "action",
+                "runtime",
+                "buildername",
+                "product",
+                "platform",
+                "branch",
+                "slavename",
+                "gecko_revision",
+                "gaia_revision",
+                "buildid",
+            ],
+        }])
+
+    def record_influx_stat(self, json_data):
+        try:
+            r = self.post(self.posturl, data=json.dumps(json_data), timeout=5)
+            if r.status_code != 200:
+                self.warning("Failed to log stats. Return code = %i, stats = %s" % (r.status_code, json_data))
+
+                # Disable recording for the rest of this job. Even if it's just
+                # intermittent, we don't want to keep the build from progressing.
+                self.recording = False
+        except Exception, e:
+            self.warning('Failed to log stats. Exception = %s' % str(e))
+            self.recording = False
 
 
 # __main__ {{{1

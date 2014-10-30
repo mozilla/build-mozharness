@@ -32,7 +32,6 @@ class FxDesktopBuild(BuildScript, object):
                 'clone-tools',
                 'setup-mock',
                 'build',
-                'sendchanges',
                 'generate-build-stats',
                 'update',
             ],
@@ -65,12 +64,7 @@ class FxDesktopBuild(BuildScript, object):
                 'stage_product': 'firefox',
                 'platform_supports_post_upload_to_latest': True,
                 'use_branch_in_symbols_extra_buildid': True,
-                'update_env': {
-                    'MAR': '../dist/host/bin/mar',
-                    'MBSDIFF': '../dist/host/bin/mbsdiff'
-                },
                 'latest_mar_dir': '/pub/mozilla.org/firefox/nightly/latest-%(branch)s',
-                'branch_supports_partials': True,  # check branch_specifics.py
 
                 # try will overwrite these
                 'clone_with_purge': False,

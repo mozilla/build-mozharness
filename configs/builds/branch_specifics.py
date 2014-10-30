@@ -31,8 +31,8 @@
 config = {
     ### release branches
     "mozilla-central": {
-        "update_channel": "nightly",
         "repo_path": 'mozilla-central',
+        "update_channel": "nightly",
         "graph_server_branch_name": "Firefox",
         'use_branch_in_symbols_extra_buildid': False,
     },
@@ -72,14 +72,12 @@ config = {
         'repo_path': 'releases/mozilla-b2g30_v1_4',
         'use_branch_in_symbols_extra_buildid': False,
         'update_channel': 'nightly-b2g30',
-        'branch_supports_partials': False,
         'graph_server_branch_name': 'Mozilla-B2g30-v1.4',
     },
     'mozilla-b2g32_v2_0': {
         'repo_path': 'releases/mozilla-b2g32_v2_0',
         'use_branch_in_symbols_extra_buildid': False,
         'update_channel': 'nightly-b2g32',
-        'branch_supports_partials': False,
         'graph_server_branch_name': 'Mozilla-B2g32-v2.0',
     },
     'try': {
@@ -90,12 +88,6 @@ config = {
         'to_tinderbox_dated': False,
         'include_post_upload_builddir': True,
         'release_to_try_builds': True,
-        'upload_env': {
-            # stage_server is dictated from build_pool_specifics.py
-            'UPLOAD_USER': "trybld",
-            'UPLOAD_TO_TEMP': '1',
-            'UPLOAD_SSH_KEY': '~/.ssh/%s' % ("trybld_dsa",),
-        },
         'use_branch_in_symbols_extra_buildid': False,
         'stage_username': 'trybld',
         'stage_ssh_key': 'trybld_dsa',

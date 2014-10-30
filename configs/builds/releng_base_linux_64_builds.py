@@ -1,5 +1,4 @@
 import os
-import sys
 
 STAGE_USERNAME = 'ffxbld'
 STAGE_SSH_KEY = 'ffxbld_rsa'
@@ -17,7 +16,6 @@ config = {
         'clone-tools',
         'setup-mock',
         'build',
-        'sendchanges',
         'generate-build-stats',
         'update',  # decided by query_is_nightly()
     ],
@@ -44,6 +42,7 @@ config = {
         ('/tools/tooltool.py', '/builds/tooltool.py'),
     ],
     'enable_ccache': True,
+    'enable_check_test': True,
     'vcs_share_base': '/builds/hg-shared',
     'objdir': 'obj-firefox',
     'tooltool_script': ["/builds/tooltool.py"],
@@ -51,7 +50,6 @@ config = {
     'enable_count_ctors': True,
     'enable_talos_sendchange': True,
     'enable_unittest_sendchange': True,
-    'platform_supports_partials': True,
     #########################################################################
 
 
@@ -90,11 +88,11 @@ config = {
         ##
     },
     'upload_env': {
-        # UPLOAD_HOST is set to stage_server
         # stage_server is dictated from build_pool_specifics.py
-        'UPLOAD_USER': STAGE_USERNAME,
+        'UPLOAD_HOST': '%(stage_server)s',
+        'UPLOAD_USER': '%(stage_username)s',
+        'UPLOAD_SSH_KEY': '/home/mock_mozilla/.ssh/%(stage_ssh_key)s',
         'UPLOAD_TO_TEMP': '1',
-        'UPLOAD_SSH_KEY': '~/.ssh/%s' % (STAGE_SSH_KEY,),
     },
     "check_test_env": {
         'MINIDUMP_STACKWALK': '%(abs_tools_dir)s/breakpad/linux64/minidump_stackwalk',
@@ -130,6 +128,5 @@ config = {
     'src_mozconfig': 'browser/config/mozconfigs/linux64/nightly',
     'tooltool_manifest_src': "browser/config/tooltool-manifests/linux64/\
 releng.manifest",
-    'platform_ftp_name': 'linux-x86_64.complete.mar',
     #########################################################################
 }
