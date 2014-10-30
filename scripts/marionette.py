@@ -461,9 +461,6 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
         if self.config.get('emulator') or self.config.get('gaiatest'):
             config_fmt_args['symbols_path'] = self.symbols_path
 
-        if self.config.get('emulator'):
-            cmd.append("--logcat-stdout")
-
         options_group = self._get_options_group(self.config.get('emulator'),
                                                 self.config.get('gaiatest'))
         for s in self.tree_config[options_group]:
