@@ -91,6 +91,7 @@ config = {
         'use_branch_in_symbols_extra_buildid': False,
         'stage_username': 'trybld',
         'stage_ssh_key': 'trybld_dsa',
+        'branch_supports_uploadsymbols': False,
     },
 
     ### project branches
