@@ -765,7 +765,7 @@ or run without that action (ie: --no-{action})"
     def query_mach_build_env(self):
         c = self.config
         mach_env = {}
-        if c.get('upload_env'):
+        if c.get('upload_env') and c.get('branch_supports_uploadsymbols'):
             mach_env.update(c['upload_env'])
             mach_env['UPLOAD_HOST'] = mach_env['UPLOAD_HOST'] % {
                 'stage_server': c['stage_server']
@@ -1178,7 +1178,8 @@ or run without that action (ie: --no-{action})"
                     self.info("Properties set from 'mach build'")
                     self.info(pprint.pformat(build_props))
             for key, prop in build_props.iteritems():
-                self.set_buildbot_property(key, prop, write_to_file=True)
+                if prop != 'UNKNOWN':
+                    self.set_buildbot_property(key, prop, write_to_file=True)
         else:
             self.log("Could not determine path for build properties. "
                      "Does this exist: `%s` ?" % mach_properties_path,
