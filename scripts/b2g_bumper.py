@@ -153,14 +153,19 @@ class B2GBumper(VCSScript, MapperMixin):
             if proc.wait() != 0:
                 self.warning("Returned %i - sleeping and retrying" %
                              proc.returncode)
-                self.warning("Got output: %s" % proc.stdout.read())
+                self.warning("%s:%s - got output: %s" % (remote_url, revision, proc.stdout.read()))
                 time.sleep(30)
                 continue
             output = proc.stdout.read()
-            self.info("Got output: %s" % output)
-            revision = output.split()[0].strip()
-            self._git_ref_cache[remote_url, revision] = revision
-            return revision
+            self.info("%s:%s - got output: %s" % (remote_url, revision, output))
+            try:
+                revision = output.split()[0].strip()
+                self._git_ref_cache[remote_url, revision] = revision
+                return revision
+            except IndexError:
+                # Couldn't split the output properly
+                self.warning("no output from: git ls-remote %s %s" % (remote_url, revision))
+                return None
         return None
 
     def resolve_refs(self, manifest):
@@ -225,7 +230,7 @@ class B2GBumper(VCSScript, MapperMixin):
             revision = repo_manifest.get_project_revision(manifest, p)
             if not abs_revision:
                 abort = True
-                self.error("Couldn't resolve %s %s" % (remote_url, revision))
+                self.error("Couldn't resolve reference %s %s" % (remote_url, revision))
                 failed.append(p)
             # Save to our cache
             self._git_ref_cache[remote_url, revision] = abs_revision
