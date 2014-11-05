@@ -196,6 +196,11 @@ class B2GBuildBaseScript(BuildbotMixin, MockMixin,
             # Handle local files vs. in-repo files
             url = self.query_hgweb_url(repo, rev, config_path)
             return self.retry(self.load_json_from_url, args=(url,))
+        else:
+            # assume it is a local path
+            config_path = self.query_gecko_config_path()
+            config_path = "{repo}/{config_path}".format(repo=repo, config_path=config_path)
+            return json.load(open(config_path, "r"))
 
     def load_gecko_config(self):
         if self.gecko_config:
