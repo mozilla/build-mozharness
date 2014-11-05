@@ -765,7 +765,7 @@ or run without that action (ie: --no-{action})"
     def query_mach_build_env(self):
         c = self.config
         mach_env = {}
-        if c.get('upload_env') and c.get('branch_supports_uploadsymbols'):
+        if c.get('upload_env'):
             mach_env.update(c['upload_env'])
             mach_env['UPLOAD_HOST'] = mach_env['UPLOAD_HOST'] % {
                 'stage_server': c['stage_server']
@@ -1431,11 +1431,18 @@ or run without that action (ie: --no-{action})"
 
         parser = CheckTestCompleteParser(config=c,
                                          log_obj=self.log_obj)
-        self.run_command_m(command=cmd,
-                           cwd=dirs['abs_obj_dir'],
-                           env=env,
-                           output_parser=parser)
+        return_code = self.run_command_m(command=cmd,
+                                         cwd=dirs['abs_obj_dir'],
+                                         env=env,
+                                         output_parser=parser)
         parser.evaluate_parser()
+        if return_code:
+            self.return_code = self.worst_level(
+                EXIT_STATUS_DICT[TBPL_WARNING], self.return_code,
+                AUTOMATION_EXIT_CODES[::-1]
+            )
+            self.error("'make -k check' did not run successfully. Please check "
+                       "log for errors.")
 
     def generate_build_stats(self):
         """grab build stats following a compile.
