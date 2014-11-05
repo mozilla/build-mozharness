@@ -1,22 +1,28 @@
 import sys
 BRANCH = "mozilla-central"
 MOZILLA_DIR = BRANCH
-HG_SHARE_BASE_DIR = "e:/builds/hg-shared"
+HG_SHARE_BASE_DIR = "c:/builds/hg-shared"
 EN_US_BINARY_URL = "http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/latest-mozilla-central"
 OBJDIR = "obj-l10n"
 MOZ_UPDATE_CHANNEL = "nightly"
-STAGE_SERVER = "dev-stage01.build.sjc1.mozilla.com"
+STAGE_SERVER = "dev-stage01.srv.releng.scl3.mozilla.com"
 #STAGE_SERVER = "stage.mozilla.org"
 STAGE_USER = "ffxbld"
-STAGE_SSH_KEY = "~/.ssh/ffxbld_rsa"
-AUS_SERVER = "dev-stage01.build.sjc1.mozilla.com"
+STAGE_SSH_KEY = "~/.ssh/ffxbld_dsa"
+AUS_SERVER = "dev-stage01.srv.releng.scl3.mozilla.com"
 #AUS_SERVER = "aus2-staging.mozilla.org"
 AUS_USER = "ffxbld"
-AUS_SSH_KEY = "~/.ssh/ffxbld_rsa"
+AUS_SSH_KEY = "~/.ssh/ffxbld_dsa"
 AUS_UPLOAD_BASE_DIR = "/opt/aus2/incoming/2/Firefox"
 AUS_BASE_DIR = BRANCH + "/%(build_target)s/%(buildid)s/%(locale)s"
 CANDIDATES_URL = "http://ftp.mozilla.org/pub/mozilla.org/firefox/%s" % MOZ_UPDATE_CHANNEL
 config = {
+    "platform": "win64",
+    "update_platform": "WINNT_x86_64-msvc",
+    'balrog_api_root': 'https://aus4-admin-dev.allizom.org',
+    'balrog_api_root': 'https://aus4-admin-dev.allizom.org',
+    "balrog_credentials_file": "oauth.txt",
+    'balrog_username': 'stage-ffxbld',
     "mozilla_dir": MOZILLA_DIR,
     "snippet_base_url": "http://example.com",  # fix it
     "mozconfig": "%s/browser/config/mozconfigs/win32/l10n-mozconfig" % MOZILLA_DIR,
