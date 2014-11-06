@@ -174,9 +174,13 @@ config = {
             "category": "mochitest",
             "extra_args": ["--total-chunks=16", "--this-chunk=16", "--run-only-tests=android23.json"],
         },
-        "mochitest-gl": {
+        "mochitest-gl-1": {
             "category": "mochitest",
-            "extra_args": ["--test-manifest=gl.json"],
+            "extra_args": ["--total-chunks=2", "--this-chunk=1", "--test-manifest=gl.json"],
+        },
+        "mochitest-gl-2": {
+            "category": "mochitest",
+            "extra_args": ["--total-chunks=2", "--this-chunk=2", "--test-manifest=gl.json"],
         },
         "reftest-1": {
             "category": "reftest",
