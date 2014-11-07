@@ -38,8 +38,8 @@ class Proxxy(ScriptMixin, LogMixin):
             ('http://pypi.pub.build.mozilla.org', 'pypi.pub.build.mozilla.org'),
         ],
         "instances": [
-            'proxxy.srv.releng.use1.mozilla.com',
-            'proxxy.srv.releng.usw2.mozilla.com',
+            'proxxy1.srv.releng.use1.mozilla.com',
+            'proxxy1.srv.releng.usw2.mozilla.com',
         ],
         "regions": [".use1.", ".usw2."],
     }
