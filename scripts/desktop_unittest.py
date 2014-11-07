@@ -27,7 +27,6 @@ from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_options
 from mozharness.mozilla.mozbase import MozbaseMixin
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
-from mozharness.mozilla.testing.unittest import DesktopUnittestOutputParser
 
 SUITE_CATEGORIES = ['cppunittest', 'jittest', 'mochitest', 'reftest', 'xpcshell', 'mozbase']
 
@@ -477,7 +476,7 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
                     'regex': re.compile(r'''PROCESS-CRASH.*application crashed'''),
                     'level': ERROR,
                 }]
-                parser = DesktopUnittestOutputParser(suite_category,
+                parser = self.get_test_output_parser(suite_category,
                                                      config=self.config,
                                                      error_list=error_list,
                                                      log_obj=self.log_obj)
@@ -501,7 +500,7 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
                 #    errors itself with 'num_errors' <- OutputParser
                 # 2) if num_errors is 0 then we look in the subclassed 'parser'
                 #    findings for harness/suite errors <- DesktopUnittestOutputParser
-                tbpl_status, log_level = parser.evaluate_parser(return_code)
+                tbpl_status, log_level = parser.evaluate_parser(0)
                 parser.append_tinderboxprint_line(suite_name)
 
                 self.buildbot_status(tbpl_status, level=log_level)

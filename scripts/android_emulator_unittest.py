@@ -25,7 +25,7 @@ from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_op
 from mozharness.mozilla.mozbase import MozbaseMixin
 from mozharness.mozilla.buildbot import TBPL_WORST_LEVEL_TUPLE
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
-from mozharness.mozilla.testing.unittest import DesktopUnittestOutputParser, EmulatorMixin
+from mozharness.mozilla.testing.unittest import EmulatorMixin
 from mozharness.mozilla.tooltool import TooltoolMixin
 
 from mozharness.mozilla.testing.device import ADBDeviceHandler
@@ -668,8 +668,8 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
                     output = self.read_from_file(p["tmp_file"].name, verbose=False)
                     # Let's parse the output (which also prints it)
                     # and determine what the results should be
-                    parser = DesktopUnittestOutputParser(
-                        suite_category=self.test_suite_definitions[p["suite_name"]]["category"],
+                    parser = self.get_test_output_parser(
+                        self.test_suite_definitions[p["suite_name"]]["category"],
                         config=self.config,
                         log_obj=self.log_obj,
                         error_list=self.error_list)
@@ -677,7 +677,7 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
                         parser.parse_single_line(line)
 
                     # After parsing each line we should know what the summary for this suite should be
-                    tbpl_status, log_level = parser.evaluate_parser(return_code)
+                    tbpl_status, log_level = parser.evaluate_parser(0)
                     parser.append_tinderboxprint_line(p["suite_name"])
                     # After running all jobs we will report the worst status of all emulator runs
                     joint_tbpl_status = self.worst_level(tbpl_status, joint_tbpl_status, TBPL_WORST_LEVEL_TUPLE)

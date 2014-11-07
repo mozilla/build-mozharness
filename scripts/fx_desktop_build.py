@@ -64,7 +64,6 @@ class FxDesktopBuild(BuildScript, object):
                 'stage_product': 'firefox',
                 'platform_supports_post_upload_to_latest': True,
                 'use_branch_in_symbols_extra_buildid': True,
-                'branch_supports_uploadsymbols': True,
                 'latest_mar_dir': '/pub/mozilla.org/firefox/nightly/latest-%(branch)s',
 
                 # try will overwrite these
@@ -97,7 +96,9 @@ class FxDesktopBuild(BuildScript, object):
                 if c.get('pgo_build'):
                     platform_for_log_url += '-pgo'
                 # postrun.py uses stage_platform buildbot prop as part of the log url
-                self.set_buildbot_property('stage_platform', platform_for_log_url)
+                self.set_buildbot_property('stage_platform',
+                                           platform_for_log_url,
+                                           write_to_file=True)
             else:
                 self.fatal("'stage_platform' not determined and is required in your config")
 

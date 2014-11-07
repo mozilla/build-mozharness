@@ -17,7 +17,6 @@ from mozharness.base.script import PreScriptAction
 from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_options
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
-from mozharness.mozilla.testing.unittest import DesktopUnittestOutputParser
 from mozharness.mozilla.tooltool import TooltoolMixin
 
 
@@ -248,16 +247,17 @@ class B2GDesktopTest(BlobUploadMixin, TestingMixin, TooltoolMixin, MercurialScri
             self.mkdir_p(env['MOZ_UPLOAD_DIR'])
         env = self.query_env(partial_env=env)
 
-        parser = DesktopUnittestOutputParser(suite_category=suite_name,
-                                                config=self.config,
-                                                log_obj=self.log_obj,
-                                                error_list=error_list)
-        return_code = self.run_command(cmd, cwd=cwd, env=env,
-                                       output_timeout=1000,
-                                       output_parser=parser,
-                                       success_codes=success_codes)
+        parser = self.get_test_output_parser(suite_name,
+                                             config=self.config,
+                                             log_obj=self.log_obj,
+                                             error_list=error_list)
 
-        tbpl_status, log_level = parser.evaluate_parser(return_code)
+        self.run_command(cmd, cwd=cwd, env=env,
+                         output_timeout=1000,
+                         output_parser=parser,
+                         success_codes=success_codes)
+
+        tbpl_status, log_level = parser.evaluate_parser(0)
         parser.append_tinderboxprint_line(suite_name)
 
         self.buildbot_status(tbpl_status, level=log_level)

@@ -26,6 +26,8 @@ class StructuredOutputParser(OutputParser):
         else:
             self.strict = True
 
+        self.suite_category = kwargs.pop('suite_category', None)
+
         super(StructuredOutputParser, self).__init__(**kwargs)
 
         structured = self._get_mozlog_module()

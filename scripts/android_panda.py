@@ -27,7 +27,6 @@ from mozharness.mozilla.mozbase import MozbaseMixin
 from mozharness.mozilla.testing.mozpool import MozpoolMixin
 from mozharness.mozilla.testing.device import SUTDeviceMozdeviceMixin
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
-from mozharness.mozilla.testing.unittest import DesktopUnittestOutputParser
 
 SUITE_CATEGORIES = ['mochitest', 'reftest', 'crashtest', 'jsreftest', 'robocop', 'instrumentation', 'xpcshell', 'jittest', 'cppunittest']
 
@@ -260,14 +259,18 @@ class PandaTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixin, Bu
                 env = self.query_env(partial_env=env, log_level=INFO)
                 if env.has_key('PYTHONPATH'):
                     del env['PYTHONPATH']
-                test_summary_parser = DesktopUnittestOutputParser(suite_category,
-                                                                  config=self.config,
-                                                                  error_list=error_list,
-                                                                  log_obj=self.log_obj)
 
-                return_code = self.run_command(cmd, cwd=dirs['abs_test_install_dir'], env=env, output_parser=test_summary_parser)
+                parser = self.get_test_output_parser(suite_category,
+                                                     config=self.config,
+                                                     error_list=error_list,
+                                                     log_obj=self.log_obj)
 
-                tbpl_status, log_level = test_summary_parser.evaluate_parser(return_code)
+                self.run_command(cmd,
+                                 cwd=dirs['abs_test_install_dir'],
+                                 env=env,
+                                 output_parser=parser)
+
+                tbpl_status, log_level = parser.evaluate_parser(0)
 
                 if tbpl_status != TBPL_SUCCESS:
                     self.info("Output logcat...")
@@ -280,7 +283,7 @@ class PandaTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixin, Bu
                     except Exception, e:
                         self.warning("We failed to run logcat: str(%s)" % str(e))
 
-                test_summary_parser.append_tinderboxprint_line(suite)
+                parser.append_tinderboxprint_line(suite)
                 self.buildbot_status(tbpl_status, level=level)
 
                 self.log("The %s suite: %s ran with return status: %s" %
