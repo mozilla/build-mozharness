@@ -536,7 +536,7 @@ class B2GBumper(VCSScript, MapperMixin):
             return False
 
         # Update the gaia.json with the list of changes
-        gaia_repo_path = urlparse(self.config['gaia_repo_url']).path
+        gaia_repo_path = urlparse(self.config['gaia_repo_url']).path.lstrip('/')
         revision = revision_list[-1]['changesets'][-1]['node']
         self.update_gaia_json(gaia_json_path, revision, gaia_repo_path)
         self.gaia_hg_revision = revision
