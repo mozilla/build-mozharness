@@ -168,6 +168,17 @@ class DesktopUnittestOutputParser(OutputParser):
             self.worst_log_level = self.worst_level(WARNING, self.worst_log_level)
             self.tbpl_status = self.worst_level(TBPL_WARNING, self.tbpl_status,
                                                 levels=TBPL_WORST_LEVEL_TUPLE)
+
+        # Account for the possibility that no test summary was output.
+        if self.pass_count <= 0 and self.fail_count <= 0 and \
+            (self.known_fail_count is None or self.known_fail_count <= 0):
+            self.error('No tests run or test summary not found')
+            self.worst_log_level = self.worst_level(WARNING,
+                                                    self.worst_log_level)
+            self.tbpl_status = self.worst_level(TBPL_WARNING,
+                                                self.tbpl_status,
+                                                levels=TBPL_WORST_LEVEL_TUPLE)
+
         # we can trust in parser.worst_log_level in either case
         return (self.tbpl_status, self.worst_log_level)
 
