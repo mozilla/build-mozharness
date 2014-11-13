@@ -11,10 +11,6 @@ config = {
                     "path": "/mobile/releases/%(version)s/android/:lang/fennec-%(version)s.:lang.android-arm.apk",
                     "bouncer-platform": "android",
                 },
-                "android-x86": {
-                    "path": "/mobile/releases/%(version)s/android-x86/:lang/fennec-%(version)s.:lang.android-x86.apk",
-                    "bouncer-platform": "android-x86",
-                },
             },
         },
     },   
