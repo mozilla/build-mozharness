@@ -451,15 +451,13 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
             'html_output': os.path.join(dirs['abs_blob_upload_dir'], 'output.html'),
             'logcat_dir': dirs['abs_work_dir'],
             'emulator': self.config.get('emulator'),
+            'symbols_path': self.symbols_path,
             'homedir': os.path.join(dirs['abs_emulator_dir'], 'b2g-distro'),
             'binary': binary,
             'address': self.config.get('marionette_address'),
             'raw_log_file': os.path.join(dirs["abs_blob_upload_dir"],
                                          "mn_structured_full.log")
         }
-
-        if self.config.get('emulator') or self.config.get('gaiatest'):
-            config_fmt_args['symbols_path'] = self.symbols_path
 
         options_group = self._get_options_group(self.config.get('emulator'),
                                                 self.config.get('gaiatest'))
