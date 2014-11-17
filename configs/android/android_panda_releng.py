@@ -57,11 +57,13 @@ config = {
         "jsreftest-3": ["--total-chunks=3", "--this-chunk=3"],
     },
     "all_robocop_suites": {
-        "robocop-1": ["--total-chunks=5", "--this-chunk=1"],
-        "robocop-2": ["--total-chunks=5", "--this-chunk=2"],
-        "robocop-3": ["--total-chunks=5", "--this-chunk=3"],
-        "robocop-4": ["--total-chunks=5", "--this-chunk=4"],
-        "robocop-5": ["--total-chunks=5", "--this-chunk=5"],
+        "robocop-1": ["--total-chunks=7", "--this-chunk=1"],
+        "robocop-2": ["--total-chunks=7", "--this-chunk=2"],
+        "robocop-3": ["--total-chunks=7", "--this-chunk=3"],
+        "robocop-4": ["--total-chunks=7", "--this-chunk=4"],
+        "robocop-5": ["--total-chunks=7", "--this-chunk=5"],
+        "robocop-6": ["--total-chunks=7", "--this-chunk=6"],
+        "robocop-7": ["--total-chunks=7", "--this-chunk=7"],
     },
     "all_instrumentation_suites": {
         "browser": ["--suite", "browser"],
