@@ -247,7 +247,14 @@ class GeckoMigration(MercurialScript, BalrogMixin):
             with self.opened(os.path.join(cwd, '.hgtags'), open_mode='a') as (fh, err):
                 if err:
                     self.fatal("Can't append to .hgtags!")
-                for line in tag_diff.splitlines():
+                for n, line in enumerate(tag_diff.splitlines()):
+                    # The first 4 lines of a patch are headers, so we ignore them.
+                    if n < 5:
+                        continue
+                    # Even after that, the only lines we really care about are
+                    # additions to the file.
+                    # TODO: why do we only care about additions? I couldn't
+                    # figure that out by reading this code.
                     if not line.startswith('+'):
                         continue
                     line = line.replace('+', '')
