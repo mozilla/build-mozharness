@@ -1,10 +1,4 @@
 config = {
-    "default_actions": [
-        "clean-repos",
-        "pull",
-        "lock-update-paths",
-        "migrate",
-    ],
     "log_name": "central_to_aurora",
 
     "branding_dirs": ["mobile/android/config/mozconfigs/android/",
