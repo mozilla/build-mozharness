@@ -24,7 +24,6 @@ scripts
     mobile_l10n.rst
     mobile_partner_repack.rst
     multil10n.rst
-    servo_build.rst
     sourcetool.rst
     spidermonkey_build.rst
     talos_script.rst
