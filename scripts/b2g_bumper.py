@@ -54,6 +54,8 @@ class B2GBumper(VCSScript, MapperMixin):
         super(B2GBumper, self).__init__(
             config_options=self.config_options,
             all_actions=[
+                'delete-git-ref-cache',
+                'import-git-ref-cache',
                 'clobber',
                 'check-treestatus',
                 'checkout-gecko',
@@ -63,6 +65,7 @@ class B2GBumper(VCSScript, MapperMixin):
                 'commit-manifests',
                 'push',
                 'push-loop',
+                'export-git-ref-cache',
             ],
             default_actions=[
                 'push-loop',
@@ -79,8 +82,11 @@ class B2GBumper(VCSScript, MapperMixin):
         # Mapping of device name to manifest
         self.device_manifests = {}
 
-        # Cache of (remote url, refname) to revision hashes
+        # Cache of "%s:%s" % (remote url, refname) to revision hashes
         self._git_ref_cache = {}
+
+        # File location for persisting _git_ref_cache dictionary above as a json file
+        self.git_ref_cache_file = self.config.get('git_ref_cache', os.path.join(self.query_abs_dirs()['abs_work_dir'], 'git_ref_cache.json'))
 
         # Cache of new remotes to original upstreams
         self._remote_mappings = {}
@@ -143,6 +149,7 @@ class B2GBumper(VCSScript, MapperMixin):
         repo_manifest.rewrite_remotes(manifest, mapping_func)
 
     def resolve_git_ref(self, remote_url, revision):
+        cache_key = "%s:%s" % (remote_url, revision)
         cmd = ['git', 'ls-remote', remote_url, revision]
         self.info("Running %s" % cmd)
         # Retry this a few times, in case there are network errors or somesuch
@@ -153,15 +160,15 @@ class B2GBumper(VCSScript, MapperMixin):
             if proc.wait() != 0:
                 self.warning("Returned %i - sleeping and retrying" %
                              proc.returncode)
-                self.warning("%s:%s - got output: %s" % (remote_url, revision, proc.stdout.read()))
+                self.warning("%s - got output: %s" % (cache_key, proc.stdout.read()))
                 time.sleep(30)
                 continue
             output = proc.stdout.read()
-            self.info("%s:%s - got output: %s" % (remote_url, revision, output))
+            self.info("%s - got output: %s" % (cache_key, output))
             try:
-                revision = output.split()[0].strip()
-                self._git_ref_cache[remote_url, revision] = revision
-                return revision
+                abs_revision = output.split()[0].strip()
+                self._git_ref_cache[cache_key] = abs_revision
+                return abs_revision
             except IndexError:
                 # Couldn't split the output properly
                 self.warning("no output from: git ls-remote %s %s" % (remote_url, revision))
@@ -170,7 +177,8 @@ class B2GBumper(VCSScript, MapperMixin):
 
     def resolve_refs(self, manifest):
         worker_pool = ThreadPool(20)
-        results = []
+        lookup_threads_by_project = {}
+        lookup_threads_by_parameters = {}
 
         # Resolve refnames
         for p in manifest.getElementsByTagName('project'):
@@ -197,43 +205,51 @@ class B2GBumper(VCSScript, MapperMixin):
                 p.setAttribute('revision', self.gaia_git_rev)
                 continue
 
-            # Check to see if we've looked up this revision on this remote
-            # before If we have, reuse the previous value rather than looking
-            # it up again This will make sure revisions for the same ref name
-            # are consistent between devices, as long as they use the same
-            # remote/refname
-            if (remote_url, revision) in self._git_ref_cache:
-                abs_revision = self._git_ref_cache[remote_url, revision]
-                self.info(
-                    "Re-using previous lookup %s:%s -> %s" %
-                    (remote_url, revision, abs_revision))
-                p.setAttribute('revision', abs_revision)
-                continue
-
             # If there's no '/' in the revision, assume it's a head
             if '/' not in revision:
                 revision = 'refs/heads/%s' % revision
 
-            self.debug("Getting revision for %s (currently %s)" %
-                       (name, revision))
-            async_result = worker_pool.apply_async(self.resolve_git_ref,
+            cache_key = "%s:%s" % (remote_url, revision)
+
+            # Check to see if we've looked up this revision on this remote
+            # before. If we have, reuse the previous value rather than looking
+            # it up again. This will make sure revisions for the same ref name
+            # are consistent between devices, as long as they use the same
+            # remote/refname.
+            if cache_key in self._git_ref_cache:
+                abs_revision = self._git_ref_cache[cache_key]
+                self.info(
+                    "Reusing previous lookup %s -> %s" %
+                    (cache_key, abs_revision))
+                p.setAttribute('revision', abs_revision)
+                continue
+
+            # Maybe a thread already exists for this lookup, even if the result has not
+            # yet been retrieved and placed in _git_ref_cache...
+            # Please note result.get() can be called multiple times without problems;
+            # the git command will only be executed once. Therefore we can associate many
+            # projects to the same thread result, without problems later when we call
+            # get() multiple times against the same thread result.
+            if cache_key in lookup_threads_by_parameters:
+                self.info("Reusing currently running thread to look up %s" % cache_key)
+                lookup_threads_by_project[p] = lookup_threads_by_parameters.get(cache_key)
+            else:
+                async_result = worker_pool.apply_async(self.resolve_git_ref,
                                                    (remote_url, revision))
-            results.append((p, async_result))
+                lookup_threads_by_parameters[cache_key] = async_result
+                lookup_threads_by_project[p] = async_result
 
         # TODO: alert/notify on missing repositories
-        # TODO: Add external caching
         abort = False
         failed = []
-        for p, result in results:
-            abs_revision = result.get()
+        for p, result in lookup_threads_by_project.iteritems():
+            abs_revision = result.get(timeout=300)
             remote_url = repo_manifest.get_project_remote_url(manifest, p)
             revision = repo_manifest.get_project_revision(manifest, p)
             if not abs_revision:
                 abort = True
                 self.error("Couldn't resolve reference %s %s" % (remote_url, revision))
                 failed.append(p)
-            # Save to our cache
-            self._git_ref_cache[remote_url, revision] = abs_revision
             p.setAttribute('revision', abs_revision)
         if abort:
             # Write message about how to set up syncing
@@ -590,6 +606,34 @@ class B2GBumper(VCSScript, MapperMixin):
             time.sleep(60)
         else:
             self.fatal("Didn't complete successfully (hit max_retries)")
+
+    def import_git_ref_cache(self):
+        """ This action imports the git ref cache created during a previous run. This is
+        useful for sharing the cache across multiple branches (for example).
+        """
+        if os.path.exists(self.git_ref_cache_file):
+            self._git_ref_cache = self._read_json(self.git_ref_cache_file)
+
+    def export_git_ref_cache(self):
+        """ This action exports the git ref cache created during this run. This is useful
+        for sharing the cache across multiple branches (for example).
+        """
+        if self.write_to_file(self.git_ref_cache_file, json.dumps(self._git_ref_cache, sort_keys=True, indent=4) + "\n") != self.git_ref_cache_file:
+            self.add_summary(
+                "Unable to update %s with git ref cache" % self.git_ref_cache_file,
+                level=ERROR,
+            )
+            return -2
+
+    def delete_git_ref_cache(self):
+        """ Used to delete the git ref cache from the file system. The cache can be used
+        to persist git ls-remote lookup results, for example to reuse them between b2g bumper
+        runs. Since the results are stale and do not get updated, the cache should be
+        periodically deleted, so that the new refs can be fetched. The cache can also be used
+        across branches/devices.
+        """
+        self.log("Deleting git ls-remote look-up cache file ('%s')...")
+        os.remove(self.git_ref_cache_file)
 
 # __main__ {{{1
 if __name__ == '__main__':
