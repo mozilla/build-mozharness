@@ -9,6 +9,7 @@ config = {
     'gecko_pull_url': 'https://hg.mozilla.org/integration/b2g-inbound',
     'gecko_push_url': 'ssh://hg.mozilla.org/integration/b2g-inbound',
     'gecko_local_dir': 'b2g-inbound',
+    'git_ref_cache': '/builds/b2g_bumper/git_ref_cache.json',
 
     'manifests_repo': 'https://git.mozilla.org/b2g/b2g-manifest.git',
     'manifests_revision': 'origin/master',
