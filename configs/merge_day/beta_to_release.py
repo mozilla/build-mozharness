@@ -18,6 +18,6 @@ config = {
     "end_tag": "FIREFOX_RELEASE_%(major_version)s_END",
 
     "migration_behavior": "beta_to_release",
-    "require_remove_locales": True,
+    "require_remove_locales": False,
     "pull_all_branches": True,
 }
