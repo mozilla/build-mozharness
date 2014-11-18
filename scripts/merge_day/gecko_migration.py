@@ -25,8 +25,10 @@ sys.path.insert(1, os.path.dirname(os.path.dirname(sys.path[0])))
 
 from mozharness.base.errors import HgErrorList
 from mozharness.base.log import INFO, FATAL
+from mozharness.base.python import VirtualenvMixin, virtualenv_config_options
 from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.base.vcs.mercurial import MercurialVCS
+from mozharness.mozilla.selfserve import SelfServeMixin
 from mozharness.mozilla.updates.balrog import BalrogMixin
 
 VALID_MIGRATION_BEHAVIORS = (
@@ -35,7 +37,7 @@ VALID_MIGRATION_BEHAVIORS = (
 
 
 # GeckoMigration {{{1
-class GeckoMigration(MercurialScript, BalrogMixin):
+class GeckoMigration(MercurialScript, BalrogMixin, VirtualenvMixin, SelfServeMixin):
     config_options = [
         [['--hg-user', ], {
             "action": "store",
@@ -68,15 +70,17 @@ class GeckoMigration(MercurialScript, BalrogMixin):
 
     def __init__(self, require_config_file=True):
         super(GeckoMigration, self).__init__(
-            config_options=self.config_options,
+            config_options=virtualenv_config_options + self.config_options,
             all_actions=[
                 'clobber',
+                'create-virtualenv',
                 'clean-repos',
                 'pull',
                 'lock-update-paths',
                 'migrate',
                 'commit-changes',
                 'push',
+                'trigger-builders',
             ],
             default_actions=[
                 'clean-repos',
@@ -679,6 +683,26 @@ The second run will be faster."""
                     message = error_message
                 self.fatal(message)
 
+    def trigger_builders(self):
+        """Triggers builders that should be run directly after a merge.
+        There are two different types of things we trigger:
+        1) Nightly builds ("post_merge_nightly_branches" in the config).
+           These are triggered with buildapi's nightly build endpoint to avoid
+           duplicating all of the nightly builder names into the gecko
+           migration mozharness configs. (Which would surely get out of date
+           very quickly).
+        2) Arbitrary builders ("post_merge_builders"). These are additional
+           builders to trigger that aren't part of the nightly builder set.
+           For example: hg bundle generation builders.
+        """
+        dirs = self.query_abs_dirs()
+        branch = self.config["to_repo_url"].rstrip("/").split("/")[-1]
+        revision = self.query_to_revision()
+        for builder in self.config["post_merge_builders"]:
+            self.trigger_arbitrary_job(builder, branch, revision)
+        for nightly_branch in self.config["post_merge_nightly_branches"]:
+            nightly_revision = self.query_hg_revision(os.path.join(dirs["abs_work_dir"], nightly_branch))
+            self.trigger_nightly_builds(nightly_branch, nightly_revision)
 
 # __main__ {{{1
 if __name__ == '__main__':

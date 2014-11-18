@@ -18,4 +18,15 @@ config = {
     "end_tag": "FIREFOX_BETA_%(major_version)s_END",
 
     "migration_behavior": "aurora_to_beta",
+
+    "virtualenv_modules": [
+        "requests==2.2.1",
+    ],
+
+    "post_merge_builders": [
+        "mozilla-beta hg bundle",
+    ],
+    "post_merge_nightly_branches": [
+        # No nightlies on mozilla-beta
+    ],
 }

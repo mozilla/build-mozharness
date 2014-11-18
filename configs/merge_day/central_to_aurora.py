@@ -45,4 +45,17 @@ config = {
         18, # MetroFirefox aurora channel
     ],
     "balrog_credentials_file": "oauth.txt",
+
+    "virtualenv_modules": [
+        "requests==2.2.1",
+    ],
+
+    "post_merge_builders": [
+        "mozilla-aurora hg bundle",
+        "mozilla-central hg bundle",
+    ],
+    "post_merge_nightly_branches": [
+        "mozilla-central",
+        "mozilla-aurora",
+    ],
 }
