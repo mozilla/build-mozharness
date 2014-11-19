@@ -844,14 +844,18 @@ or run without that action (ie: --no-{action})"
         and failing that, will poll buildbot_config
         If nothing is found, it will default to returning "nobody@example.com"
         """
-        _who = ''
+        _who = "nobody@example.com"
         if self.config.get('who'):
             _who = self.config['who']
-        if self.buildbot_config and 'sourcestamp' in self.buildbot_config:
-            if self.buildbot_config['sourcestamp'].get('who'):
-                _who = self.buildbot_config['sourcestamp']['who']
-        if not _who:
-            _who = "nobody@example.com"
+        else:
+            try:
+                if self.buildbot_config:
+                    _who = self.buildbot_config['sourcestamp']['changes'][0]['who']
+            except (KeyError, IndexError):
+                # KeyError: "sourcestamp" or "changes" or "who" not in buildbot_config
+                # IndexError: buildbot_config['sourcestamp']['changes'] is empty
+                # "who" is not available, using the default value
+                pass
         return _who
 
     def _query_post_upload_cmd(self):

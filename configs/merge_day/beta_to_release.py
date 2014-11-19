@@ -20,4 +20,15 @@ config = {
     "migration_behavior": "beta_to_release",
     "require_remove_locales": False,
     "pull_all_branches": True,
+
+    "virtualenv_modules": [
+        "requests==2.2.1",
+    ],
+
+    "post_merge_builders": [
+        "mozilla-release hg bundle",
+    ],
+    "post_merge_nightly_branches": [
+        # No nightlies on mozilla-release
+    ],
 }
