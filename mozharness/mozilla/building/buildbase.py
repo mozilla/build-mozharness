@@ -1510,9 +1510,10 @@ or run without that action (ie: --no-{action})"
         sendchange_props = {
             'buildid': self.query_buildid(),
             'builduid': self.query_builduid(),
-            'nightly_build': self.query_is_nightly(),
             'pgo_build': pgo_build,
         }
+        if self.query_is_nightly():
+            sendchange_props['nightly_build'] = True
         if test_type == 'talos':
             if pgo_build:
                 build_type = 'pgo-'
@@ -1566,7 +1567,12 @@ or run without that action (ie: --no-{action})"
             return
 
         if c['balrog_api_root']:
-            self.submit_balrog_updates()
+            if self.submit_balrog_updates():
+                # set the build to orange so it is at least caught
+                self.return_code = self.worst_level(
+                    EXIT_STATUS_DICT[TBPL_WARNING], self.return_code,
+                    AUTOMATION_EXIT_CODES[::-1]
+                )
 
     def _post_fatal(self, message=None, exit_code=None):
         if not self.return_code:  # only overwrite return_code if it's 0
