@@ -1510,9 +1510,10 @@ or run without that action (ie: --no-{action})"
         sendchange_props = {
             'buildid': self.query_buildid(),
             'builduid': self.query_builduid(),
-            'nightly_build': self.query_is_nightly(),
             'pgo_build': pgo_build,
         }
+        if self.query_is_nightly():
+            sendchange_props['nightly_build'] = True
         if test_type == 'talos':
             if pgo_build:
                 build_type = 'pgo-'
