@@ -12,8 +12,6 @@ import re
 import urllib2
 import getpass
 
-from nose.tools import nottest
-
 from mozharness.base.config import ReadOnlyDict, parse_config_file
 from mozharness.base.errors import BaseErrorList
 from mozharness.base.log import FATAL
@@ -405,7 +403,6 @@ You can set this by:
         return ('structured_suites' in self.tree_config and
                 suite_category in self.tree_config['structured_suites'])
 
-    @nottest
     def get_test_output_parser(self, suite_category, strict=False,
                                fallback_parser_class=DesktopUnittestOutputParser,
                                **kwargs):
@@ -586,7 +583,6 @@ Did you run with --create-virtualenv? Is mozinstall in virtualenv_modules?""")
                              halt_on_failure=suite['halt_on_failure'],
                              fatal_exit_code=suite.get('fatal_exit_code', 3))
 
-    @nottest
     def preflight_run_tests(self):
         """preflight commands for all tests"""
         # If the in tree config hasn't been loaded by a previous step, load it here.
@@ -601,7 +597,6 @@ Did you run with --create-virtualenv? Is mozinstall in virtualenv_modules?""")
                          " These are often OS specific and disabling them may"
                          " result in spurious test results!")
 
-    @nottest
     def postflight_run_tests(self):
         """preflight commands for all tests"""
         c = self.config
