@@ -260,7 +260,7 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
             dirs = self.query_abs_dirs()
             run_file = c['run_file_names'][suite_category]
             base_cmd = [self.query_python_path('python'), '-u']
-            base_cmd.append(dirs["abs_%s_dir" % suite_category] + "/" + run_file)
+            base_cmd.append(os.path.join(dirs["abs_%s_dir" % suite_category], run_file))
             abs_app_dir = self.query_abs_app_dir()
 
             webapprt_path = os.path.join(os.path.dirname(self.binary_path),
