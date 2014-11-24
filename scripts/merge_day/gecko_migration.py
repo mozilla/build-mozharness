@@ -16,6 +16,7 @@ and
 http://hg.mozilla.org/build/tools/file/084bc4e2fc76/release/merge_helper.py
 """
 
+from getpass import getpass
 import os
 import pprint
 import subprocess
@@ -698,11 +699,16 @@ The second run will be faster."""
         dirs = self.query_abs_dirs()
         branch = self.config["to_repo_url"].rstrip("/").split("/")[-1]
         revision = self.query_to_revision()
+        # Horrible hack because our internal buildapi interface doesn't let us
+        # actually do anything. Need to use the public one w/ auth.
+        username = raw_input("LDAP Username: ")
+        password = getpass(prompt="LDAP Password: ")
+        auth = (username, password)
         for builder in self.config["post_merge_builders"]:
-            self.trigger_arbitrary_job(builder, branch, revision)
+            self.trigger_arbitrary_job(builder, branch, revision, auth)
         for nightly_branch in self.config["post_merge_nightly_branches"]:
             nightly_revision = self.query_hg_revision(os.path.join(dirs["abs_work_dir"], nightly_branch))
-            self.trigger_nightly_builds(nightly_branch, nightly_revision)
+            self.trigger_nightly_builds(nightly_branch, nightly_revision, auth)
 
 # __main__ {{{1
 if __name__ == '__main__':
