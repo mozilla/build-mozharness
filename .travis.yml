@@ -7,7 +7,7 @@ install:
   - "pip freeze"
 
 script:
-  - bash ./run_travis_tests.sh
+  - nosetests
 
 # currently cannot customise per user fork, see:
 # https://github.com/travis-ci/travis-ci/issues/1094
