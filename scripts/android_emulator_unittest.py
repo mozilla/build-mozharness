@@ -119,16 +119,6 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
         for suite in self.test_suites:
             assert suite in self.test_suite_definitions
 
-    def _query_tests_dir(self, suite_name):
-        dirs = self.query_abs_dirs()
-        suite_category = self.test_suite_definitions[suite_name]["category"]
-        try:
-            test_dir = self.tree_config["suite_definitions"][suite_category]["testsdir"]
-        except:
-            test_dir = suite_category
-
-        return os.path.join(dirs['abs_test_install_dir'], test_dir)
-
     def query_abs_dirs(self):
         if self.abs_dirs:
             return self.abs_dirs
@@ -138,8 +128,14 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
             abs_dirs['abs_work_dir'], 'tests')
         dirs['abs_xre_dir'] = os.path.join(
             abs_dirs['abs_work_dir'], 'hostutils')
+        dirs['abs_mochitest_dir'] = os.path.join(
+            dirs['abs_test_install_dir'], 'mochitest')
         dirs['abs_modules_dir'] = os.path.join(
             dirs['abs_test_install_dir'], 'modules')
+        dirs['abs_reftest_dir'] = os.path.join(
+            dirs['abs_test_install_dir'], 'reftest')
+        dirs['abs_xpcshell_dir'] = os.path.join(
+            dirs['abs_test_install_dir'], 'xpcshell')
         dirs['abs_blob_upload_dir'] = os.path.join(
             abs_dirs['abs_work_dir'], 'blobber_upload_dir')
         for key in dirs.keys():
@@ -386,7 +382,7 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
             self.query_python_path('python'),
             '-u',
             os.path.join(
-                self._query_tests_dir(suite_name),
+                dirs["abs_%s_dir" % suite_category],
                 self.tree_config["suite_definitions"][suite_category]["run_filename"]
             ),
         ]
@@ -442,7 +438,7 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
         dirs = self.query_abs_dirs()
         cmd = self._build_command(self.emulators[emulator_index], suite_name)
         try:
-            cwd = self._query_tests_dir(suite_name)
+            cwd = dirs['abs_%s_dir' % self.test_suite_definitions[suite_name]["category"]]
         except:
             self.fatal("Don't know how to run --test-suite '%s'!" % suite_name)
 
