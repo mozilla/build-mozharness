@@ -15,9 +15,7 @@ config = {
         "browser/config/mozconfigs/win64/nightly"
     ],
     "elf_hack_files": [
-        "mobile/android/config/mozconfigs/android/nightly",
-        "browser/config/mozconfigs/linux32/nightly",
-        "browser/config/mozconfigs/linux64/nightly"
+        # Not necessary since bug 788974 landed.
     ],
     "locale_files": [
         "browser/locales/shipped-locales",

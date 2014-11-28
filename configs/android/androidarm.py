@@ -75,40 +75,28 @@ config = {
     ],
     "test_suite_definitions": {
         "jsreftest-1": {
-            "category": "reftest",
-            "extra_args": ["../jsreftest/tests/jstests.list",
-                "--total-chunks=6", "--this-chunk=1",
-                "--extra-profile-file=jsreftest/tests/user.js"]
+            "category": "jsreftest",
+            "extra_args": ["--this-chunk=1"],
         },
         "jsreftest-2": {
-            "category": "reftest",
-            "extra_args": ["../jsreftest/tests/jstests.list",
-                "--total-chunks=6", "--this-chunk=2",
-                "--extra-profile-file=jsreftest/tests/user.js"]
+            "category": "jsreftest",
+            "extra_args": ["--this-chunk=2"],
         },
         "jsreftest-3": {
-            "category": "reftest",
-            "extra_args": ["../jsreftest/tests/jstests.list",
-                "--total-chunks=6", "--this-chunk=3",
-                "--extra-profile-file=jsreftest/tests/user.js"]
+            "category": "jsreftest",
+            "extra_args": ["--this-chunk=3"],
         },
         "jsreftest-4": {
-            "category": "reftest",
-            "extra_args": ["../jsreftest/tests/jstests.list",
-                "--total-chunks=6", "--this-chunk=4",
-                "--extra-profile-file=jsreftest/tests/user.js"]
+            "category": "jsreftest",
+            "extra_args": ["--this-chunk=4"],
         },
         "jsreftest-5": {
-            "category": "reftest",
-            "extra_args": ["../jsreftest/tests/jstests.list",
-                "--total-chunks=6", "--this-chunk=5",
-                "--extra-profile-file=jsreftest/tests/user.js"]
+            "category": "jsreftest",
+            "extra_args": ["--this-chunk=5"],
         },
         "jsreftest-6": {
-            "category": "reftest",
-            "extra_args": ["../jsreftest/tests/jstests.list",
-                "--total-chunks=6", "--this-chunk=6",
-                "--extra-profile-file=jsreftest/tests/user.js"]
+            "category": "jsreftest",
+            "extra_args": ["--this-chunk=6"],
         },
         "mochitest-1": {
             "category": "mochitest",
@@ -175,12 +163,12 @@ config = {
             "extra_args": ["--total-chunks=16", "--this-chunk=16", "--run-only-tests=android23.json"],
         },
         "mochitest-gl-1": {
-            "category": "mochitest",
-            "extra_args": ["--total-chunks=2", "--this-chunk=1", "--test-manifest=gl.json"],
+            "category": "mochitest-gl",
+            "extra_args": ["--this-chunk=1"],
         },
         "mochitest-gl-2": {
-            "category": "mochitest",
-            "extra_args": ["--total-chunks=2", "--this-chunk=2", "--test-manifest=gl.json"],
+            "category": "mochitest-gl",
+            "extra_args": ["--this-chunk=2"],
         },
         "reftest-1": {
             "category": "reftest",
@@ -263,55 +251,40 @@ config = {
                 "tests/layout/reftests/reftest.list"]
         },
         "crashtest-1": {
-            "category": "reftest",
-            "extra_args": ["--total-chunks=2", "--this-chunk=1",
-                "tests/testing/crashtest/crashtests.list"]
+            "category": "crashtest",
+            "extra_args": ["--this-chunk=1"],
         },
         "crashtest-2": {
-            "category": "reftest",
-            "extra_args": ["--total-chunks=2", "--this-chunk=2",
-                "tests/testing/crashtest/crashtests.list"]
+            "category": "crashtest",
+            "extra_args": ["--this-chunk=2"],
         },
         "xpcshell-1": {
             "category": "xpcshell",
-            "extra_args": ["--total-chunks=3", "--this-chunk=1",
-                # XXX --manifest is superceded by testing/config/mozharness/android_arm_config.py.
-                # Remove when Gecko 35 no longer in tbpl.
-                "--manifest=tests/xpcshell_android.ini"]
+            "extra_args": ["--total-chunks=3", "--this-chunk=1"],
         },
         "xpcshell-2": {
             "category": "xpcshell",
-            "extra_args": ["--total-chunks=3", "--this-chunk=2",
-                # XXX --manifest is superceded by testing/config/mozharness/android_arm_config.py.
-                # Remove when Gecko 35 no longer in tbpl.
-                "--manifest=tests/xpcshell_android.ini"]
+            "extra_args": ["--total-chunks=3", "--this-chunk=2"],
         },
         "xpcshell-3": {
             "category": "xpcshell",
-            "extra_args": ["--total-chunks=3", "--this-chunk=3",
-                # XXX --manifest is superceded by testing/config/mozharness/android_arm_config.py.
-                # Remove when Gecko 35 no longer in tbpl.
-                "--manifest=tests/xpcshell_android.ini"]
+            "extra_args": ["--total-chunks=3", "--this-chunk=3"],
         },
         "robocop-1": {
-            "category": "mochitest",
-            "extra_args": ["--total-chunks=4", "--this-chunk=1", "--robocop-path=../..",
-                "--robocop-ids=fennec_ids.txt", "--robocop=robocop.ini"],
+            "category": "robocop",
+            "extra_args": ["--this-chunk=1"],
         },
         "robocop-2": {
-            "category": "mochitest",
-            "extra_args": ["--total-chunks=4", "--this-chunk=2", "--robocop-path=../..",
-                "--robocop-ids=fennec_ids.txt", "--robocop=robocop.ini"],
+            "category": "robocop",
+            "extra_args": ["--this-chunk=2"],
         },
         "robocop-3": {
-            "category": "mochitest",
-            "extra_args": ["--total-chunks=4", "--this-chunk=3", "--robocop-path=../..",
-                "--robocop-ids=fennec_ids.txt", "--robocop=robocop.ini"],
+            "category": "robocop",
+            "extra_args": ["--this-chunk=3"],
         },
         "robocop-4": {
-            "category": "mochitest",
-            "extra_args": ["--total-chunks=4", "--this-chunk=4", "--robocop-path=../..",
-                "--robocop-ids=fennec_ids.txt", "--robocop=robocop.ini"],
+            "category": "robocop",
+            "extra_args": ["--this-chunk=4"],
         },
     }, # end of "test_definitions"
     # test harness options are located in the gecko tree
