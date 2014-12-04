@@ -108,6 +108,7 @@ class PurgeMixin(object):
         cmd.extend(['-s', 'logs'])
         cmd.extend(['-s', 'buildprops.json'])
         cmd.extend(['-s', 'token'])
+        cmd.extend(['-s', 'oauth.txt'])
 
         if periodic_clobber:
             cmd.extend(['-t', str(periodic_clobber)])
