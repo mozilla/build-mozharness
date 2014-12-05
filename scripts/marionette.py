@@ -369,8 +369,27 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
         Run the Marionette tests
         """
         dirs = self.query_abs_dirs()
-        binary = self.binary_path
-        manifest = None
+
+        config_fmt_args = {
+            'type': self.config.get('test_type'),
+            # emulator builds require a longer timeout
+            'timeout': 60000 if self.config.get('emulator') else 10000,
+            'profile': os.path.join(dirs['abs_gaia_dir'], 'profile'),
+            'xml_output': os.path.join(dirs['abs_work_dir'], 'output.xml'),
+            'html_output': os.path.join(dirs['abs_blob_upload_dir'], 'output.html'),
+            'logcat_dir': dirs['abs_work_dir'],
+            'emulator': self.config.get('emulator'),
+            'symbols_path': self.symbols_path,
+            'homedir': os.path.join(dirs['abs_emulator_dir'], 'b2g-distro'),
+            'binary': self.binary_path,
+            'address': self.config.get('marionette_address'),
+            'raw_log_file': os.path.join(dirs["abs_blob_upload_dir"],
+                                         "mn_structured_full.log"),
+            'gecko_log': dirs["abs_blob_upload_dir"],
+        }
+
+        # build the marionette command arguments
+        python = self.query_python_path('python')
 
         if self.config.get('gaiatest'):
             # make the gaia profile
@@ -384,10 +403,6 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
                            noftu=False,
                            build_config_path=build_config)
 
-        # build the marionette command arguments
-        python = self.query_python_path('python')
-        testvars = None
-        if self.config.get('gaiatest'):
             # write a testvars.json file
             testvars = os.path.join(dirs['abs_gaiatest_dir'],
                                     'gaiatest', 'testvars.json')
@@ -399,6 +414,7 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
                               "time.timezone.user-selected": "America/Los_Angeles"
                             }}
                         """)
+            config_fmt_args['testvars'] = testvars
 
             # gaia-ui-tests on B2G desktop builds
             cmd = [python, '-u', os.path.join(dirs['abs_gaiatest_dir'],
@@ -408,17 +424,16 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
             if not self.config.get('emulator'):
                 # support desktop builds with and without a built-in profile
                 binary_path = os.path.dirname(self.binary_path)
-                binary = os.path.join(binary_path, 'b2g-bin')
-                if not os.access(binary, os.F_OK):
-                    binary = os.path.join(binary_path, 'b2g')
-
-            manifest = os.path.join(dirs['abs_gaiatest_dir'], 'gaiatest', 'tests',
-                                    'tbpl-manifest.ini')
-
+                if os.access(os.path.join(binary_path, 'b2g-bin'), os.F_OK):
+                    # first, try to find and use b2g-bin
+                    config_fmt_args['binary'] = os.path.join(binary_path, 'b2g-bin')
+                else:
+                    # if b2g-bin cannot be found we must use just b2g
+                    config_fmt_args['binary'] = os.path.join(binary_path, 'b2g')
 
             if self.config.get('this_chunk') and self.config.get('total_chunks'):
-                cmd.extend(['--this-chunk', self.config.get('this_chunk')])
-                cmd.extend(['--total-chunks', self.config.get('total_chunks')])
+                config_fmt_args['this_chunk'] = self.config.get('this_chunk')
+                config_fmt_args['total_chunks'] = self.config.get('total_chunks')
 
             # Bug 1046694
             # using a different manifest if a specific gip-suite is specified
@@ -427,9 +442,12 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
                 manifest = os.path.join(dirs['abs_gaiatest_dir'], 'gaiatest', 'tests', self.config.get('gip_suite'),
                                         'manifest.ini')
                 if self.config.get('gip_suite') == "functional":
-                    cmd.extend(['--type', "b2g-external"])
-                else:
-                    cmd.extend(['--type', "b2g"])
+                    config_fmt_args['type'] = "b2g-external"
+            else:
+                # For <v2.2 branches using the old tbpl-manifest.ini and no split gip-suite
+                manifest = os.path.join(dirs['abs_gaiatest_dir'], 'gaiatest', 'tests',
+                    'tbpl-manifest.ini')
+
         else:
             # Marionette or Marionette-webapi tests
             cmd = [python, '-u', os.path.join(dirs['abs_marionette_dir'],
@@ -439,40 +457,20 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
                                     self.config['test_manifest'])
 
             if self.config.get('app_arg'):
-                cmd.extend(['--app-arg', self.config['app_arg']])
-
-        config_fmt_args = {
-            'type': self.config.get('test_type'),
-            'testvars': testvars,
-            # emulator builds require a longer timeout
-            'timeout': 60000 if self.config.get('emulator') else 10000,
-            'profile': os.path.join(dirs['abs_gaia_dir'], 'profile'),
-            'xml_output': os.path.join(dirs['abs_work_dir'], 'output.xml'),
-            'html_output': os.path.join(dirs['abs_blob_upload_dir'], 'output.html'),
-            'logcat_dir': dirs['abs_work_dir'],
-            'emulator': self.config.get('emulator'),
-            'symbols_path': self.symbols_path,
-            'homedir': os.path.join(dirs['abs_emulator_dir'], 'b2g-distro'),
-            'binary': binary,
-            'address': self.config.get('marionette_address'),
-            'raw_log_file': os.path.join(dirs["abs_blob_upload_dir"],
-                                         "mn_structured_full.log")
-        }
+                config_fmt_args['app_arg'] = self.config['app_arg']
 
         options_group = self._get_options_group(self.config.get('emulator'),
                                                 self.config.get('gaiatest'))
+
+        if self.config.get("structured_output"):
+            config_fmt_args["raw_log_file"]= "-"
+
         for s in self.tree_config[options_group]:
             cmd.append(s % config_fmt_args)
-
-        if config_fmt_args.has_key('binary'):
-            cmd.append("--gecko-log=%s" % self.query_abs_dirs()['abs_blob_upload_dir'])
 
         if self.mkdir_p(dirs["abs_blob_upload_dir"]) == -1:
             # Make sure that the logging directory exists
             self.fatal("Could not create blobber upload directory")
-
-        if self.config.get("structured_output"):
-            cmd.append("--log-raw=-")
 
         cmd.append(manifest)
 
