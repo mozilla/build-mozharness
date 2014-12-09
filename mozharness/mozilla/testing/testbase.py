@@ -157,8 +157,20 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin):
         if not hasattr(self, "https_username"):
             self.info("NOTICE: Files downloaded from outside of "
                     "Release Engineering network require LDAP credentials.")
-            self.https_username = raw_input("Please enter your full LDAP email address: ")
-            self.https_password = getpass.getpass()
+	    self.credential_path = os.path.expanduser("~/.mozilla/credentials.cfg")
+	    if (os.path.isfile(self.credential_path)):
+	        fp = open(self.credential_path,'r')
+		content = fp.read().splitlines()
+		fp.close()
+		self.https_username = content[0].strip()
+		self.https_password = content[1].strip()
+	    else:
+                self.https_username = raw_input("Please enter your full LDAP email address: ")
+                self.https_password = getpass.getpass()
+	        fp = open(self.credential_path,"w+")
+	        fp.write("%s\n" % self.https_username)
+		fp.write("%s\n" % self.https_password)
+	        fp.close()
         return self.https_username, self.https_password
 
     def _pre_config_lock(self, rw_config):
