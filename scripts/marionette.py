@@ -434,6 +434,10 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
             if self.config.get('this_chunk') and self.config.get('total_chunks'):
                 config_fmt_args['this_chunk'] = self.config.get('this_chunk')
                 config_fmt_args['total_chunks'] = self.config.get('total_chunks')
+            else:
+                # pass 1 as default so that the config option is honoured
+                config_fmt_args['this_chunk'] = 1
+                config_fmt_args['total_chunks'] = 1
 
             # Bug 1046694
             # using a different manifest if a specific gip-suite is specified
