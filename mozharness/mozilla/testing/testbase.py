@@ -165,12 +165,16 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin):
 		self.https_username = content[0].strip()
 		self.https_password = content[1].strip()
 	    else:
+                if not os.path.exists(os.path.expanduser("~/.mozilla")):
+                    os.makedirs(os.path.expanduser("~/.mozilla"))
                 self.https_username = raw_input("Please enter your full LDAP email address: ")
                 self.https_password = getpass.getpass()
 	        fp = open(self.credential_path,"w+")
 	        fp.write("%s\n" % self.https_username)
 		fp.write("%s\n" % self.https_password)
 	        fp.close()
+		os.chmod(self.credential_path, 0600)
+
         return self.https_username, self.https_password
 
     def _pre_config_lock(self, rw_config):
