@@ -104,11 +104,11 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
             "default": False,
             "help": "Run tests with multiple processes."}
          ],
-        [['--content-sandbox', ], {
-            "choices": ["off", "warn", "on"],
-            "dest": "content_sandbox",
-            "default": "off",
-            "help": "Run tests with the content sandbox enabled or in warn only mode (Windows only)."}
+        [['--strict-content-sandbox', ], {
+            "action": "store_true",
+            "dest": "strict_content_sandbox",
+            "default": False,
+            "help": "Run tests with a more strict content sandbox (Windows only)."}
          ],
         [['--no-random', ], {
             "action": "store_true",
@@ -283,11 +283,11 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
             if c['e10s']:
                 base_cmd.append('--e10s')
 
-            if c.get('content_sandbox') in ["warn", "on"]:
+            if c.get('strict_content_sandbox'):
                 if suite_category == "mochitest":
-                    base_cmd.append('--content-sandbox=' + c['content_sandbox'])
+                    base_cmd.append('--strict-content-sandbox')
                 else:
-                    self.fatal("--content-sandbox does not currently work with suites other than mochitest.")
+                    self.fatal("--strict-content-sandbox only works with mochitest suites.")
 
             if c.get('total_chunks') and c.get('this_chunk'):
                 base_cmd.extend(['--total-chunks', c['total_chunks'],
