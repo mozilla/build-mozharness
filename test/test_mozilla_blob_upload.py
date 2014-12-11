@@ -28,6 +28,7 @@ class BlobUploadScript(BlobUploadMixin, script.BaseScript):
     config_options = copy.deepcopy(blobupload_config_options)
     def __init__(self, **kwargs):
         self.abs_dirs = None
+        self.set_buildbot_property = mock.Mock()
         super(BlobUploadScript, self).__init__(
                 config_options=self.config_options,
                 **kwargs
@@ -84,14 +85,15 @@ class TestBlobUploadMechanism(unittest.TestCase):
         file_name = os.path.join(parent_dir, 'test_mock_blob_file')
         self.s.write_to_file(file_name, content)
         self.s.upload_blobber_files()
+        self.assertTrue(self.s.set_buildbot_property.called)
 
         expected_result = ['/path/to/python', '/path/to/blobberc', '-u',
                            'http://blob_server.me', '-a',
                            os.path.abspath(__file__), '-b', 'test-branch', '-d']
         expected_result.append(self.s.query_abs_dirs()['abs_blob_upload_dir'])
         expected_result += [
-                '--output-manifest-url',
-                os.path.join(self.s.query_abs_dirs()['abs_work_dir'], "blobber_manifest.txt")
+                '--output-manifest',
+                os.path.join(self.s.query_abs_dirs()['abs_work_dir'], "uploaded_files.json")
         ]
         self.assertEqual(expected_result, self.s.command)
 
