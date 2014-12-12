@@ -1,4 +1,13 @@
+#!/usr/bin/env python
+# ***** BEGIN LICENSE BLOCK *****
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this file,
+# You can obtain one at http://mozilla.org/MPL/2.0/.
+# ***** END LICENSE BLOCK *****
+
 import os
+import json
+
 from mozharness.base.python import VirtualenvMixin
 from mozharness.base.script import PostScriptRun
 
@@ -27,7 +36,7 @@ class BlobUploadMixin(VirtualenvMixin):
     """
     def __init__(self, *args, **kwargs):
         requirements = [
-            'blobuploader==1.2.1',
+            'blobuploader==1.2.4',
         ]
         super(BlobUploadMixin, self).__init__(*args, **kwargs)
         for req in requirements:
@@ -76,21 +85,23 @@ class BlobUploadMixin(VirtualenvMixin):
             branch = ['-b', blob_branch]
             dir_to_upload = ['-d', blob_dir]
             # We want blobberc to tell us if a summary file was uploaded through this manifest file
-            manifest_path = os.path.join(dirs['abs_work_dir'], "blobber_manifest.txt")
-            open(manifest_path, 'w').close()  # Create empty file
-            record_uploaded_files = ['--output-manifest-url', manifest_path]
+            manifest_path = os.path.join(dirs['abs_work_dir'], 'uploaded_files.json')
+            record_uploaded_files = ['--output-manifest', manifest_path]
             self.info("Files from %s are to be uploaded with <%s> branch at "
                       "the following location(s): %s" % (blob_dir, blob_branch,
                       ", ".join(["%s" % s for s in blob_servers_list])))
 
             # call blob client to upload files to server
             self.run_command(upload + servers + auth + branch + dir_to_upload + record_uploaded_files)
-            # if blobberc writes anything into the manifest file then it means that a manifest file has been uploaded
-            if os.path.getsize(manifest_path) > 0:
-                blobber_manifest_url = self.read_from_file(manifest_path)
-                self.set_buildbot_property(prop_name="blobber_manifest_url",
-                        prop_value=blobber_manifest_url, write_to_file=True)
-            self.rmtree(manifest_path)
+
+            uploaded_files = {}
+            if os.path.isfile(manifest_path):
+                with open(manifest_path, 'r') as f:
+                    uploaded_files = json.loads(f.read())
+                self.rmtree(manifest_path)
+
+            self.set_buildbot_property(prop_name='blobber_files',
+                    prop_value=uploaded_files, write_to_file=True)
         else:
             self.warning("Blob upload gear skipped. Missing cmdline options.")
 
