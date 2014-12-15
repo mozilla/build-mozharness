@@ -7,7 +7,6 @@ build_repos = (
     'buildapi',
     'buildbot-configs',
     'buildbotcustom',
-    'cloud-tools',
     'mozharness',
     'opsi-package-sources',
     'partner-repacks',
@@ -44,7 +43,7 @@ for repo in build_repos:
                 "^.*$"
             ]
         },
-# Bug 1036819 - build/* repos currently not able to push tags to github 
+# Bug 1036819 - build/* repos currently not able to push tags to github
 # temporarily disable tags in conversion.
 # When bug 1020613 is resolved, this tag_config below can be enabled again.
 #       "tag_config": {
