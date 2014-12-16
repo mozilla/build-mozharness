@@ -460,8 +460,14 @@ class PandaTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixin, Bu
             'apk_path':  self.apk_path,
             'raw_log_file': os.path.join(dirs['abs_blob_upload_dir'], 'raw_structured_logs.log')
         }
-        if self.tree_config['%s_options' % suite_category]:
+        if '%s_options' % suite_category in self.tree_config:
             for option in self.tree_config['%s_options' % suite_category]:
+                options.append(option % str_format_values)
+            abs_base_cmd = base_cmd + options
+            return abs_base_cmd
+        elif "suite_definitions" in self.tree_config and \
+                suite_category in self.tree_config["suite_definitions"]: # new in-tree format
+            for option in self.tree_config["suite_definitions"][suite_category]["options"]:
                 options.append(option % str_format_values)
             abs_base_cmd = base_cmd + options
             return abs_base_cmd
