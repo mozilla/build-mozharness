@@ -195,6 +195,7 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin):
                 Release Engineering network
         """
         c = self.config
+        orig_config = copy.deepcopy(c)
         self.warning("When you use developer_config.py, we drop " \
                 "'read-buildbot-config' from the list of actions.")
         if "read-buildbot-config" in rw_config.actions:
@@ -221,7 +222,9 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin):
             if type(value) == str and value.startswith("http"):
                 self.config[key] = _replace_url(value, c["replace_urls"])
 
-        self._get_credentials()
+        # Any changes to c means that we need credentials
+        if not c == orig_config:
+            self._get_credentials()
 
     def _urlopen(self, url, **kwargs):
         '''

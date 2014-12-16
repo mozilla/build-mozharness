@@ -6,7 +6,6 @@
 # ***** END LICENSE BLOCK *****
 
 import os
-import json
 
 from mozharness.base.python import VirtualenvMixin
 from mozharness.base.script import PostScriptRun
@@ -94,10 +93,10 @@ class BlobUploadMixin(VirtualenvMixin):
             # call blob client to upload files to server
             self.run_command(upload + servers + auth + branch + dir_to_upload + record_uploaded_files)
 
-            uploaded_files = {}
+            uploaded_files = '{}'
             if os.path.isfile(manifest_path):
                 with open(manifest_path, 'r') as f:
-                    uploaded_files = json.loads(f.read())
+                    uploaded_files = f.read()
                 self.rmtree(manifest_path)
 
             self.set_buildbot_property(prop_name='blobber_files',

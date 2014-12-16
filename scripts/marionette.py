@@ -364,6 +364,12 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
         else:
             super(MarionetteTest, self).install()
 
+    def preflight_run_marionette(self):
+        """preflight commands for all tests"""
+        # If the in tree config hasn't been loaded by a previous step, load it here.
+        if not self.tree_config:
+            self._read_tree_config()
+
     def run_marionette(self):
         """
         Run the Marionette tests
@@ -469,8 +475,17 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
         if self.config.get("structured_output"):
             config_fmt_args["raw_log_file"]= "-"
 
-        for s in self.tree_config[options_group]:
-            cmd.append(s % config_fmt_args)
+        if options_group not in self.tree_config:
+            # This allows using the new in-tree format
+            options_group = options_group.split("_options")[0]
+            if options_group not in self.tree_config["suite_definitions"]:
+                self.fatal("%s is not defined in the in-tree config" %
+                           options_group)
+            for s in self.tree_config["suite_definitions"][options_group]["options"]:
+                cmd.append(s % config_fmt_args)
+        else:
+            for s in self.tree_config[options_group]:
+                cmd.append(s % config_fmt_args)
 
         if self.mkdir_p(dirs["abs_blob_upload_dir"]) == -1:
             # Make sure that the logging directory exists

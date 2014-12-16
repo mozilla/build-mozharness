@@ -178,12 +178,23 @@ class B2GDesktopTest(BlobUploadMixin, TestingMixin, TooltoolMixin, MercurialScri
                 manifest_param = ''
             str_format_values['test_manifest'] = manifest_param
 
-        suite_options = '%s_options' % suite
-        if suite_options not in self.tree_config:
-            self.fatal("Key '%s' not defined in the in-tree config! Please add it to '%s'." \
-                       "See bug 981030 for more details." % (suite_options,
-                       os.path.join('gecko', 'testing', self.config['in_tree_config'])))
-        options = self.tree_config[suite_options]
+        missing_key = True
+        if "suite_definitions" in self.tree_config: # new structure
+            if suite in self.tree_config["suite_definitions"]:
+                missing_key = False
+            options = self.tree_config["suite_definitions"][suite]["options"]
+        else:
+            suite_options = '%s_options' % suite
+            if suite_options in self.tree_config:
+                missing_key = False
+            options = self.tree_config[suite_options]
+
+        if missing_key:
+            self.fatal("'%s' not defined in the in-tree config! Please add it to '%s'. "
+                       "See bug 981030 for more details." %
+                       (suite,
+                        os.path.join('gecko', 'testing', self.config['in_tree_config'])))
+
         if options:
             for option in options:
                 option = option % str_format_values
