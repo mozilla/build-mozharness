@@ -14,6 +14,6 @@ config = {
     "tooltool_servers": ["https://secure.pub.build.mozilla.org/tooltool/pvt/build"],
     "replace_urls": [
         ("http://pvtbuilds.pvt.build", "https://pvtbuilds"),
-        ("http://runtime-binaries.pvt.build.mozilla.org/tooltool", "https://secure.pub.build.mozilla.org/tooltool/pvt/build")
+        ("http://tooltool.pvt.build.mozilla.org/build", "https://secure.pub.build.mozilla.org/tooltool/pvt/build")
     ],
 }

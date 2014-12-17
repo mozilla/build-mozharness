@@ -37,7 +37,7 @@ config = {
     "exes": {
         'tooltool.py': '/tools/tooltool.py',
     },
-    "tooltool_servers": ["http://runtime-binaries.pvt.build.mozilla.org/tooltool/"],
+    "tooltool_servers": ["http://tooltool.pvt.build.mozilla.org/build/"],
     "repos": [{
         "repo": "https://hg.mozilla.org/releases/mozilla-aurora",
         "revision": "default",

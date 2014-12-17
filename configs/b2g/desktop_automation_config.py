@@ -4,7 +4,7 @@ import os
 config = {
     # mozharness options
     "application": "b2g",
-    "tooltool_servers": ["http://runtime-binaries.pvt.build.mozilla.org/tooltool/"],
+    "tooltool_servers": ["http://tooltool.pvt.build.mozilla.org/build/"],
 
     "exes": {
         'python': '/tools/buildbot/bin/python',

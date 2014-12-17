@@ -143,7 +143,7 @@ class SpidermonkeyBuild(MockMixin,
                         ('purge_maxage', 'purge_maxage', None),
                         ('purge_skip', 'purge_skip', None),
                         ('force_clobber', 'force_clobber', None),
-                        ('tooltool_url_list', 'tooltool_servers', ['http://runtime-binaries.pvt.build.mozilla.org/tooltool']),
+                        ('tooltool_url_list', 'tooltool_servers', ['http://tooltool.pvt.build.mozilla.org/build']),
                         ]
             buildbot_props = self.buildbot_config.get('properties', {})
             for bb_prop, cfg_prop, default in bb_props:
