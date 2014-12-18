@@ -42,7 +42,7 @@ config = {
     },
     "backup_dir": "/mnt/netapp/github_sync/aki/%s" % hostname,
     "cvs_manifest": CVS_MANIFEST,
-    "tooltool_servers": ["http://runtime-binaries.pvt.build.mozilla.org/tooltool/"],
+    "tooltool_servers": ["http://tooltool.pvt.build.mozilla.org/build/"],
     "cvs_history_tarball": "/home/pmoore/mozilla-cvs-history.tar.bz2",
     "env": {
         "PATH": "%(PATH)s:/usr/libexec/git-core",

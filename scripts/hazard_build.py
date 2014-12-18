@@ -92,7 +92,7 @@ class B2GHazardBuild(PurgeMixin, B2GBuildBaseScript):
         super(B2GHazardBuild, self)._pre_config_lock(rw_config)
 
         if self.buildbot_config:
-            bb_props = [('tooltool_url_list', 'tooltool_servers', ['http://runtime-binaries.pvt.build.mozilla.org/tooltool']),
+            bb_props = [('tooltool_url_list', 'tooltool_servers', ['http://tooltool.pvt.build.mozilla.org/build']),
                         ]
             buildbot_props = self.buildbot_config.get('properties', {})
             for bb_prop, cfg_prop, default in bb_props:

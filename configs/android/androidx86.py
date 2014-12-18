@@ -9,7 +9,7 @@ config = {
     "default_sut_port2": "20700", # does not prompt for commands
     "tooltool_manifest_path": "testing/config/tooltool-manifests/androidx86/releng.manifest",
     "tooltool_cache": "/builds/tooltool_cache",
-    "tooltool_servers": ["http://runtime-binaries.pvt.build.mozilla.org/tooltool/"],
+    "tooltool_servers": ["http://tooltool.pvt.build.mozilla.org/build/"],
     ".avds_dir": "/home/cltbld/.android",
     "emulator_process_name": "emulator64-x86",
     "exes": {
