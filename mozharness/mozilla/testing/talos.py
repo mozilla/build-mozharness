@@ -644,6 +644,9 @@ class Talos(TestingMixin, MercurialScript, BlobUploadMixin):
             if self.return_code == 1:
                 log_level = WARNING
                 tbpl_level = TBPL_WARNING
+            if self.return_code == 4:
+                log_level = WARNING
+                tbpl_level = TBPL_RETRY
 
             parser.worst_log_level = parser.worst_level(
                 log_level, parser.worst_log_level
