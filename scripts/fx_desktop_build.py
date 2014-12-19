@@ -50,8 +50,8 @@ class FxDesktopBuild(BuildScript, object):
                 'default_vcs': 'hgtool',
                 "tools_repo": "https://hg.mozilla.org/build/tools",
                 "repo_base": "https://hg.mozilla.org",
-                'tooltool_url': 'http://runtime-binaries.pvt.build.mozilla'
-                                '.org/tooltool',
+                'tooltool_url': 'http://tooltool.pvt.build.mozilla'
+                                '.org/build',
                 "graph_selector": "/server/collect.cgi",
                 # only used for make uploadsymbols
                 'old_packages': [
