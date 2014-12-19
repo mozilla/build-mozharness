@@ -243,6 +243,17 @@ class BaseConfig(object):
                 (initial_config_file, initial_config)
             )
             self.set_config(initial_config)
+            # Since initial_config_file is only set when running unit tests,
+            # if no option_args have been specified, then the parser will
+            # parse sys.argv which in this case would be the command line
+            # options specified to run the tests, e.g. nosetests -v. Clearly,
+            # the options passed to nosetests (such as -v) should not be
+            # interpreted by mozharness as mozharness options, so we specify
+            # a dummy command line with no options, so that the parser does
+            # not add anything from the test invocation command line
+            # arguments to the mozharness options.
+            if option_args is None:
+                option_args=['dummy_mozharness_script_with_no_command_line_options.py']
         if config_options is None:
             config_options = []
         self._create_config_parser(config_options, usage)
@@ -437,7 +448,7 @@ class BaseConfig(object):
         child objects can manipulate it.
         """
         self.command_line = ' '.join(sys.argv)
-        if not args:
+        if args is None:
             args = sys.argv[1:]
         (options, args) = self.config_parser.parse_args(args)
 
