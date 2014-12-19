@@ -1,13 +1,12 @@
 language: python
 python:
-  - "2.7"
+  - 2.7
 
 install:
-  - "pip install -e .[test]"
-  - "pip freeze"
+  - pip install tox
 
 script:
-  - nosetests
+  - tox -e py27,py27-coveralls
 
 # currently cannot customise per user fork, see:
 # https://github.com/travis-ci/travis-ci/issues/1094

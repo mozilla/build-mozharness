@@ -64,10 +64,6 @@ config = {
         'branch_uses_per_checkin_strategy': True,
         'use_branch_in_symbols_extra_buildid': False,
     },
-    'mozilla-b2g28_v1_3t': {
-        'repo_path': 'releases/mozilla-b2g28_v1_3t',
-        'use_branch_in_symbols_extra_buildid': False,
-    },
     'mozilla-b2g30_v1_4': {
         'repo_path': 'releases/mozilla-b2g30_v1_4',
         'use_branch_in_symbols_extra_buildid': False,

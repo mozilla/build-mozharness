@@ -2,14 +2,17 @@ syntax: glob
 
 .hgignore
 .gitignore
+.pydevproject
+.project
+.tox/
 *.log
 *.pyc
 *.swp
-test.py
 .DS_Store
 .coverage
 coverage
 htmlcov
+nosetests.xml
 venv
 bin/
 build/
@@ -17,7 +20,5 @@ include/
 lib/
 local/
 logs/
-.pydevproject
-.project
 docs/_build/
 *~
