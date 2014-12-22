@@ -25,3 +25,4 @@ one. To enable:
 * https://coveralls.io/repos/new
 
 Happy contributing! =)
+ 
