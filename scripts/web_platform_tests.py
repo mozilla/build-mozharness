@@ -139,6 +139,7 @@ class WebPlatformTest(TestingMixin, MercurialScript, BlobUploadMixin):
         str_format_values = {
             'binary_path': self.binary_path,
             'test_path': dirs["abs_wpttest_dir"],
+            'test_install_path': dirs["abs_test_install_dir"],
             'abs_app_dir': abs_app_dir,
             'abs_work_dir': dirs["abs_work_dir"]
             }
@@ -150,7 +151,8 @@ class WebPlatformTest(TestingMixin, MercurialScript, BlobUploadMixin):
     def download_and_extract(self):
         self.install_minidump_stackwalk()
         super(WebPlatformTest, self).download_and_extract(
-            target_unzip_dirs=["config/*",
+            target_unzip_dirs=["bin/*",
+                               "config/*",
                                "mozbase/*",
                                "marionette/*",
                                "web-platform/*"])
