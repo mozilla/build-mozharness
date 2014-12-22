@@ -32,7 +32,7 @@ class Proxxy(ScriptMixin, LogMixin):
             ('https://ftp-ssl.mozilla.org', 'ftp.mozilla.org'),
             ('http://pvtbuilds.pvt.build.mozilla.org', 'pvtbuilds.mozilla.org'),
             # tooltool
-            ('http://tooltool.pvt.build.mozilla.org', 'tooltool.pvt.build.mozilla.org'),
+            ('http://runtime-binaries.pvt.build.mozilla.org', 'runtime-binaries.pvt.build.mozilla.org'),
             # pypi
             ('http://pypi.pvt.build.mozilla.org', 'pypi.pvt.build.mozilla.org'),
             ('http://pypi.pub.build.mozilla.org', 'pypi.pub.build.mozilla.org'),
