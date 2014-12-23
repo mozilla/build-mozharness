@@ -274,7 +274,7 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
         self.symbols_url = symbols_url
         return self.symbols_url
 
-    def _query_abs_base_cmd(self, suite_category):
+    def _query_abs_base_cmd(self, suite_category, suite):
         if self.binary_path:
             c = self.config
             dirs = self.query_abs_dirs()
@@ -289,12 +289,14 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
             if c.get('exe_suffix'):
                 webapprt_path += c['exe_suffix']
 
+            raw_log_file = os.path.join(dirs['abs_blob_upload_dir'],
+                                        '%s_raw.log' % suite)
             str_format_values = {
                 'binary_path': self.binary_path,
                 'symbols_path': self._query_symbols_url(),
                 'abs_app_dir': abs_app_dir,
                 'app_path': webapprt_path,
-                'raw_log_file': os.path.join(dirs['abs_blob_upload_dir'], 'raw_structured_logs.log')
+                'raw_log_file': raw_log_file,
             }
             # TestingMixin._download_and_extract_symbols() will set
             # self.symbols_path when downloading/extracting.
@@ -492,8 +494,8 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
             preflight_run_method(suites)
         if suites:
             self.info('#### Running %s suites' % suite_category)
-            abs_base_cmd = self._query_abs_base_cmd(suite_category)
             for suite in suites:
+                abs_base_cmd = self._query_abs_base_cmd(suite_category, suite)
                 cmd = abs_base_cmd[:]
                 replace_dict = {
                     'abs_app_dir': abs_app_dir,
