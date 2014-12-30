@@ -7,8 +7,6 @@ import os
 import sys
 from datetime import datetime
 from functools import wraps
-import json
-import re
 
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
@@ -16,7 +14,8 @@ from mozharness.base.errors import MakefileErrorList
 from mozharness.base.script import BaseScript
 from mozharness.base.transfer import TransferMixin
 from mozharness.base.vcs.vcsbase import VCSMixin
-from mozharness.mozilla.buildbot import BuildbotMixin, TBPL_WARNING
+from mozharness.mozilla.buildbot import BuildbotMixin
+from mozharness.mozilla.building.hazards import HazardError, HazardAnalysis
 from mozharness.mozilla.purge import PurgeMixin
 from mozharness.mozilla.mock import MockMixin
 from mozharness.mozilla.tooltool import TooltoolMixin
@@ -25,12 +24,17 @@ SUCCESS, WARNINGS, FAILURE, EXCEPTION, RETRY = xrange(5)
 
 
 def requires(*queries):
+    """Wrapper for detecting problems where some bit of information
+    required by the wrapped step is unavailable. Use it put prepending
+    @requires("foo"), which will check whether self.query_foo() returns
+    something useful."""
     def make_wrapper(f):
         @wraps(f)
         def wrapper(self, *args, **kwargs):
             for query in queries:
                 val = query(self)
-                assert (val is not None and "None" not in str(val)), "invalid " + query.__name__
+                goodval = not (val is None or "None" in str(val))
+                assert goodval, f.__name__ + " requires " + query.__name__ + " to return a value"
             return f(self, *args, **kwargs)
         return wrapper
     return make_wrapper
@@ -71,8 +75,8 @@ class SpidermonkeyBuild(MockMixin,
                             config_options=self.config_options,
                             # other stuff
                             all_actions=[
-                                'purge',
                                 'checkout-tools',
+                                'purge',
 
                                 # First, build an optimized JS shell for running the analysis
                                 'checkout-source',
@@ -96,8 +100,8 @@ class SpidermonkeyBuild(MockMixin,
                                 'check-expectations',
                             ],
                             default_actions=[
-                                'purge',
                                 'checkout-tools',
+                                'purge',
                                 'checkout-source',
                                 'get-blobs',
                                 'clobber-shell',
@@ -125,6 +129,7 @@ class SpidermonkeyBuild(MockMixin,
         )
 
         self.buildid = None
+        self.analysis = HazardAnalysis()
 
     def _pre_config_lock(self, rw_config):
         super(SpidermonkeyBuild, self)._pre_config_lock(rw_config)
@@ -181,6 +186,10 @@ class SpidermonkeyBuild(MockMixin,
                 os.path.join(self.config['srcdir'], self.config['analysis-scriptdir']),
             'abs_tools_dir':
                 os.path.join(abs_dirs['base_work_dir'], 'tools'),
+            'gecko_src':
+                os.path.join(abs_work_dir, self.config['srcdir']),
+            'abs_blob_upload_dir':
+                os.path.join(abs_work_dir, 'blobber_upload_dir'),
         }
 
         abs_dirs.update(dirs)
@@ -323,6 +332,7 @@ class SpidermonkeyBuild(MockMixin,
     # Actions {{{2
     def purge(self):
         dirs = self.query_abs_dirs()
+        self.info("purging, abs_upload_dir=" + dirs['abs_upload_dir'])
         PurgeMixin.clobber(
             self,
             always_clobber_dirs=[
@@ -331,10 +341,12 @@ class SpidermonkeyBuild(MockMixin,
         )
 
     def checkout_tools(self):
+        dirs = self.query_abs_dirs()
         rev = self.vcs_checkout(
             vcs='hg',  # Don't have hgtool.py yet
             repo=self.config['tools_repo'],
             clean=False,
+            dest=dirs['abs_tools_dir'],
         )
         self.set_buildbot_property("tools_revision", rev, write_to_file=True)
 
@@ -364,156 +376,61 @@ class SpidermonkeyBuild(MockMixin,
 
     def get_blobs(self):
         dirs = self.query_abs_dirs()
+        assert self.config['tooltool_servers']
         self.tooltool_fetch(self.query_compiler_manifest(), "sh " + self.config['compiler_setup'],
                             dirs['abs_work_dir'])
         self.tooltool_fetch(self.query_sixgill_manifest(), "sh " + self.config['sixgill_setup'],
                             dirs['abs_work_dir'])
 
     def clobber_shell(self):
-        dirs = self.query_abs_dirs()
-        self.rmtree(dirs['shell_objdir'])
+        self.analysis.clobber_shell(self)
 
     def configure_shell(self):
         self.enable_mock()
 
-        dirs = self.query_abs_dirs()
-        if not os.path.exists(dirs['shell_objdir']):
-            self.mkdir_p(dirs['shell_objdir'])
-
-        rc = self.run_command(['autoconf-2.13'],
-                              cwd=dirs['abs_work_dir'] + '/source/js/src',
-                              env=self.env,
-                              error_list=MakefileErrorList)
-        if rc != 0:
-            self.fatal("autoconf failed, can't continue.", exit_code=FAILURE)
-
-        rc = self.run_command(['../source/js/src/configure',
-                               '--enable-optimize',
-                               '--disable-debug',
-                               '--enable-ctypes',
-                               '--with-system-nspr',
-                               '--without-intl-api'],
-                              cwd=dirs['shell_objdir'],
-                              env=self.env,
-                              error_list=MakefileErrorList)
-        if rc != 0:
-            self.fatal("Configure failed, can't continue.", exit_code=FAILURE)
+        try:
+            self.analysis.configure_shell(self)
+        except HazardError as e:
+            self.fatal(e, exit_code=FAILURE)
 
         self.disable_mock()
 
     def build_shell(self):
         self.enable_mock()
 
-        dirs = self.query_abs_dirs()
-        rc = self.run_command(['make', '-j', str(self.config['concurrency']), '-s'],
-                              cwd=dirs['shell_objdir'],
-                              env=self.env,
-                              error_list=MakefileErrorList)
-        if rc != 0:
-            self.fatal("Build failed, can't continue.", exit_code=FAILURE)
+        try:
+            self.analysis.build_shell(self)
+        except HazardError as e:
+            self.fatal(e, exit_code=FAILURE)
 
         self.disable_mock()
 
     def clobber_analysis(self):
-        dirs = self.query_abs_dirs()
-        self.rmtree(dirs['abs_analysis_dir'])
-        self.rmtree(dirs['abs_analyzed_objdir'])
+        self.analysis.clobber(self)
 
     def setup_analysis(self):
-        dirs = self.query_abs_dirs()
-        analysis_dir = dirs['abs_analysis_dir']
-
-        if not os.path.exists(analysis_dir):
-            self.mkdir_p(analysis_dir)
-
-        values = {'js': os.path.join(dirs['shell_objdir'], 'dist', 'bin', 'js'),
-                  'analysis_scriptdir': os.path.join(dirs['abs_work_dir'], 'source/js/src/devtools/rootAnalysis'),
-                  'source_objdir': dirs['abs_analyzed_objdir'],
-                  'source': os.path.join(dirs['abs_work_dir'], 'source'),
-                  'sixgill': os.path.join(dirs['abs_work_dir'], self.config['sixgill']),
-                  'sixgill_bin': os.path.join(dirs['abs_work_dir'], self.config['sixgill_bin']),
-                  }
-        defaults = """
-js = '%(js)s'
-analysis_scriptdir = '%(analysis_scriptdir)s'
-objdir = '%(source_objdir)s'
-source = '%(source)s'
-sixgill = '%(sixgill)s'
-sixgill_bin = '%(sixgill_bin)s'
-jobs = 2
-""" % values
-
-        file(os.path.join(analysis_dir, 'defaults.py'), "w").write(defaults)
-
-        build_command = self.config['build_command']
-        self.copyfile(os.path.join(dirs['mozharness_scriptdir'],
-                                   os.path.join('spidermonkey', build_command)),
-                      os.path.join(analysis_dir, build_command),
-                      copystat=True)
+        self.analysis.setup(self)
 
     def run_analysis(self):
         self.enable_mock()
 
-        dirs = self.query_abs_dirs()
-        analysis_dir = dirs['abs_analysis_dir']
-        analysis_scriptdir = os.path.join(dirs['abs_work_dir'], 'source/js/src/devtools/rootAnalysis')
+        upload_dir = self.query_abs_dirs()['abs_blob_upload_dir']
+        if not os.path.exists(upload_dir):
+            self.mkdir_p(upload_dir)
 
-        # The build for the analysis is always a clobber build,
-        # because the analysis needs to see every compile to work
-        self.rmtree(dirs['abs_analyzed_objdir'])
+        env = self.env.copy()
+        env['MOZ_UPLOAD_DIR'] = upload_dir
 
-        build_command = self.config['build_command']
-        build_command = os.path.abspath(os.path.join(analysis_dir, build_command))
-        rc = self.run_command(
-            [
-                self.config['python'], os.path.join(analysis_scriptdir, 'analyze.py'),
-                "--buildcommand=%s" % build_command,
-            ],
-            cwd=analysis_dir,
-            env=self.env,
-            error_list=MakefileErrorList)
-        if rc != 0:
-            self.fatal("analysis failed, can't continue.", exit_code=FAILURE)
+        try:
+            self.analysis.run(self, env=env, error_list=MakefileErrorList)
+        except HazardError as e:
+            self.fatal(e, exit_code=FAILURE)
 
         self.disable_mock()
 
     def collect_analysis_output(self):
-        dirs = self.query_abs_dirs()
-        analysis_dir = dirs['abs_analysis_dir']
-        upload_dir = dirs['abs_upload_dir']
-        self.mkdir_p(upload_dir)
-        files = (('rootingHazards.txt',
-                  'rooting_hazards',
-                  'list of rooting hazards, unsafe references, and extra roots'),
-                 ('gcFunctions.txt',
-                  'gcFunctions',
-                  'list of functions that can gc, and why'),
-                 ('allFunctions.txt',
-                  'allFunctions',
-                  'list of all functions that were compiled'),
-                 ('gcTypes.txt',
-                  'gcTypes',
-                  'list of types containing unrooted gc pointers'),
-                 ('unnecessary.txt',
-                  'extra',
-                  'list of extra roots (rooting with no GC function in scope)'),
-                 ('refs.txt',
-                  'refs',
-                  'list of unsafe references to unrooted pointers'),
-                 ('hazards.txt',
-                  'hazards',
-                  'list of just the hazards, together with gcFunction reason for each'))
-        for f, short, long in files:
-            self.copy_to_upload_dir(os.path.join(analysis_dir, f),
-                                    short_desc=short,
-                                    long_desc=long,
-                                    compress=True)
+        self.analysis.collect_output(self)
 
-    @requires(query_upload_path,
-              query_upload_ssh_key,
-              query_upload_ssh_user,
-              query_upload_ssh_server,
-              query_upload_remote_baseuri)
     def upload_analysis(self):
         if not self.query_do_upload():
             self.info("Uploads disabled for this build. Skipping...")
@@ -521,88 +438,20 @@ jobs = 2
 
         self.enable_mock()
 
-        dirs = self.query_abs_dirs()
-        upload_path = self.query_upload_path()
-
-        retval = self.rsync_upload_directory(
-            dirs['abs_upload_dir'],
-            self.query_upload_ssh_key(),
-            self.query_upload_ssh_user(),
-            self.query_upload_ssh_server(),
-            upload_path)
-
-        if retval is not None:
-            self.error("failed to upload")
+        try:
+            self.analysis.upload_results(self)
+        except HazardError as e:
+            self.error(e)
             self.return_code = WARNINGS
-        else:
-            upload_url = "{baseuri}{upload_path}".format(
-                baseuri=self.query_upload_remote_baseuri(),
-                upload_path=upload_path,
-            )
-            self.info("TinderboxPrint: hazard results: %s" % upload_url)
 
         self.disable_mock()
 
     def check_expectations(self):
-        if 'expect_file' not in self.config:
-            self.info('No expect_file given; skipping comparison with expected hazard count')
-            return
+        try:
+            self.analysis.check_expectations(self)
+        except HazardError as e:
+            self.fatal(e, exit_code=FAILURE)
 
-        dirs = self.query_abs_dirs()
-        analysis_dir = dirs['abs_analysis_dir']
-        analysis_scriptdir = os.path.join(dirs['abs_work_dir'], 'source/js/src/devtools/rootAnalysis')
-        expect_file = os.path.join(analysis_scriptdir, self.config['expect_file'])
-        expect = self.read_from_file(expect_file)
-        if expect is None:
-            self.fatal("could not load expectation file")
-        data = json.loads(expect)
-
-        num_hazards = 0
-        num_refs = 0
-        with self.opened(os.path.join(analysis_dir, "rootingHazards.txt")) as (hazards_fh, err):
-            if err:
-                self.fatal("hazards file required")
-            for line in hazards_fh:
-                m = re.match(r"^Function.*has unrooted.*live across GC call", line)
-                if m:
-                    num_hazards += 1
-
-                m = re.match(r'^Function.*takes unsafe address of unrooted', line)
-                if m:
-                    num_refs += 1
-
-        expect_hazards = data.get('expect-hazards')
-        status = []
-        if expect_hazards is None:
-            status.append("%d hazards" % num_hazards)
-        else:
-            status.append("%d/%d hazards allowed" % (num_hazards, expect_hazards))
-
-        if expect_hazards is not None and expect_hazards != num_hazards:
-            if expect_hazards < num_hazards:
-                self.warning("TEST-UNEXPECTED-FAIL %d more hazards than expected (expected %d, saw %d)" %
-                             (num_hazards - expect_hazards, expect_hazards, num_hazards))
-                self.buildbot_status(TBPL_WARNING)
-            else:
-                self.info("%d fewer hazards than expected! (expected %d, saw %d)" %
-                          (expect_hazards - num_hazards, expect_hazards, num_hazards))
-
-        expect_refs = data.get('expect-refs')
-        if expect_refs is None:
-            status.append("%d unsafe refs" % num_refs)
-        else:
-            status.append("%d/%d unsafe refs allowed" % (num_refs, expect_refs))
-
-        if expect_refs is not None and expect_refs != num_refs:
-            if expect_refs < num_refs:
-                self.warning("TEST-UNEXPECTED-FAIL %d more unsafe refs than expected (expected %d, saw %d)" %
-                             (num_refs - expect_refs, expect_refs, num_refs))
-                self.buildbot_status(TBPL_WARNING)
-            else:
-                self.info("%d fewer unsafe refs than expected! (expected %d, saw %d)" %
-                          (expect_refs - num_refs, expect_refs, num_refs))
-
-        self.info("TinderboxPrint: " + ", ".join(status))
 
 # main {{{1
 if __name__ == '__main__':
