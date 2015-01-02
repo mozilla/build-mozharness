@@ -21,12 +21,13 @@ import glob
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
 from mozharness.base.errors import BaseErrorList
-from mozharness.base.log import INFO, ERROR
+from mozharness.base.log import INFO, ERROR, WARNING
 from mozharness.base.script import PreScriptAction
 from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_options
 from mozharness.mozilla.mozbase import MozbaseMixin
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
+from mozharness.mozilla.buildbot import TBPL_WARNING
 
 SUITE_CATEGORIES = ['cppunittest', 'jittest', 'mochitest', 'reftest', 'xpcshell', 'mozbase']
 
@@ -139,7 +140,6 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
                 'read-buildbot-config',
                 'download-and-extract',
                 'create-virtualenv',
-                'pull',
                 'install',
                 'run-tests',
             ],
@@ -157,6 +157,7 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
         self.installer_path = c.get('installer_path')
         self.binary_path = c.get('binary_path')
         self.abs_app_dir = None
+        self.abs_res_dir = None
 
     # helper methods {{{2
     def _pre_config_lock(self, rw_config):
@@ -218,6 +219,25 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
         self.abs_app_dir = os.path.dirname(self.binary_path)
         return self.abs_app_dir
 
+    def query_abs_res_dir(self):
+        """The directory containing resources like plugins and extensions. On
+        OSX this is Contents/Resources, on all other platforms its the same as
+        the app dir.
+
+        As with the app dir, we can't set this in advance, because OSX install
+        directories change depending on branding and opt/debug.
+        """
+        if self.abs_res_dir:
+            return self.abs_res_dir
+
+        abs_app_dir = self.query_abs_app_dir()
+        if self._is_darwin():
+            res_subdir = self.tree_config.get("mac_res_subdir", "Resources")
+            self.abs_res_dir = os.path.join(os.path.dirname(abs_app_dir), res_subdir)
+        else:
+            self.abs_res_dir = abs_app_dir
+        return self.abs_res_dir
+
     @PreScriptAction('create-virtualenv')
     def _pre_create_virtualenv(self, action):
         dirs = self.query_abs_dirs()
@@ -262,6 +282,7 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
             base_cmd = [self.query_python_path('python'), '-u']
             base_cmd.append(os.path.join(dirs["abs_%s_dir" % suite_category], run_file))
             abs_app_dir = self.query_abs_app_dir()
+            abs_res_dir = self.query_abs_res_dir()
 
             webapprt_path = os.path.join(os.path.dirname(self.binary_path),
                                          'webapprt-stub')
@@ -300,8 +321,8 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
                     self.warning("--no-random does not currently work with suites other than mochitest.")
 
             # set pluginsPath
-            abs_app_plugins_dir = os.path.join(abs_app_dir, 'plugins')
-            str_format_values['test_plugin_path'] = abs_app_plugins_dir
+            abs_res_plugins_dir = os.path.join(abs_res_dir, 'plugins')
+            str_format_values['test_plugin_path'] = abs_res_plugins_dir
 
             missing_key = True
             if "suite_definitions" in self.tree_config: # new structure
@@ -416,29 +437,35 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
         c = self.config
         dirs = self.query_abs_dirs()
         abs_app_dir = self.query_abs_app_dir()
-        abs_app_components_dir = os.path.join(abs_app_dir, 'components')
-        abs_app_plugins_dir = os.path.join(abs_app_dir, 'plugins')
-        abs_app_extensions_dir = os.path.join(abs_app_dir, 'extensions')
+
+        # For mac these directories are in Contents/Resources, on other
+        # platforms abs_res_dir will point to abs_app_dir.
+        abs_res_dir = self.query_abs_res_dir()
+        abs_res_components_dir = os.path.join(abs_res_dir, 'components')
+        abs_res_plugins_dir = os.path.join(abs_res_dir, 'plugins')
+        abs_res_extensions_dir = os.path.join(abs_res_dir, 'extensions')
+
         if suites:  # there are xpcshell suites to run
-            self.mkdir_p(abs_app_plugins_dir)
+            self.mkdir_p(abs_res_plugins_dir)
             self.info('copying %s to %s' % (os.path.join(dirs['abs_test_bin_dir'],
                       c['xpcshell_name']), os.path.join(abs_app_dir,
                                                         c['xpcshell_name'])))
             shutil.copy2(os.path.join(dirs['abs_test_bin_dir'], c['xpcshell_name']),
                          os.path.join(abs_app_dir, c['xpcshell_name']))
             self.copytree(dirs['abs_test_bin_components_dir'],
-                          abs_app_components_dir,
+                          abs_res_components_dir,
                           overwrite='overwrite_if_exists')
             self.copytree(dirs['abs_test_bin_plugins_dir'],
-                          abs_app_plugins_dir,
+                          abs_res_plugins_dir,
                           overwrite='overwrite_if_exists')
             if os.path.isdir(dirs['abs_test_extensions_dir']):
+                self.mkdir_p(abs_res_extensions_dir)
                 self.copytree(dirs['abs_test_extensions_dir'],
-                              abs_app_extensions_dir,
+                              abs_res_extensions_dir,
                               overwrite='overwrite_if_exists')
 
     def preflight_cppunittest(self, suites):
-        abs_app_dir = self.query_abs_app_dir()
+        abs_res_dir = self.query_abs_res_dir()
         dirs = self.query_abs_dirs()
         abs_cppunittest_dir = dirs['abs_cppunittest_dir']
 
@@ -447,11 +474,11 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
             if not os.path.isdir(abs_cppunittest_dir):
                 self._download_unzip(self.test_url.replace('tests', 'tests.cppunit'), dirs['abs_test_install_dir'])
 
-        # move manifest and js fils to app dir, where tests expect them
+        # move manifest and js fils to resources dir, where tests expect them
         files = glob.glob(os.path.join(abs_cppunittest_dir, '*.js'))
         files.extend(glob.glob(os.path.join(abs_cppunittest_dir, '*.manifest')))
         for f in files:
-            self.move(f, abs_app_dir)
+            self.move(f, abs_res_dir)
 
     def _run_category_suites(self, suite_category, preflight_run_method=None):
         """run suite(s) to a specific category"""
@@ -459,6 +486,7 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
         dirs = self.query_abs_dirs()
         suites = self._query_specified_suites(suite_category)
         abs_app_dir = self.query_abs_app_dir()
+        abs_res_dir = self.query_abs_res_dir()
 
         if preflight_run_method:
             preflight_run_method(suites)
@@ -469,6 +497,10 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
                 cmd = abs_base_cmd[:]
                 replace_dict = {
                     'abs_app_dir': abs_app_dir,
+
+                    # Mac specific, but points to abs_app_dir on other
+                    # platforms.
+                    'abs_res_dir': abs_res_dir,
                 }
                 options_list = []
                 env = {}
@@ -491,8 +523,9 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
                                                      config=self.config,
                                                      error_list=error_list,
                                                      log_obj=self.log_obj)
-                if c.get('minidump_stackwalk_path'):
-                    env['MINIDUMP_STACKWALK'] = c['minidump_stackwalk_path']
+
+                if self.query_minidump_stackwalk():
+                    env['MINIDUMP_STACKWALK'] = self.minidump_stackwalk_path
                 env['MOZ_UPLOAD_DIR'] = self.query_abs_dirs()['abs_blob_upload_dir']
                 env['MINIDUMP_SAVE_PATH'] = self.query_abs_dirs()['abs_blob_upload_dir']
                 if not os.path.isdir(env['MOZ_UPLOAD_DIR']):

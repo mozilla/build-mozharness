@@ -148,7 +148,6 @@ class WebPlatformTest(TestingMixin, MercurialScript, BlobUploadMixin):
         return base_cmd + opt_cmd
 
     def download_and_extract(self):
-        self.install_minidump_stackwalk()
         super(WebPlatformTest, self).download_and_extract(
             target_unzip_dirs=["config/*",
                                "mozbase/*",

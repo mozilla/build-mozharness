@@ -86,7 +86,7 @@ class BuildbotMixin(object):
                         tbpl_status = TBPL_FAILURE
             if not level:
                 level = TBPL_STATUS_DICT[tbpl_status]
-            self.worst_buildbot_status = self.worst_level(tbpl_status, self.worst_buildbot_status, TBPL_STATUS_DICT.keys())
+            self.worst_buildbot_status = self.worst_level(tbpl_status, self.worst_buildbot_status, TBPL_WORST_LEVEL_TUPLE)
             if self.worst_buildbot_status != tbpl_status:
                 self.info("Current worst status %s is worse; keeping it." % self.worst_buildbot_status)
             self.add_summary("# TBPL %s #" % self.worst_buildbot_status, level=level)

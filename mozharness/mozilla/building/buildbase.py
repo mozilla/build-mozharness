@@ -1146,7 +1146,7 @@ or run without that action (ie: --no-{action})"
                              level=ERROR)
             self.worst_buildbot_status = self.worst_level(
                 TBPL_EXCEPTION, self.worst_buildbot_status,
-                TBPL_STATUS_DICT.keys()
+                TBPL_WORST_LEVEL_TUPLE
             )
 
         else:
