@@ -17,9 +17,10 @@ from mozharness.base.script import PreScriptAction
 from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_options
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
+from mozharness.mozilla.tooltool import TooltoolMixin
 
 
-class B2GDesktopTest(BlobUploadMixin, TestingMixin, MercurialScript):
+class B2GDesktopTest(BlobUploadMixin, TestingMixin, TooltoolMixin, MercurialScript):
     test_suites = ('mochitest',
                    'reftest',)
     config_options = [
@@ -120,6 +121,12 @@ class B2GDesktopTest(BlobUploadMixin, TestingMixin, MercurialScript):
                 abs_dirs[key] = dirs[key]
         self.abs_dirs = abs_dirs
         return self.abs_dirs
+
+    def download_and_extract(self):
+        super(B2GDesktopTest, self).download_and_extract()
+
+        if self.config.get('download_minidump_stackwalk'):
+            self.install_minidump_stackwalk()
 
     @PreScriptAction('create-virtualenv')
     def _pre_create_virtualenv(self, action):

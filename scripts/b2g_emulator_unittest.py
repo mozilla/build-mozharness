@@ -23,10 +23,11 @@ from mozharness.base.vcs.vcsbase import VCSMixin
 from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_options
 from mozharness.mozilla.testing.errors import LogcatErrorList
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
+from mozharness.mozilla.tooltool import TooltoolMixin
 from mozharness.mozilla.buildbot import TBPL_SUCCESS
 
 
-class B2GEmulatorTest(TestingMixin, VCSMixin, BaseScript, BlobUploadMixin):
+class B2GEmulatorTest(TestingMixin, TooltoolMixin, VCSMixin, BaseScript, BlobUploadMixin):
     test_suites = ('jsreftest', 'reftest', 'mochitest', 'xpcshell', 'crashtest', 'cppunittest')
     config_options = [[
         ["--type"],
@@ -196,6 +197,9 @@ class B2GEmulatorTest(TestingMixin, VCSMixin, BaseScript, BlobUploadMixin):
                          cwd=dirs['abs_emulator_dir'],
                          error_list=TarErrorList,
                          halt_on_failure=True, fatal_exit_code=3)
+
+        if self.config.get('download_minidump_stackwalk'):
+            self.install_minidump_stackwalk()
 
         self.mkdir_p(dirs['abs_xre_dir'])
         self._download_unzip(self.config['xre_url'],

@@ -22,10 +22,12 @@ from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_op
 from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_WARNING, TBPL_FAILURE
 from mozharness.mozilla.gaia import GaiaMixin, gaia_config_options
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
+from mozharness.mozilla.tooltool import TooltoolMixin
 from mozharness.mozilla.proxxy import Proxxy
 
 
-class GaiaTest(TestingMixin, MercurialScript, TransferMixin, GaiaMixin, BlobUploadMixin):
+class GaiaTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin,
+               GaiaMixin, BlobUploadMixin):
     config_options = [[
         ["--application"],
         {"action": "store",
