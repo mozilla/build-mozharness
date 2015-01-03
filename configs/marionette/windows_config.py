@@ -1,6 +1,5 @@
 # This is a template config file for marionette production on Windows.
 import os
-import sys
 
 config = {
     # marionette options
@@ -15,7 +14,6 @@ config = {
         'virtualenv': ['c:/mozilla-build/python27/python', 'c:/mozilla-build/buildbotve/virtualenv.py'],
         'mozinstall': ['%s/build/venv/scripts/python' % os.getcwd(),
                        '%s/build/venv/scripts/mozinstall-script.py' % os.getcwd()],
-        'tooltool.py': [sys.executable, 'C:/mozilla-build/tooltool.py'],
     },
 
     "find_links": [
@@ -39,6 +37,4 @@ config = {
     ],
     "blob_uploader_auth_file" : os.path.join(os.getcwd(), "oauth.txt"),
     "in_tree_config": "config/mozharness/marionette.py",
-    "download_minidump_stackwalk": True,
-    "tooltool_servers": ["http://runtime-binaries.pvt.build.mozilla.org/tooltool/"],
 }
