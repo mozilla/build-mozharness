@@ -140,13 +140,6 @@ class ScriptMixin(object):
         if sys.platform.startswith("linux"):
             return True
 
-    def _is_64_bit(self):
-        if self._is_darwin():
-            # osx is a special snowflake and to ensure the arch, it is better to use the following
-            return sys.maxsize > 2**32  # context: https://docs.python.org/2/library/platform.html
-        else:
-            return '64' in platform.architecture()[0]  # architecture() returns (bits, linkage)
-
     def query_msys_path(self, path):
         if not isinstance(path, basestring):
             return path

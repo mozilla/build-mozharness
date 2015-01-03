@@ -14,17 +14,16 @@ import getpass
 
 from mozharness.base.config import ReadOnlyDict, parse_config_file
 from mozharness.base.errors import BaseErrorList
-from mozharness.base.log import FATAL, WARNING
+from mozharness.base.log import FATAL
 from mozharness.base.python import (
     ResourceMonitoringMixin,
     VirtualenvMixin,
     virtualenv_config_options,
 )
-from mozharness.mozilla.buildbot import BuildbotMixin, TBPL_WARNING
+from mozharness.mozilla.buildbot import BuildbotMixin
 from mozharness.mozilla.proxxy import Proxxy
 from mozharness.mozilla.structuredlog import StructuredOutputParser
 from mozharness.mozilla.testing.unittest import DesktopUnittestOutputParser
-from mozharness.mozilla.tooltool import TooltoolMixin
 
 INSTALLER_SUFFIXES = ('.tar.bz2', '.zip', '.dmg', '.exe', '.apk', '.tar.gz')
 
@@ -76,7 +75,7 @@ testing_config_options = [
 
 
 # TestingMixin {{{1
-class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin, TooltoolMixin):
+class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin):
     """
     The steps to identify + download the proper bits for [browser] unit
     tests and Talos.
@@ -530,79 +529,47 @@ Did you run with --create-virtualenv? Is mozinstall in virtualenv_modules?""")
         self.binary_path = self.get_output_from_command(cmd, halt_on_failure=True,
                                                         fatal_exit_code=3)
 
-    def query_minidump_tooltool_manifest(self):
-        if self.config.get('minidump_tooltool_manifest_path'):
-            return self.config['minidump_tooltool_manifest_path']
+    def install_minidump_stackwalk(self):
+        dirs = self.query_abs_dirs()
 
-        self.info('minidump tooltool manifest unknown. determining based upon platform and arch')
-        tooltool_path = "config/tooltool-manifests/%s/releng.manifest"
-        if self._is_windows():
-            # we use the same minidump binary for 32 and 64 bit windows
-            return tooltool_path % 'win32'
-        elif self._is_darwin():
-            # we only use the 64 bit binary for osx
-            return tooltool_path % 'macosx64'
-        elif self._is_linux():
-            if self._is_64_bit():
-                return tooltool_path % 'linux64'
-            else:
-                return tooltool_path % 'linux32'
-        else:
-            self.fatal('could not determine minidump tooltool manifest')
-
-    def query_minidump_filename(self):
-        if self.config.get('minidump_stackwalk_path'):
-            return self.config['minidump_stackwalk_path']
-
-        self.info('minidump filename unknown. determining based upon platform and arch')
-        minidump_filename = '%s-minidump_stackwalk'
-        if self._is_windows():
-            # we use the same minidump binary for 32 and 64 bit windows
-            return minidump_filename % ('win32',) + '.exe'
-        elif self._is_darwin():
-            # we only use the 64 bit binary for osx
-            return minidump_filename % ('macosx64',)
-        elif self._is_linux():
-            if self._is_64_bit():
-                return minidump_filename % ('linux64',)
-            else:
-                return minidump_filename % ('linux32',)
-        else:
-            self.fatal('could not determine minidump filename')
+        if not os.path.isdir(os.path.join(dirs['abs_work_dir'], 'tools', 'breakpad')):
+            # clone hg.m.o/build/tools
+            repos = [{
+                'repo': self.config.get('tools_repo') or self.default_tools_repo,
+                'vcs': 'hg',
+                'dest': os.path.join(dirs['abs_work_dir'], "tools")
+            }]
+            self.vcs_checkout(**repos[0])
 
     def query_minidump_stackwalk(self):
         if self.minidump_stackwalk_path:
             return self.minidump_stackwalk_path
-        c = self.config
+
         dirs = self.query_abs_dirs()
-
-        if c.get('download_minidump_stackwalk'):
-            minidump_stackwalk_path = self.query_minidump_filename()
-            tooltool_manifest_path = self.query_minidump_tooltool_manifest()
-            self.info('grabbing minidump binary from tooltool')
-            try:
-                self.tooltool_fetch(
-                    manifest=os.path.join(dirs.get('abs_test_install_dir',
-                                                   os.path.join(dirs['abs_work_dir'], 'tests')),
-                                          tooltool_manifest_path),
-                    output_dir=dirs['abs_work_dir'],
-                    cache=c.get('tooltool_cache')
-                )
-            except KeyError:
-                self.error('missing a required key. is "tooltool_servers" in self.config?')
-
-            abs_minidump_path = os.path.join(dirs['abs_work_dir'],
-                                             minidump_stackwalk_path)
-            if os.path.exists(abs_minidump_path):
-                self.minidump_stackwalk_path = abs_minidump_path
-            else:
-                self.warning("minidump stackwalk path was given but couldn't be found. "
-                             "Tried looking in '%s'" % abs_minidump_path)
-                # don't burn the job but we should at least turn them orange so it is caught
-                self.buildbot_status(TBPL_WARNING, WARNING)
+        env = self.query_env()
+        if os.path.isdir(os.path.join(dirs['abs_work_dir'], 'tools', 'breakpad')):
+            # find binary for platform/architecture
+            path = os.path.join(dirs['abs_work_dir'], 'tools', 'breakpad', '%s', 'minidump_stackwalk')
+            pltfrm = platform.platform().lower()
+            arch = platform.architecture()
+            if 'linux' in pltfrm:
+                if '64' in arch:
+                    self.minidump_stackwalk_path = path % 'linux64'
+                else:
+                    self.minidump_stackwalk_path = path % 'linux'
+            elif any(s in pltfrm for s in ('mac', 'osx', 'darwin')):
+                if '64' in arch:
+                    self.minidump_stackwalk_path = path % 'osx64'
+                else:
+                    self.minidump_stackwalk_path = path % 'osx'
+            elif 'win' in pltfrm:
+                self.minidump_stackwalk_path = path % 'win32' + '.exe'
+        elif os.path.isfile(env.get('MINIDUMP_STACKWALK', '')):
+            self.minidump_stackwalk_path = env['MINIDUMP_STACKWALK']
+        elif os.path.isfile(os.path.join(dirs['abs_work_dir'], 'minidump_stackwalk')):
+            self.minidump_stackwalk_path = os.path.join(dirs['abs_work_dir'], 'minidump_stackwalk')
 
         return self.minidump_stackwalk_path
-
 
     def _run_cmd_checks(self, suites):
         if not suites:

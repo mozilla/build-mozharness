@@ -13,7 +13,6 @@ config = {
     "exes": {
         'python': '/tools/buildbot/bin/python',
         'virtualenv': ['/tools/buildbot/bin/python', '/tools/misc-python/virtualenv.py'],
-        'tooltool.py': "/tools/tooltool.py",
     },
 
     "find_links": [
@@ -39,6 +38,4 @@ config = {
     "in_tree_config": "config/mozharness/marionette.py",
     "download_symbols": "ondemand",
     "download_minidump_stackwalk": True,
-    "tooltool_servers": ["http://runtime-binaries.pvt.build.mozilla.org/tooltool/"],
-    "tooltool_cache": "/builds/tooltool_cache",
 }

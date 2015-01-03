@@ -21,7 +21,6 @@ config = {
     "exes": {
         'python': '/tools/buildbot/bin/python',
         'virtualenv': ['/tools/buildbot/bin/python', '/tools/misc-python/virtualenv.py'],
-        'tooltool.py': "/tools/tooltool.py",
     },
 
     "find_links": [
@@ -49,6 +48,4 @@ config = {
     "blob_uploader_auth_file": os.path.join(os.getcwd(), "oauth.txt"),
     "vcs_output_timeout": 1760,
     "in_tree_config": "config/mozharness/marionette.py",
-    "tooltool_servers": ["http://runtime-binaries.pvt.build.mozilla.org/tooltool/"],
-    "tooltool_cache": "/builds/tooltool_cache",
 }
