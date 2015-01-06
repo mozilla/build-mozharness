@@ -84,25 +84,27 @@ config = {
         },
     },
     "partials": {
-        "product-name": "Firefox-%(version)s-Partial-%(prev_version)s",
-        "ssl-only": False,
-        "add-locales": True,
-        "paths": {
-            "linux": {
-                "path": "/firefox/releases/%(version)s/update/linux-i686/:lang/firefox-%(prev_version)s-%(version)s.partial.mar",
-                "bouncer-platform": "linux",
-            },
-            "linux64": {
-                "path": "/firefox/releases/%(version)s/update/linux-x86_64/:lang/firefox-%(prev_version)s-%(version)s.partial.mar",
-                "bouncer-platform": "linux64",
-            },
-            "macosx64": {
-                "path": "/firefox/releases/%(version)s/update/mac/:lang/firefox-%(prev_version)s-%(version)s.partial.mar",
-                "bouncer-platform": "osx",
-            },
-            "win32": {
-                "path": "/firefox/releases/%(version)s/update/win32/:lang/firefox-%(prev_version)s-%(version)s.partial.mar",
-                "bouncer-platform": "win",
+        "releases-dir": {
+            "product-name": "Firefox-%(version)s-Partial-%(prev_version)s",
+            "ssl-only": False,
+            "add-locales": True,
+            "paths": {
+                "linux": {
+                    "path": "/firefox/releases/%(version)s/update/linux-i686/:lang/firefox-%(prev_version)s-%(version)s.partial.mar",
+                    "bouncer-platform": "linux",
+                },
+                "linux64": {
+                    "path": "/firefox/releases/%(version)s/update/linux-x86_64/:lang/firefox-%(prev_version)s-%(version)s.partial.mar",
+                    "bouncer-platform": "linux64",
+                },
+                "macosx64": {
+                    "path": "/firefox/releases/%(version)s/update/mac/:lang/firefox-%(prev_version)s-%(version)s.partial.mar",
+                    "bouncer-platform": "osx",
+                },
+                "win32": {
+                    "path": "/firefox/releases/%(version)s/update/win32/:lang/firefox-%(prev_version)s-%(version)s.partial.mar",
+                    "bouncer-platform": "win",
+                },
             },
         },
     },
