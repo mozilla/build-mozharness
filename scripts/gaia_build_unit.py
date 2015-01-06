@@ -35,7 +35,8 @@ class GaiaBuildUnitTest(GaiaTest):
             'make',
             'build-test-unit',
             'NPM_REGISTRY=' + self.config.get('npm_registry'),
-            'REPORTER=mocha-tbpl-reporter'
+            'REPORTER=mocha-tbpl-reporter',
+            'TRY_ENV=1'
         ], cwd=dirs['abs_gaia_dir'],
            output_parser=output_parser,
            output_timeout=330)
