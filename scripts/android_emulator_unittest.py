@@ -18,7 +18,6 @@ import tempfile
 # load modules from parent dir
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
-from mozprocess import ProcessHandler
 from mozharness.base.log import FATAL
 from mozharness.base.script import BaseScript
 from mozharness.base.vcs.vcsbase import VCSMixin
@@ -139,8 +138,6 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
             dirs['abs_test_install_dir'], 'xpcshell')
         dirs['abs_blob_upload_dir'] = os.path.join(
             abs_dirs['abs_work_dir'], 'blobber_upload_dir')
-        dirs['abs_avds_dir'] = os.path.join(
-            abs_dirs['abs_work_dir'], "avds_dir")
         for key in dirs.keys():
             if key not in abs_dirs:
                 abs_dirs[key] = dirs[key]
@@ -209,20 +206,6 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
         # constructed in start_emulators.
         env['LD_LIBRARY_PATH'] = self.abs_dirs['abs_work_dir']
 
-        if self.config.get("developer_mode"):
-            avds_dir = os.path.join(self.abs_dirs['abs_avds_dir'], 'avd')
-            # IIUC when using a directory different than $HOME/.android/avd
-            # we need to set this value. This is important since we're running
-            # in a developer's machine
-            env['ANDROID_AVD_HOME'] = avds_dir
-            cmd = ['bash', '-c',
-                   'sed -i "s|/home/cltbld/.android/avd|%s|" %s/test-*.ini' %
-                   (avds_dir, avds_dir)]
-            print cmd
-            proc = ProcessHandler(cmd)
-            proc.run()
-            proc.wait()
-
         command = [
             "emulator", "-avd", emulator["name"],
             "-debug", "init,console,gles,memcheck,adbserver,adbclient,adb,avd_config,socket",
@@ -238,8 +221,7 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
         tmp_stdout = open(tmp_file.name, 'w')
         self.info("Created temp file %s." % tmp_file.name)
         self.info("Trying to start the emulator with this command: %s" % ' '.join(command))
-        proc = ProcessHandler(command, env=env)
-        proc.run()
+        proc = subprocess.Popen(command, stdout=tmp_stdout, stderr=tmp_stdout, env=env)
         return {
             "process": proc,
             "tmp_file": tmp_file,
@@ -478,57 +460,42 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
             "emulator_index": emulator_index
         }
 
-    def _tooltool_fetch(self, url):
-        c = self.config
-        dirs = self.query_abs_dirs()
-
-        manifest_path = self.download_file(
-            url,
-            file_name='releng.manifest',
-            parent_dir=dirs['abs_avds_dir']
-        )
-
-        if not os.path.exists(manifest_path):
-            self.fatal("Could not retrieve manifest needed to retrieve avds "
-                       "artifacts from %s" % manifest_path)
-
-        self.tooltool_fetch(manifest_path,
-                            output_dir=dirs['abs_avds_dir'],
-                            cache=c.get("tooltool_cache", None))
-
     ##########################################
     ### Actions for AndroidEmulatorTest ###
     ##########################################
     def setup_avds(self):
         '''
-        If tooltool cache mechanism is enabled, the cached version is used by
-        the fetch command. If the manifest includes an "unpack" field, tooltool
-        will unpack all compressed archives mentioned in the manifest.
+        If tooltool cache mechanism is enabled, the cached version is used by the fetch command
+        If the manifest includes an "unpack" field, tooltool will unpack all compressed archives mentioned in the manifest
         '''
         c = self.config
-        dirs = self.query_abs_dirs()
+
+        # TODO
+        # the following code cleans the folder previously (pre bug 1058286) used as cache for tooltool artifacts
+        # it can be removed when the folder has been clobbered on all slaves
+        old_tooltool_cache = "/builds/slave/talos-slave/cached"
+        try:
+            self.rmtree(old_tooltool_cache)
+            self.info("Folder %s is no longer used to cache tooltool artifacts and has been deleted" % old_tooltool_cache)
+        except OSError as e:
+            self.warning("Folder %s has not been clobbered: %s" % (old_tooltool_cache, str(e)))
 
         # FIXME
-        # Clobbering and re-unpacking would not be needed if we had a way to
-        # check whether the unpacked content already present match the
-        # contents of the tar ball
-        self.rmtree(dirs['abs_avds_dir'])
-        self.mkdir_p(dirs['abs_avds_dir'])
+        # clobbering and re-unpacking would not be needed if we had a way to check whether
+        # the unpacked content already present match the contents of the tar ball
 
-        if not self.buildbot_config:
-            # XXX until we figure out how to determine the repo_path, revision 
-            url = 'https://hg.mozilla.org/%s/raw-file/%s/%s' % (
-                "try", "default", c["tooltool_manifest_path"])
-            self._tooltool_fetch(url)
-        elif self.buildbot_config and 'properties' in self.buildbot_config:
-            url = 'https://hg.mozilla.org/%s/raw-file/%s/%s' % (
-                self.buildbot_config['properties']['repo_path'],
-                self.buildbot_config['properties']['revision'],
-                c["tooltool_manifest_path"])
-            self._tooltool_fetch(url)
+        self.rmtree(c[".avds_dir"])
+        self.mkdir_p(c[".avds_dir"])
+        if self.buildbot_config and 'properties' in self.buildbot_config:
+            url = 'https://hg.mozilla.org/%s/raw-file/%s/%s' % (self.buildbot_config['properties']['repo_path'], self.buildbot_config['properties']['revision'], c["tooltool_manifest_path"])
+
+            manifest_path = self.download_file(url, file_name='releng.manifest',
+                                           parent_dir=c[".avds_dir"])
+            if not os.path.exists(manifest_path):
+                self.fatal("Could not retrieve manifest needed to retrieve avds artifacts from %s" % manifest_path)
+            self.tooltool_fetch(manifest_path, output_dir=c[".avds_dir"], cache=c.get("tooltool_cache", None))
         else:
-            self.fatal("properties in self.buildbot_config are required to "
-                       "retrieve tooltool manifest to be used for avds setup")
+            self.fatal("properties in self.buildbot_config are required to retrieve tooltool manifest to be used for avds setup")
 
     def start_emulators(self):
         '''
@@ -536,11 +503,9 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
         '''
         assert len(self.test_suites) <= len(self.emulators), \
             "We can't run more tests that the number of emulators we start"
-
-        if not self.config.get("developer_mode"):
-            # We kill compiz because it sometimes prevents us from starting the emulators
-            self._kill_processes("compiz")
-            self._kill_processes("xpcshell")
+        # We kill compiz because it sometimes prevents us from starting the emulators
+        self._kill_processes("compiz")
+        self._kill_processes("xpcshell")
 
         # We add a symlink for libGL.so because the emulator dlopen()s it by that name
         # even though the installed library on most systems without dev packages is
