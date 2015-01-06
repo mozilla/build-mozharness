@@ -25,8 +25,6 @@ from mozharness.mozilla.proxxy import Proxxy
 from mozharness.mozilla.structuredlog import StructuredOutputParser
 from mozharness.mozilla.testing.unittest import DesktopUnittestOutputParser
 
-from mozharness.lib.python.authentication import get_credentials
-
 INSTALLER_SUFFIXES = ('.tar.bz2', '.zip', '.dmg', '.exe', '.apk', '.tar.gz')
 
 testing_config_options = [
@@ -112,17 +110,6 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin):
                                             error_level=error_level,
                                             exit_code=exit_code)
 
-    def download_file(self, *args, **kwargs):
-        '''
-        This function helps not to use download of proxied files
-        since it does not support authenticated downloads.
-        This could be re-factored and fixed in bug 1087664.
-        '''
-        if self.config.get("developer_mode"):
-            return super(TestingMixin, self).download_file(*args, **kwargs)
-        else:
-            return self.download_proxied_file(*args, **kwargs)
-
     def query_value(self, key):
         """
         This function allows us to check for a value
@@ -165,6 +152,30 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin):
                 return self.symbols_url
         else:
             self.fatal("Can't figure out symbols_url from installer_url %s!" % self.installer_url)
+
+    def _get_credentials(self):
+        if not hasattr(self, "https_username"):
+            self.info("NOTICE: Files downloaded from outside of "
+                    "Release Engineering network require LDAP credentials.")
+	    self.credential_path = os.path.expanduser("~/.mozilla/credentials.cfg")
+	    if (os.path.isfile(self.credential_path)):
+	        fp = open(self.credential_path,'r')
+		content = fp.read().splitlines()
+		fp.close()
+		self.https_username = content[0].strip()
+		self.https_password = content[1].strip()
+	    else:
+                if not os.path.exists(os.path.expanduser("~/.mozilla")):
+                    os.makedirs(os.path.expanduser("~/.mozilla"))
+                self.https_username = raw_input("Please enter your full LDAP email address: ")
+                self.https_password = getpass.getpass()
+	        fp = open(self.credential_path,"w+")
+	        fp.write("%s\n" % self.https_username)
+		fp.write("%s\n" % self.https_password)
+	        fp.close()
+		os.chmod(self.credential_path, 0600)
+
+        return self.https_username, self.https_password
 
     def _pre_config_lock(self, rw_config):
         for i, (target_file, target_dict) in enumerate(rw_config.all_cfg_files_and_dicts):
@@ -213,7 +224,7 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin):
 
         # Any changes to c means that we need credentials
         if not c == orig_config:
-            get_credentials()
+            self._get_credentials()
 
     def _urlopen(self, url, **kwargs):
         '''
@@ -223,16 +234,11 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin):
         # Code based on http://code.activestate.com/recipes/305288-http-basic-authentication
         def _urlopen_basic_auth(url, **kwargs):
             self.info("We want to download this file %s" % url)
-            if not hasattr(self, "https_username"):
-                self.info("NOTICE: Files downloaded from outside of "
-                          "Release Engineering network require LDAP "
-                          "credentials.")
-
-            self.https_username, self.https_password = get_credentials()
+            username, password = self._get_credentials()
             # This creates a password manager
             passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
             # Because we have put None at the start it will use this username/password combination from here on
-            passman.add_password(None, url, self.https_username, self.https_password)
+            passman.add_password(None, url, username, password)
             authhandler = urllib2.HTTPBasicAuthHandler(passman)
 
             return urllib2.build_opener(authhandler).open(url, **kwargs)
@@ -347,7 +353,7 @@ You can set this by:
             file_name = self.test_zip_path
         # try to use our proxxy servers
         # create a proxxy object and get the binaries from it
-        source = self.download_file(self.test_url, file_name=file_name,
+        source = self.download_proxied_file(self.test_url, file_name=file_name,
                                             parent_dir=dirs['abs_work_dir'],
                                             error_level=FATAL)
         self.test_zip_path = os.path.realpath(source)
@@ -357,7 +363,7 @@ You can set this by:
         This is hardcoded to halt on failure.
         We should probably change some other methods to call this."""
         dirs = self.query_abs_dirs()
-        zipfile = self.download_file(url, parent_dir=dirs['abs_work_dir'],
+        zipfile = self.download_proxied_file(url, parent_dir=dirs['abs_work_dir'],
                                              error_level=FATAL)
         command = self.query_exe('unzip', return_type='list')
         command.extend(['-q', '-o', zipfile])
@@ -435,7 +441,7 @@ You can set this by:
         if self.installer_path:
             file_name = self.installer_path
         dirs = self.query_abs_dirs()
-        source = self.download_file(self.installer_url,
+        source = self.download_proxied_file(self.installer_url,
                                             file_name=file_name,
                                             parent_dir=dirs['abs_work_dir'],
                                             error_level=FATAL)
@@ -451,7 +457,7 @@ You can set this by:
         if not self.symbols_path:
             self.symbols_path = os.path.join(dirs['abs_work_dir'], 'symbols')
         self.mkdir_p(self.symbols_path)
-        source = self.download_file(self.symbols_url,
+        source = self.download_proxied_file(self.symbols_url,
                                             parent_dir=self.symbols_path,
                                             error_level=FATAL)
         self.set_buildbot_property("symbols_url", self.symbols_url,
