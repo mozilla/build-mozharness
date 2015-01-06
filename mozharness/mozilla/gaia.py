@@ -302,7 +302,12 @@ class GaiaMixin(object):
                          halt_on_failure=True)
 
     def make_node_modules(self):
+
         dirs = self.query_abs_dirs()
+
+        def cleanup_node_modules():
+            node_dir = os.path.join(dirs['abs_gaia_dir'], 'node_modules')
+            self.rmtree(node_dir)
 
         self.run_command(['npm', 'cache', 'clean'])
 
@@ -317,7 +322,7 @@ class GaiaMixin(object):
             'error_list': self.npm_error_list
         }
         code = self.retry(self.run_command, attempts=3, good_statuses=(0,),
-                          args=[cmd], kwargs=kwargs)
+                          args=[cmd], cleanup=cleanup_node_modules, kwargs=kwargs)
         if code:
             # Dump npm-debug.log, if it exists
             npm_debug = os.path.join(dirs['abs_gaia_dir'], 'npm-debug.log')
