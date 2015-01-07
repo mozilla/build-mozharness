@@ -322,6 +322,22 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
         out, err = p.communicate()
         self.info('%s:\n%s\n%s' % (ps_cmd, out, err))
 
+    def _dump_host_state(self):
+        p = subprocess.Popen(['ps', '-ef'], stdout=subprocess.PIPE)
+        out, err = p.communicate()
+        self.info("output from ps -ef follows...")
+        if out:
+            self.info(out)
+        if err:
+            self.info(err)
+        p = subprocess.Popen(['netstat', '-a', '-p', '-n', '-t', '-u'], stdout=subprocess.PIPE)
+        out, err = p.communicate()
+        self.info("output from netstat -a -p -n -t -u follows...")
+        if out:
+            self.info(out)
+        if err:
+            self.info(err)
+
     def _dump_emulator_log(self, emulator_index):
         emulator = self.emulators[emulator_index]
         self.info("##### %s emulator log begins" % emulator["name"])
@@ -541,6 +557,7 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
                 time.sleep(30)
             attempts += 1
             self.info('Attempt #%d to launch emulators...' % attempts)
+            self._dump_host_state()
             self.emulator_procs = []
             emulator_index = 0
             redirect_failed = False
