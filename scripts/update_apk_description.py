@@ -186,9 +186,54 @@ class UpdateDescriptionAPK(BaseScript, GooglePlayMixin, VirtualenvMixin):
         self.update_desc(service, self.config['package_name'])
 
     def test(self):
-        """ Test if the connexion can be done """
+        """
+        Test if the connexion can be done and if the various method
+        works as expected
+        """
         self.check_argument()
         self.connect_to_play()
+        package_name = 'org.mozilla.fennec_aurora'
+        locales = self.get_list_locales(package_name)
+        if not locales:
+            self.fatal("get_list_locales() failed")
+
+        self.get_mapping()
+        if not self.mappings:
+            self.fatal("get_mapping() failed")
+
+        loca = self.locale_mapping("fr")
+        if loca != "fr-FR":
+            self.fatal("fr locale_mapping failed")
+        loca = self.locale_mapping("hr")
+        if loca != "hr":
+            self.fatal("hr locale_mapping failed")
+
+        translation = self.get_translation(package_name, 'cs')
+        if len(translation.get('title')) < 5:
+            self.fatal("get_translation title failed for the 'cs' locale")
+        if len(translation.get('short_desc')) < 5:
+            self.fatal("get_translation short_desc failed for the 'cs' locale")
+        if len(translation.get('long_desc')) < 5:
+            self.fatal("get_translation long_desc failed for the 'cs' locale")
+
+        package_name = "org.mozilla.firefox_beta"
+        translation = self.get_translation(package_name, 'fr')
+        if len(translation.get('title')) < 5:
+            self.fatal("get_translation title failed for the 'fr' locale")
+        if len(translation.get('short_desc')) < 5:
+            self.fatal("get_translation short_desc failed for the 'fr' locale")
+        if len(translation.get('long_desc')) < 5:
+            self.fatal("get_translation long_desc failed for the 'fr' locale")
+
+        package_name = "org.mozilla.firefox"
+        translation = self.get_translation(package_name, 'de')
+        print translation
+        if len(translation.get('title')) < 5:
+            self.fatal("get_translation title failed for the 'de' locale")
+        if len(translation.get('short_desc')) < 5:
+            self.fatal("get_translation short_desc failed for the 'de' locale")
+        if len(translation.get('long_desc')) < 5:
+            self.fatal("get_translation long_desc failed for the 'de' locale")
 
 # main {{{1
 if __name__ == '__main__':
