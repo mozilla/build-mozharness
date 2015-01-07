@@ -50,7 +50,10 @@ class UpdateDescriptionAPK(BaseScript, GooglePlayMixin, VirtualenvMixin):
             "help": "The L10N URL",
             "default": "https://l10n.mozilla-community.org/~pascalc/google_play_description/"
         }],
-
+        [["--force-locale"], {
+            "dest": "force_locale",
+            "help": "Force a specific locale (instead of all)",
+        }],
     ]
 
     # We have 3 apps. Make sure that their names are correct
@@ -107,13 +110,20 @@ class UpdateDescriptionAPK(BaseScript, GooglePlayMixin, VirtualenvMixin):
         So, locale unsupported by Google play won't be downloaded
         Idem for not translated locale
         """
-        response = urllib2.urlopen(self.all_locales_url.format(channel=package_name))
+        try:
+            response = urllib2.urlopen(self.all_locales_url.format(channel=package_name))
+        except urllib2.HTTPError:
+            print self.fatal("Could not download the locale list. Channel: '" + package_name + "', URL: '" + self.all_locales_url + "'")
+
         return json.load(response)
 
     def get_mapping(self):
         """ Download and load the locale mapping
         """
-        response = urllib2.urlopen(self.mapping_url)
+        try:
+            response = urllib2.urlopen(self.mapping_url)
+        except urllib2.HTTPError:
+            print self.fatal("Could not download the locale mapping list. URL: '" + self.mapping_url + "'")
         self.mappings = json.load(response)
 
     def locale_mapping(self, locale):
@@ -128,7 +138,11 @@ class UpdateDescriptionAPK(BaseScript, GooglePlayMixin, VirtualenvMixin):
     def get_translation(self, package_name, locale):
         """ Get the translation for a locale
         """
-        response = urllib2.urlopen(self.locale_url.format(channel=package_name, locale=locale))
+        localeURL = self.locale_url.format(channel=package_name, locale=locale)
+        try:
+            response = urllib2.urlopen(localeURL)
+        except urllib2.HTTPError:
+            print self.fatal("Could not download the locale translation. Locale: '" + locale + "', Channel: '" + package_name + "', URL: '" + localeURL + "'")
         return json.load(response)
 
     def update_desc(self, service, package_name):
@@ -148,8 +162,12 @@ class UpdateDescriptionAPK(BaseScript, GooglePlayMixin, VirtualenvMixin):
         # Retrieve the mapping
         self.get_mapping()
 
-        # Get all the locales from the web interface
-        locales = self.get_list_locales(package_name)
+        if self.config.get("force_locale"):
+            # The user forced a locale, don't need to retrieve the full list
+            locales = [self.config.get("force_locale")]
+        else:
+            # Get all the locales from the web interface
+            locales = self.get_list_locales(package_name)
         for locale in locales:
             translation = self.get_translation(package_name, locale)
             title = translation.get("title")
@@ -227,7 +245,6 @@ class UpdateDescriptionAPK(BaseScript, GooglePlayMixin, VirtualenvMixin):
 
         package_name = "org.mozilla.firefox"
         translation = self.get_translation(package_name, 'de')
-        print translation
         if len(translation.get('title')) < 5:
             self.fatal("get_translation title failed for the 'de' locale")
         if len(translation.get('short_desc')) < 5:
