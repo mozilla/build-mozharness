@@ -19,7 +19,7 @@ import tempfile
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
 from mozharness.base.log import FATAL
-from mozharness.base.script import BaseScript
+from mozharness.base.script import BaseScript, PostScriptRun
 from mozharness.base.vcs.vcsbase import VCSMixin
 from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_options
 from mozharness.mozilla.mozbase import MozbaseMixin
@@ -356,9 +356,8 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
                 self.info("Killing pid %d." % pid)
                 os.kill(pid, signal.SIGKILL)
 
-    def _post_fatal(self, message=None, exit_code=None):
-        """ After we call fatal(), run this method before exiting.
-        """
+    @PostScriptRun
+    def _post_script(self):
         self._kill_processes(self.config["emulator_process_name"])
 
     # XXX: This and android_panda.py's function might make sense to take higher up
