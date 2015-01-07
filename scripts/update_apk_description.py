@@ -86,8 +86,8 @@ class UpdateDescriptionAPK(BaseScript, GooglePlayMixin, VirtualenvMixin):
             default_actions=default_actions,
         )
 
-        self.all_locales_url = self.config['l10n_api_url'] + "api/?done"
-        self.locale_url = self.config['l10n_api_url'] + "api/?locale="
+        self.all_locales_url = self.config['l10n_api_url'] + "api/?done&channel={channel}"
+        self.locale_url = self.config['l10n_api_url'] + "api/?locale={locale}&channel={channel}"
         self.mapping_url = self.config['l10n_api_url'] + "api/?locale_mapping&reverse"
 
     def check_argument(self):
@@ -101,12 +101,13 @@ class UpdateDescriptionAPK(BaseScript, GooglePlayMixin, VirtualenvMixin):
         if not os.path.isfile(self.config['google_play_credentials_file']):
             self.fatal("Could not find " + self.config['google_play_credentials_file'])
 
-    def get_list_locales(self):
+    def get_list_locales(self, package_name):
+
         """ Get all the translated locales supported by Google play
         So, locale unsupported by Google play won't be downloaded
         Idem for not translated locale
         """
-        response = urllib2.urlopen(self.all_locales_url)
+        response = urllib2.urlopen(self.all_locales_url.format(channel=package_name))
         return json.load(response)
 
     def get_mapping(self):
@@ -123,6 +124,12 @@ class UpdateDescriptionAPK(BaseScript, GooglePlayMixin, VirtualenvMixin):
             return self.mappings[locale]
         else:
             return locale
+
+    def get_translation(self, package_name, locale):
+        """ Get the translation for a locale
+        """
+        response = urllib2.urlopen(self.locale_url.format(channel=package_name, locale=locale))
+        return json.load(response)
 
     def update_desc(self, service, package_name):
         """ Update the desc on google play
@@ -142,25 +149,25 @@ class UpdateDescriptionAPK(BaseScript, GooglePlayMixin, VirtualenvMixin):
         self.get_mapping()
 
         # Get all the locales from the web interface
-        locales = self.get_list_locales()
+        locales = self.get_list_locales(package_name)
         for locale in locales:
-            response = urllib2.urlopen(self.locale_url + locale)
-
-            description_json = json.load(response)
-            title = description_json.get('title')
-            shortDescription = description_json.get('short_desc')
-            fullDescription = description_json.get('long_desc')
+            translation = self.get_translation(package_name, locale)
+            title = translation.get("title")
+            short_desc = translation.get("short_desc")
+            long_desc = translation.get("long_desc")
 
             # Google play expects some locales codes (de-DE instead of de)
             locale = self.locale_mapping(locale)
 
             try:
                 self.log("Udating " + package_name + " for '" + locale +
-                         "' /  desc (first chars): " + fullDescription[0:20])
+                         "' /  title: '" + title + "', short_desc: '" +
+                         short_desc[0:20] + "'..., long_desc: '" +
+                         long_desc[0:20] + "...'")
                 listing_response = service.edits().listings().update(
                     editId=edit_id, packageName=package_name, language=locale,
-                    body={'fullDescription': fullDescription,
-                          'shortDescription': shortDescription,
+                    body={'fullDescription': long_desc,
+                          'shortDescription': short_desc,
                           'title': title}).execute()
 
             except client.AccessTokenRefreshError:
