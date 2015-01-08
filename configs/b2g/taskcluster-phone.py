@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 config = {
-    "default-vcs": "tc-cvs",
+    "default_vcs": "tc-vcs",
     "default_actions": [
         'checkout-sources',
         'build',
