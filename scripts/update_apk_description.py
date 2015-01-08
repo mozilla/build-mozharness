@@ -113,7 +113,7 @@ class UpdateDescriptionAPK(BaseScript, GooglePlayMixin, VirtualenvMixin):
         try:
             response = urllib2.urlopen(self.all_locales_url.format(channel=package_name))
         except urllib2.HTTPError:
-            print self.fatal("Could not download the locale list. Channel: '" + package_name + "', URL: '" + self.all_locales_url + "'")
+            self.fatal("Could not download the locale list. Channel: '" + package_name + "', URL: '" + self.all_locales_url + "'")
 
         return json.load(response)
 
@@ -123,7 +123,7 @@ class UpdateDescriptionAPK(BaseScript, GooglePlayMixin, VirtualenvMixin):
         try:
             response = urllib2.urlopen(self.mapping_url)
         except urllib2.HTTPError:
-            print self.fatal("Could not download the locale mapping list. URL: '" + self.mapping_url + "'")
+            self.fatal("Could not download the locale mapping list. URL: '" + self.mapping_url + "'")
         self.mappings = json.load(response)
 
     def locale_mapping(self, locale):
@@ -142,7 +142,7 @@ class UpdateDescriptionAPK(BaseScript, GooglePlayMixin, VirtualenvMixin):
         try:
             response = urllib2.urlopen(localeURL)
         except urllib2.HTTPError:
-            print self.fatal("Could not download the locale translation. Locale: '" + locale + "', Channel: '" + package_name + "', URL: '" + localeURL + "'")
+            self.fatal("Could not download the locale translation. Locale: '" + locale + "', Channel: '" + package_name + "', URL: '" + localeURL + "'")
         return json.load(response)
 
     def update_desc(self, service, package_name):
