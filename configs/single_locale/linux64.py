@@ -7,7 +7,8 @@ config = {
         "EN_US_BINARY_URL": "%(en_us_binary_url)s",
         "LOCALE_MERGEDIR": "%(abs_merge_dir)s/",
         "MOZ_UPDATE_CHANNEL": "%(update_channel)s",
-        "IS_NIGHTLY": "yes",
+        "DIST": "%(abs_objdir)s",
+        "LOCALE_MERGEDIR": "%(abs_merge_dir)s/",
     },
     "log_name": "single_locale",
     "objdir": "obj-l10n",
@@ -15,13 +16,17 @@ config = {
     "make_dirs": ['config'],
     "vcs_share_base": "/builds/hg-shared",
 
+    # tooltool
+    'tooltool_url': 'http://tooltool.pvt.build.mozilla.org/build/',
+    'tooltool_script': ["/builds/tooltool.py"],
+    'tooltool_bootstrap': "setup.sh",
+    'tooltool_manifest_src': 'browser/config/tooltool-manifests/linux64/releng.manifest',
     # balrog credential file:
     'balrog_credentials_file': 'oauth.txt',
 
     # l10n
     "ignore_locales": ["en-US"],
     "l10n_dir": "l10n",
-    "l10n_stage_dir": "dist/firefox/l10n-stage",
     "locales_file": "%(branch)s/browser/locales/all-locales",
     "locales_dir": "browser/locales",
     "hg_l10n_base": "https://hg.mozilla.org/l10n-central",
@@ -29,8 +34,8 @@ config = {
     "merge_locales": True,
 
     # MAR
-    "previous_mar_dir": "previous",
-    "current_mar_dir": "current",
+    "previous_mar_dir": "dist/previous",
+    "current_mar_dir": "dist/current",
     "update_mar_dir": "dist/update",  # sure?
     "previous_mar_filename": "previous.mar",
     "current_work_mar_dir": "current.work",
@@ -45,8 +50,7 @@ config = {
     "local_mar_tool_dir": "dist/host/bin",
     "mar": "mar",
     "mbsdiff": "mbsdiff",
-    # "partials_url": "%(base_url)s/latest-mozilla-central/",
-    "current_mar_filename": "firefox-%(version)s.en-US.linux-x86_64.complete.mar",
+    "current_mar_filename": "firefox-%(version)s.%(locale)s.linux-x86_64.complete.mar",
     "complete_mar": "firefox-%(version)s.en-US.linux-x86_64.complete.mar",
     "localized_mar": "firefox-%(version)s.%(locale)s.linux-x86_64.complete.mar",
     "partial_mar": "firefox-%(version)s.%(locale)s.linux-x86_64.partial.%(from_buildid)s-%(to_buildid)s.mar",
@@ -54,23 +58,33 @@ config = {
 
     # Mock
     'mock_target': 'mozilla-centos6-x86_64',
-    'mock_packages':
-        ['autoconf213', 'python', 'zip', 'mozilla-python27-mercurial', 'git', 'ccache',
-         'glibc-static', 'libstdc++-static', 'perl-Test-Simple', 'perl-Config-General',
-         'gtk2-devel', 'libnotify-devel', 'yasm',
-         'alsa-lib-devel', 'libcurl-devel',
-         'wireless-tools-devel', 'libX11-devel',
-         'libXt-devel', 'mesa-libGL-devel',
-         'gnome-vfs2-devel', 'GConf2-devel', 'wget',
-         'mpfr',  # required for system compiler
-         'xorg-x11-font*',  # fonts required for PGO
-         'imake',  # required for makedepend!?!
-         'gcc45_0moz3', 'gcc454_0moz1', 'gcc472_0moz1', 'yasm', 'ccache',  # <-- from releng repo
-         'gcc473_0moz1', 'valgrind',
-         'pulseaudio-libs-devel',
-         'gstreamer-devel', 'gstreamer-plugins-base-devel',
-         'freetype-2.3.11-6.el6_1.8.x86_64',
-         'freetype-devel-2.3.11-6.el6_1.8.x86_64', ],
+
+    'mock_packages': [
+        'autoconf213', 'python', 'mozilla-python27', 'zip', 'mozilla-python27-mercurial',
+        'git', 'ccache', 'perl-Test-Simple', 'perl-Config-General',
+        'yasm', 'wget',
+        'mpfr',  # required for system compiler
+        'xorg-x11-font*',  # fonts required for PGO
+        'imake',  # required for makedepend!?!
+        ### <-- from releng repo
+        'gcc45_0moz3', 'gcc454_0moz1', 'gcc472_0moz1', 'gcc473_0moz1',
+        'yasm', 'ccache',
+        ###
+        'valgrind', 'dbus-x11',
+        ######## 64 bit specific ###########
+        'glibc-static', 'libstdc++-static',
+        'gtk2-devel', 'libnotify-devel',
+        'alsa-lib-devel', 'libcurl-devel', 'wireless-tools-devel',
+        'libX11-devel', 'libXt-devel', 'mesa-libGL-devel', 'gnome-vfs2-devel',
+        'GConf2-devel',
+        ### from releng repo
+        'gcc45_0moz3', 'gcc454_0moz1', 'gcc472_0moz1', 'gcc473_0moz1',
+        'yasm', 'ccache',
+        ###
+        'pulseaudio-libs-devel', 'gstreamer-devel',
+        'gstreamer-plugins-base-devel', 'freetype-2.3.11-6.el6_1.8.x86_64',
+        'freetype-devel-2.3.11-6.el6_1.8.x86_64'
+    ],
     'mock_files': [
         ('/home/cltbld/.ssh', '/home/mock_mozilla/.ssh'),
         ('/home/cltbld/.hgrc', '/builds/.hgrc'),

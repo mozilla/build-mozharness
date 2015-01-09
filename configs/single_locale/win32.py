@@ -1,112 +1,67 @@
 import sys
-BRANCH = "mozilla-central"
-MOZILLA_DIR = BRANCH
-HG_SHARE_BASE_DIR = "c:/builds/hg-shared"
-EN_US_BINARY_URL = "http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/latest-mozilla-central"
-OBJDIR = "obj-l10n"
-MOZ_UPDATE_CHANNEL = "nightly"
-STAGE_SERVER = "dev-stage01.srv.releng.scl3.mozilla.com"
-STAGE_USER = "ffxbld"
-STAGE_SSH_KEY = "~/.ssh/ffxbld_rsa"
-AUS_SERVER = "dev-stage01.srv.releng.scl3.mozilla.com"
-# AUS_SERVER = "aus2-staging.mozilla.org"
-AUS_USER = "ffxbld"
-AUS_SSH_KEY = "~/.ssh/ffxbld_rsa"
-AUS_UPLOAD_BASE_DIR = "/opt/aus2/incoming/2/Firefox"
-AUS_BASE_DIR = BRANCH + "/%(build_target)s/%(buildid)s/%(locale)s"
-CANDIDATES_URL = "http://ftp.mozilla.org/pub/mozilla.org/firefox/%s" % MOZ_UPDATE_CHANNEL
+
 config = {
-    'balrog_api_root': 'https://aus4-admin-dev.allizom.org',
-    "balrog_credentials_file": "oauth.txt",
-    'balrog_username': 'stage-ffxbld',
-    "mozilla_dir": MOZILLA_DIR,
-    "snippet_base_url": "http://example.com",  # fix it
-    "mozconfig": "%s/browser/config/mozconfigs/win32/l10n-mozconfig" % MOZILLA_DIR,
     "platform": "win32",
     "update_platform": "WINNT_x86-msvc",
-    "binary_url": EN_US_BINARY_URL,
-    "repos": [{
-        "vcs": "hg",
-        "repo": "https://hg.mozilla.org/mozilla-central",
-        "revision": "default",
-        "dest": MOZILLA_DIR,
-    }, {
-        "vcs": "hg",
-        "repo": "https://hg.mozilla.org/build/tools",
-        "revision": "default",
-        "dest": "tools",
-    }, {
-        "vcs": "hg",
-        "repo": "https://hg.mozilla.org/build/compare-locales",
-        "revision": "RELEASE_AUTOMATION"
-    }],
+    "mozilla_dir": "%(branch)s",
+    "mozconfig": "%(branch)s/browser/config/mozconfigs/win32/l10n-mozconfig",
     "repack_env": {
-        "MOZ_OBJDIR": OBJDIR,
-        "EN_US_BINARY_URL": EN_US_BINARY_URL,
+        "MOZ_OBJDIR": "obj-l10n",
+        "EN_US_BINARY_URL": "%(en_us_binary_url)s",
         "LOCALE_MERGEDIR": "%(abs_merge_dir)s/",
-        "MOZ_UPDATE_CHANNEL": MOZ_UPDATE_CHANNEL,
-        "DIST": "%(abs_objdir)s\\dist",
-        "LOCALE_MERGEDIR": "%(abs_merge_dir)s\\",
-        # "MOZ_MAKE_COMPLETE_MAR": "1",
+        "MOZ_UPDATE_CHANNEL": "%(update_channel)s",
+        "DIST": "%(abs_objdir)s",
+        "LOCALE_MERGEDIR": "%(abs_merge_dir)s/",
+        "L10NBASEDIR": "../../l10n",
+        "MAKE_COMPLETE_MAR": "1",
     },
     "log_name": "single_locale",
-    "objdir": OBJDIR,
+    "objdir": "obj-l10n",
     "js_src_dir": "js/src",
     "make_dirs": ['config'],
-    "vcs_share_base": HG_SHARE_BASE_DIR,
+    "vcs_share_base": "c:/builds/hg-shared",
 
-    "upload_env": {
-        "UPLOAD_USER": STAGE_USER,
-        "UPLOAD_SSH_KEY": STAGE_SSH_KEY,
-        "UPLOAD_HOST": STAGE_SERVER,
-        # "POST_UPLOAD_CMD": "post_upload.py -b mozilla-central-android-l10n -p mobile -i %(buildid)s --release-to-latest --release-to-dated",
-        "POST_UPLOAD_CMD": "post_upload.py -b mozilla-central-l10n -p firefox -i %(buildid)s  --release-to-latest --release-to-dated",
-        "UPLOAD_TO_TEMP": "1",
-    },
+    # tooltool
+    'tooltool_url': 'http://tooltool.pvt.build.mozilla.org/build/',
+    'tooltool_script': [sys.executable,
+                        'C:/mozilla-build/tooltool.py'],
+    'tooltool_bootstrap': "setup.sh",
+    'tooltool_manifest_src': 'browser/config/tooltool-manifests/win32/releng.manifest',
+    # balrog credential file:
+    'balrog_credentials_file': 'oauth.txt',
+
     # l10n
     "ignore_locales": ["en-US"],
     "l10n_dir": "l10n",
-    "l10n_stage_dir": "dist/firefox/l10n-stage",
-    "locales_file": "%s/browser/locales/all-locales" % MOZILLA_DIR,
+    "locales_file": "%(branch)s/browser/locales/all-locales",
     "locales_dir": "browser/locales",
     "hg_l10n_base": "https://hg.mozilla.org/l10n-central",
     "hg_l10n_tag": "default",
     "merge_locales": True,
-    "clobber_file": 'CLOBBER',
 
     # MAR
-    'previous_mar_url': 'http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/latest-mozilla-central-l10n',
-    'current_mar_url': 'http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/latest-mozilla-central',
-    "previous_mar_dir": "previous",
-    "current_mar_dir": "current",
+    "previous_mar_dir": "dist\\previous",
+    "current_mar_dir": "dist\\current",
     "update_mar_dir": "dist\\update",  # sure?
     "previous_mar_filename": "previous.mar",
     "current_work_mar_dir": "current.work",
-    "package_base_dir": "dist\\install\\sea",
+    "package_base_dir": "dist\\l10n-stage",
     "application_ini": "application.ini",
     "buildid_section": 'App',
     "buildid_option": "BuildID",
     "unpack_script": "tools\\update-packaging\\unwrap_full_update.pl",
     "incremental_update_script": "tools\\update-packaging\\make_incremental_update.sh",
+    "balrog_release_pusher_script": "scripts\\updates\\balrog-release-pusher.py",
     "update_packaging_dir": "tools\\update-packaging",
     "local_mar_tool_dir": "dist\\host\\bin",
     "mar": "mar.exe",
     "mbsdiff": "mbsdiff.exe",
-    "candidates_base_url": CANDIDATES_URL,
-    "partials_url": "%(base_url)s/latest-mozilla-central/",
-    "mar_tools_url": "http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/latest-mozilla-central/mar-tools/win32",
+    "current_mar_filename": "firefox-%(version)s.%(locale)s.win32.complete.mar",
     "complete_mar": "firefox-%(version)s.en-US.win32.complete.mar",
     "localized_mar": "firefox-%(version)s.%(locale)s.win32.complete.mar",
     "partial_mar": "firefox-%(version)s.%(locale)s.partial.%(from_buildid)s-%(to_buildid)s.mar",
     'installer_file': "firefox-%(version)s.en-US.win32.installer.exe",
 
-    # AUS
-    "aus_server": AUS_SERVER,
-    "aus_user": AUS_USER,
-    "aus_ssh_key": AUS_SSH_KEY,
-    "aus_upload_base_dir": AUS_UPLOAD_BASE_DIR,
-    "aus_base_dir": AUS_BASE_DIR,
-    "exes": {
-        "make": [sys.executable, "%(abs_work_dir)s\\mozilla-central\\build\\pymake\\make.py"],
-    }
+    # use pymake instead of make?
+    "enable_pymake": True,
 }

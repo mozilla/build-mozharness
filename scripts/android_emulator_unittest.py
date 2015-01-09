@@ -19,7 +19,7 @@ import tempfile
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
 from mozharness.base.log import FATAL
-from mozharness.base.script import BaseScript
+from mozharness.base.script import BaseScript, PostScriptRun
 from mozharness.base.vcs.vcsbase import VCSMixin
 from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_options
 from mozharness.mozilla.mozbase import MozbaseMixin
@@ -322,6 +322,22 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
         out, err = p.communicate()
         self.info('%s:\n%s\n%s' % (ps_cmd, out, err))
 
+    def _dump_host_state(self):
+        p = subprocess.Popen(['ps', '-ef'], stdout=subprocess.PIPE)
+        out, err = p.communicate()
+        self.info("output from ps -ef follows...")
+        if out:
+            self.info(out)
+        if err:
+            self.info(err)
+        p = subprocess.Popen(['netstat', '-a', '-p', '-n', '-t', '-u'], stdout=subprocess.PIPE)
+        out, err = p.communicate()
+        self.info("output from netstat -a -p -n -t -u follows...")
+        if out:
+            self.info(out)
+        if err:
+            self.info(err)
+
     def _dump_emulator_log(self, emulator_index):
         emulator = self.emulators[emulator_index]
         self.info("##### %s emulator log begins" % emulator["name"])
@@ -340,9 +356,8 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
                 self.info("Killing pid %d." % pid)
                 os.kill(pid, signal.SIGKILL)
 
-    def _post_fatal(self, message=None, exit_code=None):
-        """ After we call fatal(), run this method before exiting.
-        """
+    @PostScriptRun
+    def _post_script(self):
         self._kill_processes(self.config["emulator_process_name"])
 
     # XXX: This and android_panda.py's function might make sense to take higher up
@@ -387,6 +402,8 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
             ),
         ]
 
+        raw_log_file = os.path.join(dirs['abs_blob_upload_dir'],
+                                    '%s_raw.log' % suite_name)
         str_format_values = {
             'app': self._query_package_name(),
             'remote_webserver': c['remote_webserver'],
@@ -402,7 +419,7 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
             'symbols_path': self.symbols_path,
             'modules_dir': dirs['abs_modules_dir'],
             'installer_path': self.installer_path,
-            'raw_log_file': os.path.join(dirs['abs_blob_upload_dir'], 'raw_structured_logs.log')
+            'raw_log_file': raw_log_file,
         }
         for option in self.tree_config["suite_definitions"][suite_category]["options"]:
             cmd.extend([option % str_format_values])
@@ -541,6 +558,7 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
                 time.sleep(30)
             attempts += 1
             self.info('Attempt #%d to launch emulators...' % attempts)
+            self._dump_host_state()
             self.emulator_procs = []
             emulator_index = 0
             redirect_failed = False

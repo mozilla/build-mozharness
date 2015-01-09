@@ -130,6 +130,10 @@ class B2GBuild(LocalesMixin, PurgeMixin,
             "dest": "repo_rev",
             "help": "which revision of repo tool to use",
         }],
+        [["--base-repo"], {
+            "dest": "base_repo",
+            "help": "base repository for cloning",
+        }],
         [["--complete-mar-url"], {
             "dest": "complete_mar_url",
             "help": "the URL where the complete MAR was uploaded. Required if submit-to-balrog is requested and upload isn't.",

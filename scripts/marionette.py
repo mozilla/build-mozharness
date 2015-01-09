@@ -376,6 +376,8 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
         """
         dirs = self.query_abs_dirs()
 
+        raw_log_file = os.path.join(dirs['abs_blob_upload_dir'],
+                                    'marionette_raw.log')
         config_fmt_args = {
             'type': self.config.get('test_type'),
             # emulator builds require a longer timeout
@@ -389,8 +391,7 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
             'homedir': os.path.join(dirs['abs_emulator_dir'], 'b2g-distro'),
             'binary': self.binary_path,
             'address': self.config.get('marionette_address'),
-            'raw_log_file': os.path.join(dirs["abs_blob_upload_dir"],
-                                         "mn_structured_full.log"),
+            'raw_log_file': raw_log_file,
             'gecko_log': dirs["abs_blob_upload_dir"],
         }
 
