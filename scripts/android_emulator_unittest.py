@@ -402,6 +402,8 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
             ),
         ]
 
+        raw_log_file = os.path.join(dirs['abs_blob_upload_dir'],
+                                    '%s_raw.log' % suite_name)
         str_format_values = {
             'app': self._query_package_name(),
             'remote_webserver': c['remote_webserver'],
@@ -417,7 +419,7 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
             'symbols_path': self.symbols_path,
             'modules_dir': dirs['abs_modules_dir'],
             'installer_path': self.installer_path,
-            'raw_log_file': os.path.join(dirs['abs_blob_upload_dir'], 'raw_structured_logs.log')
+            'raw_log_file': raw_log_file,
         }
         for option in self.tree_config["suite_definitions"][suite_category]["options"]:
             cmd.extend([option % str_format_values])

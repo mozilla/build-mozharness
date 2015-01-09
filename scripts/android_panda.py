@@ -222,7 +222,7 @@ class PandaTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixin, Bu
             for suite in suites:
                 dirs = self.query_abs_dirs()
                 self._download_unzip_hostutils()
-                abs_base_cmd = self._query_abs_base_cmd(suite_category)
+                abs_base_cmd = self._query_abs_base_cmd(suite_category, suite)
 
                 should_install_app = True
                 if 'cppunittest' in suite:
@@ -420,7 +420,7 @@ class PandaTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixin, Bu
         if self.symbols_url:
             return self.symbols_url
 
-    def _query_abs_base_cmd(self, suite_category):
+    def _query_abs_base_cmd(self, suite_category, suite):
         #check for apk first with if ?
         c = self.config
         dirs = self.query_abs_dirs()
@@ -449,6 +449,8 @@ class PandaTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixin, Bu
         self.run_command(unzip_cmd, cwd=apk_dir, halt_on_failure=True, fatal_exit_code=3)
         self.app_name = str(self.read_from_file(package_path, verbose=True)).rstrip()
 
+        raw_log_file = os.path.join(dirs['abs_blob_upload_dir'],
+                                    '%s_raw.log' % suite)
         str_format_values = {
             'device_ip': self.device_ip,
             'hostname': self.mozpool_device,
@@ -458,7 +460,7 @@ class PandaTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixin, Bu
             'app_name':  self.app_name,
             'apk_name':  self.filename_apk,
             'apk_path':  self.apk_path,
-            'raw_log_file': os.path.join(dirs['abs_blob_upload_dir'], 'raw_structured_logs.log')
+            'raw_log_file': raw_log_file,
         }
         if '%s_options' % suite_category in self.tree_config:
             for option in self.tree_config['%s_options' % suite_category]:

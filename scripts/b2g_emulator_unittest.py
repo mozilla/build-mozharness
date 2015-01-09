@@ -261,6 +261,8 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, VCSMixin, BaseScript, BlobUpl
         cmd = [self.query_python_path('python')]
         cmd.append(self.config['run_file_names'][suite])
 
+        raw_log_file = os.path.join(dirs['abs_blob_upload_dir'],
+                                    '%s_raw.log' % suite)
         str_format_values = {
             'adbpath': self.adb_path,
             'b2gpath': dirs['abs_b2g-distro_dir'],
@@ -278,7 +280,7 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, VCSMixin, BaseScript, BlobUpl
             'this_chunk': self.config.get('this_chunk'),
             'test_path': self.config.get('test_path'),
             'certificate_path': dirs['abs_certs_dir'],
-            'raw_log_file': os.path.join(dirs['abs_blob_upload_dir'], 'raw_structured_logs.log')
+            'raw_log_file': raw_log_file,
         }
 
         # Bug 978233 - hack to get around multiple mochitest manifest arguments

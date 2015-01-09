@@ -121,7 +121,7 @@ class WebPlatformTest(TestingMixin, MercurialScript, BlobUploadMixin):
 
         base_cmd += ["--log-raw=-",
                      "--log-raw=%s" % os.path.join(dirs["abs_blob_upload_dir"],
-                                                   "wpt_structured_full.log"),
+                                                   "wpt_raw.log"),
                      "--binary=%s" % self.binary_path,
                      "--symbols-path=%s" % self.query_symbols_url(),
                      "--stackwalk-binary=%s" % self.query_minidump_stackwalk()]

@@ -151,6 +151,8 @@ class B2GDesktopTest(BlobUploadMixin, TestingMixin, TooltoolMixin, MercurialScri
         cmd = [self.query_python_path('python')]
         cmd.append(self.query_value("run_file_names")[suite])
 
+        raw_log_file = os.path.join(dirs['abs_blob_upload_dir'],
+                                    '%s_raw.log' % suite)
         str_format_values = {
             'application': self.binary_path,
             'test_manifest': self.test_manifest,
@@ -161,7 +163,7 @@ class B2GDesktopTest(BlobUploadMixin, TestingMixin, TooltoolMixin, MercurialScri
             'this_chunk': self.config.get('this_chunk'),
             'cert_path': dirs['abs_certs_dir'],
             'browser_arg': self.config.get('browser_arg'),
-            'raw_log_file': os.path.join(dirs['abs_blob_upload_dir'], 'raw_structured_logs.log')
+            'raw_log_file': raw_log_file,
         }
 
         # Bug 978233 - hack to get around multiple mochitest manifest arguments
