@@ -13,6 +13,10 @@ config = {
     ],
     "no_branch_repos": [
         "gecko",
+        # device conflict
+        "platform_frameworks_base",
+        "device_lge_hammerhead-kernel",
+        "device-hammerhead",
     ],
     "extra_branch_manifest_repos": [
         "gecko",
