@@ -62,8 +62,6 @@ class B2GBuild(LocalesMixin, PurgeMixin,
         'build-update-testdata',
         'prep-upload',
         'upload',
-        'make-update-xml',
-        'upload-updates',
         'make-socorro-json',
         'upload-source-manifest',
         'submit-to-balrog',
@@ -98,20 +96,6 @@ class B2GBuild(LocalesMixin, PurgeMixin,
             "dest": "additional_source_tarballs",
             "help": "Additional source tarballs to extract",
         }],
-        # XXX: Remove me after all devices/branches are switched to Balrog
-        [["--update-channel"], {
-            "dest": "update_channel",
-            "help": "b2g update channel",
-        }],
-        # XXX: Remove me after all devices/branches are switched to Balrog
-        [["--nightly-update-channel"], {
-            "dest": "nightly_update_channel",
-            "help": "b2g update channel for nightly builds",
-        }],
-        [["--publish-channel"], {
-            "dest": "publish_channel",
-            "help": "channel where build is published to",
-        }],
         [["--debug"], {
             "dest": "debug_build",
             "action": "store_true",
@@ -143,8 +127,6 @@ class B2GBuild(LocalesMixin, PurgeMixin,
     def __init__(self, require_config_file=False, config={},
                  all_actions=all_actions,
                  default_actions=default_actions):
-                                # XXX: Remove me after all devices/branches are switched to Balrog
-                                # XXX: Remove me after all devices/branches are switched to Balrog
         # Default configuration
         default_config = {
             'default_vcs': 'hgtool',
@@ -163,8 +145,6 @@ class B2GBuild(LocalesMixin, PurgeMixin,
             'repo_rev': 'stable',
             'repo_remote_mappings': {},
             'influx_credentials_file': 'oauth.txt',
-            # XXX: Remove me after all devices/branches are switched to Balrog
-            'update_channel': 'default',
             'balrog_credentials_file': 'oauth.txt',
             'virtualenv_modules': [
                 'requests==2.2.1',
@@ -254,11 +234,6 @@ class B2GBuild(LocalesMixin, PurgeMixin,
         env = self.query_env()
         if 'B2G_UPDATE_CHANNEL' in env:
             return env['B2G_UPDATE_CHANNEL']
-        # XXX: Remove me after all devices/branches are switched to Balrog
-        if self.query_is_nightly() and 'nightly_update_channel' in self.config:
-            return self.config['nightly_update_channel']
-        else:
-            return self.config['update_channel']
 
     def get_hg_commit_time(self, repo_dir, rev):
         """Returns the commit time for given `rev` in unix epoch time"""
@@ -299,13 +274,6 @@ class B2GBuild(LocalesMixin, PurgeMixin,
     def query_build_env(self):
         env = super(B2GBuild, self).query_build_env()
 
-        # XXX: Remove me after all devices/branches are switched to Balrog
-        if 'B2G_UPDATE_CHANNEL' not in env:
-            env['B2G_UPDATE_CHANNEL'] = "{target}/{version}/{channel}".format(
-                target=self.config['target'],
-                channel=self.query_update_channel(),
-                version=self.query_b2g_version(),
-            )
         # Force B2G_UPDATER so that eng builds (like the emulator) will get
         # the updater included. Otherwise the xpcshell updater tests won't run.
         env['B2G_UPDATER'] = '1'
@@ -365,11 +333,6 @@ class B2GBuild(LocalesMixin, PurgeMixin,
             return self.config["complete_mar_url"]
         if "completeMarUrl" in self.package_urls:
             return self.package_urls["completeMarUrl"]
-        # XXX: remove this after everything is uploading publicly
-        url = self.config.get("update", {}).get("mar_base_url")
-        if url:
-            url += os.path.basename(self.query_marfile_path())
-            return url.format(branch=self.query_branch())
         self.fatal("Couldn't find complete mar url in config or package_urls")
 
     def checkout_repotool(self, repo_dir):
@@ -1097,120 +1060,6 @@ class B2GBuild(LocalesMixin, PurgeMixin,
                 self.return_code = 2
                 return
         self.info("Upload successful")
-
-    # XXX: Remove me after all devices/branches are switched to Balrog
-    def make_update_xml(self):
-        if not self.query_is_nightly():
-            self.info("Not a nightly build. Skipping...")
-            return
-        if not self.config.get('update'):
-            self.info("No updates. Skipping...")
-            return
-
-        dirs = self.query_abs_dirs()
-        upload_dir = dirs['abs_upload_dir'] + '-updates'
-        # Delete the upload dir so we don't upload previous stuff by accident
-        self.rmtree(upload_dir)
-
-        suffix = self.query_buildid()
-        dated_mar = "b2g_update_%s.mar" % suffix
-        dated_update_xml = "update_%s.xml" % suffix
-        dated_application_ini = "application_%s.ini" % suffix
-        dated_sources_xml = "b2g_update_source_%s.xml" % suffix
-        mar_url = self.config['update']['base_url'] + dated_mar
-        if self.query_is_nightly() and 'nightly_update_channel' in self.config:
-            update_channel = self.config['nightly_update_channel']
-        else:
-            update_channel = self.config['update_channel']
-        publish_channel = self.config.get('publish_channel', update_channel)
-        mar_url = mar_url.format(
-            update_channel=update_channel,
-            publish_channel=publish_channel,
-            version=self.query_b2g_version(),
-            target=self.config['target'],
-        )
-
-        self.info("Generating update.xml for %s" % mar_url)
-        if not self.create_update_xml(self.query_marfile_path(), self.query_version(),
-                                      self.query_buildid(),
-                                      mar_url,
-                                      upload_dir,
-                                      extra_update_attrs=self.extra_update_attrs):
-            self.fatal("Failed to generate update.xml")
-
-        self.copy_to_upload_dir(
-            self.query_marfile_path(),
-            os.path.join(upload_dir, dated_mar)
-        )
-        self.copy_to_upload_dir(
-            self.query_application_ini(),
-            os.path.join(upload_dir, dated_application_ini)
-        )
-        # copy update.xml to update_${buildid}.xml to keep history of updates
-        self.copy_to_upload_dir(
-            os.path.join(upload_dir, "update.xml"),
-            os.path.join(upload_dir, dated_update_xml)
-        )
-        self.copy_to_upload_dir(
-            os.path.join(dirs['work_dir'], 'sources.xml'),
-            os.path.join(upload_dir, dated_sources_xml)
-        )
-
-    # XXX: Remove me after all devices/branches are switched to Balrog
-    def upload_updates(self):
-        if not self.query_is_nightly():
-            self.info("Not a nightly build. Skipping...")
-            return
-        if not self.config.get('update'):
-            self.info("No updates. Skipping...")
-            return
-        dirs = self.query_abs_dirs()
-        upload_dir = dirs['abs_upload_dir'] + '-updates'
-        # upload dated files first to be sure that update.xml doesn't
-        # point to not existing files
-        if self.query_is_nightly() and 'nightly_update_channel' in self.config:
-            update_channel = self.config['nightly_update_channel']
-        else:
-            update_channel = self.config['update_channel']
-        publish_channel = self.config.get('publish_channel', update_channel)
-        if publish_channel is None:
-            publish_channel = update_channel
-        upload_remote_basepath = self.config['update']['upload_remote_basepath']
-        upload_remote_basepath = upload_remote_basepath.format(
-            update_channel=update_channel,
-            publish_channel=publish_channel,
-            version=self.query_b2g_version(),
-            target=self.config['target'],
-        )
-        retval = self.rsync_upload_directory(
-            upload_dir,
-            self.config['update']['ssh_key'],
-            self.config['update']['ssh_user'],
-            self.config['update']['upload_remote_host'],
-            upload_remote_basepath,
-            rsync_options=['-azv', "--exclude=update.xml"]
-        )
-        if retval is not None:
-            self.error("failed to upload")
-            self.return_code = 2
-        else:
-            self.info("Upload successful")
-
-        if self.config['update'].get('autopublish'):
-            # rsync everything, including update.xml
-            retval = self.rsync_upload_directory(
-                upload_dir,
-                self.config['update']['ssh_key'],
-                self.config['update']['ssh_user'],
-                self.config['update']['upload_remote_host'],
-                upload_remote_basepath,
-            )
-
-            if retval is not None:
-                self.error("failed to upload")
-                self.return_code = 2
-            else:
-                self.info("Upload successful")
 
     def submit_to_balrog(self):
         if not self.query_is_nightly():
