@@ -11,6 +11,10 @@ LIVE_B2G_BRANCHES = {
         "gaia_branch": "v2.1",
         "tag_name": "B2G_2_1_%(DATE)s_MERGEDAY",
     },
+    "mozilla-b2g34_v2_1s": {
+        "gaia_branch": "v2.1s",
+        "tag_name": "B2G_2_1s_%(DATE)s_MERGEDAY",
+    },
 }
 
 config = {
