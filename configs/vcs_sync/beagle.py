@@ -264,6 +264,32 @@ config = {
             ],
         },
     }, {
+        "repo": "https://hg.mozilla.org/releases/mozilla-b2g37_v2_2",
+        "revision": "default",
+        "repo_name": "mozilla-b2g37_v2_2",
+        "targets": [{
+            "target_dest": "beagle/.git",
+            "vcs": "git",
+            "test_push": True,
+        }, {
+            "target_dest": "gitmo-beagle",
+        }, {
+            "target_dest": "gitmo-staging",
+        }, {
+            "target_dest": "github-beagle",
+        }],
+        "vcs": "hg",
+        "branch_config": {
+            "branches": {
+                "default": "b2g37_v2_2",
+            },
+        },
+        "tag_config": {
+            "tag_regexes": [
+                "^B2G_",
+            ],
+        },
+    }, {
         "repo": "https://hg.mozilla.org/releases/mozilla-b2g32_v2_0",
         "revision": "default",
         "repo_name": "mozilla-b2g32_v2_0",
