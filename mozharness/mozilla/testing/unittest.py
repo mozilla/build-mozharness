@@ -156,7 +156,9 @@ class DesktopUnittestOutputParser(OutputParser):
             return  # skip base parse_single_line
         super(DesktopUnittestOutputParser, self).parse_single_line(line)
 
-    def evaluate_parser(self, return_code):
+    def evaluate_parser(self, return_code, success_codes=None):
+        success_codes = success_codes or [0]
+
         if self.num_errors:  # mozharness ran into a script error
             self.tbpl_status = self.worst_level(TBPL_FAILURE, self.tbpl_status,
                                                 levels=TBPL_WORST_LEVEL_TUPLE)
@@ -177,6 +179,10 @@ class DesktopUnittestOutputParser(OutputParser):
                                                     self.worst_log_level)
             self.tbpl_status = self.worst_level(TBPL_WARNING,
                                                 self.tbpl_status,
+                                                levels=TBPL_WORST_LEVEL_TUPLE)
+
+        if return_code not in success_codes:
+            self.tbpl_status = self.worst_level(TBPL_FAILURE, self.tbpl_status,
                                                 levels=TBPL_WORST_LEVEL_TUPLE)
 
         # we can trust in parser.worst_log_level in either case

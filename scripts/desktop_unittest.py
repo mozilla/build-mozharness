@@ -545,7 +545,15 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
                 #    errors itself with 'num_errors' <- OutputParser
                 # 2) if num_errors is 0 then we look in the subclassed 'parser'
                 #    findings for harness/suite errors <- DesktopUnittestOutputParser
-                tbpl_status, log_level = parser.evaluate_parser(0)
+                # 3) checking to see if the return code is in success_codes
+
+                success_codes = None
+                if self._is_windows():
+                    # bug 1120644
+                    success_codes = [0, 1]
+
+                tbpl_status, log_level = parser.evaluate_parser(return_code,
+                                                                success_codes=success_codes)
                 parser.append_tinderboxprint_line(suite_name)
 
                 self.buildbot_status(tbpl_status, level=log_level)

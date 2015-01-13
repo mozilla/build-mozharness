@@ -85,7 +85,8 @@ class StructuredOutputParser(OutputParser):
         self.log(self.formatter(data), level=level)
         self.update_levels(tbpl_level, level)
 
-    def evaluate_parser(self, return_code):
+    def evaluate_parser(self, return_code, success_codes=None):
+        success_codes = success_codes or [0]
         summary = self.handler.summarize()
 
         fail_pair = TBPL_WARNING, WARNING
@@ -123,7 +124,7 @@ class StructuredOutputParser(OutputParser):
 
         # Harnesses typically return non-zero on test failure, so don't promote
         # to error if we already have a failing status.
-        if return_code != 0 and self.tbpl_status == TBPL_SUCCESS:
+        if return_code not in success_codes and self.tbpl_status == TBPL_SUCCESS:
             self.update_levels(*error_pair)
 
         return self.tbpl_status, self.worst_log_level
