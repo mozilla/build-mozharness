@@ -265,12 +265,12 @@ class PandaTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixin, Bu
                                                      error_list=error_list,
                                                      log_obj=self.log_obj)
 
-                self.run_command(cmd,
-                                 cwd=dirs['abs_test_install_dir'],
-                                 env=env,
-                                 output_parser=parser)
+                return_code = self.run_command(cmd,
+                                               cwd=dirs['abs_test_install_dir'],
+                                               env=env,
+                                               output_parser=parser)
 
-                tbpl_status, log_level = parser.evaluate_parser(0)
+                tbpl_status, log_level = parser.evaluate_parser(return_code)
 
                 if tbpl_status != TBPL_SUCCESS:
                     self.info("Output logcat...")

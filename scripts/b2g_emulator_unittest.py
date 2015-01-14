@@ -308,7 +308,7 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, VCSMixin, BaseScript, BlobUpl
                 missing_key = False
             options = self.tree_config[suite_options]
 
-        if missing_key: 
+        if missing_key:
             self.fatal("Key '%s' not defined in the in-tree config! Please add it to '%s'." \
                        "See bug 981030 for more details." % (suite,
                        os.path.join('gecko', 'testing', self.config['in_tree_config'])))
@@ -387,10 +387,13 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, VCSMixin, BaseScript, BlobUpl
         else:
             suite = suite_name
 
-        # bug 773703
         success_codes = None
         if suite_name == 'xpcshell':
+            # bug 773703
             success_codes = [0, 1]
+        elif suite_name == 'mochitest' and int(self.config['this_chunk']) == 11:
+            # bug 1120580
+            success_codes = [0, 247]
 
         if suite_name == 'cppunittest':
             # check if separate test package required
@@ -409,10 +412,10 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, VCSMixin, BaseScript, BlobUpl
                                              config=self.config,
                                              log_obj=self.log_obj,
                                              error_list=error_list)
-        self.run_command(cmd, cwd=cwd, env=env,
-                         output_timeout=1000,
-                         output_parser=parser,
-                         success_codes=success_codes)
+        return_code = self.run_command(cmd, cwd=cwd, env=env,
+                                       output_timeout=1000,
+                                       output_parser=parser,
+                                       success_codes=success_codes)
 
         logcat = os.path.join(dirs['abs_work_dir'], 'emulator-5554.log')
 
@@ -421,7 +424,8 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, VCSMixin, BaseScript, BlobUpl
             self.copyfile(qemu, os.path.join(env['MOZ_UPLOAD_DIR'],
                                              os.path.basename(qemu)))
 
-        tbpl_status, log_level = parser.evaluate_parser(0)
+        tbpl_status, log_level = parser.evaluate_parser(return_code,
+                                                        success_codes=success_codes)
 
         if os.path.isfile(logcat):
             if tbpl_status != TBPL_SUCCESS:

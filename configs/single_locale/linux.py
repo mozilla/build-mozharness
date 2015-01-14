@@ -59,7 +59,7 @@ config = {
     'installer_file': "firefox-%(version)s.en-US.linux-i686.tar.bz2",
 
     # Mock
-    'mock_target': 'mozilla-centos6-i386',
+    'mock_target': 'mozilla-centos6-x86_64',
     'mock_packages': [
         'autoconf213', 'python', 'mozilla-python27', 'zip', 'mozilla-python27-mercurial',
         'git', 'ccache', 'perl-Test-Simple', 'perl-Config-General',

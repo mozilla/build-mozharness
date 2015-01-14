@@ -265,12 +265,13 @@ class B2GDesktopTest(BlobUploadMixin, TestingMixin, TooltoolMixin, MercurialScri
                                              log_obj=self.log_obj,
                                              error_list=error_list)
 
-        self.run_command(cmd, cwd=cwd, env=env,
-                         output_timeout=1000,
-                         output_parser=parser,
-                         success_codes=success_codes)
+        return_code = self.run_command(cmd, cwd=cwd, env=env,
+                                       output_timeout=1000,
+                                       output_parser=parser,
+                                       success_codes=success_codes)
 
-        tbpl_status, log_level = parser.evaluate_parser(0)
+        tbpl_status, log_level = parser.evaluate_parser(return_code,
+                                                        success_codes=success_codes)
         parser.append_tinderboxprint_line(suite_name)
 
         self.buildbot_status(tbpl_status, level=log_level)

@@ -136,8 +136,14 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
          "dest": "this_chunk",
          "help": "Number of this chunk",
         }
-    ]] + copy.deepcopy(testing_config_options) \
-       + copy.deepcopy(blobupload_config_options)
+     ], [
+        ["--e10s"],
+        {"action": "store_true",
+         "dest": "e10s",
+         "help": "Run tests with multiple processes. (Desktop builds only)",
+        }
+     ]] + copy.deepcopy(testing_config_options) \
+        + copy.deepcopy(blobupload_config_options)
 
     error_list = [
         {'substr': 'FAILED (errors=', 'level': WARNING},
@@ -469,6 +475,9 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
 
             if self.config.get('app_arg'):
                 config_fmt_args['app_arg'] = self.config['app_arg']
+
+            if self.config.get('e10s'):
+                cmd.append('--e10s')
 
         options_group = self._get_options_group(self.config.get('emulator'),
                                                 self.config.get('gaiatest'))
