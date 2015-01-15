@@ -359,6 +359,21 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, VCSMixin, BaseScript, BlobUpl
         # the base implementation from running here.
         pass
 
+    def _get_success_codes(self, suite_name):
+        chunk = int(self.config.get('this_chunk', 0))
+        branch = self.buildbot_config['properties'].get('branch')
+        platform = self.buildbot_config['properties'].get('stage_platform')
+
+        success_codes = None
+        if suite_name == 'xpcshell':
+            # bug 773703
+            success_codes = [0, 1]
+        elif suite_name == 'mochitest' and platform == 'emulator':
+            if chunk == 11 or (chunk == 12 and branch in ('mozilla-b2g32_v2_0', 'mozilla-b2g34_v2_1')):
+                # bug 1120580
+                success_codes = [0, 247]
+        return success_codes
+
     def run_tests(self):
         """
         Run the tests
@@ -387,14 +402,6 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, VCSMixin, BaseScript, BlobUpl
         else:
             suite = suite_name
 
-        success_codes = None
-        if suite_name == 'xpcshell':
-            # bug 773703
-            success_codes = [0, 1]
-        elif suite_name == 'mochitest' and int(self.config['this_chunk']) == 11:
-            # bug 1120580
-            success_codes = [0, 247]
-
         if suite_name == 'cppunittest':
             # check if separate test package required
             if not os.path.isdir(dirs['abs_cppunittest_dir']):
@@ -408,6 +415,7 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, VCSMixin, BaseScript, BlobUpl
             self.mkdir_p(env['MOZ_UPLOAD_DIR'])
         env = self.query_env(partial_env=env)
 
+        success_codes = self._get_success_codes(suite_name)
         parser = self.get_test_output_parser(suite_name,
                                              config=self.config,
                                              log_obj=self.log_obj,
