@@ -28,7 +28,7 @@ from mozharness.mozilla.buildbot import TBPL_SUCCESS
 
 
 class B2GEmulatorTest(TestingMixin, TooltoolMixin, VCSMixin, BaseScript, BlobUploadMixin):
-    test_suites = ('jsreftest', 'reftest', 'mochitest', 'xpcshell', 'crashtest', 'cppunittest')
+    test_suites = ('jsreftest', 'reftest', 'mochitest', 'mochitest-chrome', 'xpcshell', 'crashtest', 'cppunittest')
     config_options = [[
         ["--type"],
         {"action": "store",
