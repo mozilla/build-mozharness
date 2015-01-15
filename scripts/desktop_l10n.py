@@ -188,7 +188,7 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
 
         self.buildid = None
         self.make_ident_output = None
-        self.repack_env = None
+        self.bootstrap_env = None
         self.upload_env = None
         self.revision = None
         self.version = None
@@ -308,22 +308,22 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
         return None
 
     # Helper methods {{{2
-    def query_repack_env(self):
+    def query_bootstrap_env(self):
         """returns the env for repacks"""
-        if self.repack_env:
-            return self.repack_env
+        if self.bootstrap_env:
+            return self.bootstrap_env
         config = self.config
         replace_dict = self.query_abs_dirs()
-        repack_env = self.query_env(partial_env=config.get("repack_env"),
-                                    replace_dict=replace_dict)
+        bootstrap_env = self.query_env(partial_env=config.get("bootstrap_env"),
+                                       replace_dict=replace_dict)
         if config.get('en_us_binary_url') and \
            config.get('release_config_file'):
-            repack_env['EN_US_BINARY_URL'] = config['en_us_binary_url']
+            bootstrap_env['EN_US_BINARY_URL'] = config['en_us_binary_url']
         if 'MOZ_SIGNING_SERVERS' in os.environ:
             sign_cmd = self.query_moz_sign_cmd(formats=None)
             sign_cmd = subprocess.list2cmdline(sign_cmd)
             # windows fix
-            repack_env['MOZ_SIGN_CMD'] = sign_cmd.replace('\\', '\\\\\\\\')
+            bootstrap_env['MOZ_SIGN_CMD'] = sign_cmd.replace('\\', '\\\\\\\\')
         for binary in self._mar_binaries():
             # "mar -> MAR" and 'mar.exe -> MAR' (windows)
             name = binary.replace('.exe', '')
@@ -331,30 +331,41 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
             binary_path = os.path.join(self._mar_tool_dir(), binary)
             # windows fix...
             binary_path.replace("\\", "/")
-            repack_env[name] = binary_path
+            bootstrap_env[name] = binary_path
 
-        self.repack_env = repack_env
-        return self.repack_env
+        self.bootstrap_env = bootstrap_env
+        return self.bootstrap_env
 
-    def query_upload_env(self):
+    def _query_upload_env(self):
         """returns the environment used for the upload step"""
         if self.upload_env:
             return self.upload_env
-        c = self.config
+        config = self.config
         buildid = self._query_buildid()
         version = self.query_version()
-        upload_env = self.query_env(partial_env=c.get("upload_env"),
+        upload_env = self.query_env(partial_env=config.get("upload_env"),
                                     replace_dict={'buildid': buildid,
                                                   'version': version})
         # check if there are any extra option from the platform configuration
         # and append them to the env
-        if 'upload_env_extra' in c:
-            for extra in c['upload_env_extra']:
-                upload_env[extra] = c['upload_env_extra'][extra]
-        if 'MOZ_SIGNING_SERVERS' in os.environ:
-            upload_env['MOZ_SIGN_CMD'] = subprocess.list2cmdline(self.query_moz_sign_cmd())
+        if self.query_is_nightly():
+            upload_env['LATEST_MAR_DIR'] = config['latest_mar_dir']
+
+        if 'upload_env_extra' in config:
+            for extra in config['upload_env_extra']:
+                upload_env[extra] = config['upload_env_extra'][extra]
         self.upload_env = upload_env
         return self.upload_env
+
+    def query_l10n_env(self):
+        l10n_env = self._query_upload_env()
+        # both upload_env and bootstrap_env define MOZ_SIGN_CMD
+        # the one from upload_env is taken from os.environ, the one from
+        # bootstrap_env is set with query_moz_sign_cmd()
+        # we need to use the value provided my query_moz_sign_cmd or make upload
+        # will fail (signtool.py path is wrong)
+        l10n_env.update(self.query_bootstrap_env())
+        return l10n_env
 
     def _query_make_ident_output(self):
         """Get |make ident| output from the objdir.
@@ -366,7 +377,7 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
         self.make_ident_output = self._get_output_from_make(
             target=["ident"],
             cwd=dirs['abs_locales_dir'],
-            env=self.query_repack_env())
+            env=self.query_bootstrap_env())
         return self.make_ident_output
 
     def _query_buildid(self):
@@ -383,7 +394,7 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
                 self.buildid = match.groups()[0]
         return self.buildid
 
-    def query_revision(self):
+    def _query_revision(self):
         """Get revision from the objdir.
         Only valid after setup is run.
        """
@@ -412,7 +423,7 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
         target = ["echo-variable-%s" % variable] + make_args
         cwd = dirs['abs_locales_dir']
         raw_output = self._get_output_from_make(target, cwd=cwd,
-                                                env=self.query_repack_env())
+                                                env=self.query_bootstrap_env())
         # we want to log all the messages from make/pymake and
         # exlcude some messages from the output ("Entering directory...")
         output = []
@@ -532,22 +543,23 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
                                 tag_override=config.get('tag_override'))
         self.pull_locale_source()
 
-    def _setup_configure(self, buildid=None):
-        """configuration setup"""
-        # no need to catch failures as _make() halts on failure by default
-        self._run_tooltool()
-        self._make_configure()
-        self._make_dirs()
-        self.make_export(buildid)  # not sure we need it
-
     def setup(self):
         """setup step"""
         dirs = self.query_abs_dirs()
+        self._run_tooltool()
+        # create dirs
+        self._create_base_dirs()
+        # copy the mozconfig file
         self._copy_mozconfig()
-        self._setup_configure()
+        # run mach conigure
+        self._mach_configure()
+        self._run_make_in_config_dir()
+        # download the en-us binary
         self.make_wget_en_US()
+        # ...and unpack it
         self.make_unpack()
-        revision = self.query_revision()
+        # get the revision
+        revision = self._query_revision()
         if not revision:
             self.fatal("Can't determine revision!")
         #  TODO do this through VCSMixin instead of hardcoding hg
@@ -555,7 +567,7 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
         hg = self.query_exe("hg")
         self.run_command([hg, "update", "-r", revision],
                          cwd=dirs["abs_mozilla_dir"],
-                         env=self.query_repack_env(),
+                         env=self.query_bootstrap_env(),
                          error_list=BaseErrorList,
                          halt_on_failure=True, fatal_exit_code=3)
         # if checkout updates CLOBBER file with a newer timestamp,
@@ -564,9 +576,14 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
         _clobber_file = self._clobber_file()
         if os.path.exists(_clobber_file):
             self._touch_file(_clobber_file)
-        # Configure again since the hg update may have invalidated it.
-        buildid = self._query_buildid()
-        self._setup_configure(buildid=buildid)
+
+    def _run_make_in_config_dir(self):
+        """this step creates nsinstall, needed my make_wget_en_US()
+        """
+        dirs = self.query_abs_dirs()
+        config_dir = os.path.join(dirs['abs_objdir'], 'config')
+        env = self.query_bootstrap_env()
+        return self._make(target=None, cwd=config_dir, env=env)
 
     def _clobber_file(self):
         """returns the full path of the clobber file"""
@@ -605,6 +622,25 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
             for line in mozconfig:
                 self.info(line.strip())
 
+    def _mach(self, target, env, halt_on_failure=True, output_parser=None):
+        dirs = self.query_abs_dirs()
+        mach = self._get_mach_executable()
+        return self.run_command(mach + target,
+                                halt_on_failure=True,
+                                env=env,
+                                cwd=dirs['abs_mozilla_dir'],
+                                output_parser=None)
+
+    def _mach_configure(self):
+        """calls mach configure"""
+        env = self.query_bootstrap_env()
+        target = ["configure"]
+        return self._mach(target=target, env=env)
+
+    def _get_mach_executable(self):
+        python = self.query_exe('python2.7')
+        return [python, 'mach']
+
     def _get_make_executable(self):
         config = self.config
         dirs = self.query_abs_dirs()
@@ -622,7 +658,9 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
               halt_on_failure=True, output_parser=None):
         """Runs make. Returns the exit code"""
         make = self._get_make_executable()
-        return self.run_command(make + target,
+        if target:
+            make = make + target
+        return self.run_command(make,
                                 cwd=cwd,
                                 env=env,
                                 error_list=error_list,
@@ -638,25 +676,6 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
                                             silent=True,
                                             halt_on_failure=halt_on_failure)
 
-    def _make_configure(self):
-        """calls make -f client.mk configure"""
-        env = self.query_repack_env()
-        dirs = self.query_abs_dirs()
-        cwd = dirs['abs_mozilla_dir']
-        target = ["-f", "client.mk", "configure"]
-        return self._make(target=target, cwd=cwd, env=env)
-
-    def _make_dirs(self):
-        """calls make <dirs>
-           dirs is defined in configuration"""
-        config = self.config
-        env = self.query_repack_env()
-        dirs = self.query_abs_dirs()
-        target = []
-        for make_dir in config.get('make_dirs', []):
-            cwd = os.path.join(dirs['abs_objdir'], make_dir)
-            self._make(target=target, cwd=cwd, env=env, halt_on_failure=True)
-
     def make_export(self, buildid):
         """calls make export <buildid>"""
         #  is it really needed ???
@@ -665,7 +684,7 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
             return
         dirs = self.query_abs_dirs()
         cwd = dirs['abs_locales_dir']
-        env = self.query_repack_env()
+        env = self.query_bootstrap_env()
         target = ["export", 'MOZ_BUILD_DATE=%s' % str(buildid)]
         return self._make(target=target, cwd=cwd, env=env)
 
@@ -673,13 +692,13 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
         """wrapper for make unpack"""
         config = self.config
         dirs = self.query_abs_dirs()
-        env = self.query_repack_env()
+        env = self.query_bootstrap_env()
         cwd = os.path.join(dirs['abs_objdir'], config['locales_dir'])
         return self._make(target=["unpack"], cwd=cwd, env=env)
 
     def make_wget_en_US(self):
         """wrapper for make wget-en-US"""
-        env = self.query_repack_env()
+        env = self.query_bootstrap_env()
         dirs = self.query_abs_dirs()
         cwd = dirs['abs_locales_dir']
         return self._make(target=["wget-en-US"], cwd=cwd, env=env)
@@ -687,7 +706,7 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
     def make_upload(self, locale):
         """wrapper for make upload command"""
         config = self.config
-        env = self.query_upload_env()
+        env = self.query_l10n_env()
         dirs = self.query_abs_dirs()
         buildid = self._query_buildid()
         try:
@@ -711,18 +730,19 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
         else:
             self.error('failed to upload %s' % (locale))
             ret = FAILURE
+            self.fatal('failed to upload -- REMOVEME')
         return ret
 
     def make_installers(self, locale):
         """wrapper for make installers-(locale)"""
-        env = self.query_repack_env()
+        env = self.query_l10n_env()
         self._copy_mozconfig()
         env['L10NBASEDIR'] = self.l10n_dir
         dirs = self.query_abs_dirs()
         cwd = os.path.join(dirs['abs_locales_dir'])
-        cmd = ["installers-%s" % locale,
-               "LOCALE_MERGEDIR=%s" % env["LOCALE_MERGEDIR"], ]
-        return self._make(target=cmd, cwd=cwd,
+        target = ["installers-%s" % locale,
+                  "LOCALE_MERGEDIR=%s" % env["LOCALE_MERGEDIR"], ]
+        return self._make(target=target, cwd=cwd,
                           env=env, halt_on_failure=False)
 
     def generate_complete_mar(self, locale):
@@ -735,7 +755,7 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
         package_basedir = os.path.join(dirs['abs_objdir'],
                                        config['package_base_dir'])
         dist_dir = os.path.join(dirs['abs_objdir'], 'dist')
-        env = self.query_repack_env()
+        env = self.query_l10n_env()
         cmd = os.path.join(dirs['abs_objdir'], config['update_packaging_dir'])
         cmd = ['-C', cmd, 'full-update', 'AB_CD=%s' % locale,
                'PACKAGE_BASE_DIR=%s' % package_basedir,
@@ -789,20 +809,37 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
             self.error("make installers-%s failed" % (locale))
             return FAILURE
 
-        # installer succeded, generate complete mar
-        if self.generate_complete_mar(locale) != 0:
-            self.error("generate complete %s mar failed" % (locale))
-            return FAILURE
+        if self._requires_generate_mar('complete', locale):
+            if self.generate_complete_mar(locale) != 0:
+                self.error("generate complete %s mar failed" % (locale))
+                return FAILURE
 
-        # do we need to generate partials?
-        if self.has_partials():
+        if self._requires_generate_mar('partial', locale):
             if self.generate_partial_updates(locale) != 0:
                 self.error("generate partials %s failed" % (locale))
                 return FAILURE
-        else:
-            self.info("partial updates are not enabled, skipping")
 
         return SUCCESS
+
+    def _requires_generate_mar(self, mar_type, locale):
+        generate = True
+        if mar_type == 'complete':
+            complete_filename = self._current_mar_filename(locale)
+            if os.path.exists(complete_filename):
+                self.info('complete mar, already exists: %s' % (complete_filename))
+                generate = False
+        elif mar_type == 'partial':
+            if not self.has_partials():
+                self.info('partials are disabled: enable_partials == False')
+                generate = False
+            else:
+                partial_filename = self._previous_mar_filename(locale)
+                if os.path.exists(partial_filename):
+                    self.info('partial mar, already exists: %s' % (partial_filename))
+                    generate = False
+        else:
+            self.fatal('unknown mar_type: %s' % mar_type)
+        return generate
 
     def has_partials(self):
         """returns True if partials are enabled, False elsewhere"""
@@ -851,14 +888,8 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
                                                       current_mar_dir))
             return result
         # partial filename
-        config = self.config
-        version = self.query_version()
         previous_mar_buildid = self.get_buildid_from_mar_dir(previous_mar_dir)
-        current_mar_buildid = self._query_buildid()
-        partial_filename = config['partial_mar'] % {'version': version,
-                                                    'locale': locale,
-                                                    'from_buildid': current_mar_buildid,
-                                                    'to_buildid': previous_mar_buildid}
+        partial_filename = self._partial_filename(locale)
         if locale not in self.package_urls:
             self.package_urls[locale] = {}
         self.package_urls[locale]['partial_filename'] = partial_filename
@@ -884,6 +915,17 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
             # append partialInfo
             self.partials[locale].append(partialInfo)
         return result
+
+    def _partial_filename(self, locale):
+        config = self.config
+        version = self.query_version()
+        previous_mar_dir = self._previous_mar_dir()
+        previous_mar_buildid = self.get_buildid_from_mar_dir(previous_mar_dir)
+        current_mar_buildid = self._query_buildid()
+        return config['partial_mar'] % {'version': version,
+                                        'locale': locale,
+                                        'from_buildid': current_mar_buildid,
+                                        'to_buildid': previous_mar_buildid}
 
     def _query_objdir(self):
         """returns objdir name from configuration"""
@@ -1011,7 +1053,7 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
     def _query_partial_mar_filename(self, locale):
         """returns the full path to a partial, it returns a valid path only
            after make upload"""
-        partial_mar_name = self.package_urls[locale]['partial_filename']
+        partial_mar_name = self._partial_filename(locale)
         return os.path.join(self._update_mar_dir(), partial_mar_name)
 
     def _query_previous_mar_buildid(self, locale):
@@ -1170,6 +1212,14 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
         cmd.extend(config['tooltool_script'])
         self.info(str(cmd))
         self.run_command(cmd, cwd=dirs['abs_mozilla_dir'], halt_on_failure=True)
+
+    def _create_base_dirs(self):
+        config = self.config
+        dirs = self.query_abs_dirs()
+        for make_dir in config.get('make_dirs', []):
+            dirname = os.path.join(dirs['abs_objdir'], make_dir)
+            self.mkdir_p(dirname)
+
 
 # main {{{
 if __name__ == '__main__':

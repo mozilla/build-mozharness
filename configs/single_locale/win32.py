@@ -3,9 +3,8 @@ import sys
 config = {
     "platform": "win32",
     "update_platform": "WINNT_x86-msvc",
-    "mozilla_dir": "%(branch)s",
     "mozconfig": "%(branch)s/browser/config/mozconfigs/win32/l10n-mozconfig",
-    "repack_env": {
+    "bootstrap_env": {
         "MOZ_OBJDIR": "obj-l10n",
         "EN_US_BINARY_URL": "%(en_us_binary_url)s",
         "LOCALE_MERGEDIR": "%(abs_merge_dir)s/",
@@ -14,6 +13,7 @@ config = {
         "LOCALE_MERGEDIR": "%(abs_merge_dir)s/",
         "L10NBASEDIR": "../../l10n",
         "MAKE_COMPLETE_MAR": "1",
+        #"MOZ_AUTOMATION_UPDATE_PACKAGING": "0",
     },
     "log_name": "single_locale",
     "objdir": "obj-l10n",
@@ -64,4 +64,7 @@ config = {
 
     # use pymake instead of make?
     "enable_pymake": True,
+    'exes': {
+        'python2.7': sys.executable,
+    }
 }

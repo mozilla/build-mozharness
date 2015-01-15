@@ -77,7 +77,7 @@ class MarMixin(object):
     def _unpack_mar(self, mar_file, dst_dir):
         """unpacks a mar file into dst_dir"""
         cmd = ['perl', self._unpack_script(), mar_file]
-        env = self.query_repack_env()
+        env = self.query_bootstrap_env()
         self.info("unpacking %s" % mar_file)
         self.mkdir_p(dst_dir)
         return self.run_command(cmd,
@@ -91,7 +91,7 @@ class MarMixin(object):
         # Usage: make_incremental_update.sh [OPTIONS] ARCHIVE FROMDIR TODIR
         cmd = [self._incremental_update_script(), partial_filename,
                current_dir, previous_dir]
-        env = self.query_repack_env()
+        env = self.query_bootstrap_env()
         cwd = self._mar_dir('update_mar_dir')
         self.mkdir_p(cwd)
         result = self.run_command(cmd, cwd=cwd, env=env)
