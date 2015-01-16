@@ -90,7 +90,7 @@ class MarMixin(object):
            It stores the result in partial_filename"""
         # Usage: make_incremental_update.sh [OPTIONS] ARCHIVE FROMDIR TODIR
         cmd = [self._incremental_update_script(), partial_filename,
-               current_dir, previous_dir]
+               previous_dir, current_dir]
         env = self.query_bootstrap_env()
         cwd = self._mar_dir('update_mar_dir')
         self.mkdir_p(cwd)

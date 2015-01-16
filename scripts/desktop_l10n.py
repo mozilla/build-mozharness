@@ -794,12 +794,13 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
         self.download_mar_tools()
         package_basedir = os.path.join(dirs['abs_objdir'],
                                        config['package_base_dir'])
-        # remove the package basedir directory, it might contain files
-        # from a previous locale
+        # delete current/ previous/... directories
+        self._delete_mar_dirs()
+        self._create_mar_dirs()
+        # remove the package basedir directory, it might contain old files
         self.rmtree(package_basedir)
-        # the directory is gone, recreate it
         self.mkdir_p(package_basedir)
-        # the directory is gone, recreate it
+
         if self.run_compare_locales(locale) != 0:
             self.error("compare locale %s failed" % (locale))
             return FAILURE
@@ -865,7 +866,6 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
         # clean up any left overs from previous locales
         # remove current/ current.work/ previous/ directories
         self.info('creating partial update for locale: %s' % (locale))
-        # self._delete_mar_dirs()
         # and recreate current/ previous/
         self._create_mar_dirs()
         # download mar and mbsdiff executables
@@ -880,13 +880,15 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
                                                       previous_mar_dir))
             return result
 
-        current_marfile = self._get_current_mar(locale)
+        current_marfile = self._current_mar_filename(locale)
         current_mar_dir = self._current_mar_dir()
         result = self._unpack_mar(current_marfile, current_mar_dir)
         if result != 0:
             self.error('failed to unpack %s to %s' % (current_marfile,
                                                       current_mar_dir))
             return result
+        # current mar file unpacked, remove it
+        self.rmtree(current_marfile)
         # partial filename
         previous_mar_buildid = self.get_buildid_from_mar_dir(previous_mar_dir)
         partial_filename = self._partial_filename(locale)
@@ -1086,14 +1088,6 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
         config = self.config
         base_url = config['previous_mar_url']
         return "/".join((base_url, self._localized_mar_name(locale)))
-
-    def _get_current_mar(self, locale):
-        """returns the path of current mar file"""
-        # current completed mar is generated, not downloaded
-        if not os.path.exists(self._current_mar_filename(locale)):
-            self.fatal('current mar is missing, locale %s' % (locale))
-            self.fatal('did you execute generate_complete_mar() ?')
-        return self._current_mar_filename(locale)
 
     def _get_previous_mar(self, locale):
         """downloads the previous mar file"""
