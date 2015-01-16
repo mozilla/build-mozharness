@@ -178,7 +178,7 @@ class UpdateDescriptionAPK(BaseScript, GooglePlayMixin, VirtualenvMixin):
             locale = self.locale_mapping(locale)
 
             try:
-                self.log("Udating " + package_name + " for '" + locale +
+                self.log("Updating " + package_name + " for '" + locale +
                          "' /  title: '" + title + "', short_desc: '" +
                          short_desc[0:20] + "'..., long_desc: '" +
                          long_desc[0:20] + "...'")
