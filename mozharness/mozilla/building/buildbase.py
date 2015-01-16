@@ -268,7 +268,7 @@ class BuildOptionParser(object):
     ]
 
     # add to this list and you can automagically do things like
-    # --custom-build-variant non-unified
+    # --custom-build-variant asan
     # and the script will pull up the appropriate path for the config
     # against the current platform and bits.
     # *It will warn and fail if there is not a config for the current
@@ -278,9 +278,6 @@ class BuildOptionParser(object):
         'debug': 'builds/releng_sub_%s_configs/%s_debug.py',
         'asan-and-debug': 'builds/releng_sub_%s_configs/%s_asan_and_debug.py',
         'stat-and-debug': 'builds/releng_sub_%s_configs/%s_stat_and_debug.py',
-        'non-unified': 'builds/releng_sub_%s_configs/%s_non_unified.py',
-        'debug-and-non-unified':
-                'builds/releng_sub_%s_configs/%s_debug_and_non_unified.py',
         'mulet': 'builds/releng_sub_%s_configs/%s_mulet.py',
         'code-coverage': 'builds/releng_sub_%s_configs/%s_code_coverage.py',
     }
