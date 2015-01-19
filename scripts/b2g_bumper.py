@@ -195,14 +195,9 @@ class B2GBumper(VCSScript, MapperMixin):
             # gaia is special - make sure we're using the same revision we used
             # for gaia.json
             if self.gaia_hg_revision and p.getAttribute('path') == 'gaia' and revision == self.config['gaia_git_branch']:
-                if not self.gaia_git_rev:
-                    self.gaia_git_rev = self.query_mapper_git_revision(
-                        self.config['mapper_url'],
-                        self.config['gaia_mapper_project'],
-                        self.gaia_hg_revision,
-                    )
-                self.info("Using %s for gaia to match %s in gaia.json" % (self.gaia_git_rev, self.gaia_hg_revision))
-                p.setAttribute('revision', self.gaia_git_rev)
+                git_rev = self.query_gaia_git_rev()
+                self.info("Using %s for gaia to match %s in gaia.json" % (git_rev, self.gaia_hg_revision))
+                p.setAttribute('revision', git_rev)
                 continue
 
             # If there's no '/' in the revision, assume it's a head
@@ -367,7 +362,10 @@ class B2GBumper(VCSScript, MapperMixin):
             self.truncated_revisions = True
         return revision_list[-max_revisions:]
 
-    def update_gaia_json(self, path, revision, repo_path):
+    def update_gaia_json(self, path,
+                         hg_revision, hg_repo_path,
+                         git_revision, git_repo,
+                         ):
         """ Update path with repo_path + revision.
 
             If the revision hasn't changed, don't do anything.
@@ -375,30 +373,31 @@ class B2GBumper(VCSScript, MapperMixin):
             """
         if not os.path.exists(path):
             self.add_summary(
-                "%s doesn't exist; can't update with repo_path %s revision %s!" % (path, repo_path, revision),
+                "%s doesn't exist; can't update with repo_path %s revision %s!" %
+                (path, hg_repo_path, hg_revision),
                 level=ERROR,
             )
             return -1
         contents = self._read_json(path)
         if contents:
-            if contents.get("repo_path") != repo_path:
-                self.error("Current repo_path %s differs from %s!" % (str(contents.get("repo_path")), repo_path))
-            if contents.get("revision") == revision:
-                self.info("Revision %s is the same.  No action needed." % revision)
-                self.add_summary("Revision %s is unchanged for repo_path %s." % (revision, repo_path))
+            if contents.get("repo_path") != hg_repo_path:
+                self.error("Current repo_path %s differs from %s!" % (str(contents.get("repo_path")), hg_repo_path))
+            if contents.get("revision") == hg_revision:
+                self.info("Revision %s is the same.  No action needed." % hg_revision)
+                self.add_summary("Revision %s is unchanged for repo_path %s." % (hg_revision, hg_repo_path))
                 return 0
         contents = {
-            "repo_path": repo_path,
-            "revision": revision,
+            "repo_path": hg_repo_path,
+            "revision": hg_revision,
             "git": {
-                "remote": "",
+                "remote": git_repo,
                 "branch": "",
-                "git_revision": ""
+                "git_revision": git_revision,
             }
         }
         if self.write_to_file(path, json.dumps(contents, indent=4) + "\n") != path:
             self.add_summary(
-                "Unable to update %s with new revision %s!" % (path, revision),
+                "Unable to update %s with new revision %s!" % (path, hg_revision),
                 level=ERROR,
             )
             return -2
@@ -456,6 +455,21 @@ class B2GBumper(VCSScript, MapperMixin):
             return {override: c['devices'][override]}
         else:
             return c['devices']
+
+
+    def query_gaia_git_rev(self):
+        """Returns (and caches) the git revision for gaia corresponding to the
+        latest hg revision on our branch."""
+        if not self.gaia_hg_revision:
+            return None
+
+        if not self.gaia_git_rev:
+            self.gaia_git_rev = self.query_mapper_git_revision(
+                self.config['mapper_url'],
+                self.config['gaia_mapper_project'],
+                self.gaia_hg_revision,
+            )
+        return self.gaia_git_rev
 
     # Actions {{{1
     def check_treestatus(self):
@@ -552,10 +566,17 @@ class B2GBumper(VCSScript, MapperMixin):
             return False
 
         # Update the gaia.json with the list of changes
-        gaia_repo_path = urlparse(self.config['gaia_repo_url']).path.lstrip('/')
-        revision = revision_list[-1]['changesets'][-1]['node']
-        self.update_gaia_json(gaia_json_path, revision, gaia_repo_path)
-        self.gaia_hg_revision = revision
+        hg_gaia_repo_path = urlparse(self.config['gaia_repo_url']).path.lstrip('/')
+        hg_revision = revision_list[-1]['changesets'][-1]['node']
+        self.gaia_hg_revision = hg_revision
+
+        git_revision = self.query_gaia_git_rev()
+        git_gaia_repo = self.config['gaia_git_repo']
+
+        self.update_gaia_json(gaia_json_path,
+                              hg_revision, hg_gaia_repo_path,
+                              git_revision, git_gaia_repo,
+                              )
 
         # Commit
         message = self.build_commit_message(revision_list, 'gaia',
