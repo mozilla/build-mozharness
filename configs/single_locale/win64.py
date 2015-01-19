@@ -1,9 +1,11 @@
+import sys
+
 config = {
     "platform": "win64",
     "update_platform": "WINNT_x86_64-msvc",
     "mozilla_dir": "%(branch)s",
     "mozconfig": "%(branch)s/browser/config/mozconfigs/win64/l10n-mozconfig",
-    "repack_env": {
+    "bootstrap_env": {
         "MOZ_OBJDIR": "obj-l10n",
         "EN_US_BINARY_URL": "%(en_us_binary_url)s",
         "LOCALE_MERGEDIR": "%(abs_merge_dir)s/",
@@ -11,6 +13,8 @@ config = {
         "DIST": "%(abs_objdir)s",
         "LOCALE_MERGEDIR": "%(abs_merge_dir)s/",
         "L10NBASEDIR": "../../l10n",
+        "MAKE_COMPLETE_MAR": "1",
+        "MOZ_AUTOMATION_UPDATE_PACKAGING": "0",
     },
     "log_name": "single_locale",
     "objdir": "obj-l10n",
@@ -20,7 +24,8 @@ config = {
 
     # tooltool
     'tooltool_url': 'http://tooltool.pvt.build.mozilla.org/build/',
-    'tooltool_script': ["/builds/tooltool.py"],
+    'tooltool_script': [sys.executable,
+                        'C:/mozilla-build/tooltool.py'],
     'tooltool_bootstrap': "setup.sh",
     'tooltool_manifest_src': 'browser/config/tooltool-manifests/win64/releng.manifest',
     # balrog credential file:
@@ -60,4 +65,7 @@ config = {
 
     # use pymake instead of make?
     "enable_pymake": True,
+    'exes': {
+        'python2.7': sys.executable,
+    }
 }

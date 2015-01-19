@@ -2,13 +2,15 @@ config = {
     "platform": "linux64",
     "update_platform": "Linux_x86_64-gcc3",
     "mozconfig": "%(branch)s/browser/config/mozconfigs/linux64/l10n-mozconfig",
-    "repack_env": {
+    "bootstrap_env": {
         "MOZ_OBJDIR": "obj-l10n",
         "EN_US_BINARY_URL": "%(en_us_binary_url)s",
         "LOCALE_MERGEDIR": "%(abs_merge_dir)s/",
         "MOZ_UPDATE_CHANNEL": "%(update_channel)s",
         "DIST": "%(abs_objdir)s",
         "LOCALE_MERGEDIR": "%(abs_merge_dir)s/",
+        "L10NBASEDIR": "../../l10n",
+        "MOZ_MAKE_COMPLETE_MAR": "1",
     },
     "log_name": "single_locale",
     "objdir": "obj-l10n",

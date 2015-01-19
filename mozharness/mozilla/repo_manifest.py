@@ -8,10 +8,26 @@ import re
 
 def load_manifest(filename):
     """
-    Loads manifest from `filename`
-    Processes any <include name="..." /> nodes
+    Loads manifest from `filename` and returns a single flattened manifest
+    Processes any <include name="..." /> nodes recursively
+    Removes projects referenced by <remove-project name="..." /> nodes
+    Abort on unsupported manifest tags
+    Returns the root node of the resulting DOM
     """
     doc = xml.dom.minidom.parse(filename)
+
+    # Check that we don't have any unsupported tags
+    to_visit = list(doc.childNodes)
+    while to_visit:
+        node = to_visit.pop()
+        # Skip text nodes
+        if node.nodeType in (node.TEXT_NODE, node.COMMENT_NODE):
+            continue
+
+        if node.tagName not in ('include', 'project', 'remote', 'default', 'manifest', 'copyfile', 'remove-project'):
+            raise ValueError("Unsupported tag: %s" % node.tagName)
+        to_visit.extend(node.childNodes)
+
     # Find all <include> nodes
     for i in doc.getElementsByTagName('include'):
         p = i.parentNode
@@ -30,6 +46,26 @@ def load_manifest(filename):
             p.insertBefore(c, i)
         # Now we can remove the include node
         p.removeChild(i)
+
+    # Remove all projects referenced by <remove-project>
+    projects = {}
+    manifest = doc.documentElement
+    to_remove = []
+    for node in manifest.childNodes:
+        # Skip text nodes
+        if node.nodeType in (node.TEXT_NODE, node.COMMENT_NODE):
+            continue
+
+        if node.tagName == 'project':
+            projects[node.getAttribute('name')] = node
+
+        elif node.tagName == 'remove-project':
+            project_node = projects[node.getAttribute('name')]
+            to_remove.append(project_node)
+            to_remove.append(node)
+
+    for r in to_remove:
+        r.parentNode.removeChild(r)
 
     return doc
 

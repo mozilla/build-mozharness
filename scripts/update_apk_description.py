@@ -168,6 +168,7 @@ class UpdateDescriptionAPK(BaseScript, GooglePlayMixin, VirtualenvMixin):
         else:
             # Get all the locales from the web interface
             locales = self.get_list_locales(package_name)
+        nb_locales = 0
         for locale in locales:
             translation = self.get_translation(package_name, locale)
             title = translation.get("title")
@@ -178,7 +179,7 @@ class UpdateDescriptionAPK(BaseScript, GooglePlayMixin, VirtualenvMixin):
             locale = self.locale_mapping(locale)
 
             try:
-                self.log("Udating " + package_name + " for '" + locale +
+                self.log("Updating " + package_name + " for '" + locale +
                          "' /  title: '" + title + "', short_desc: '" +
                          short_desc[0:20] + "'..., long_desc: '" +
                          long_desc[0:20] + "...'")
@@ -187,7 +188,7 @@ class UpdateDescriptionAPK(BaseScript, GooglePlayMixin, VirtualenvMixin):
                     body={'fullDescription': long_desc,
                           'shortDescription': short_desc,
                           'title': title}).execute()
-
+                nb_locales += 1
             except client.AccessTokenRefreshError:
                 self.log('The credentials have been revoked or expired,'
                          'please re-run the application to re-authorize')
@@ -195,7 +196,7 @@ class UpdateDescriptionAPK(BaseScript, GooglePlayMixin, VirtualenvMixin):
         # Commit our changes
         commit_request = service.edits().commit(
             editId=edit_id, packageName=package_name).execute()
-        self.log('Edit "%s" has been committed' % (commit_request['id']))
+        self.log('Edit "%s" has been committed. %d locale(s) updated.' % (commit_request['id'], nb_locales))
 
     def update_apk_description(self):
         """ Update the description """
