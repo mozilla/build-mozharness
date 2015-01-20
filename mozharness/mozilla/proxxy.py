@@ -4,7 +4,7 @@
 """
 import urlparse
 import socket
-from mozharness.base.log import ERROR, LogMixin
+from mozharness.base.log import INFO, ERROR, LogMixin
 from mozharness.base.script import ScriptMixin
 
 
@@ -159,6 +159,7 @@ class Proxxy(ScriptMixin, LogMixin):
                 retry_config=dict(
                     attempts=3,
                     sleeptime=30,
+                    error_level=INFO,
                 ))
             if retval:
                 return retval
