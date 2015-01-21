@@ -91,9 +91,6 @@ class B2GBumper(VCSScript, MapperMixin):
         # Cache of new remotes to original upstreams
         self._remote_mappings = {}
 
-        # Have we missed some gaia revisions?
-        self.truncated_revisions = False
-
         # What's the latest gaia revsion we have for hg
         self.gaia_hg_revision = None
         self.gaia_git_rev = None
@@ -356,11 +353,7 @@ class B2GBumper(VCSScript, MapperMixin):
             if v['changesets'][-1]['branch'] == branch:
                 revision_list.append(v)
         # Limit the list to max_revisions.
-        # Set a flag, so we can update the commit message with a warning
-        # that we've truncated the list.
-        if len(revision_list) > max_revisions:
-            self.truncated_revisions = True
-        return revision_list[-max_revisions:]
+        return revision_list[:max_revisions]
 
     def update_gaia_json(self, path,
                          hg_revision, hg_repo_path,
@@ -419,9 +412,6 @@ class B2GBumper(VCSScript, MapperMixin):
             len(revisions),
             repo_name
         )
-        if self.truncated_revisions:
-            message += "Truncated some number of revisions since the previous bump.\n"
-            self.truncated_revisions = False
         message += comments
         message = message.encode("utf-8")
         return message
