@@ -4,16 +4,13 @@ config = {
     "buildbot_json_path": "buildprops.json",
     "host_utils_url": "http://talos-remote.pvt.build.mozilla.org/tegra/tegra-host-utils.Linux.1109310.2.zip",
     "robocop_package_name": "org.mozilla.roboexample.test",
-    "device_ip": "127.0.0.1",
-    "default_sut_port1": "20701",
-    "default_sut_port2": "20700", # does not prompt for commands
     "tooltool_manifest_path": "testing/config/tooltool-manifests/androidarm/releng.manifest",
     "tooltool_cache": "/builds/tooltool_cache",
     "tooltool_servers": ["http://tooltool.pvt.build.mozilla.org/build/"],
     ".avds_dir": "/home/cltbld/.android",
     "emulator_process_name": "emulator64-arm",
     "emulator_cpu": "cortex-a9",
-    "device_manager": "sut",
+    "device_manager": "adb",
     "exes": {
         'adb': '/tools/android-sdk18/platform-tools/adb',
         'python': '/tools/buildbot/bin/python',
@@ -43,36 +40,7 @@ config = {
             "http_port": "8854", # starting http port to use for the mochitest server
             "ssl_port": "4454", # starting ssl port to use for the server
             "emulator_port": 5554,
-            "sut_port1": 20701,
-            "sut_port2": 20700
         },
-        {
-            "name": "test-2",
-            "device_id": "emulator-5556",
-            "http_port": "8856", # starting http port to use for the mochitest server
-            "ssl_port": "4456", # starting ssl port to use for the server
-            "emulator_port": 5556,
-            "sut_port1": 20703,
-            "sut_port2": 20702
-        },
-        {
-            "name": "test-3",
-            "device_id": "emulator-5558",
-            "http_port": "8858", # starting http port to use for the mochitest server
-            "ssl_port": "4458", # starting ssl port to use for the server
-            "emulator_port": 5558,
-            "sut_port1": 20705,
-            "sut_port2": 20704
-        },
-        {
-            "name": "test-4",
-            "device_id": "emulator-5560",
-            "http_port": "8860", # starting http port to use for the mochitest server
-            "ssl_port": "4460", # starting ssl port to use for the server
-            "emulator_port": 5560,
-            "sut_port1": 20707,
-            "sut_port2": 20706
-        }
     ],
     "test_suite_definitions": {
         "jsreftest-1": {
@@ -289,7 +257,7 @@ config = {
         },
     }, # end of "test_definitions"
     # test harness options are located in the gecko tree
-    "in_tree_config": "config/mozharness/android_arm_config.py",
+    "in_tree_config": "config/mozharness/android_arm_4_4_config.py",
     "download_minidump_stackwalk": True,
     "default_blob_upload_servers": [
          "https://blobupload.elasticbeanstalk.com",
