@@ -101,11 +101,6 @@ class B2GBuild(LocalesMixin, PurgeMixin,
             "action": "store_true",
             "help": "Set B2G_DEBUG=1 (debug build)",
         }],
-        [["--non-unified"], {
-            "dest": "nonunified_build",
-            "action": "store_true",
-            "help": "Set MOZ_NON_UNIFIED=1 (non-unified build)",
-        }],
         [["--repotool-repo"], {
             "dest": "repo_repo",
             "help": "where to pull repo tool source from",
@@ -267,8 +262,6 @@ class B2GBuild(LocalesMixin, PurgeMixin,
             return True
         if self.config['target'] in self.config['upload']['default'].get('upload_dep_target_exclusions', []):
             return False
-        if self.config.get('nonunified_build'):
-            return False
         return True
 
     def query_build_env(self):
@@ -281,8 +274,6 @@ class B2GBuild(LocalesMixin, PurgeMixin,
         env['FORCE_GECKO_BUILD_OUTPUT'] = '1'
         if self.config.get('debug_build'):
             env['B2G_DEBUG'] = '1'
-        if self.config.get('nonunified_build'):
-            env['MOZ_NON_UNIFIED'] = '1'
         return env
 
     def query_dotconfig(self):
