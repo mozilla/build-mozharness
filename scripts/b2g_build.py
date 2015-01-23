@@ -789,6 +789,18 @@ class B2GBuild(LocalesMixin, PurgeMixin,
             if retval != 0:
                 self.error("failed to create latest symlink")
                 self.return_code = 2
+            # Create properties file
+            remote_properties_path = '%s.properties' % remote_symlink_path
+            cmd = [ssh,
+                   '-l', ssh_user,
+                   '-i', ssh_key,
+                   remote_host,
+                   'echo url=%s > %s' % (upload_url, remote_properties_path),
+                   ]
+            retval = self.run_command(cmd)
+            if retval != 0:
+                self.error("failed to create properties file")
+                self.return_code = 2
 
     def _do_postupload_upload(self, upload_dir, ssh_key, ssh_user, remote_host,
                               postupload_cmd):
