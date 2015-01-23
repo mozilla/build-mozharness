@@ -475,7 +475,7 @@ jobs = 2
                 baseuri=self.query_upload_remote_baseuri(),
                 upload_path=upload_path,
             )
-            self.info("TinderboxPrint: upload <a title='hazards_results' href='%s'>results</a>: complete" % upload_url)
+            self.info("TinderboxPrint: hazard results: %s" % upload_url)
 
         self.disable_mock()
 
