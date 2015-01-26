@@ -142,6 +142,8 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
             dirs['abs_test_install_dir'], 'modules')
         dirs['abs_blob_upload_dir'] = os.path.join(
             abs_dirs['abs_work_dir'], 'blobber_upload_dir')
+        dirs['abs_emulator_dir'] = os.path.join(
+            abs_dirs['abs_work_dir'], 'emulator')
         for key in dirs.keys():
             if key not in abs_dirs:
                 abs_dirs[key] = dirs[key]
@@ -235,44 +237,45 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
     def _check_emulator(self, emulator):
         self.info('Checking emulator %s' % emulator["name"])
 
-        attempts = 0
-        tn = None
-        contacted_sut = False
-        while attempts < 8 and not contacted_sut:
-            if attempts != 0:
-                self.info("Sleeping 30 seconds")
-                time.sleep(30)
-            attempts += 1
-            self.info("  Attempt #%d to connect to SUT on port %d" %
-                      (attempts, emulator["sut_port1"]))
-            try:
-                tn = telnetlib.Telnet('localhost', emulator["sut_port1"], 10)
-                if tn is not None:
-                    self.info('Connected to port %d' % emulator["sut_port1"])
-                    res = tn.read_until('$>', 10)
-                    tn.write('quit\n')
-                    if res.find('$>') == -1:
-                        self.warning('Unexpected SUT response: %s' % res)
+        if self.config["device_manager"] == "sut":
+            attempts = 0
+            tn = None
+            contacted_sut = False
+            while attempts < 8 and not contacted_sut:
+                if attempts != 0:
+                    self.info("Sleeping 30 seconds")
+                    time.sleep(30)
+                attempts += 1
+                self.info("  Attempt #%d to connect to SUT on port %d" %
+                          (attempts, emulator["sut_port1"]))
+                try:
+                    tn = telnetlib.Telnet('localhost', emulator["sut_port1"], 10)
+                    if tn is not None:
+                        self.info('Connected to port %d' % emulator["sut_port1"])
+                        res = tn.read_until('$>', 10)
+                        tn.write('quit\n')
+                        if res.find('$>') == -1:
+                            self.warning('Unexpected SUT response: %s' % res)
+                        else:
+                            self.info('SUT response: %s' % res)
+                            contacted_sut = True
+                        tn.read_all()
                     else:
-                        self.info('SUT response: %s' % res)
-                        contacted_sut = True
-                    tn.read_all()
-                else:
-                    self.warning('Unable to connect to the SUT agent on port %d' % emulator["sut_port1"])
-            except socket.error, e:
-                self.info('Trying again after socket error: %s' % str(e))
-                pass
-            except EOFError:
-                self.info('Trying again after EOF')
-                pass
-            except:
-                self.info('Trying again after unexpected exception')
-                pass
-            finally:
-                if tn is not None:
-                    tn.close()
-        if not contacted_sut:
-            self.warning('Unable to communicate with SUT agent on port %d' % emulator["sut_port1"])
+                        self.warning('Unable to connect to the SUT agent on port %d' % emulator["sut_port1"])
+                except socket.error, e:
+                    self.info('Trying again after socket error: %s' % str(e))
+                    pass
+                except EOFError:
+                    self.info('Trying again after EOF')
+                    pass
+                except:
+                    self.info('Trying again after unexpected exception')
+                    pass
+                finally:
+                    if tn is not None:
+                        tn.close()
+            if not contacted_sut:
+                self.warning('Unable to communicate with SUT agent on port %d' % emulator["sut_port1"])
 
         attempts = 0
         tn = None
@@ -413,8 +416,6 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
             'remote_webserver': c['remote_webserver'],
             'xre_path': os.path.join(dirs['abs_xre_dir'], 'xre'),
             'utility_path':  os.path.join(dirs['abs_xre_dir'], 'bin'),
-            'device_ip': c['device_ip'],
-            'device_port': str(emulator['sut_port1']),
             'http_port': emulator['http_port'],
             'ssl_port': emulator['ssl_port'],
             'certs_path': os.path.join(dirs['abs_work_dir'], 'tests/certs'),
@@ -424,7 +425,13 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
             'modules_dir': dirs['abs_modules_dir'],
             'installer_path': self.installer_path,
             'raw_log_file': raw_log_file,
+            'dm_trans': c['device_manager'],
         }
+        if self.config["device_manager"] == "sut":
+            str_format_values.update({
+                'device_ip': c['device_ip'],
+                'device_port': str(emulator['sut_port1']),
+            })
         for option in self.tree_config["suite_definitions"][suite_category]["options"]:
             cmd.extend([option % str_format_values])
 
@@ -524,6 +531,10 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
         '''
         assert len(self.test_suites) <= len(self.emulators), \
             "We can't run more tests that the number of emulators we start"
+
+        if 'emulator_url' in self.config or 'emulator_manifest' in self.config:
+            self.install_emulator()
+
         # We kill compiz because it sometimes prevents us from starting the emulators
         self._kill_processes("compiz")
         self._kill_processes("xpcshell")
@@ -569,16 +580,17 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
             for test in self.test_suites:
                 emulator_proc = self._launch_emulator(emulator_index)
                 self.emulator_procs.append(emulator_proc)
-                if self._redirectSUT(emulator_index):
-                    emulator = self.emulators[emulator_index]
-                    self.info("%s: %s; sut port: %s/%s" %
-                              (emulator["name"], emulator["emulator_port"], emulator["sut_port1"], emulator["sut_port2"]))
-                    emulator_index += 1
-                else:
-                    self._dump_emulator_log(emulator_index)
-                    self._kill_processes(self.config["emulator_process_name"])
-                    redirect_failed = True
-                    break
+                if self.config["device_manager"] == "sut":
+                    if self._redirectSUT(emulator_index):
+                        emulator = self.emulators[emulator_index]
+                        self.info("%s: %s; sut port: %s/%s" %
+                                  (emulator["name"], emulator["emulator_port"], emulator["sut_port1"], emulator["sut_port2"]))
+                        emulator_index += 1
+                    else:
+                        self._dump_emulator_log(emulator_index)
+                        self._kill_processes(self.config["emulator_process_name"])
+                        redirect_failed = True
+                        break
         if redirect_failed:
             self.fatal('We have not been able to establish a telnet connection with the emulator')
 

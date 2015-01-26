@@ -120,8 +120,12 @@ class BouncerSubmitter(BaseScript, PurgeMixin, BouncerSubmitterMixin):
             subs["build_number"] = self.config["build_number"]
 
         for product, pr_config in sorted(self.config["products"].items()):
-            self.info("Adding %s..." % product)
             product_name = pr_config["product-name"] % subs
+            if self.product_exists(product_name):
+                self.warning("Product %s already exists. Skipping..." %
+                             product_name)
+                continue
+            self.info("Adding %s..." % product)
             self.api_add_product(
                 product_name=product_name,
                 add_locales=pr_config.get("add-locales"),
@@ -149,6 +153,10 @@ class BouncerSubmitter(BaseScript, PurgeMixin, BouncerSubmitterMixin):
             for prev_version in prev_versions:
                 subs["prev_version"] = prev_version
                 product_name = product_name_tmpl % subs
+                if self.product_exists(product_name):
+                    self.warning("Product %s already exists. Skipping..." %
+                                product_name)
+                    continue
                 self.info("Adding partial updates for %s" % product_name)
                 self.api_add_product(
                     product_name=product_name,

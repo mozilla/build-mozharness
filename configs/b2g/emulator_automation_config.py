@@ -40,6 +40,7 @@ config = {
     "run_file_names": {
         "jsreftest": "runreftestb2g.py",
         "mochitest": "runtestsb2g.py",
+        "mochitest-chrome": "runtestsb2g.py",
         "reftest": "runreftestb2g.py",
         "crashtest": "runreftestb2g.py",
         "xpcshell": "runtestsb2g.py",

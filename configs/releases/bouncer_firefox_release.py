@@ -153,17 +153,6 @@ config = {
                 },
             },
         },
-        "EUballot-installer": {
-            "product-name": "Firefox-%(version)s-EUballot",
-            "add-locales": False,
-            "ssl-only": False,
-            "paths": {
-                "win32": {
-                    "path": "/firefox/releases/%(version)s/win32-EUballot/:lang/Firefox%%20Setup%%20%(version)s.exe",
-                    "bouncer-platform": "win",
-                },
-            },
-        },
     },
     "partials": {
         "releases-dir": {

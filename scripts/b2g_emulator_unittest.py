@@ -167,6 +167,8 @@ class B2GEmulatorTest(TestingMixin, TooltoolMixin, VCSMixin, BaseScript, BlobUpl
             dirs['abs_emulator_dir'], 'b2g-distro')
         dirs['abs_mochitest_dir'] = os.path.join(
             dirs['abs_test_install_dir'], 'mochitest')
+        dirs['abs_mochitest-chrome_dir'] = os.path.join(
+            dirs['abs_test_install_dir'], 'mochitest')
         dirs['abs_certs_dir'] = os.path.join(
             dirs['abs_test_install_dir'], 'certs')
         dirs['abs_modules_dir'] = os.path.join(

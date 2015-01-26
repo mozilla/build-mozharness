@@ -1,9 +1,16 @@
 config = {
     "log_name": "beta_to_release",
 
-    "branding_dirs": ["mobile/android/config/mozconfigs/android/",
-                      "mobile/android/config/mozconfigs/android-armv6/",
-                      "mobile/android/config/mozconfigs/android-x86/"],
+    "branding_dirs": [
+        "mobile/android/config/mozconfigs/android/",
+        # FIXME: Enable the following 2 lines when "release" and "l10n-release"
+        # files are available in the corresponding directories in the
+        # mozilla-beta branch repo
+        # "mobile/android/config/mozconfigs/android-api-11/",
+        # "mobile/android/config/mozconfigs/android-api-9-10-constrained/",
+        "mobile/android/config/mozconfigs/android-armv6/",
+        "mobile/android/config/mozconfigs/android-x86/",
+    ],
     "branding_files": ["release", "l10n-release", "l10n-nightly", "nightly"],
 
     # Disallow sharing, since we want pristine .hg directories.
