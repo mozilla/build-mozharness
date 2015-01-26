@@ -5,6 +5,7 @@ import sys
 import traceback
 import urllib
 import urllib2
+from xml.dom.minidom import parseString
 
 from mozharness.base.log import FATAL
 
@@ -43,8 +44,9 @@ class BouncerSubmitterMixin(object):
         api_prefix = self.config["bouncer-api-prefix"]
         api_url = "%s/%s" % (api_prefix, route)
         request = urllib2.Request(api_url)
-        post_data = urllib.urlencode(data, doseq=True)
-        request.add_data(post_data)
+        if data:
+            post_data = urllib.urlencode(data, doseq=True)
+            request.add_data(post_data)
         credentials = self.query_credentials()
         if credentials:
             auth = base64.encodestring('%s:%s' % credentials)
@@ -55,6 +57,7 @@ class BouncerSubmitterMixin(object):
             res = urllib2.urlopen(request, timeout=60).read()
             self.info("Server response")
             self.info(res)
+            return res
         except urllib2.HTTPError as e:
             self.warning("Cannot access %s POST data:\n%s" % (api_url,
                                                               post_data))
@@ -68,14 +71,30 @@ class BouncerSubmitterMixin(object):
                                                               post_data))
             raise
         except socket.timeout as e:
-            self.warning("Timed out accessing %s: %s" % (api_url, str(e)))
+            self.warning("Timed out accessing %s: %s" % (api_url, e))
             raise
         except socket.error as e:
-            self.warning("Socket error when accessing %s: %s" % (api_url, str(e)))
+            self.warning("Socket error when accessing %s: %s" % (api_url, e))
             raise
         except httplib.BadStatusLine as e:
-            self.warning('BadStatusLine accessing %s: %s' % (api_url, str(e)))
+            self.warning('BadStatusLine accessing %s: %s' % (api_url, e))
             raise
+
+    def product_exists(self, product_name):
+        self.info("Checking if %s already exists" % product_name)
+        res = self.api_call("product_show?product=%s" %
+                            urllib.urlencode(product_name), data=None)
+        try:
+            xml = parseString(res)
+            # API returns <products/> if the product doesn't exist
+            products_found = len(xml.getElementsByTagName("product"))
+            self.info("Products found: %s" % products_found)
+            return bool(products_found)
+        except Exception as e:
+            self.warning("Error parsing XML: %s" % e)
+            self.warning("Assuming %s does not exist" % product_name)
+            # ignore XML parsing errors
+            return False
 
     def api_add_product(self, product_name, add_locales, ssl_only=False):
         data = {
@@ -95,4 +114,3 @@ class BouncerSubmitterMixin(object):
             "path": path,
         }
         self.api_call("location_add/", data)
-
