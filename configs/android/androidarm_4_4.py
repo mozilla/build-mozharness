@@ -8,6 +8,7 @@ config = {
     "tooltool_cache": "/builds/tooltool_cache",
     "tooltool_servers": ["http://tooltool.pvt.build.mozilla.org/build/"],
     ".avds_dir": "/home/cltbld/.android",
+    "emulator_url": "http://people.mozilla.org/~gbrown/android-sdk_r24.0.2-linux.zip",
     "emulator_process_name": "emulator64-arm",
     "emulator_cpu": "cortex-a9",
     "device_manager": "adb",
@@ -19,7 +20,7 @@ config = {
     },
     "env": {
         "DISPLAY": ":0.0",
-        "PATH": "%(PATH)s:/tools/android-sdk18/tools:/tools/android-sdk18/platform-tools",
+        "PATH": "%(PATH)s:%(abs_work_dir)s/emulator/android-sdk-linux/tools:/tools/android-sdk18/platform-tools",
         "MINIDUMP_SAVEPATH": "%(abs_work_dir)s/../minidumps"
     },
     "default_actions": [

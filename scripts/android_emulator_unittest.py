@@ -142,6 +142,8 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
             dirs['abs_test_install_dir'], 'modules')
         dirs['abs_blob_upload_dir'] = os.path.join(
             abs_dirs['abs_work_dir'], 'blobber_upload_dir')
+        dirs['abs_emulator_dir'] = os.path.join(
+            abs_dirs['abs_work_dir'], 'emulator')
         for key in dirs.keys():
             if key not in abs_dirs:
                 abs_dirs[key] = dirs[key]
@@ -529,6 +531,10 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
         '''
         assert len(self.test_suites) <= len(self.emulators), \
             "We can't run more tests that the number of emulators we start"
+
+        if 'emulator_url' in self.config or 'emulator_manifest' in self.config:
+            self.install_emulator()
+
         # We kill compiz because it sometimes prevents us from starting the emulators
         self._kill_processes("compiz")
         self._kill_processes("xpcshell")
