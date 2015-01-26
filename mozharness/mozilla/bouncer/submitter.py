@@ -83,7 +83,7 @@ class BouncerSubmitterMixin(object):
     def product_exists(self, product_name):
         self.info("Checking if %s already exists" % product_name)
         res = self.api_call("product_show?product=%s" %
-                            urllib.urlencode(product_name), data=None)
+                            urllib.quote(product_name), data=None)
         try:
             xml = parseString(res)
             # API returns <products/> if the product doesn't exist
