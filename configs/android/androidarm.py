@@ -12,7 +12,7 @@ config = {
     "tooltool_servers": ["http://tooltool.pvt.build.mozilla.org/build/"],
     ".avds_dir": "/home/cltbld/.android",
     "emulator_process_name": "emulator64-arm",
-    "emulator_cpu": "cortex-a9",
+    "emulator_extra_args": "-debug init,console,gles,memcheck,adbserver,adbclient,adb,avd_config,socket -qemu -m 1024 -cpu cortex-a9",
     "device_manager": "sut",
     "exes": {
         'adb': '/tools/android-sdk18/platform-tools/adb',

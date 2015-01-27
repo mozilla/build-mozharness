@@ -10,7 +10,7 @@ config = {
     ".avds_dir": "/home/cltbld/.android",
     "emulator_url": "http://people.mozilla.org/~gbrown/android-sdk_r24.0.2-linux.zip",
     "emulator_process_name": "emulator64-arm",
-    "emulator_cpu": "cortex-a9",
+    "emulator_extra_args": "-debug init,console,gles,memcheck,adbserver,adbclient,adb,avd_config,socket",
     "device_manager": "adb",
     "exes": {
         'adb': '/tools/android-sdk18/platform-tools/adb',
