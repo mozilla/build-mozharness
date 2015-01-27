@@ -47,28 +47,26 @@ class BouncerSubmitterMixin(object):
         if data:
             post_data = urllib.urlencode(data, doseq=True)
             request.add_data(post_data)
+            self.info("POST data: %s" % post_data)
         credentials = self.query_credentials()
         if credentials:
             auth = base64.encodestring('%s:%s' % credentials)
             request.add_header("Authorization", "Basic %s" % auth.strip())
         try:
             self.info("Submitting to %s" % api_url)
-            self.info("POST data: %s" % post_data)
             res = urllib2.urlopen(request, timeout=60).read()
             self.info("Server response")
             self.info(res)
             return res
         except urllib2.HTTPError as e:
-            self.warning("Cannot access %s POST data:\n%s" % (api_url,
-                                                              post_data))
+            self.warning("Cannot access %s" % api_url)
             traceback.print_exc(file=sys.stdout)
             self.warning("Returned page source:")
             self.warning(e.read())
             raise
         except urllib2.URLError:
             traceback.print_exc(file=sys.stdout)
-            self.warning("Cannot access %s POST data:\n%s" % (api_url,
-                                                              post_data))
+            self.warning("Cannot access %s" % api_url)
             raise
         except socket.timeout as e:
             self.warning("Timed out accessing %s: %s" % (api_url, e))
