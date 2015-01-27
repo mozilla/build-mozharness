@@ -23,6 +23,10 @@ config = {
                     "path": "/firefox/releases/%(version)s/win32/:lang/Firefox%%20Setup%%20%(version)s.exe",
                     "bouncer-platform": "win",
                 },
+                "win64": {
+                    "path": "/firefox/releases/%(version)s/win64/:lang/Firefox%%20Setup%%20%(version)s.exe",
+                    "bouncer-platform": "win64",
+                },
             },
         },
         "installer-ssl": {
@@ -46,6 +50,10 @@ config = {
                     "path": "/firefox/releases/%(version)s/win32/:lang/Firefox%%20Setup%%20%(version)s.exe",
                     "bouncer-platform": "win",
                 },
+                "win64": {
+                    "path": "/firefox/releases/%(version)s/win64/:lang/Firefox%%20Setup%%20%(version)s.exe",
+                    "bouncer-platform": "win64",
+                },
             },
         },
         "stub-installer": {
@@ -56,6 +64,10 @@ config = {
                 "win32": {
                     "path": "/firefox/releases/%(version)s/win32/:lang/Firefox%%20Setup%%20Stub%%20%(version)s.exe",
                     "bouncer-platform": "win",
+                },
+                "win64": {
+                    "path": "/firefox/releases/%(version)s/win64/:lang/Firefox%%20Setup%%20Stub%%20%(version)s.exe",
+                    "bouncer-platform": "win64",
                 },
             },
         },
@@ -79,6 +91,10 @@ config = {
                 "win32": {
                     "path": "/firefox/releases/%(version)s/update/win32/:lang/firefox-%(version)s.complete.mar",
                     "bouncer-platform": "win",
+                },
+                "win64": {
+                    "path": "/firefox/releases/%(version)s/update/win64/:lang/firefox-%(version)s.complete.mar",
+                    "bouncer-platform": "win64",
                 },
             },
         },
@@ -104,6 +120,10 @@ config = {
                 "win32": {
                     "path": "/firefox/releases/%(version)s/update/win32/:lang/firefox-%(prev_version)s-%(version)s.partial.mar",
                     "bouncer-platform": "win",
+                },
+                "win64": {
+                    "path": "/firefox/releases/%(version)s/update/win64/:lang/firefox-%(prev_version)s-%(version)s.partial.mar",
+                    "bouncer-platform": "win64",
                 },
             },
         },

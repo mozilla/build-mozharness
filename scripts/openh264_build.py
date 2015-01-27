@@ -6,6 +6,7 @@
 # ***** END LICENSE BLOCK *****
 import sys
 import os
+import glob
 
 # load modules from parent dir
 sys.path.insert(1, os.path.dirname(sys.path[0]))
@@ -13,14 +14,17 @@ sys.path.insert(1, os.path.dirname(sys.path[0]))
 # import the guts
 from mozharness.base.vcs.vcsbase import VCSScript
 from mozharness.base.log import ERROR
+from mozharness.base.transfer import TransferMixin
+from mozharness.mozilla.mock import MockMixin
 
 
-class OpenH264Build(VCSScript):
+class OpenH264Build(MockMixin, TransferMixin, VCSScript):
     all_actions = [
         'clobber',
         'checkout-sources',
         'build',
         'test',
+        'package',
         'upload',
     ]
 
@@ -28,6 +32,7 @@ class OpenH264Build(VCSScript):
         'checkout-sources',
         'build',
         'test',
+        'package',
     ]
 
     config_options = [
@@ -61,6 +66,18 @@ class OpenH264Build(VCSScript):
             "dest": "operating_system",
             "help": "Specify the operating system to build for",
         }],
+        [["--use-mock"], {
+            "dest": "use_mock",
+            "help": "use mock to set up build environment",
+            "action": "store_true",
+            "default": False,
+        }],
+        [["--use-yasm"], {
+            "dest": "use_yasm",
+            "help": "use yasm instead of nasm",
+            "action": "store_true",
+            "default": False,
+        }],
     ]
 
     def __init__(self, require_config_file=False, config={},
@@ -70,6 +87,14 @@ class OpenH264Build(VCSScript):
         # Default configuration
         default_config = {
             'debug_build': False,
+            'mock_target': 'mozilla-centos6-x86_64',
+            'mock_packages': ['make', 'git', 'nasm', 'glibc-devel.i686', 'libstdc++-devel.i686', 'zip', 'yasm'],
+            'mock_files': [],
+            'upload_ssh_key': os.path.expanduser("~/.ssh/ffxbld_dsa"),
+            'upload_ssh_user': 'ffxbld',
+            'upload_ssh_host': 'stage.mozilla.org',
+            'upload_path_base': '/home/ffxbld/openh264',
+            'use_yasm': False,
         }
         default_config.update(config)
 
@@ -81,6 +106,29 @@ class OpenH264Build(VCSScript):
             all_actions=all_actions,
             default_actions=default_actions,
         )
+
+        if self.config['use_mock']:
+            self.setup_mock()
+            self.enable_mock()
+
+    def query_package_name(self):
+        if self.config['64bit']:
+            bits = '64'
+        else:
+            bits = '32'
+
+        version = self.config['revision']
+
+        if sys.platform == 'linux2':
+            if self.config.get('operating_system') == 'android':
+                return 'openh264-android-{version}.zip'.format(version=version, bits=bits)
+            else:
+                return 'openh264-linux{bits}-{version}.zip'.format(version=version, bits=bits)
+        elif sys.platform == 'darwin':
+            return 'openh264-macosx{bits}-{version}.zip'.format(version=version, bits=bits)
+        elif sys.platform == 'win32':
+            return 'openh264-win{bits}-{version}.zip'.format(version=version, bits=bits)
+        self.fatal("can't determine platform")
 
     def query_make_params(self):
         retval = []
@@ -95,7 +143,22 @@ class OpenH264Build(VCSScript):
         if "operating_system" in self.config:
             retval.append("OS=%s" % self.config['operating_system'])
 
+        if self.config['use_yasm']:
+            retval.append('ASM=yasm')
+
         return retval
+
+    def query_upload_ssh_key(self):
+        return self.config['upload_ssh_key']
+
+    def query_upload_ssh_host(self):
+        return self.config['upload_ssh_host']
+
+    def query_upload_ssh_user(self):
+        return self.config['upload_ssh_user']
+
+    def query_upload_ssh_path(self):
+        return "%s/%s" % (self.config['upload_path_base'], self.config['revision'])
 
     def run_make(self, target):
         cmd = ['make', target] + self.query_make_params()
@@ -147,9 +210,33 @@ class OpenH264Build(VCSScript):
         if retval != 0:
             self.fatal("couldn't build plugin")
 
+    def package(self):
+        dirs = self.query_abs_dirs()
+        srcdir = os.path.join(dirs['abs_work_dir'], 'src')
+        package_name = self.query_package_name()
+        package_file = os.path.join(dirs['abs_work_dir'], package_name)
+        if os.path.exists(package_file):
+            os.unlink(package_file)
+        to_package = [os.path.basename(f) for f in glob.glob(os.path.join(srcdir, "*gmpopenh264*"))]
+        cmd = ['zip', package_file] + to_package
+        retval = self.run_command(cmd, cwd=srcdir)
+        if retval != 0:
+            self.fatal("couldn't make package")
+        self.copy_to_upload_dir(package_file)
+
     def upload(self):
-        # TODO: Grab libgmpopenh264.so
-        pass
+        if self.config['use_mock']:
+            self.disable_mock()
+        dirs = self.query_abs_dirs()
+        self.rsync_upload_directory(
+            dirs['abs_upload_dir'],
+            self.query_upload_ssh_key(),
+            self.query_upload_ssh_user(),
+            self.query_upload_ssh_host(),
+            self.query_upload_ssh_path(),
+        )
+        if self.config['use_mock']:
+            self.enable_mock()
 
     def test(self):
         retval = self.run_make('test')

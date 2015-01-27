@@ -214,15 +214,11 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
 
         command = [
             "emulator", "-avd", emulator["name"],
-            "-debug", "init,console,gles,memcheck,adbserver,adbclient,adb,avd_config,socket",
             "-port", str(emulator["emulator_port"]),
-            # Enable kvm; -qemu arguments must be at the end of the command
-            "-qemu", "-m", "1024"
         ]
-        if "emulator_cpu" in self.config:
-            command += ["-cpu", self.config["emulator_cpu"]]
-        else:
-            command += ["-enable-kvm"]
+        if "emulator_extra_args" in self.config:
+            command += self.config["emulator_extra_args"].split()
+
         tmp_file = tempfile.NamedTemporaryFile(mode='w')
         tmp_stdout = open(tmp_file.name, 'w')
         self.info("Created temp file %s." % tmp_file.name)
