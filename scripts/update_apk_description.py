@@ -2,6 +2,8 @@
 """ update_apk_description.py
 
     Update the descriptions of an application (multilang)
+    Example of beta update:
+    $ python update_apk_description.py --service-account foo@developer.gserviceaccount.com --package-name org.mozilla.firefox --credentials key.p12 --update-apk-description
 """
 import sys
 import os

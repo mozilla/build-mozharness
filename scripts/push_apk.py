@@ -2,6 +2,8 @@
 """ push_apk.py
 
     Upload the apk of a Firefox app on Google play
+    Example for a beta upload:
+    $ python push_apk.py --package-name org.mozilla.firefox_beta --service-account foo@developer.gserviceaccount.com --credentials key.p12 --apk-x86=/path/to/fennec-XX.0bY.multi.android-i386.apk --apk-armv7=/path/to/fennec-XX.0bY.multi.android-arm.apk --track production --push_apk
 """
 import sys
 import os
