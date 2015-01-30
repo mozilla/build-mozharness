@@ -62,15 +62,7 @@ config = {
             'ignore_projects': ['gecko'],
             'ignore_groups': ['darwin'],
         },
-        'helix': {
-            'ignore_projects': ['gecko'],
-            'ignore_groups': ['darwin'],
-        },
         'nexus-4': {
-            'ignore_projects': ['gecko'],
-            'ignore_groups': ['darwin'],
-        },
-        'wasabi': {
             'ignore_projects': ['gecko'],
             'ignore_groups': ['darwin'],
         },

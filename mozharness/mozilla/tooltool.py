@@ -5,9 +5,15 @@ from mozharness.base.errors import PythonErrorList
 from mozharness.base.log import ERROR, FATAL
 from mozharness.mozilla.proxxy import Proxxy
 
+from mozharness.lib.python.authentication import get_credentials_path
+
 TooltoolErrorList = PythonErrorList + [{
     'substr': 'ERROR - ', 'level': ERROR
 }]
+
+
+TOOLTOOL_PY_URL = \
+    "https://raw.githubusercontent.com/mozilla/build-tooltool/master/tooltool.py"
 
 
 class TooltoolMixin(object):
@@ -18,7 +24,16 @@ class TooltoolMixin(object):
                        output_dir=None, privileged=False, cache=None):
         """docstring for tooltool_fetch"""
         tooltool = self.query_exe('tooltool.py', return_type='list')
-        cmd = tooltool
+
+        if self.config.get("developer_mode"):
+            if not os.path.exists(str(tooltool)):
+                tooltool = self._fetch_tooltool_py()
+            cmd = [tooltool,
+                   "--authentication-file",
+                   get_credentials_path()]
+        else:
+            cmd = tooltool
+
         # get the tooltools servers from configuration
         default_urls = self.config['tooltool_servers']
         proxxy = Proxxy(self.config, self.log_obj)
@@ -56,6 +71,17 @@ class TooltoolMixin(object):
                 error_message=error_message,
                 error_level=FATAL,
             )
+
+    def _fetch_tooltool_py(self):
+        """ Retrieve tooltool.py
+        """
+        dirs = self.query_abs_dirs()
+        file_path = os.path.join(dirs['abs_work_dir'], "tooltool.py")
+        self.download_file(TOOLTOOL_PY_URL, file_path)
+        if not os.path.exists(file_path):
+            self.fatal("We can't get tooltool.py")
+        self.chmod(file_path, 0755)
+        return file_path
 
     def create_tooltool_manifest(self, contents, path=None):
         """ Currently just creates a manifest, given the contents.

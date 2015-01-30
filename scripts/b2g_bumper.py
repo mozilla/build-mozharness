@@ -148,7 +148,7 @@ class B2GBumper(VCSScript, MapperMixin):
     def resolve_git_ref(self, remote_url, revision):
         cache_key = "%s:%s" % (remote_url, revision)
         cmd = ['git', 'ls-remote', remote_url, revision]
-        self.info("Running %s" % cmd)
+        self.debug("Running %s" % cmd)
         # Retry this a few times, in case there are network errors or somesuch
         max_retries = 5
         for _ in range(max_retries):
@@ -210,7 +210,7 @@ class B2GBumper(VCSScript, MapperMixin):
             # remote/refname.
             if cache_key in self._git_ref_cache:
                 abs_revision = self._git_ref_cache[cache_key]
-                self.info(
+                self.debug(
                     "Reusing previous lookup %s -> %s" %
                     (cache_key, abs_revision))
                 p.setAttribute('revision', abs_revision)
@@ -223,7 +223,7 @@ class B2GBumper(VCSScript, MapperMixin):
             # projects to the same thread result, without problems later when we call
             # get() multiple times against the same thread result.
             if cache_key in lookup_threads_by_parameters:
-                self.info("Reusing currently running thread to look up %s" % cache_key)
+                self.debug("Reusing currently running thread to look up %s" % cache_key)
                 lookup_threads_by_project[p] = lookup_threads_by_parameters.get(cache_key)
             else:
                 async_result = worker_pool.apply_async(self.resolve_git_ref,
