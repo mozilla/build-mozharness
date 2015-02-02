@@ -179,7 +179,7 @@ def remove_group(manifest, group):
     """
     retval = []
     for node in manifest.getElementsByTagName('project'):
-        if node.getAttribute('groups') == group:
+        if group in node.getAttribute('groups').split(","):
             node.parentNode.removeChild(node)
             retval.append(node)
     return retval
