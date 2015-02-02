@@ -58,10 +58,6 @@ config = {
             'ignore_projects': ['gecko'],
             'ignore_groups': ['darwin'],
         },
-        'hamachi': {
-            'ignore_projects': ['gecko'],
-            'ignore_groups': ['darwin'],
-        },
         'nexus-4': {
             'ignore_projects': ['gecko'],
             'ignore_groups': ['darwin'],
