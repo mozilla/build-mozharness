@@ -287,11 +287,8 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin):
                         if not self.installer_url:
                             self.installer_url = str(f['name'])
                             self.info("Found installer url %s." % self.installer_url)
-            except IndexError:
-                if c.get("require_test_zip"):
-                    message = message % ("installer_url+test_url")
-                else:
-                    message = message % ("installer_url")
+            except IndexError, e:
+                self.error(str(e))
             missing = []
             if not self.installer_url:
                 missing.append("installer_url")
