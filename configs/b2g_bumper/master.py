@@ -70,6 +70,10 @@ config = {
             'ignore_projects': ['gecko'],
             'ignore_groups': ['darwin'],
         },
+        'nexus-5-l': {
+            'ignore_projects': ['gecko'],
+            'ignore_groups': ['darwin'],
+        },
     },
     'repo_remote_mappings': {
         'https://android.googlesource.com/': 'https://git.mozilla.org/external/aosp',

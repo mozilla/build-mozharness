@@ -795,7 +795,8 @@ class B2GBuild(LocalesMixin, PurgeMixin,
                    '-l', ssh_user,
                    '-i', ssh_key,
                    remote_host,
-                   'echo path=%s > %s' % (remote_path, remote_properties_path),
+                   'echo B2G_BUILD_PATH=%s > %s' % (remote_path,
+                                                    remote_properties_path),
                    ]
             retval = self.run_command(cmd)
             if retval != 0:
