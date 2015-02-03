@@ -2,10 +2,8 @@ config = {
     "log_name": "aurora_to_beta",
 
     "branding_dirs": [
-        "mobile/android/config/mozconfigs/android/",
         "mobile/android/config/mozconfigs/android-api-11/",
         "mobile/android/config/mozconfigs/android-api-9-10-constrained/",
-        "mobile/android/config/mozconfigs/android-armv6/",
         "mobile/android/config/mozconfigs/android-x86/",
     ],
     "branding_files": ["debug", "l10n-nightly", "nightly"],
