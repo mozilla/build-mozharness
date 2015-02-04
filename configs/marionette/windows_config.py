@@ -37,4 +37,6 @@ config = {
     ],
     "blob_uploader_auth_file" : os.path.join(os.getcwd(), "oauth.txt"),
     "in_tree_config": "config/mozharness/marionette.py",
+    "download_symbols": "ondemand",
+    "download_minidump_stackwalk": True,
 }

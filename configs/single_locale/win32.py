@@ -12,8 +12,7 @@ config = {
         "DIST": "%(abs_objdir)s",
         "LOCALE_MERGEDIR": "%(abs_merge_dir)s/",
         "L10NBASEDIR": "../../l10n",
-        "MAKE_COMPLETE_MAR": "1",
-        #"MOZ_AUTOMATION_UPDATE_PACKAGING": "0",
+        "MOZ_MAKE_COMPLETE_MAR": "1",
     },
     "log_name": "single_locale",
     "objdir": "obj-l10n",
@@ -59,11 +58,11 @@ config = {
     "current_mar_filename": "firefox-%(version)s.%(locale)s.win32.complete.mar",
     "complete_mar": "firefox-%(version)s.en-US.win32.complete.mar",
     "localized_mar": "firefox-%(version)s.%(locale)s.win32.complete.mar",
-    "partial_mar": "firefox-%(version)s.%(locale)s.partial.%(from_buildid)s-%(to_buildid)s.mar",
+    "partial_mar": "firefox-%(version)s.%(locale)s.win32.partial.%(from_buildid)s-%(to_buildid)s.mar",
     'installer_file': "firefox-%(version)s.en-US.win32.installer.exe",
 
-    # use pymake instead of make?
-    "enable_pymake": True,
+    # use mozmake?
+    "enable_mozmake": True,
     'exes': {
         'python2.7': sys.executable,
     }

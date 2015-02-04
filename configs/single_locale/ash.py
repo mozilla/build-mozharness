@@ -48,5 +48,4 @@ config = {
         "repo": "https://hg.mozilla.org/build/compare-locales",
         "revision": "RELEASE_AUTOMATION"
     }],
-
 }

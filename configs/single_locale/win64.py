@@ -3,7 +3,6 @@ import sys
 config = {
     "platform": "win64",
     "update_platform": "WINNT_x86_64-msvc",
-    "mozilla_dir": "%(branch)s",
     "mozconfig": "%(branch)s/browser/config/mozconfigs/win64/l10n-mozconfig",
     "bootstrap_env": {
         "MOZ_OBJDIR": "obj-l10n",
@@ -13,8 +12,7 @@ config = {
         "DIST": "%(abs_objdir)s",
         "LOCALE_MERGEDIR": "%(abs_merge_dir)s/",
         "L10NBASEDIR": "../../l10n",
-        "MAKE_COMPLETE_MAR": "1",
-        "MOZ_AUTOMATION_UPDATE_PACKAGING": "0",
+        "MOZ_MAKE_COMPLETE_MAR": "1",
     },
     "log_name": "single_locale",
     "objdir": "obj-l10n",
@@ -60,11 +58,11 @@ config = {
     "current_mar_filename": "firefox-%(version)s.%(locale)s.win64.complete.mar",
     "complete_mar": "firefox-%(version)s.en-US.win64.complete.mar",
     "localized_mar": "firefox-%(version)s.%(locale)s.win64.complete.mar",
-    "partial_mar": "firefox-%(version)s.%(locale)s.partial.%(from_buildid)s-%(to_buildid)s.mar",
+    "partial_mar": "firefox-%(version)s.%(locale)s.win64.partial.%(from_buildid)s-%(to_buildid)s.mar",
     'installer_file': "firefox-%(version)s.en-US.win64.installer.exe",
 
-    # use pymake instead of make?
-    "enable_pymake": True,
+    # use mozmake?
+    "enable_mozmake": True,
     'exes': {
         'python2.7': sys.executable,
     }

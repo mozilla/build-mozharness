@@ -33,8 +33,6 @@ config = {
         }, {
             "target_dest": "gitmo-beagle",
         }, {
-            "target_dest": "gitmo-staging",
-        }, {
             "target_dest": "github-beagle",
         }],
         "vcs": "hg",
@@ -61,8 +59,6 @@ config = {
             "test_push": True,
         }, {
             "target_dest": "gitmo-beagle",
-        }, {
-            "target_dest": "gitmo-staging",
         }, {
             "target_dest": "github-beagle",
             "tag_config": {
@@ -93,8 +89,6 @@ config = {
         }, {
             "target_dest": "gitmo-beagle",
         }, {
-            "target_dest": "gitmo-staging",
-        }, {
             "target_dest": "github-beagle",
             "tag_config": {
                 "tag_regexes": [
@@ -123,8 +117,6 @@ config = {
             "test_push": True,
         }, {
             "target_dest": "gitmo-beagle",
-        }, {
-            "target_dest": "gitmo-staging",
         }, {
             "target_dest": "github-beagle",
             "tag_config": {
@@ -155,8 +147,6 @@ config = {
         }, {
             "target_dest": "gitmo-beagle",
         }, {
-            "target_dest": "gitmo-staging",
-        }, {
             "target_dest": "github-beagle",
             "tag_config": {
                 "tag_regexes": [
@@ -185,8 +175,6 @@ config = {
             "test_push": True,
         }, {
             "target_dest": "gitmo-beagle",
-        }, {
-            "target_dest": "gitmo-staging",
         }, {
             "target_dest": "github-beagle",
             "tag_config": {
@@ -217,8 +205,6 @@ config = {
         }, {
             "target_dest": "gitmo-beagle",
         }, {
-            "target_dest": "gitmo-staging",
-        }, {
             "target_dest": "github-beagle",
             "tag_config": {
                 "tag_regexes": [
@@ -248,8 +234,6 @@ config = {
         }, {
             "target_dest": "gitmo-beagle",
         }, {
-            "target_dest": "gitmo-staging",
-        }, {
             "target_dest": "github-beagle",
         }],
         "vcs": "hg",
@@ -273,8 +257,6 @@ config = {
             "test_push": True,
         }, {
             "target_dest": "gitmo-beagle",
-        }, {
-            "target_dest": "gitmo-staging",
         }, {
             "target_dest": "github-beagle",
         }],
@@ -300,8 +282,6 @@ config = {
         }, {
             "target_dest": "gitmo-beagle",
         }, {
-            "target_dest": "gitmo-staging",
-        }, {
             "target_dest": "github-beagle",
         }],
         "vcs": "hg",
@@ -325,8 +305,6 @@ config = {
             "test_push": True,
         }, {
             "target_dest": "gitmo-beagle",
-        }, {
-            "target_dest": "gitmo-staging",
         }, {
             "target_dest": "github-beagle",
         }],
@@ -352,8 +330,6 @@ config = {
         }, {
             "target_dest": "gitmo-beagle",
         }, {
-            "target_dest": "gitmo-staging",
-        }, {
             "target_dest": "github-beagle",
         }],
         "vcs": "hg",
@@ -377,8 +353,6 @@ config = {
             "test_push": True,
         }, {
             "target_dest": "gitmo-beagle",
-        }, {
-            "target_dest": "gitmo-staging",
         }, {
             "target_dest": "github-beagle",
         }],
@@ -404,8 +378,6 @@ config = {
         }, {
             "target_dest": "gitmo-beagle",
         }, {
-            "target_dest": "gitmo-staging",
-        }, {
             "target_dest": "github-beagle",
         }],
         "vcs": "hg",
@@ -430,8 +402,6 @@ config = {
         }, {
             "target_dest": "gitmo-beagle",
         }, {
-            "target_dest": "gitmo-staging",
-        }, {
             "target_dest": "github-beagle",
         }],
         "vcs": "hg",
@@ -455,8 +425,6 @@ config = {
             "test_push": True,
         }, {
             "target_dest": "gitmo-beagle",
-        }, {
-            "target_dest": "gitmo-staging",
         }, {
             "target_dest": "github-beagle",
         }],
@@ -486,8 +454,6 @@ config = {
         }, {
             "target_dest": "gitmo-beagle",
         }, {
-            "target_dest": "gitmo-staging",
-        }, {
             "target_dest": "github-beagle",
         }],
         "vcs": "hg",
@@ -516,8 +482,6 @@ config = {
         }, {
             "target_dest": "gitmo-beagle",
         }, {
-            "target_dest": "gitmo-staging",
-        }, {
             "target_dest": "github-beagle",
         }],
         "vcs": "hg",
@@ -541,8 +505,6 @@ config = {
             "test_push": True,
         }, {
             "target_dest": "gitmo-beagle",
-        }, {
-            "target_dest": "gitmo-staging",
         }, {
             "target_dest": "github-beagle",
         }],
@@ -571,8 +533,6 @@ config = {
         }, {
             "target_dest": "gitmo-beagle",
         }, {
-            "target_dest": "gitmo-staging",
-        }, {
             "target_dest": "github-beagle",
         }],
         "vcs": "hg",
@@ -592,8 +552,6 @@ config = {
             "test_push": True,
         }, {
             "target_dest": "gitmo-beagle",
-        }, {
-            "target_dest": "gitmo-staging",
         }, {
             "target_dest": "github-beagle",
         }],
@@ -615,8 +573,6 @@ config = {
         }, {
             "target_dest": "gitmo-beagle",
         }, {
-            "target_dest": "gitmo-staging",
-        }, {
             "target_dest": "github-beagle",
         }],
         "vcs": "hg",
@@ -635,11 +591,6 @@ config = {
         },
         "gitmo-beagle": {
             "repo": "gitolite3@git.mozilla.org:integration/gecko-dev.git",
-            "ssh_key": "~/.ssh/vcs-sync_rsa",
-            "vcs": "git",
-        },
-        "gitmo-staging": {
-            "repo": "gitolite3@git.allizom.org:test/gecko-dev.git",
             "ssh_key": "~/.ssh/vcs-sync_rsa",
             "vcs": "git",
         },

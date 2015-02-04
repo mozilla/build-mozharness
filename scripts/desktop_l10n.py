@@ -330,9 +330,9 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
             name = name.upper()
             binary_path = os.path.join(self._mar_tool_dir(), binary)
             # windows fix...
-            binary_path.replace("\\", "/")
+            if binary.endswith('.exe'):
+                binary_path = binary_path.replace('\\', '\\\\\\\\')
             bootstrap_env[name] = binary_path
-
         self.bootstrap_env = bootstrap_env
         return self.bootstrap_env
 
@@ -644,12 +644,11 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
     def _get_make_executable(self):
         config = self.config
         dirs = self.query_abs_dirs()
-        if config.get('enable_pymake'):  # e.g. windows
-            pymake_path = r"/".join([dirs['abs_mozilla_dir'], 'build',
-                                    'pymake', 'make.py'])
+        if config.get('enable_mozmake'):  # e.g. windows
+            make = r"/".join([dirs['abs_mozilla_dir'], 'mozmake.exe'])
             # mysterious subprocess errors, let's try to fix this path...
-            pymake_path = pymake_path.replace('\\', '/')
-            make = ['python', pymake_path]
+            make = make.replace('\\', '/')
+            make = [make]
         else:
             make = ['make']
         return make
@@ -764,8 +763,6 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
         return_code = self._make(target=cmd,
                                  cwd=dirs['abs_mozilla_dir'],
                                  env=env)
-        if return_code == SUCCESS:
-            return_code == self._copy_complete_mar(locale)
         return return_code
 
     def _copy_complete_mar(self, locale):
@@ -789,31 +786,28 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
     def repack_locale(self, locale):
         """wraps the logic for comapare locale, make installers and generate
            partials"""
-        config = self.config
-        dirs = self.query_abs_dirs()
+        # get mar tools
         self.download_mar_tools()
-        package_basedir = os.path.join(dirs['abs_objdir'],
-                                       config['package_base_dir'])
-        # delete current/ previous/... directories
+        # remove current/previous/... directories
         self._delete_mar_dirs()
         self._create_mar_dirs()
-        # remove the package basedir directory, it might contain old files
-        self.rmtree(package_basedir)
-        self.mkdir_p(package_basedir)
 
-        if self.run_compare_locales(locale) != 0:
+        if self.run_compare_locales(locale) != SUCCESS:
             self.error("compare locale %s failed" % (locale))
             return FAILURE
 
         # compare locale succeded, let's run make installers
-        if self.make_installers(locale) != 0:
-            self.error("make installers-%s failed" % (locale))
+        if self.make_installers(locale) != SUCCESS:
+            self.fatal("make installers-%s failed" % (locale))
             return FAILURE
 
         if self._requires_generate_mar('complete', locale):
-            if self.generate_complete_mar(locale) != 0:
+            if self.generate_complete_mar(locale) != SUCCESS:
                 self.error("generate complete %s mar failed" % (locale))
                 return FAILURE
+        # copy the complete mar file where generate_partial_updates expects it
+        if self._copy_complete_mar(locale) != SUCCESS:
+            self.fatal('copy_complete_mar failed!')
 
         if self._requires_generate_mar('partial', locale):
             if self.generate_partial_updates(locale) != 0:
@@ -825,10 +819,12 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
     def _requires_generate_mar(self, mar_type, locale):
         generate = True
         if mar_type == 'complete':
-            complete_filename = self._current_mar_filename(locale)
+            complete_filename = self.localized_marfile(locale)
             if os.path.exists(complete_filename):
                 self.info('complete mar, already exists: %s' % (complete_filename))
                 generate = False
+            else:
+                self.info('complete mar, does not exist: %s' % (complete_filename))
         elif mar_type == 'partial':
             if not self.has_partials():
                 self.info('partials are disabled: enable_partials == False')
@@ -838,6 +834,8 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
                 if os.path.exists(partial_filename):
                     self.info('partial mar, already exists: %s' % (partial_filename))
                     generate = False
+                else:
+                    self.info('partial mar, does not exist: %s' % (partial_filename))
         else:
             self.fatal('unknown mar_type: %s' % mar_type)
         return generate
