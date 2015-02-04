@@ -39,7 +39,7 @@ class GaiaBuildIntegrationTest(GaiaTest):
             'TRY_ENV=1'
         ], cwd=dirs['abs_gaia_dir'],
            output_parser=output_parser,
-           output_timeout=330)
+           output_timeout=600)
 
         output_parser.print_summary('gaia-build-integration-tests')
         self.publish(code)
