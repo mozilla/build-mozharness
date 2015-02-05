@@ -27,6 +27,5 @@
     "required_config_vars": ["tag_override", "user_repo_override"],
     "l10n_dir": "mozilla-release",
     "merge_locales": true,
-    "mozilla_dir": "build",
-    "mozconfig": "build/configs/mozilla2/android/mozilla-release/release/mozconfig"
+    "mozilla_dir": "build"
 }
