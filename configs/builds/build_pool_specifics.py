@@ -3,7 +3,7 @@
 
 config = {
     "staging": {
-        'balrog_api_root': 'https://aus4-admin-dev.allizom.org',
+        'balrog_api_root': 'https://aus4-admin-dev.allizom.org/api',
         'balrog_usernames': {
             'firefox': 'stage-ffxbld',
         },
@@ -26,7 +26,7 @@ config = {
         "sendchange_masters": ["dev-master1.srv.releng.scl3.mozilla.com:9038"],
     },
     "production": {
-        'balrog_api_root': 'https://aus4-admin.mozilla.org',
+        'balrog_api_root': 'https://aus4-admin.mozilla.org/api',
         'balrog_usernames': {
             'firefox': 'ffxbld',
         },
