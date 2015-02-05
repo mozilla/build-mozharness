@@ -5,7 +5,7 @@ import os
 HG_SHARE_BASE_DIR = "/builds/hg-shared"
 
 if platform.system().lower() == 'darwin':
-    xre_url = "http://tooltool.pvt.build.mozilla.org/build/sha512/ce54c2f5abb8b8bae67b129e1218e3c3fe46ed965992987b991d5b401e47db07a894da203978a710ea5498321c3b3d39538db2bca7db230c326af6ff060d7c98"
+    xre_url = "http://tooltool.pvt.build.mozilla.org/build/sha512/314a6b9e177307950461bf3dd13a92a9ae4ceb35acc865e5bdff58a860f617e7b9bfb9485ab276a0a4ac82b1ea6c9ec60652d2f46dc5a7769c4a5f5d04d6dbcd"
 else:
     xre_url = "http://tooltool.pvt.build.mozilla.org/build/sha512/64b655694963a05b9cf8ac7f2e7480898e6613714c9bedafc3236ef633ce76e726585d0a76dbe4b428b5142ce85bebe877b70b5daaecf073e592cb505690839f"
 
