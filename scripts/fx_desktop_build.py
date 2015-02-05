@@ -45,6 +45,7 @@ class FxDesktopBuild(BuildScript, object):
                 # nightly stuff
                 "nightly_build": False,
                 'balrog_credentials_file': 'oauth.txt',
+                'taskcluster_credentials_file': 'oauth.txt',
                 'periodic_clobber': 168,
                 # hg tool stuff
                 'default_vcs': 'hgtool',
@@ -75,6 +76,12 @@ class FxDesktopBuild(BuildScript, object):
                 'include_post_upload_builddir': False,
                 'stage_username': 'ffxbld',
                 'stage_ssh_key': 'ffxbld_rsa',
+                'virtualenv_modules': [
+                    'requests==2.2.1',
+                    'PyHawk-with-a-single-extra-commit==0.1.5',
+                    'taskcluster==0.0.7',
+                ],
+                'virtualenv_path': 'venv',
                 #
 
             },
