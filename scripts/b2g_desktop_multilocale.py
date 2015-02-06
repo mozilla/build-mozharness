@@ -96,6 +96,7 @@ class B2gMultilocale(LocalesMixin, BaseScript, VCSMixin, GaiaLocalesMixin):
                                 'objdir': 'obj-firefox',
                                 'merge_locales': True,
                                 'work_dir': '.',
+                                'vcs_output_timeout': 600,  # 10 minutes should be enough for anyone!
                             },
                             )
 
