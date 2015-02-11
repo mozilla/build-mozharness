@@ -115,8 +115,6 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
                 "setup",
                 "repack",
                 "upload-repacks",
-                "create-nightly-snippets",
-                "upload-nightly-snippets",
                 "submit-to-balrog",
                 "summary",
             ],
@@ -261,10 +259,8 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
     def query_upload_url(self, locale):
         if locale in self.upload_urls:
             return self.upload_urls[locale]
-        if 'snippet_base_url' in self.config:
-            return self.config['snippet_base_url'] % {'locale': locale}
-        self.error("Can't determine the upload url for %s!" % locale)
-        self.error("You either need to run --upload-repacks before --create-nightly-snippets, or specify the 'snippet_base_url' in self.config!")
+        else:
+            self.error("Can't determine the upload url for %s!" % locale)
 
     def query_abs_dirs(self):
          if self.abs_dirs:
@@ -491,52 +487,6 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
         self.summarize_success_count(success_count, total_count,
                                      message="Uploaded %d of %d binaries successfully.")
 
-    def create_nightly_snippets(self):
-        c = self.config
-        dirs = self.query_abs_dirs()
-        locales = self.query_locales()
-        base_package_name = self.query_base_package_name()
-        buildid = self.query_buildid()
-        version = self.query_version()
-        binary_dir = os.path.join(dirs['abs_objdir'], 'dist')
-        success_count = total_count = 0
-        replace_dict = {
-            'buildid': buildid,
-            'build_target': c['build_target'],
-        }
-        for locale in locales:
-            total_count += 1
-            replace_dict['locale'] = locale
-            aus_base_dir = c['aus_base_dir'] % replace_dict
-            aus_abs_dir = os.path.join(dirs['abs_work_dir'], 'update',
-                                       aus_base_dir)
-            binary_path = os.path.join(binary_dir,
-                                       base_package_name % {'locale': locale})
-            url = self.query_upload_url(locale)
-            if not url:
-                self.add_failure(locale, "Can't create a snippet for %s without an upload url." % locale)
-                continue
-            if not self.create_complete_snippet(binary_path, version, buildid, url, aus_abs_dir):
-                self.add_failure(locale, message="Errors creating snippet for %s!  Removing snippet directory." % locale)
-                self.rmtree(aus_abs_dir)
-                continue
-            self.run_command_m(["touch", os.path.join(aus_abs_dir, "partial.txt")])
-            success_count += 1
-        self.summarize_success_count(success_count, total_count,
-                                     message="Created %d of %d snippets successfully.")
-
-    def upload_nightly_snippets(self):
-        c = self.config
-        dirs = self.query_abs_dirs()
-        update_dir = os.path.join(dirs['abs_work_dir'], 'update')
-        if not os.path.exists(update_dir):
-            self.error("No such directory %s! Skipping..." % update_dir)
-            return
-        if self.rsync_upload_directory(update_dir, c['aus_ssh_key'],
-                                       c['aus_user'], c['aus_server'],
-                                       c['aus_upload_base_dir']):
-            self.return_code += 1
-
     def checkout_tools(self):
         dirs = self.query_abs_dirs()
 
@@ -562,15 +512,15 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
                 apks.append(f)
         if len(apks) == 0:
             self.fatal("Found no apks files in %s, don't know what to do:\n%s" % (apkdir, apks), exit_code=1)
-         
+
         return os.path.join(apkdir, apks[0])
-     
+
     def query_is_release(self):
-        
+
         return bool(self.config.get("is_release"))
-        
-    def submit_to_balrog(self):        
-        
+
+    def submit_to_balrog(self):
+
         if not self.query_is_nightly() and not self.query_is_release():
             self.info("Not a nightly or release build, skipping balrog submission.")
             return
@@ -580,7 +530,7 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
             return
 
         self.checkout_tools()
-  
+
         dirs = self.query_abs_dirs()
         locales = self.query_locales()
         for locale in locales:
@@ -591,7 +541,7 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
             # be passed back to buildbot, so we won't write them to the properties
             #files.
             self.set_buildbot_property("locale", locale)
-            
+
             self.set_buildbot_property("appVersion", self.query_version())
             # The Balrog submitter translates this platform into a build target
             # via https://github.com/mozilla/build-tools/blob/master/lib/python/release/platforms.py#L23
@@ -607,13 +557,13 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
             self.set_buildbot_property("isOSUpdate", False)
             self.set_buildbot_property("buildid", self.query_buildid())
 
-            if self.query_is_nightly():  
+            if self.query_is_nightly():
                 self.submit_balrog_updates(release_type="nightly")
             else:
-                self.submit_balrog_updates(release_type="release")              
+                self.submit_balrog_updates(release_type="release")
         if not self.query_is_nightly():
             self.submit_balrog_release_pusher(dirs)
-          
+
 # main {{{1
 if __name__ == '__main__':
     single_locale = MobileSingleLocale()

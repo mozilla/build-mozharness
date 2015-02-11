@@ -1,10 +1,10 @@
-BRANCH = "mozilla-aurora"
-MOZ_UPDATE_CHANNEL = "aurora"
+BRANCH = "mozilla-beta"
+MOZ_UPDATE_CHANNEL = "beta"
 MOZILLA_DIR = BRANCH
 OBJDIR = "obj-l10n"
-EN_US_BINARY_URL = "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/latest-%s-android-api-9/en-US" % (BRANCH)
-#STAGE_SERVER = "dev-stage01.srv.releng.scl3.mozilla.com"
-STAGE_SERVER = "stage.mozilla.org"
+STAGE_SERVER = "dev-stage01.srv.releng.scl3.mozilla.com"
+#STAGE_SERVER = "stage.mozilla.org"
+EN_US_BINARY_URL = "http://" + STAGE_SERVER + "/pub/mozilla.org/mobile/candidates/%(version)s-candidates/build%(buildnum)d/android-api-11/en-US"
 STAGE_USER = "ffxbld"
 STAGE_SSH_KEY = "~/.ssh/ffxbld_rsa"
 HG_SHARE_BASE_DIR = "/builds/hg-shared"
@@ -16,13 +16,14 @@ config = {
     "buildbot_json_path": "buildprops.json",
     "purge_minsize": 10,
     "force_clobber": True,
-    "clobberer_url": "https://api.pub.build.mozilla.org/clobberer/lastclobber",
-    "locales_file": "%s/mobile/android/locales/all-locales" % MOZILLA_DIR,
+    "clobberer_url": "https://api-pub-build.allizom.org/clobberer/lastclobber",
+    "locales_file": "buildbot-configs/mozilla/l10n-changesets_mobile-beta.json",
     "locales_dir": "mobile/android/locales",
+    "locales_platform": "android",
     "ignore_locales": ["en-US"],
-    "nightly_build": True,
-    'balrog_credentials_file': 'oauth.txt',
+    "balrog_credentials_file": "oauth.txt",
     "tools_repo": "https://hg.mozilla.org/build/tools",
+    "is_release": True,
     "tooltool_config": {
         "manifest": "mobile/android/config/tooltool-manifests/android/releng.manifest",
         "output_dir": "%(abs_work_dir)s/" + MOZILLA_DIR,
@@ -33,51 +34,61 @@ config = {
     },
     "tooltool_servers": ["http://tooltool.pvt.build.mozilla.org/build/"],
     "repos": [{
-        "repo": "https://hg.mozilla.org/releases/mozilla-aurora",
+        "repo": "https://hg.mozilla.org/%(user_repo_override)s/mozilla-beta",
         "revision": "default",
         "dest": MOZILLA_DIR,
     }, {
-        "repo": "https://hg.mozilla.org/build/buildbot-configs",
+        "repo": "https://hg.mozilla.org/%(user_repo_override)s/buildbot-configs",
         "revision": "default",
         "dest": "buildbot-configs"
     }, {
-        "repo": "https://hg.mozilla.org/build/tools",
+        "repo": "https://hg.mozilla.org/%(user_repo_override)s/tools",
         "revision": "default",
         "dest": "tools"
     }, {
-        "repo": "https://hg.mozilla.org/build/compare-locales",
+        "repo": "https://hg.mozilla.org/%(user_repo_override)s/compare-locales",
         "revision": "RELEASE_AUTOMATION"
     }],
-    "hg_l10n_base": "https://hg.mozilla.org/releases/l10n/%s" % BRANCH,
+    "hg_l10n_base": "https://hg.mozilla.org/%(user_repo_override)s/",
     "hg_l10n_tag": "default",
     'vcs_share_base': HG_SHARE_BASE_DIR,
-
     "l10n_dir": MOZILLA_DIR,
+
+    "release_config_file": "buildbot-configs/mozilla/staging_release-fennec-mozilla-beta.py",
     "repack_env": {
         # so ugly, bug 951238
         "LD_LIBRARY_PATH": "/lib:/tools/gcc-4.7.2-0moz1/lib:/tools/gcc-4.7.2-0moz1/lib64",
+        "MOZ_PKG_VERSION": "%(version)s",
         "MOZ_OBJDIR": OBJDIR,
-        "EN_US_BINARY_URL": EN_US_BINARY_URL,
         "LOCALE_MERGEDIR": "%(abs_merge_dir)s/",
         "MOZ_UPDATE_CHANNEL": MOZ_UPDATE_CHANNEL,
     },
+    "base_en_us_binary_url": EN_US_BINARY_URL,
     # TODO ideally we could get this info from a central location.
     # However, the agility of these individual config files might trump that.
     "upload_env": {
         "UPLOAD_USER": STAGE_USER,
         "UPLOAD_SSH_KEY": STAGE_SSH_KEY,
         "UPLOAD_HOST": STAGE_SERVER,
-        "POST_UPLOAD_CMD": "post_upload.py -b mozilla-aurora-android-api-9-l10n -p mobile -i %(buildid)s --release-to-latest --release-to-dated",
         "UPLOAD_TO_TEMP": "1",
+        "MOZ_PKG_VERSION": "%(version)s",
     },
+    "base_post_upload_cmd": "post_upload.py -p mobile -n %(buildnum)s -v %(version)s --builddir android-api-11/%(locale)s --release-to-mobile-candidates-dir --nightly-dir=candidates",
     "merge_locales": True,
     "make_dirs": ['config'],
     "mozilla_dir": MOZILLA_DIR,
-    "mozconfig": "%s/mobile/android/config/mozconfigs/android-api-9-10-constrained/l10n-nightly" % MOZILLA_DIR,
+    "mozconfig": "%s/mobile/android/config/mozconfigs/android-api-11/l10n-release" % MOZILLA_DIR,
     "signature_verification_script": "tools/release/signing/verify-android-signature.sh",
-
-    # Balrog
-    "build_target": "Android_arm-eabi-gcc3",
+    "default_actions": [
+        "clobber",
+        "pull",
+        "list-locales",
+        "setup",
+        "repack",
+        "upload-repacks",
+        "submit-to-balrog",
+        "summary",
+    ],
 
     # Mock
     "mock_target": "mozilla-centos6-x86_64-android",
