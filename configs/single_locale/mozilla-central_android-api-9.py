@@ -7,12 +7,6 @@ EN_US_BINARY_URL = "http://stage.mozilla.org/pub/mozilla.org/mobile/nightly/late
 STAGE_SERVER = "stage.mozilla.org"
 STAGE_USER = "ffxbld"
 STAGE_SSH_KEY = "~/.ssh/ffxbld_rsa"
-#AUS_SERVER = "dev-stage01.srv.releng.scl3.mozilla.com"
-AUS_SERVER = "aus3-staging.mozilla.org"
-AUS_USER = "ffxbld"
-AUS_SSH_KEY = "~/.ssh/ffxbld_rsa"
-AUS_UPLOAD_BASE_DIR = "/opt/aus2/incoming/2/Fennec"
-AUS_BASE_DIR = BRANCH + "/%(build_target)s/%(buildid)s/%(locale)s"
 HG_SHARE_BASE_DIR = "/builds/hg-shared"
 
 config = {
@@ -27,7 +21,7 @@ config = {
     "locales_dir": "mobile/android/locales",
     "ignore_locales": ["en-US"],
     "nightly_build": True,
-    'balrog_credentials_file': 'oauth.txt',   
+    'balrog_credentials_file': 'oauth.txt',
     "tools_repo": "https://hg.mozilla.org/build/tools",
     "tooltool_config": {
         "manifest": "mobile/android/config/tooltool-manifests/android/releng.manifest",
@@ -82,13 +76,8 @@ config = {
     "mozconfig": "%s/mobile/android/config/mozconfigs/android-api-9-10-constrained/l10n-nightly" % MOZILLA_DIR,
     "signature_verification_script": "tools/release/signing/verify-android-signature.sh",
 
-    # AUS
+    # Balrog
     "build_target": "Android_arm-eabi-gcc3",
-    "aus_server": AUS_SERVER,
-    "aus_user": AUS_USER,
-    "aus_ssh_key": AUS_SSH_KEY,
-    "aus_upload_base_dir": AUS_UPLOAD_BASE_DIR,
-    "aus_base_dir": AUS_BASE_DIR,
 
     # Mock
     "mock_target": "mozilla-centos6-x86_64-android",

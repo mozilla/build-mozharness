@@ -30,93 +30,11 @@ AndroidSignatureVerificationErrorList = BaseErrorList + [{
     "explanation": "Not signed!"
 }]
 
-# TODO I'm not sure how many templates we will need.
-# This will be sufficient for the moment.
-SNIPPET_TEMPLATE = """version=1
-type=complete
-url=%(url)s
-hashFunction=sha512
-hashValue=%(sha512_hash)s
-size=%(size)d
-build=%(buildid)s
-appv=%(version)s
-extv=%(version)s
-"""
-
-UPDATE_XML_TEMPLATE = """<?xml version="1.0"?>
-<updates>
-  <update type="minor" displayVersion="%(version)s" appVersion="%(version)s" platformVersion="%(version)s" buildID="%(buildid)s"%(extra_update_attrs)s>
-      <patch type="complete" URL="%(url)s?build_id=%(buildid)s&amp;version=%(version)s" hashFunction="SHA512" hashValue="%(sha512_hash)s" size="%(size)d"/>
-  </update>
-</updates>
-"""
-
 
 # SigningMixin {{{1
 
 class SigningMixin(BaseSigningMixin):
-    """Generic signing helper methods.
-    """
-    def create_complete_snippet(self, binary_path, version, buildid,
-                                url, snippet_dir, snippet_file="complete.txt",
-                                size=None, sha512_hash=None,
-                                extra_update_attrs='',
-                                snippet_template=SNIPPET_TEMPLATE,
-                                error_level=ERROR):
-        """Creates a complete snippet, and writes to file.
-        Returns True for success, False for failure.
-        """
-        self.info("Creating complete snippet for %s." % binary_path)
-        if not os.path.exists(binary_path):
-            self.error("Can't create complete snippet: %s doesn't exist!" % binary_path)
-            return False
-        replace_dict = {
-            'version': version,
-            'buildid': buildid,
-            'url': url,
-        }
-        # Allow these to be generated beforehand since we may be generating
-        # many snippets for the same binary_path, and calculating them
-        # multiple times isn't efficient.
-        if size:
-            replace_dict['size'] = size
-        else:
-            replace_dict['size'] = self.query_filesize(binary_path)
-        if sha512_hash:
-            replace_dict['sha512_hash'] = sha512_hash
-        else:
-            replace_dict['sha512_hash'] = self.query_sha512sum(binary_path)
-        if extra_update_attrs:
-            replace_dict['extra_update_attrs'] = ' %s' % extra_update_attrs
-        else:
-            replace_dict['extra_update_attrs'] = ''
-        contents = snippet_template % replace_dict
-        self.mkdir_p(snippet_dir)
-        snippet_path = os.path.join(snippet_dir, snippet_file)
-        if self.write_to_file(snippet_path, contents) is None:
-            self.log("Unable to write complete snippet to %s!" % snippet_path,
-                     level=error_level)
-            return False
-        else:
-            return True
-
-    def create_update_xml(self, binary_path, version, buildid,
-                          url, snippet_dir, snippet_file="update.xml",
-                          extra_update_attrs='',
-                          size=None, sha512_hash=None,
-                          snippet_template=UPDATE_XML_TEMPLATE,
-                          error_level=ERROR):
-        """Creates a complete update.xml, and writes to file.
-        Returns True for success, False for failure.
-        """
-        return self.create_complete_snippet(
-            binary_path=binary_path, version=version, buildid=buildid,
-            url=url, snippet_dir=snippet_dir, snippet_file=snippet_file,
-            size=size, sha512_hash=sha512_hash,
-            extra_update_attrs=extra_update_attrs,
-            snippet_template=snippet_template, error_level=error_level
-        )
-
+    """Generic signing helper methods."""
     def query_moz_sign_cmd(self, formats='gpg'):
         if 'MOZ_SIGNING_SERVERS' not in os.environ:
             self.fatal("MOZ_SIGNING_SERVERS not in env; no MOZ_SIGN_CMD for you!")
