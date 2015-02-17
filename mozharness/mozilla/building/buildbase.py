@@ -1288,7 +1288,13 @@ or run without that action (ie: --no-{action})"
         task = tc.create_task()
         tc.claim_task(task)
 
-        for upload_file in self.query_buildbot_property('uploadFiles'):
+        # Some trees may not be setting uploadFiles, so default to []. Normally
+        # we'd only expect to get here if the build completes successfully,
+        # which means we should have uploadFiles.
+        files = self.query_buildbot_property('uploadFiles') or []
+        if not files:
+            self.warning('No files to upload to S3: uploadFiles property is missing or empty.')
+        for upload_file in files:
             tc.create_artifact(task, upload_file)
         tc.report_completed(task)
 
