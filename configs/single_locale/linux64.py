@@ -12,6 +12,7 @@ config = {
         "L10NBASEDIR": "../../l10n",
         "MOZ_MAKE_COMPLETE_MAR": "1",
     },
+    "ssh_key_dir": "/home/mock_mozilla/.ssh",
     "log_name": "single_locale",
     "objdir": "obj-l10n",
     "js_src_dir": "js/src",

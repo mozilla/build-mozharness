@@ -14,6 +14,7 @@ config = {
         "L10NBASEDIR": "../../l10n",
         "MOZ_MAKE_COMPLETE_MAR": "1",
     },
+    "ssh_key_dir": "~/.ssh",
     "log_name": "single_locale",
     "objdir": "obj-l10n",
     "js_src_dir": "js/src",

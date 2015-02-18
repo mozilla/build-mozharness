@@ -17,6 +17,7 @@ config = {
         "MOZ_MAKE_COMPLETE_MAR": "1",
         "LOCALE_MERGEDIR": "%(abs_merge_dir)s/",
     },
+    "ssh_key_dir": "~/.ssh",
     "log_name": "single_locale",
     "objdir": "obj-l10n",
     "js_src_dir": "js/src",
