@@ -34,6 +34,10 @@ config = {
             'ignore_projects': ['gecko'],
             'ignore_groups': ['darwin'],
         },
+        'emulator-l': {
+            'ignore_projects': ['gecko'],
+            'ignore_groups': ['darwin'],
+        },
         'emulator-kk': {
             'ignore_projects': ['gecko'],
             'ignore_groups': ['darwin'],
