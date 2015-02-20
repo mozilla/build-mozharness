@@ -8,4 +8,7 @@ config = {
         "modules/*",
         "mozbase/*",
         "config/*"],
+    "all_mozmill_suites": {
+        "mozmill": ["--list=tests/mozmill/mozmilltests.list"],
+    },
 }
