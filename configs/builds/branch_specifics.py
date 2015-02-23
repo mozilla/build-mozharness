@@ -97,6 +97,9 @@ config = {
     'fx-team': {
         'repo_path': 'integration/fx-team',
     },
+    'gum': {
+        'branch_uses_per_checkin_strategy': True,
+    },
     'mozilla-inbound': {
         'repo_path': 'integration/mozilla-inbound',
     },
@@ -118,7 +121,6 @@ config = {
     # 'elm': {},
     # 'fig': {},
     # 'graphics': {}
-    # 'gum': {},
     # 'holly': {},
     # 'jamun': {},
     # 'larch': {},
