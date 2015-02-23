@@ -36,6 +36,7 @@ config = {
     "repos": [{
         "vcs": "hg",
         "repo": "https://hg.mozilla.org/mozilla-central",
+        "repo": "https://hg.mozilla.org/projects/ash",
         "revision": "default",
         "dest": "ash",
     }, {

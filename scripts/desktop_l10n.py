@@ -566,6 +566,8 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
         #  TODO do this through VCSMixin instead of hardcoding hg
         #  self.update(dest=dirs["abs_mozilla_dir"], revision=revision)
         hg = self.query_exe("hg")
+        self.info(" testing a fix for relative path in make installers, hardcoding revision to default")
+        revision = "default"
         self.run_command([hg, "update", "-r", revision],
                          cwd=dirs["abs_mozilla_dir"],
                          env=self.query_bootstrap_env(),
