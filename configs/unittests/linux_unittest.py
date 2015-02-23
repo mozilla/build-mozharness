@@ -38,7 +38,8 @@ config = {
         "xpcshell": "runxpcshelltests.py",
         "cppunittest": "runcppunittests.py",
         "jittest": "jit_test.py",
-        "mozbase": "test.py"
+        "mozbase": "test.py",
+        "mozmill": "runtestlist.py",
     },
     "minimum_tests_zip_dirs": ["bin/*", "certs/*", "modules/*", "mozbase/*", "config/*"],
     "specific_tests_zip_dirs": {
@@ -48,7 +49,8 @@ config = {
         "xpcshell": ["xpcshell/*"],
         "cppunittest": ["cppunittests/*"],
         "jittest": ["jit-test/*"],
-        "mozbase": ["mozbase/*"]
+        "mozbase": ["mozbase/*"],
+        "mozmill": ["mozmill/*"],
     },
     # test harness options are located in the gecko tree
     "in_tree_config": "config/mozharness/linux_config.py",
