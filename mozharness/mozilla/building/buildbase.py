@@ -282,6 +282,7 @@ class BuildOptionParser(object):
         'stat-and-debug': 'builds/releng_sub_%s_configs/%s_stat_and_debug.py',
         'mulet': 'builds/releng_sub_%s_configs/%s_mulet.py',
         'code-coverage': 'builds/releng_sub_%s_configs/%s_code_coverage.py',
+        'graphene': 'builds/releng_sub_%s_configs/%s_graphene.py',
     }
     build_pools = {
         'staging': 'builds/build_pool_specifics.py',
