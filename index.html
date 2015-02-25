@@ -1,0 +1,142 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Mozharness by mozilla</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="javascripts/scale.fix.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1 class="header">Mozharness</h1>
+        <p class="header"></p>
+
+        <ul>
+          <li class="download"><a class="buttons" href="https://github.com/mozilla/build-mozharness/zipball/master">Download ZIP</a></li>
+          <li class="download"><a class="buttons" href="https://github.com/mozilla/build-mozharness/tarball/master">Download TAR</a></li>
+          <li><a class="buttons github" href="https://github.com/mozilla/build-mozharness">View On GitHub</a></li>
+        </ul>
+
+        <p class="header">This project is maintained by <a class="header name" href="https://github.com/mozilla">mozilla</a></p>
+
+
+      </header>
+      <section>
+        <h1>
+<a id="mozharness" class="anchor" href="#mozharness" aria-hidden="true"><span class="octicon octicon-link"></span></a>Mozharness</h1>
+
+<p>This repository is a downstream read-only copy of:
+<a href="http://hg.mozilla.org/build/mozharness/">http://hg.mozilla.org/build/mozharness/</a></p>
+
+<h3>
+<a id="submitting-changes" class="anchor" href="#submitting-changes" aria-hidden="true"><span class="octicon octicon-link"></span></a>Submitting changes</h3>
+
+<p>We do not support the github Pull Request workflow, since github is only a downstream
+mirror for us. However, feel free to fork from us and make changes. Then, rather than
+submitting a pull request, please create a patch for your changes (capture the output
+of your changes using e.g. git diff) and attach the patch file to a Bugzilla bug,
+created in the following component:
+<a href="https://bugzilla.mozilla.org/enter_bug.cgi?product=Release%20Engineering&amp;component=Mozharness">https://bugzilla.mozilla.org/enter_bug.cgi?product=Release%20Engineering&amp;component=Mozharness</a></p>
+
+<p>This bug will get triaged by us.</p>
+
+<h3>
+<a id="docs" class="anchor" href="#docs" aria-hidden="true"><span class="octicon octicon-link"></span></a>Docs</h3>
+
+<ul>
+<li><a href="https://developer.mozilla.org/en-US/docs/Mozharness_FAQ">https://developer.mozilla.org/en-US/docs/Mozharness_FAQ</a></li>
+<li><a href="https://wiki.mozilla.org/ReleaseEngineering/Mozharness">https://wiki.mozilla.org/ReleaseEngineering/Mozharness</a></li>
+<li><a href="http://moz-releng-mozharness.readthedocs.org/en/latest/mozharness.mozilla.html">http://moz-releng-mozharness.readthedocs.org/en/latest/mozharness.mozilla.html</a></li>
+<li><a href="http://moz-releng-docs.readthedocs.org/en/latest/software.html#mozharness">http://moz-releng-docs.readthedocs.org/en/latest/software.html#mozharness</a></li>
+</ul>
+
+<h3>
+<a id="to-run-mozharness-unit-tests" class="anchor" href="#to-run-mozharness-unit-tests" aria-hidden="true"><span class="octicon octicon-link"></span></a>To run mozharness unit tests</h3>
+
+<pre><code>pip install tox
+tox
+</code></pre>
+
+<h3>
+<a id="to-run-tests-in-travis" class="anchor" href="#to-run-tests-in-travis" aria-hidden="true"><span class="octicon octicon-link"></span></a>To run tests in travis</h3>
+
+<p>Please note if you fork this repository and wish to run the tests in travis,
+you will need to enable your github fork in both travis and coveralls. In both
+cases you can log in with your github account, you do not need to set up a new
+one. To enable:</p>
+
+<ul>
+<li><a href="https://travis-ci.org/profile">https://travis-ci.org/profile</a></li>
+<li><a href="https://coveralls.io/repos/new">https://coveralls.io/repos/new</a></li>
+</ul>
+
+<p>After enabling, you will need to push changes to your repo in order for a travis
+job to be triggered.</p>
+
+<h3>
+<a id="to-match-commits-to-upstream-hg-changesets" class="anchor" href="#to-match-commits-to-upstream-hg-changesets" aria-hidden="true"><span class="octicon octicon-link"></span></a>To match commits to upstream hg changesets</h3>
+
+<p>Add this following section to the .git/config file in your local clone:</p>
+
+<pre><code>[remote "mozilla"]
+    url = git@github.com:mozilla/build-mozharness
+    fetch = +refs/heads/*:refs/remotes/mozilla/*
+    fetch = +refs/notes/*:refs/notes/*
+</code></pre>
+
+<p>then to match a git commit to an upstream hg changeset:</p>
+
+<pre><code>git fetch mozilla
+git log
+</code></pre>
+
+<p>This will produce output like this:</p>
+
+<pre><code>commit c6dc279ab791d7cd11ccc57d2d83a61dc5e0dd09
+Author: Simarpreet Singh &lt;s244sing@uwaterloo.ca&gt;
+Date:   Mon Dec 22 14:46:56 2014 -0500
+
+    Bug 1078619 - Allow to run talos jobs as a developer. r=armenzg
+
+Notes:
+    Upstream source: https://hg.mozilla.org/build/mozharness/rev/7204ff2ff48a6d31dc2fd6aa25465962f93a91ee
+
+commit dce9aae0dadf3875afd44c8e61b70fd5ba91f91f
+Author: Ankit Goyal &lt;ankit.goyal90@hotmail.com&gt;
+Date:   Mon Dec 22 10:18:16 2014 -0500
+
+    Bug 1113081 - Remove references to metro mode from talos.py script. r=jmaher
+
+Notes:
+    Upstream source: https://hg.mozilla.org/build/mozharness/rev/0424b451c005724c08a12bfe64733142305f4476
+
+commit 7bc17c00dafb144b9982dff2e19e8da91229c6c5
+Author: Peter Moore &lt;pmoore@mozilla.com&gt;
+Date:   Fri Dec 19 20:35:55 2014 +0100
+
+    Bug 1076810 - coveralls publish failures should not cause travis job result to be failure,r=rail
+
+Notes:
+    Upstream source: https://hg.mozilla.org/build/mozharness/rev/701d2eda2aece7c63d34e907bcd657f0895d1c4e
+</code></pre>
+
+<p>This allows you to map a git commit SHA to an hg changeset SHA ("Upstream source").</p>
+
+<p>Happy contributing! =)</p>
+      </section>
+      <footer>
+        <p><small>Hosted on <a href="http://pages.github.com">GitHub Pages</a> using the Dinky theme</small></p>
+      </footer>
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+		
+  </body>
+</html>
