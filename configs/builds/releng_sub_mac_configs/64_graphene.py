@@ -28,6 +28,10 @@ config = {
         ## 64 bit specific
         'PATH': '/tools/python/bin:/tools/buildbot/bin:/opt/local/bin:/usr/bin:'
                 '/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/X11/bin',
+        "SYMBOL_SERVER_HOST": "%(symbol_server_host)s",
+        "SYMBOL_SERVER_SSH_KEY": "/Users/cltbld/.ssh/ffxbld_rsa",
+        "SYMBOL_SERVER_USER": "ffxbld",
+        "SYMBOL_SERVER_PATH": "/mnt/netapp/breakpad/symbols_b2g",
     },
     'src_mozconfig': 'b2g/graphene/config/mozconfigs/macosx64/nightly',
     #######################
