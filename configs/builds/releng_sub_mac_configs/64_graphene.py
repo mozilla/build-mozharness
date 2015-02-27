@@ -8,7 +8,7 @@ config = {
         'build',
         'update',  # may or may not happen based on query_is_nightly()
     ],
-    'stage_platform': 'linux64',
+    'stage_platform': 'mac',
     'stage_product': 'graphene',
     'platform_supports_post_upload_to_latest': False,
     'enable_signing': False,
@@ -27,10 +27,9 @@ config = {
         'CCACHE_UMASK': '002',
         'LC_ALL': 'C',
         ## 64 bit specific
-        'PATH': '/tools/buildbot/bin:/usr/local/bin:/usr/lib64/ccache:/bin:\
-/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/tools/git/bin:/tools/python27/bin:\
-/tools/python27-mercurial/bin:/home/cltbld/bin',
+        'PATH': '/tools/python/bin:/tools/buildbot/bin:/opt/local/bin:/usr/bin:'
+                '/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/X11/bin',
     },
-    'src_mozconfig': 'b2g/graphene/config/mozconfigs/linux64/nightly',
+    'src_mozconfig': 'b2g/graphene/config/mozconfigs/macosx64/nightly',
     #######################
 }

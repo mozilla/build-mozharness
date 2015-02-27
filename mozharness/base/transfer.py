@@ -37,7 +37,12 @@ class TransferMixin(object):
         Create a remote directory and upload the contents of
         a local directory to it via rsync+ssh.
 
-        Return None on success, not None on failure.
+        Returns:
+            None: on success
+              -1: if local_path is not a directory
+              -2: if the remote_directory cannot be created
+                  (it only makes sense if create_remote_directory is True)
+              -3: rsync fails to copy to the remote directory
         """
         dirs = self.query_abs_dirs()
         self.info("Uploading the contents of %s to %s:%s" % (local_path, remote_host, remote_path))
@@ -78,10 +83,12 @@ class TransferMixin(object):
                                  error_level=ERROR,
                                  ):
         """
-        Create a remote directory and upload the contents of
-        a local directory to it via rsync+ssh.
+        rsync+ssh the content of a remote directory to local_path
 
-        Return None on success, not None on failure.
+        Returns:
+            None: on success
+              -1: if local_path is not a directory
+              -3: rsync fails to download from the remote directory
         """
         self.info("Downloading the contents of %s:%s to %s" % (remote_host, remote_path, local_path))
         rsync = self.query_exe("rsync")
