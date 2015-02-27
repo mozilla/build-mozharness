@@ -4,7 +4,6 @@ config = {
     'default_actions': [
         'clobber',
         'clone-tools',
-        'setup-mock',
         'build',
         'update',  # may or may not happen based on query_is_nightly()
     ],
