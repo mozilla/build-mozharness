@@ -38,7 +38,11 @@ config = {
             os.path.join(
                 os.getcwd(), 'build', 'src', 'build', 'pymake', 'make.py'
             )
-        ]
+        ],
+        'virtualenv': [
+            sys.executable,
+            'c:/mozilla-build/buildbotve/virtualenv.py'
+        ],
     },
     'app_ini_path': '%(obj_dir)s/dist/bin/application.ini',
     # decides whether we want to use moz_sign_cmd in env
