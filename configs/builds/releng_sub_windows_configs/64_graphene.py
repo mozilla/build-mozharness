@@ -27,6 +27,10 @@ config = {
         'PROPERTIES_FILE': os.path.join(os.getcwd(), 'buildprops.json'),
         'TINDERBOX_OUTPUT': '1',
         'XPCOM_DEBUG_BREAK': 'stack-and-abort',
+        "SYMBOL_SERVER_HOST": "%(symbol_server_host)s",
+        "SYMBOL_SERVER_SSH_KEY": "/c/Users/cltbld/.ssh/ffxbld_rsa",
+        "SYMBOL_SERVER_USER": "ffxbld",
+        "SYMBOL_SERVER_PATH": "/mnt/netapp/breakpad/symbols_b2g",
     },
     'src_mozconfig': 'b2g/graphene/config/mozconfigs/win64/nightly',
     #######################
