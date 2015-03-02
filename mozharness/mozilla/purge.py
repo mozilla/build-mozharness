@@ -121,6 +121,9 @@ class PurgeMixin(object):
         """ Mozilla clobberer-type clobber.
             """
         c = self.config
+        if c.get('developer_mode'):
+            self.info("Suppressing clobber in developer mode for safety.")
+            return
         if c.get('is_automation'):
             # Nightly builds always clobber
             do_clobber = False
