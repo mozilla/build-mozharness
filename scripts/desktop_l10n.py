@@ -978,6 +978,11 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
 
     def submit_repack_to_balrog(self, locale):
         """submit a single locale to balrog"""
+        # check if locale has been uploaded, if not just return a FAILURE
+        if locale not in self.package_urls:
+            self.error("%s is not present in package_urls. Did you run make upload?" % locale)
+            return FAILURE
+
         if not self.query_is_nightly():
             # remove this check when we extend this script to non-nightly builds
             self.fatal("Not a nightly build")
