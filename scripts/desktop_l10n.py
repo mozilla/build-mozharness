@@ -154,7 +154,6 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
                 "list-locales",
                 "setup",
                 "repack",
-                "upload-repacks",
                 "submit-to-balrog",
                 "summary",
             ],
@@ -462,10 +461,6 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
         else:
             self.version = self._query_make_variable("MOZ_APP_VERSION")
         return self.version
-
-    def upload_repacks(self):
-        """iterates through the list of locales and calls make upload"""
-        self.summarize(self.make_upload, self.query_locales())
 
     def summarize(self, func, items):
         """runs func for any item in items, calls the add_failure() for each
@@ -801,7 +796,7 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
 
         # compare locale succeded, let's run make installers
         if self.make_installers(locale) != SUCCESS:
-            self.fatal("make installers-%s failed" % (locale))
+            self.error("make installers-%s failed" % (locale))
             return FAILURE
 
         if self._requires_generate_mar('complete', locale):
@@ -810,13 +805,17 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
                 return FAILURE
         # copy the complete mar file where generate_partial_updates expects it
         if self._copy_complete_mar(locale) != SUCCESS:
-            self.fatal('copy_complete_mar failed!')
+            self.error("copy_complete_mar failed!")
+            return FAILURE
 
         if self._requires_generate_mar('partial', locale):
             if self.generate_partial_updates(locale) != 0:
                 self.error("generate partials %s failed" % (locale))
                 return FAILURE
-
+        # now try to upload the artifacts
+        if self.make_upload(locale):
+            self.error("make upload for locale %s failed!" % (locale))
+            return FAILURE
         return SUCCESS
 
     def _requires_generate_mar(self, mar_type, locale):
@@ -979,6 +978,11 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
 
     def submit_repack_to_balrog(self, locale):
         """submit a single locale to balrog"""
+        # check if locale has been uploaded, if not just return a FAILURE
+        if locale not in self.package_urls:
+            self.error("%s is not present in package_urls. Did you run make upload?" % locale)
+            return FAILURE
+
         if not self.query_is_nightly():
             # remove this check when we extend this script to non-nightly builds
             self.fatal("Not a nightly build")
