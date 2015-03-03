@@ -205,14 +205,15 @@ class DesktopUnittestOutputParser(OutputParser):
 class EmulatorMixin(object):
     """ Currently dependent on both TooltoolMixin and TestingMixin)"""
 
-    def install_emulator_from_tooltool(self, manifest_path):
+    def install_emulator_from_tooltool(self, manifest_path, do_unzip=True):
         dirs = self.query_abs_dirs()
         if self.tooltool_fetch(manifest_path, output_dir=dirs['abs_work_dir']):
             self.fatal("Unable to download emulator via tooltool!")
-        unzip = self.query_exe("unzip")
-        unzip_cmd = [unzip, '-q', os.path.join(dirs['abs_work_dir'], "emulator.zip")]
-        self.run_command(unzip_cmd, cwd=dirs['abs_emulator_dir'], halt_on_failure=True,
-                         fatal_exit_code=3)
+        if do_unzip:
+            unzip = self.query_exe("unzip")
+            unzip_cmd = [unzip, '-q', os.path.join(dirs['abs_work_dir'], "emulator.zip")]
+            self.run_command(unzip_cmd, cwd=dirs['abs_emulator_dir'], halt_on_failure=True,
+                             fatal_exit_code=3)
 
     def install_emulator(self):
         dirs = self.query_abs_dirs()
@@ -221,7 +222,10 @@ class EmulatorMixin(object):
             self._download_unzip(self.config['emulator_url'], dirs['abs_emulator_dir'])
         elif self.config.get('emulator_manifest'):
             manifest_path = self.create_tooltool_manifest(self.config['emulator_manifest'])
-            self.install_emulator_from_tooltool(manifest_path)
+            do_unzip = True
+            if 'unpack' in self.config['emulator_manifest']:
+                do_unzip = False
+            self.install_emulator_from_tooltool(manifest_path, do_unzip)
         elif self.buildbot_config:
             props = self.buildbot_config.get('properties')
             url = 'https://hg.mozilla.org/%s/raw-file/%s/b2g/test/emulator.manifest' % (
@@ -234,3 +238,9 @@ class EmulatorMixin(object):
             self.install_emulator_from_tooltool(manifest_path)
         else:
             self.fatal("Can't get emulator; set emulator_url or emulator_manifest in the config!")
+        if self.config.get('tools_manifest'):
+            manifest_path = self.create_tooltool_manifest(self.config['tools_manifest'])
+            do_unzip = True
+            if 'unpack' in self.config['tools_manifest']:
+                do_unzip = False
+            self.install_emulator_from_tooltool(manifest_path, do_unzip)

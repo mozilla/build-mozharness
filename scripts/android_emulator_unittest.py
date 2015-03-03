@@ -106,7 +106,7 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
         # these are necessary since self.config is read only
         c = self.config
         abs_dirs = self.query_abs_dirs()
-        self.adb_path = c.get('adb_path', self._query_adb())
+        self.adb_path = self.query_exe('adb')
         self.installer_url = c.get('installer_url')
         self.installer_path = c.get('installer_path')
         self.test_url = c.get('test_url')
@@ -453,9 +453,6 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
 
         return cmd
 
-    def _query_adb(self):
-        return self.which('adb') or os.getenv('ADB_PATH')
-
     def preflight_run_tests(self):
         super(AndroidEmulatorTest, self).preflight_run_tests()
 
@@ -569,7 +566,7 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
         assert len(self.test_suites) <= len(self.emulators), \
             "We can't run more tests that the number of emulators we start"
 
-        if 'emulator_url' in self.config or 'emulator_manifest' in self.config:
+        if 'emulator_url' in self.config or 'emulator_manifest' in self.config or 'tools_manifest' in self.config:
             self.install_emulator()
 
         if not self.config.get("developer_mode"):
@@ -696,7 +693,7 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
             config = dict(config.items() + self.config.items())
 
             self.info("Creating ADBDevicHandler for %s with config %s" % (emulator["name"], config))
-            dh = ADBDeviceHandler(config=config, log_obj=self.log_obj)
+            dh = ADBDeviceHandler(config=config, log_obj=self.log_obj, script_obj=self)
             dh.device_id = emulator['device_id']
 
             # Install Fennec

@@ -10,18 +10,28 @@ config = {
     "tooltool_manifest_path": "testing/config/tooltool-manifests/androidarm/releng.manifest",
     "tooltool_cache": "/builds/tooltool_cache",
     "tooltool_servers": ["http://tooltool.pvt.build.mozilla.org/build/"],
+    "emulator_manifest": """
+        [
+        {
+        "size": 193383673,
+        "digest": "6609e8b95db59c6a3ad60fc3dcfc358b2c8ec8b4dda4c2780eb439e1c5dcc5d550f2e47ce56ba14309363070078d09b5287e372f6e95686110ff8a2ef1838221",
+        "algorithm": "sha512",
+        "filename": "android-sdk18_0.r18moz1.orig.tar.gz",
+        "unpack": "True"
+        }
+        ] """,
     "emulator_process_name": "emulator64-arm",
     "emulator_extra_args": "-debug init,console,gles,memcheck,adbserver,adbclient,adb,avd_config,socket -qemu -m 1024 -cpu cortex-a9",
     "device_manager": "sut",
     "exes": {
-        'adb': '/tools/android-sdk18/platform-tools/adb',
+        'adb': '%(abs_work_dir)s/android-sdk18/platform-tools/adb',
         'python': '/tools/buildbot/bin/python',
         'virtualenv': ['/tools/buildbot/bin/python', '/tools/misc-python/virtualenv.py'],
         'tooltool.py': "/tools/tooltool.py",
     },
     "env": {
         "DISPLAY": ":0.0",
-        "PATH": "%(PATH)s:/tools/android-sdk18/tools:/tools/android-sdk18/platform-tools",
+        "PATH": "%(PATH)s:%(abs_work_dir)s/android-sdk18/tools:%(abs_work_dir)s/android-sdk18/platform-tools",
         "MINIDUMP_SAVEPATH": "%(abs_work_dir)s/../minidumps"
     },
     "default_actions": [

@@ -8,19 +8,38 @@ config = {
     "tooltool_cache": "/builds/tooltool_cache",
     "tooltool_servers": ["http://tooltool.pvt.build.mozilla.org/build/"],
     ".avds_dir": "/home/cltbld/.android",
-    "emulator_url": "http://people.mozilla.org/~gbrown/android-sdk_r24.0.2-linux.zip",
+    "emulator_manifest": """
+        [
+        {
+        "size": 140097024,
+        "digest": "51781032335c09103e8509b1a558bf22a7119392cf1ea301c49c01bdf21ff0ceb37d260bc1c322cd9b903252429fb01830fc27e4632be30cd345c95bf4b1a39b",
+        "algorithm": "sha512",
+        "filename": "android-sdk_r24.0.2-linux.tgz",
+        "unpack": "True"
+        }
+        ] """,
+    "tools_manifest": """
+        [
+        {
+        "size": 193383673,
+        "digest": "6609e8b95db59c6a3ad60fc3dcfc358b2c8ec8b4dda4c2780eb439e1c5dcc5d550f2e47ce56ba14309363070078d09b5287e372f6e95686110ff8a2ef1838221",
+        "algorithm": "sha512",
+        "filename": "android-sdk18_0.r18moz1.orig.tar.gz",
+        "unpack": "True"
+        }
+        ] """,
     "emulator_process_name": "emulator64-arm",
     "emulator_extra_args": "-debug init,console,gles,memcheck,adbserver,adbclient,adb,avd_config,socket",
     "device_manager": "adb",
     "exes": {
-        'adb': '/tools/android-sdk18/platform-tools/adb',
+        'adb': '%(abs_work_dir)s/android-sdk18/platform-tools/adb',
         'python': '/tools/buildbot/bin/python',
         'virtualenv': ['/tools/buildbot/bin/python', '/tools/misc-python/virtualenv.py'],
         'tooltool.py': "/tools/tooltool.py",
     },
     "env": {
         "DISPLAY": ":0.0",
-        "PATH": "%(PATH)s:%(abs_work_dir)s/emulator/android-sdk-linux/tools:/tools/android-sdk18/platform-tools",
+        "PATH": "%(PATH)s:%(abs_work_dir)s/android-sdk-linux/tools:%(abs_work_dir)s/android-sdk18/platform-tools",
         "MINIDUMP_SAVEPATH": "%(abs_work_dir)s/../minidumps"
     },
     "default_actions": [
