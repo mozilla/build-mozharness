@@ -7,17 +7,13 @@ import os
 import sys
 from datetime import datetime
 from functools import wraps
-import json
-import re
 
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
 from mozharness.base.errors import MakefileErrorList
-from mozharness.mozilla.buildbot import TBPL_WARNING
-from mozharness.mozilla.building.buildb2gbase import B2GBuildBaseScript
+from mozharness.mozilla.building.buildb2gbase import B2GBuildBaseScript, B2GMakefileErrorList
 from mozharness.mozilla.purge import PurgeMixin
-
-from b2g_build import B2GMakefileErrorList
+from mozharness.mozilla.building.hazards import HazardAnalysis, HazardError
 
 SUCCESS, WARNINGS, FAILURE, EXCEPTION, RETRY = xrange(5)
 
@@ -25,6 +21,10 @@ nuisance_env_vars = ['TERMCAP', 'LS_COLORS', 'PWD', '_']
 
 
 def requires(*queries):
+    """Wrapper for detecting problems where some bit of information
+    required by the wrapped step is unavailable. Use it put prepending
+    @requires("foo"), which will check whether self.query_foo() returns
+    something useful."""
     def make_wrapper(f):
         @wraps(f)
         def wrapper(self, *args, **kwargs):
@@ -87,6 +87,7 @@ class B2GHazardBuild(PurgeMixin, B2GBuildBaseScript):
         )
 
         self.buildid = None
+        self.analysis = HazardAnalysis()
 
     def _pre_config_lock(self, rw_config):
         super(B2GHazardBuild, self)._pre_config_lock(rw_config)
@@ -375,14 +376,10 @@ jobs = 2
 
     def run_analysis(self):
         dirs = self.query_abs_dirs()
-        analysis_dir = dirs['abs_analysis_dir']
-        analysis_scriptdir = dirs['analysis_scriptdir']
 
         env = self.query_build_env().copy()
         self.enable_mock()
 
-        build_command = self.config['build_command']
-        build_command = os.path.abspath(os.path.join(analysis_dir, build_command))
         gonk_misc = os.path.join(dirs['b2g_src'], 'gonk-misc')
         mozconfig = os.path.join(gonk_misc, 'hazard-analysis-config')
         mozconfig_text = ''
@@ -399,146 +396,36 @@ jobs = 2
         env['GECKO_PATH'] = dirs['gecko_src']
         env['TARGET_TOOLS_PREFIX'] = os.path.join(dirs['abs_work_dir'], self.config['b2g_target_compiler_prefix'])
 
-        cmd = [
-            self.config['python'],
-            os.path.join(analysis_scriptdir, 'analyze.py'),
-            "--source", dirs['gecko_src'],
-            "--buildcommand", build_command,
-        ]
-        retval = self.run_command(cmd,
-                                  cwd=analysis_dir,
-                                  env=env,
-                                  error_list=B2GMakefileErrorList)
-        if retval != 0:
-            self.fatal("failed to build", exit_code=2)
+        try:
+            self.analysis.run(self, env=env, error_list=B2GMakefileErrorList)
+        except HazardError as e:
+            self.fatal(e, exit_code=FAILURE)
 
         self.disable_mock()
 
     def collect_analysis_output(self):
-        dirs = self.query_abs_dirs()
-        analysis_dir = dirs['abs_analysis_dir']
-        upload_dir = dirs['abs_upload_dir']
-        self.mkdir_p(upload_dir)
-        files = (('rootingHazards.txt',
-                  'rooting_hazards',
-                  'list of rooting hazards, unsafe references, and extra roots'),
-                 ('gcFunctions.txt',
-                  'gcFunctions',
-                  'list of functions that can gc, and why'),
-                 ('allFunctions.txt',
-                  'allFunctions',
-                  'list of all functions that were compiled'),
-                 ('gcTypes.txt',
-                  'gcTypes',
-                  'list of types containing unrooted gc pointers'),
-                 ('unnecessary.txt',
-                  'extra',
-                  'list of extra roots (rooting with no GC function in scope)'),
-                 ('refs.txt',
-                  'refs',
-                  'list of unsafe references to unrooted pointers'),
-                 ('hazards.txt',
-                  'hazards',
-                  'list of just the hazards, together with gcFunction reason for each'))
-        for f, short, long in files:
-            self.copy_to_upload_dir(os.path.join(analysis_dir, f),
-                                    short_desc=short,
-                                    long_desc=long,
-                                    compress=True)
+        self.analysis.collect_output(self)
 
-    @requires(query_upload_path,
-              query_upload_ssh_key,
-              query_upload_ssh_user,
-              query_upload_ssh_server,
-              query_upload_remote_baseuri)
     def upload_analysis(self):
         if not self.query_do_upload():
             self.info("Uploads disabled for this build. Skipping...")
             return
 
         self.enable_mock()
-        dirs = self.query_abs_dirs()
-        upload_path = self.query_upload_path()
 
-        retval = self.rsync_upload_directory(
-            dirs['abs_upload_dir'],
-            self.query_upload_ssh_key(),
-            self.query_upload_ssh_user(),
-            self.query_upload_ssh_server(),
-            upload_path)
-
-        if retval is not None:
-            self.error("failed to upload")
+        try:
+            self.analysis.upload_results(self)
+        except HazardError as e:
+            self.error(e)
             self.return_code = WARNINGS
-        else:
-            upload_url = "{baseuri}{upload_path}".format(
-                baseuri=self.query_upload_remote_baseuri(),
-                upload_path=upload_path,
-            )
-            self.info("TinderboxPrint: hazard results: %s" % upload_url)
 
         self.disable_mock()
 
     def check_expectations(self):
-        if 'expect_file' not in self.config:
-            self.info('No expect_file given; skipping comparison with expected hazard count')
-            return
-
-        dirs = self.query_abs_dirs()
-        analysis_dir = dirs['abs_analysis_dir']
-        analysis_scriptdir = os.path.join(dirs['gecko_src'], 'js', 'src', 'devtools', 'rootAnalysis')
-        expect_file = os.path.join(analysis_scriptdir, self.config['expect_file'])
-        expect = self.read_from_file(expect_file)
-        if expect is None:
-            self.fatal("could not load expectation file")
-        data = json.loads(expect)
-
-        num_hazards = 0
-        num_refs = 0
-        with self.opened(os.path.join(analysis_dir, "rootingHazards.txt")) as (hazards_fh, err):
-            if err:
-                self.fatal("hazards file required")
-            for line in hazards_fh:
-                m = re.match(r"^Function.*has unrooted.*live across GC call", line)
-                if m:
-                    num_hazards += 1
-
-                m = re.match(r'^Function.*takes unsafe address of unrooted', line)
-                if m:
-                    num_refs += 1
-
-        expect_hazards = data.get('expect-hazards')
-        status = []
-        if expect_hazards is None:
-            status.append("%d hazards" % num_hazards)
-        else:
-            status.append("%d/%d hazards allowed" % (num_hazards, expect_hazards))
-
-        if expect_hazards is not None and expect_hazards != num_hazards:
-            if expect_hazards < num_hazards:
-                self.warning("TEST-UNEXPECTED-FAIL %d more hazards than expected (expected %d, saw %d)" %
-                             (num_hazards - expect_hazards, expect_hazards, num_hazards))
-                self.buildbot_status(TBPL_WARNING)
-            else:
-                self.info("%d fewer hazards than expected! (expected %d, saw %d)" %
-                          (expect_hazards - num_hazards, expect_hazards, num_hazards))
-
-        expect_refs = data.get('expect-refs')
-        if expect_refs is None:
-            status.append("%d unsafe refs" % num_refs)
-        else:
-            status.append("%d/%d unsafe refs allowed" % (num_refs, expect_refs))
-
-        if expect_refs is not None and expect_refs != num_refs:
-            if expect_refs < num_refs:
-                self.warning("TEST-UNEXPECTED-FAIL %d more unsafe refs than expected (expected %d, saw %d)" %
-                             (num_refs - expect_refs, expect_refs, num_refs))
-                self.buildbot_status(TBPL_WARNING)
-            else:
-                self.info("%d fewer unsafe refs than expected! (expected %d, saw %d)" %
-                          (expect_refs - num_refs, expect_refs, num_refs))
-
-        self.info("TinderboxPrint: " + ", ".join(status))
+        try:
+            self.analysis.check_expectations(self)
+        except HazardError as e:
+            self.fatal(e, exit_code=FAILURE)
 
 # main {{{1
 if __name__ == '__main__':
