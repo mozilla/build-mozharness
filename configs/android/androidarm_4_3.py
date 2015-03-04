@@ -258,7 +258,7 @@ config = {
         },
     }, # end of "test_definitions"
     # test harness options are located in the gecko tree
-    "in_tree_config": "config/mozharness/android_arm_4_4_config.py",
+    "in_tree_config": "config/mozharness/android_arm_4_3_config.py",
     "download_minidump_stackwalk": True,
     "default_blob_upload_servers": [
          "https://blobupload.elasticbeanstalk.com",
