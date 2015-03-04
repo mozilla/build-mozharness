@@ -891,7 +891,7 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
         self.rmtree(current_marfile)
         # partial filename
         previous_mar_buildid = self.get_buildid_from_mar_dir(previous_mar_dir)
-        partial_filename = self._partial_filename(locale)
+        partial_filename = self._query_partial_mar_filename(locale)
         if locale not in self.package_urls:
             self.package_urls[locale] = {}
         self.package_urls[locale]['partial_filename'] = partial_filename
