@@ -315,7 +315,8 @@ class GaiaMixin(object):
         # errors that occur here
         cmd = ['make',
                'node_modules',
-               'NODE_MODULES_GIT_URL=https://git.mozilla.org/b2g/gaia-node-modules.git']
+               'NODE_MODULES_GIT_URL=https://git.mozilla.org/b2g/gaia-node-modules.git',
+               'VIRTUALENV_EXISTS=1']
         kwargs = {
             'cwd': dirs['abs_gaia_dir'],
             'output_timeout': 300,

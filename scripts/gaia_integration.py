@@ -38,13 +38,20 @@ class GaiaIntegrationTest(GaiaTest):
             env["NBPARTS"] = self.config.get('total_chunks')
         env = self.query_env(partial_env=env)
 
-        # `make test-integration \
-        #      MOCHA_REPORTER=mocha-tbpl-reporter \
-        #      NPM_REGISTRY=http://npm-mirror.pub.build.mozilla.org`
+        # Bug 1137884 - marionette-js-runner needs to know about virtualenv
+        gaia_runner_service = (
+            dirs['abs_gaia_dir'] +
+            '/node_modules/marionette-js-runner/host/python/runner-service')
+        # Check whether python package is around since there exist versions
+        # of gaia that depend on versions of marionette-js-runner without
+        # the python stuff.
+        if os.path.exists(gaia_runner_service):
+            self.install_module('gaia-runner-service', gaia_runner_service)
+        env['VIRTUALENV_PATH'] = self.query_virtualenv_path()
+
         cmd = [
             'make',
             'test-integration',
-            'NPM_REGISTRY=' + self.config.get('npm_registry'),
             'REPORTER=mocha-tbpl-reporter',
             'TEST_MANIFEST=./shared/test/integration/tbpl-manifest.json'
         ]
