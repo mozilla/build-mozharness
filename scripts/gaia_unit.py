@@ -33,6 +33,7 @@ class GaiaUnitTest(GaiaTest):
         # make the gaia profile
         self.make_gaia(dirs['abs_gaia_dir'],
                        self.config.get('xre_path'),
+                       xre_url=self.config.get('xre_url'),
                        debug=True)
 
         # build the testrunner command arguments

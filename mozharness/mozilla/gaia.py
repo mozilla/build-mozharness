@@ -4,9 +4,10 @@ Module for performing gaia-specific tasks
 
 import json
 import os
+import re
 
-from mozharness.base.errors import HgErrorList, BaseErrorList
-from mozharness.base.log import ERROR
+from mozharness.base.errors import HgErrorList, BaseErrorList, ZipErrorList
+from mozharness.base.log import ERROR, FATAL
 
 gaia_config_options = [
     [["--gaia-dir"],
@@ -242,6 +243,46 @@ class GaiaMixin(object):
                 self.fatal("You're trying to run this outside of buildbot, " \
                     "therefore, you need to specify --gaia-branch.")
 
+    def extract_xre(self, xre_url, xre_path=None, parent_dir=None):
+        if not xre_path:
+            xre_path = self.config.get('xre_path')
+        xulrunner_bin = os.path.join(parent_dir,
+                                     xre_path,
+                                     'bin', 'xpcshell')
+        if os.access(xulrunner_bin, os.F_OK):
+            return
+
+        filename = self.download_file(xre_url, parent_dir=parent_dir)
+        m = re.search('\.tar\.(bz2|gz)$', filename)
+        if m:
+            # a xulrunner archive, which has a top-level 'xulrunner-sdk' dir
+            command = self.query_exe('tar', return_type='list')
+            tar_cmd = "jxf"
+            if m.group(1) == "gz":
+                tar_cmd = "zxf"
+            command.extend([tar_cmd, filename])
+            self.run_command(command,
+                             cwd=parent_dir,
+                             error_list=TarErrorList,
+                             halt_on_failure=True,
+                             fatal_exit_code=3)
+        else:
+            # a tooltool xre.zip
+            command = self.query_exe('unzip', return_type='list')
+            command.extend(['-q', '-o', filename])
+            # Gaia assumes that xpcshell is in a 'xulrunner-sdk' dir, but
+            # xre.zip doesn't have a top-level directory name, so we'll
+            # create it.
+            parent_dir = os.path.join(parent_dir,
+                                      self.config.get('xre_path'))
+            if not os.access(parent_dir, os.F_OK):
+                self.mkdir_p(parent_dir, error_level=FATAL)
+            self.run_command(command,
+                             cwd=parent_dir,
+                             error_list=ZipErrorList,
+                             halt_on_failure=True,
+                             fatal_exit_code=3)
+
     def pull(self, **kwargs):
         '''
         Two ways of using this function:
@@ -271,7 +312,10 @@ class GaiaMixin(object):
                         use_gaia_json=self.buildbot_config is not None)
 
     def make_gaia(self, gaia_dir, xre_dir, debug=False, noftu=True,
-                  build_config_path=None):
+                  xre_url=None, build_config_path=None):
+        if xre_url:
+            self.extract_xre(xre_url, xre_path=xre_dir, parent_dir=gaia_dir)
+
         env = {'DEBUG': '1' if debug else '0',
                'NOFTU': '1' if noftu else '0',
                'DESKTOP': '0',
