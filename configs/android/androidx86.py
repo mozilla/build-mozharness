@@ -125,21 +125,6 @@ config = {
             # Remove when Gecko 35 no longer in tbpl.
             "extra_args": ["--manifest=tests/xpcshell_android.ini"]
         },
-        "robocop-1": {
-            "category": "mochitest",
-            "extra_args": ["--total-chunks=3", "--this-chunk=1", "--robocop-path=../..",
-                "--robocop-ids=fennec_ids.txt", "--robocop=robocop.ini"],
-        },
-        "robocop-2": {
-            "category": "mochitest",
-            "extra_args": ["--total-chunks=3", "--this-chunk=2", "--robocop-path=../..",
-                "--robocop-ids=fennec_ids.txt", "--robocop=robocop.ini"],
-        },
-        "robocop-3": {
-            "category": "mochitest",
-            "extra_args": ["--total-chunks=3", "--this-chunk=3", "--robocop-path=../..",
-                "--robocop-ids=fennec_ids.txt", "--robocop=robocop.ini"],
-        },
     }, # end of "test_definitions"
     # test harness options are located in the gecko tree
     "in_tree_config": "config/mozharness/android_x86_config.py",
