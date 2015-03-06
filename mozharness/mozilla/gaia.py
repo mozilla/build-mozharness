@@ -204,7 +204,7 @@ class GaiaMixin(object):
 
 
             # verify
-            for cmd in ([git_cmd, 'log', '-1'], [git_cmd, 'branch']):
+            for cmd in ([git_cmd, 'rev-parse', 'HEAD'], [git_cmd, 'branch']):
                 self.run_command(cmd, cwd=dest, halt_on_failure=True,
                                  fatal_exit_code=3)
 
