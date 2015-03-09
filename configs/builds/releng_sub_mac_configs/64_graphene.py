@@ -8,10 +8,10 @@ config = {
         'update',  # may or may not happen based on query_is_nightly()
     ],
     'stage_platform': 'mac',
-    'stage_product': 'graphene',
-    'platform_supports_post_upload_to_latest': False,
+    'stage_product': 'b2g',
     'enable_signing': False,
     'enable_talos_sendchange': False,
+    'enable_unittest_sendchange': False,
     'enable_count_ctors': False,
     'objdir': 'obj-graphene',
     #### 64 bit build specific #####
@@ -31,7 +31,7 @@ config = {
         "SYMBOL_SERVER_HOST": "%(symbol_server_host)s",
         "SYMBOL_SERVER_SSH_KEY": "/Users/cltbld/.ssh/ffxbld_rsa",
         "SYMBOL_SERVER_USER": "ffxbld",
-        "SYMBOL_SERVER_PATH": "/mnt/netapp/breakpad/symbols_b2g",
+        "SYMBOL_SERVER_PATH": "/mnt/netapp/breakpad/symbols_ffx",
     },
     'src_mozconfig': 'b2g/graphene/config/mozconfigs/macosx64/nightly',
     #######################

@@ -34,6 +34,9 @@ class BalrogMixin(object):
             self.buildbot_config["properties"].items(),
             self.buildbot_properties.items(),
         )))
+        # XXX: hack alert: translate possibly fake platforms (like "macosx64_graphene")
+        # into proper platforms by stripping away product or build type specific parts.
+        balrog_props["properties"]["platform"] = balrog_props["properties"]["platform"].split("-")[0].split("_")[0]
         self.dump_config(props_path, balrog_props)
         cmd = [
             self.query_exe("python"),

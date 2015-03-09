@@ -497,12 +497,12 @@ You can set this by:
             self.fatal("""Can't call install() without mozinstall!
 Did you run with --create-virtualenv? Is mozinstall in virtualenv_modules?""")
 
-    def install(self):
+    def install_app(self, app=None, target_dir=None, installer_path=None):
         """ Dependent on mozinstall """
         # install the application
         cmd = self.query_exe("mozinstall", default=self.query_python_path("mozinstall"), return_type="list")
-        if self.config.get('application'):
-            cmd.extend(['--app', self.config['application']])
+        if app:
+            cmd.extend(['--app', app])
         # Remove the below when we no longer need to support mozinstall 0.3
         self.info("Detecting whether we're running mozinstall >=1.0...")
         output = self.get_output_from_command(cmd + ['-h'])
@@ -510,15 +510,21 @@ Did you run with --create-virtualenv? Is mozinstall in virtualenv_modules?""")
             cmd.append('--source')
         # End remove
         dirs = self.query_abs_dirs()
-        target_dir = dirs.get('abs_app_install_dir',
-                              os.path.join(dirs['abs_work_dir'],
-                              'application'))
+        if not target_dir:
+            target_dir = dirs.get('abs_app_install_dir',
+                                  os.path.join(dirs['abs_work_dir'],
+                                               'application'))
         self.mkdir_p(target_dir)
-        cmd.extend([self.installer_path,
+        if not installer_path:
+            installer_path = self.installer_path
+        cmd.extend([installer_path,
                     '--destination', target_dir])
         # TODO we'll need some error checking here
-        self.binary_path = self.get_output_from_command(cmd, halt_on_failure=True,
-                                                        fatal_exit_code=3)
+        return self.get_output_from_command(cmd, halt_on_failure=True,
+                                            fatal_exit_code=3)
+
+    def install(self):
+        self.binary_path = self.install_app(app=self.config.get('application'))
 
     def install_minidump_stackwalk(self):
         dirs = self.query_abs_dirs()

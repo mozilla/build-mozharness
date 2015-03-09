@@ -8,10 +8,10 @@ config = {
         'update',  # may or may not happen based on query_is_nightly()
     ],
     'stage_platform': 'win64',
-    'stage_product': 'graphene',
-    'platform_supports_post_upload_to_latest': False,
+    'stage_product': 'b2g',
     'enable_signing': False,
     'enable_talos_sendchange': False,
+    'enable_unittest_sendchange': False,
     'enable_count_ctors': False,
     'objdir': 'obj-graphene',
     'env': {
@@ -20,7 +20,7 @@ config = {
         'MOZBUILD_STATE_PATH': os.path.join(os.getcwd(), '.mozbuild'),
         'MOZ_AUTOMATION': '1',
         'MOZ_CRASHREPORTER_NO_REPORT': '1',
-        'MOZ_OBJDIR': 'obj-firefox',
+        'MOZ_OBJDIR': 'obj-graphene',
         'PATH': 'C:/mozilla-build/nsis-3.0a2;C:/mozilla-build/nsis-2.46u;C:/mozilla-build/python27;'
                 'C:/mozilla-build/buildbotve/scripts;'
                 '%s' % (os.environ.get('path')),
@@ -30,7 +30,7 @@ config = {
         "SYMBOL_SERVER_HOST": "%(symbol_server_host)s",
         "SYMBOL_SERVER_SSH_KEY": "/c/Users/cltbld/.ssh/ffxbld_rsa",
         "SYMBOL_SERVER_USER": "ffxbld",
-        "SYMBOL_SERVER_PATH": "/mnt/netapp/breakpad/symbols_b2g",
+        "SYMBOL_SERVER_PATH": "/mnt/netapp/breakpad/symbols_ffx",
     },
     'src_mozconfig': 'b2g/graphene/config/mozconfigs/win64/nightly',
     #######################

@@ -163,37 +163,6 @@ class GaiaTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin,
             return []
         return [str(option), str(value)]
 
-    def extract_xre(self, filename, parent_dir=None):
-        m = re.search('\.tar\.(bz2|gz)$', filename)
-        if m:
-            # a xulrunner archive, which has a top-level 'xulrunner-sdk' dir
-            command = self.query_exe('tar', return_type='list')
-            tar_cmd = "jxf"
-            if m.group(1) == "gz":
-                tar_cmd = "zxf"
-            command.extend([tar_cmd, filename])
-            self.run_command(command,
-                             cwd=parent_dir,
-                             error_list=TarErrorList,
-                             halt_on_failure=True,
-                             fatal_exit_code=3)
-        else:
-            # a tooltool xre.zip
-            command = self.query_exe('unzip', return_type='list')
-            command.extend(['-q', '-o', filename])
-            # Gaia assumes that xpcshell is in a 'xulrunner-sdk' dir, but
-            # xre.zip doesn't have a top-level directory name, so we'll
-            # create it.
-            parent_dir = os.path.join(parent_dir,
-                                      self.config.get('xre_path'))
-            if not os.access(parent_dir, os.F_OK):
-                self.mkdir_p(parent_dir, error_level=FATAL)
-            self.run_command(command,
-                             cwd=parent_dir,
-                             error_list=ZipErrorList,
-                             halt_on_failure=True,
-                             fatal_exit_code=3)
-
     def _query_proxxy(self):
         if not self.proxxy:
             # we don't have a proxxy object. Create it.
@@ -231,19 +200,6 @@ class GaiaTest(TestingMixin, TooltoolMixin, MercurialScript, TransferMixin,
             return super(GaiaTest, self)._retry_download_file(
                 url, file_name, error_level, retry_config=retry_config,
             )
-
-    def download_and_extract(self):
-        super(GaiaTest, self).download_and_extract()
-
-        xre_url = self.config.get('xre_url')
-        if xre_url:
-            dirs = self.query_abs_dirs()
-            xulrunner_bin = os.path.join(dirs['abs_gaia_dir'],
-                                         self.config.get('xre_path'),
-                                         'bin', 'xpcshell')
-            if not os.access(xulrunner_bin, os.F_OK):
-                xre = self.download_file(xre_url, parent_dir=dirs['abs_work_dir'])
-                self.extract_xre(xre, parent_dir=dirs['abs_gaia_dir'])
 
     def run_tests(self):
         """
