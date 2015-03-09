@@ -6,5 +6,6 @@ config = {
         'thunderbird': 'tbirdbld',
         'mobile': 'ffxbld',
         'Fennec': 'ffxbld',
+        'graphene': 'ffxbld',
     }
 }
