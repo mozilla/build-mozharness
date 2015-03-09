@@ -26,7 +26,6 @@ from mozharness.mozilla.building.buildbase import MakeUploadOutputParser
 from mozharness.mozilla.l10n.locales import LocalesMixin
 from mozharness.mozilla.mar import MarMixin
 from mozharness.mozilla.mock import MockMixin
-from mozharness.mozilla.purge import PurgeMixin
 from mozharness.mozilla.release import ReleaseMixin
 from mozharness.mozilla.signing import SigningMixin
 from mozharness.mozilla.updates.balrog import BalrogMixin
@@ -67,8 +66,8 @@ runtime_config_tokens = ('buildid', 'version', 'locale', 'from_buildid',
 
 
 # DesktopSingleLocale {{{1
-class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
-                          BuildbotMixin, VCSMixin, SigningMixin, BaseScript,
+class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
+                          VCSMixin, SigningMixin, BaseScript,
                           BalrogMixin, MarMixin):
     """Manages desktop repacks"""
     config_options = [[
@@ -507,10 +506,10 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, PurgeMixin,
     def clobber(self):
         """clobber"""
         dirs = self.query_abs_dirs()
-        config = self.config
-        objdir = os.path.join(dirs['abs_work_dir'], config['mozilla_dir'],
-                              config['objdir'])
-        PurgeMixin.clobber(self, always_clobber_dirs=[objdir])
+        clobber_dirs = (dirs['abs_objdir'], dirs['abs_compare_locales_dir'],
+                        dirs['abs_upload_dir'])
+        for directory in clobber_dirs:
+            self.rmtree(directory)
 
     def pull(self):
         """pulls source code"""
