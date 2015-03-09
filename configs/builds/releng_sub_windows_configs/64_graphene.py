@@ -9,7 +9,6 @@ config = {
     ],
     'stage_platform': 'win64',
     'stage_product': 'graphene',
-    'platform_supports_post_upload_to_latest': False,
     'enable_signing': False,
     'enable_talos_sendchange': False,
     'enable_count_ctors': False,
