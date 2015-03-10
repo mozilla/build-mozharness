@@ -34,9 +34,10 @@ class BalrogMixin(object):
             self.buildbot_config["properties"].items(),
             self.buildbot_properties.items(),
         )))
-        # XXX: hack alert: translate possibly fake platforms (like "macosx64_graphene")
-        # into proper platforms by stripping away product or build type specific parts.
-        balrog_props["properties"]["platform"] = balrog_props["properties"]["platform"].split("-")[0].split("_")[0]
+        # XXX: hack alert, turn fake graphene platforms into real ones. This
+        # was done more generically originally (bug 1140437), but it broke
+        # flame-kk updates (bug 1141633)
+        balrog_props["properties"]["platform"] = balrog_props["properties"]["platform"].replace("_graphene", "")
         self.dump_config(props_path, balrog_props)
         cmd = [
             self.query_exe("python"),
