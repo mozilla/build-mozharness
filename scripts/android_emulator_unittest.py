@@ -699,6 +699,20 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
             dh = ADBDeviceHandler(config=config, log_obj=self.log_obj, script_obj=self)
             dh.device_id = emulator['device_id']
 
+            # Wait for Android to finish booting
+            completed = None
+            retries = 0
+            while retries < 30:
+                completed = self.get_output_from_command([self.adb_path,
+                    "-s", emulator['device_id'], "shell",
+                    "getprop", "sys.boot_completed"])
+                if completed == '1':
+                    break
+                time.sleep(10)
+                retries = retries + 1
+            if completed != '1':
+                self.warning('Retries exhausted waiting for Android boot.')
+
             # Install Fennec
             self.info("Installing Fennec for %s" % emulator["name"])
             dh.install_app(self.installer_path)
