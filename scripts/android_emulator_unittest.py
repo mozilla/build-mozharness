@@ -671,7 +671,10 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
             # Does it make sense?
             self.install_minidump_stackwalk()
 
-        self._download_robocop_apk()
+        for suite_name in self.test_suites:
+            if suite_name.startswith('robocop'):
+                self._download_robocop_apk()
+                break
 
         self.mkdir_p(dirs['abs_xre_dir'])
         self._download_unzip(self.host_utils_url, dirs['abs_xre_dir'])
