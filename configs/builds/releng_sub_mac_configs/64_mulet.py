@@ -4,10 +4,7 @@ config = {
     'default_actions': [
         'clobber',
         'clone-tools',
-        # 'setup-mock',
         'build',
-        # 'generate-build-stats',
-        'update',  # decided by query_is_nightly()
     ],
     'stage_platform': 'macosx64-mulet',
     'stage_product': 'b2g',
