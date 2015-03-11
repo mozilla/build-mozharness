@@ -98,7 +98,7 @@ config = {
         },
         "mochitest-gl": {
             "category": "mochitest",
-            "extra_args": ["--test-manifest=gl.json"],
+            "extra_args": ["--manifest=tests/dom/canvas/test/_webgl-conformance.ini"],
         },
         "reftest-1": {
             "category": "reftest",
