@@ -277,7 +277,7 @@ class BaseLogger(object):
             date_format = self.log_date_format
         return logging.Formatter(log_format, date_format)
 
-    def new_logger(self, logger_name):
+    def new_logger(self):
         """Create a new logger.
         By default there are no handlers.
         """
@@ -309,7 +309,6 @@ class BaseLogger(object):
     def add_console_handler(self, log_level=None, log_format=None,
                             date_format=None):
         console_handler = logging.StreamHandler()
-        console_handler.setLevel(self.get_logger_level(log_level))
         console_handler.setFormatter(self.get_log_formatter(log_format=log_format,
                                                             date_format=date_format))
         self.logger.addHandler(console_handler)
@@ -320,7 +319,6 @@ class BaseLogger(object):
         if not self.append_to_log and os.path.exists(log_path):
             os.remove(log_path)
         file_handler = logging.FileHandler(log_path)
-        file_handler.setLevel(self.get_logger_level(log_level))
         file_handler.setFormatter(self.get_log_formatter(log_format=log_format,
                                                          date_format=date_format))
         self.logger.addHandler(file_handler)
@@ -356,11 +354,11 @@ class SimpleFileLogger(BaseLogger):
                  logger_name='Simple', log_dir='logs', **kwargs):
         BaseLogger.__init__(self, logger_name=logger_name, log_format=log_format,
                             log_dir=log_dir, **kwargs)
-        self.new_logger(self.logger_name)
+        self.new_logger()
         self.init_message()
 
-    def new_logger(self, logger_name):
-        BaseLogger.new_logger(self, logger_name)
+    def new_logger(self):
+        BaseLogger.new_logger(self)
         self.log_path = os.path.join(self.abs_log_dir, '%s.log' % self.log_name)
         self.log_files['default'] = self.log_path
         self.add_file_handler(self.log_path)
@@ -379,11 +377,11 @@ class MultiFileLogger(BaseLogger):
                             log_to_raw=log_to_raw, log_dir=log_dir,
                             **kwargs)
 
-        self.new_logger(self.logger_name)
+        self.new_logger()
         self.init_message()
 
-    def new_logger(self, logger_name):
-        BaseLogger.new_logger(self, logger_name)
+    def new_logger(self):
+        BaseLogger.new_logger(self)
         min_logger_level = self.get_logger_level(self.log_level)
         for level in self.LEVELS.keys():
             if self.get_logger_level(level) >= min_logger_level:
