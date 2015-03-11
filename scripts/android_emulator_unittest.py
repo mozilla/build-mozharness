@@ -671,7 +671,10 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
             # Does it make sense?
             self.install_minidump_stackwalk()
 
-        self._download_robocop_apk()
+        for suite_name in self.test_suites:
+            if suite_name.startswith('robocop'):
+                self._download_robocop_apk()
+                break
 
         self.mkdir_p(dirs['abs_xre_dir'])
         self._download_unzip(self.host_utils_url, dirs['abs_xre_dir'])
@@ -695,6 +698,20 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
             self.info("Creating ADBDevicHandler for %s with config %s" % (emulator["name"], config))
             dh = ADBDeviceHandler(config=config, log_obj=self.log_obj, script_obj=self)
             dh.device_id = emulator['device_id']
+
+            # Wait for Android to finish booting
+            completed = None
+            retries = 0
+            while retries < 30:
+                completed = self.get_output_from_command([self.adb_path,
+                    "-s", emulator['device_id'], "shell",
+                    "getprop", "sys.boot_completed"])
+                if completed == '1':
+                    break
+                time.sleep(10)
+                retries = retries + 1
+            if completed != '1':
+                self.warning('Retries exhausted waiting for Android boot.')
 
             # Install Fennec
             self.info("Installing Fennec for %s" % emulator["name"])

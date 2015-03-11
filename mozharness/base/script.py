@@ -1362,8 +1362,6 @@ class BaseScript(ScriptMixin, LogMixin, object):
             "append_to_log": False,
         }
         log_type = self.config.get("log_type", "multi")
-        if log_type == "multi":
-            log_config['logger_name'] = 'Multi'
         for key in log_config.keys():
             value = self.config.get(key, None)
             if value is not None:

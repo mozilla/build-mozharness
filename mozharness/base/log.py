@@ -26,6 +26,19 @@ DEBUG, INFO, WARNING, ERROR, CRITICAL, FATAL, IGNORE = (
     'debug', 'info', 'warning', 'error', 'critical', 'fatal', 'ignore')
 
 
+LOG_LEVELS = {
+    DEBUG: logging.DEBUG,
+    INFO: logging.INFO,
+    WARNING: logging.WARNING,
+    ERROR: logging.ERROR,
+    CRITICAL: logging.CRITICAL,
+    FATAL: FATAL_LEVEL
+}
+
+# mozharness root logger
+ROOT_LOGGER = logging.getLogger()
+
+
 # LogMixin {{{1
 class LogMixin(object):
     """This is a mixin for any object to access similar logging
@@ -206,14 +219,7 @@ class BaseLogger(object):
     error,critical,fatal messages for us to count up at the end (aiming
     for 0).
     """
-    LEVELS = {
-        DEBUG: logging.DEBUG,
-        INFO: logging.INFO,
-        WARNING: logging.WARNING,
-        ERROR: logging.ERROR,
-        CRITICAL: logging.CRITICAL,
-        FATAL: FATAL_LEVEL
-    }
+    LEVELS = LOG_LEVELS
 
     def __init__(
         self, log_level=INFO,
@@ -257,7 +263,7 @@ class BaseLogger(object):
             name = self.__class__.__name__
         self.log_message("%s online at %s in %s" %
                          (name, datetime.now().strftime("%Y%m%d %H:%M:%S"),
-                         os.getcwd()))
+                          os.getcwd()))
 
     def get_logger_level(self, level=None):
         if not level:
@@ -275,7 +281,7 @@ class BaseLogger(object):
         """Create a new logger.
         By default there are no handlers.
         """
-        self.logger = logging.getLogger(logger_name)
+        self.logger = ROOT_LOGGER
         self.logger.setLevel(self.get_logger_level())
         self._clear_handlers()
         if self.log_to_console:
@@ -387,6 +393,13 @@ class MultiFileLogger(BaseLogger):
                                                    self.log_files[level]),
                                       log_level=level)
 
+
+def numeric_log_level(level):
+    """Converts a mozharness log level (string) to the corresponding logger
+       level (number). This function makes possible to set the log level
+       in functions that do not inherit from LogMixin
+    """
+    return LOG_LEVELS[level]
 
 # __main__ {{{1
 if __name__ == '__main__':

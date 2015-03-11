@@ -724,7 +724,6 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
         else:
             self.error('failed to upload %s' % (locale))
             ret = FAILURE
-            self.fatal('failed to upload -- REMOVEME')
         return ret
 
     def make_installers(self, locale):
@@ -829,7 +828,7 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
                 self.info('partials are disabled: enable_partials == False')
                 generate = False
             else:
-                partial_filename = self._previous_mar_filename(locale)
+                partial_filename = self._query_partial_mar_filename(locale)
                 if os.path.exists(partial_filename):
                     self.info('partial mar, already exists: %s' % (partial_filename))
                     generate = False
@@ -865,28 +864,21 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
         self.info('creating partial update for locale: %s' % (locale))
         # and recreate current/ previous/
         self._create_mar_dirs()
-        # download mar and mbsdiff executables
+        # download mar and mbsdiff executables, we need them later...
         self.download_mar_tools()
-        # get the previous mar file
-        previous_marfile = self._get_previous_mar(locale)
-        # and unpack it
-        previous_mar_dir = self._previous_mar_dir()
-        result = self._unpack_mar(previous_marfile, previous_mar_dir)
-        if result != 0:
-            self.error('failed to unpack %s to %s' % (previous_marfile,
-                                                      previous_mar_dir))
-            return result
 
+        # unpack current mar file
         current_marfile = self._current_mar_filename(locale)
         current_mar_dir = self._current_mar_dir()
         result = self._unpack_mar(current_marfile, current_mar_dir)
-        if result != 0:
+        if result != SUCCESS:
             self.error('failed to unpack %s to %s' % (current_marfile,
                                                       current_mar_dir))
             return result
         # current mar file unpacked, remove it
         self.rmtree(current_marfile)
         # partial filename
+        previous_mar_dir = self._previous_mar_dir()
         previous_mar_buildid = self.get_buildid_from_mar_dir(previous_mar_dir)
         partial_filename = self._query_partial_mar_filename(locale)
         if locale not in self.package_urls:
@@ -918,7 +910,19 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
     def _partial_filename(self, locale):
         config = self.config
         version = self.query_version()
+        # download the previous partial, if needed
+        self._create_mar_dirs()
+        # download mar and mbsdiff executables
+        self.download_mar_tools()
+        # get the previous mar file
+        previous_marfile = self._get_previous_mar(locale)
+        # and unpack it
         previous_mar_dir = self._previous_mar_dir()
+        result = self._unpack_mar(previous_marfile, previous_mar_dir)
+        if result != SUCCESS:
+            self.error('failed to unpack %s to %s' % (previous_marfile,
+                                                      previous_mar_dir))
+            return result
         previous_mar_buildid = self.get_buildid_from_mar_dir(previous_mar_dir)
         current_mar_buildid = self._query_buildid()
         return config['partial_mar'] % {'version': version,

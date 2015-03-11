@@ -14,6 +14,8 @@ import functools
 import time
 import random
 import urlparse
+import os.path
+from external_tools.detect_repo import detect_git, detect_hg, detect_local
 
 try:
     import simplejson as json
@@ -165,13 +167,22 @@ class B2GBuildBaseScript(BuildbotMixin, MockMixin,
         elif self.buildbot_config and 'sourcestamp' in self.buildbot_config:
             revision = self.buildbot_config['sourcestamp']['revision']
         else:
-            # Look at what we have checked out
             dirs = self.query_abs_dirs()
-            hg = self.query_exe('hg', return_type='list')
-            revision = self.get_output_from_command(
-                hg + ['parent', '--template', '{node|short}'], cwd=dirs['gecko_src']
-            )
-
+            repo = dirs['gecko_src']
+            repo_type = detect_local(repo)
+            # Look at what we have checked out
+            if repo_type == 'hg':
+                hg = self.query_exe('hg', return_type='list')
+                revision = self.get_output_from_command(
+                    hg + ['parent', '--template', '{node|short}'], cwd=repo
+                )
+            elif repo_type == 'git':
+                git = self.query_exe('git', return_type='list')
+                revision = self.get_output_from_command(
+                    git + ['rev-parse', 'HEAD'], cwd=repo
+                )
+            else:
+                return None
         return revision[0:12] if revision else None
 
     def query_gecko_config_path(self):
@@ -186,8 +197,11 @@ class B2GBuildBaseScript(BuildbotMixin, MockMixin,
 
     def query_remote_gecko_config(self):
         repo = self.query_repo()
-        # TODO: Hardcoding this sucks
-        if 'hg.mozilla.org' in repo:
+        if os.path.exists(repo):
+            config_path = self.query_gecko_config_path()
+            config_path = "{repo}/{config_path}".format(repo=repo, config_path=config_path)
+            return json.load(open(config_path, "r"))
+        elif detect_hg(repo):
             rev = self.query_revision()
             if rev is None:
                 rev = 'default'
@@ -196,11 +210,14 @@ class B2GBuildBaseScript(BuildbotMixin, MockMixin,
             # Handle local files vs. in-repo files
             url = self.query_hgweb_url(repo, rev, config_path)
             return self.retry(self.load_json_from_url, args=(url,))
-        else:
-            # assume it is a local path
+        elif detect_git(repo):
+            rev = self.query_revision()
+            if rev is None:
+                rev = 'HEAD'
+
             config_path = self.query_gecko_config_path()
-            config_path = "{repo}/{config_path}".format(repo=repo, config_path=config_path)
-            return json.load(open(config_path, "r"))
+            url = self.query_gitweb_url(repo, rev, config_path)
+            return self.retry(self.load_json_from_url, args=(url,))
 
     def load_gecko_config(self):
         if self.gecko_config:
@@ -273,22 +290,36 @@ class B2GBuildBaseScript(BuildbotMixin, MockMixin,
         return url
 
     def query_gitweb_url(self, repo, rev, filename=None):
-        bits = urlparse.urlparse(repo)
-        repo = bits.path.lstrip('/')
-        if filename:
-            url = "{scheme}://{host}/?p={repo};a=blob;f={filename};h={rev}".format(
-                scheme=bits.scheme,
-                host=bits.netloc,
-                repo=repo,
-                filename=filename,
-                rev=rev)
+        # Git does not support raw files download, so each git
+        # provider has its own way to make that possible
+        if 'github.com' in repo:
+            if filename:
+                url = '{repo}/raw/{rev}/{filename}'.format(
+                        repo=repo,
+                        rev=rev,
+                        filename=filename)
+            else:
+                url = '{repo}/raw/{rev}'.format(
+                        repo=repo,
+                        rev=rev)
         else:
-            url = "{scheme}://{host}/?p={repo};a=tree;h={rev}".format(
-                scheme=bits.scheme,
-                host=bits.netloc,
-                repo=repo,
-                rev=rev)
+            bits = urlparse.urlparse(repo)
+            repo = bits.path.lstrip('/')
+            if filename:
+                url = "{scheme}://{host}/?p={repo};a=blob_plain;f={filename};hb={rev}".format(
+                    scheme=bits.scheme,
+                    host=bits.netloc,
+                    repo=repo,
+                    filename=filename,
+                    rev=rev)
+            else:
+                url = "{scheme}://{host}/?p={repo};a=tree;h={rev}".format(
+                    scheme=bits.scheme,
+                    host=bits.netloc,
+                    repo=repo,
+                    rev=rev)
         return url
+
 
     # Actions {{{2
     def checkout_tools(self):
