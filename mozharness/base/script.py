@@ -556,6 +556,7 @@ class ScriptMixin(object):
             except retry_exceptions, e:
                 retry = True
                 error_message = "%s\nCaught exception: %s" % (error_message, str(e))
+                self.log('retry: attempt #%d caught exception: %s' % (n, str(e)), level=INFO)
 
             if not retry:
                 return status

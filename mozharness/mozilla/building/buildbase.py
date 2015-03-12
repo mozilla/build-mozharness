@@ -19,6 +19,7 @@ import time
 import uuid
 import copy
 import glob
+import logging
 from itertools import chain
 
 # import the power of mozharness ;)
@@ -1277,6 +1278,10 @@ or run without that action (ie: --no-{action})"
         # which is necessary before the virtualenv can be created.
         self.create_virtualenv()
         self.activate_virtualenv()
+
+        # Enable Taskcluster debug logging, so at least we get some debug
+        # messages while we are testing uploads.
+        logging.getLogger('taskcluster').setLevel(logging.DEBUG)
 
         tc = Taskcluster(self.branch,
                          self.stage_platform,

@@ -79,7 +79,7 @@ class FxDesktopBuild(BuildScript, object):
                 'virtualenv_modules': [
                     'requests==2.2.1',
                     'PyHawk-with-a-single-extra-commit==0.1.5',
-                    'taskcluster==0.0.9',
+                    'taskcluster==0.0.14',
                 ],
                 'virtualenv_path': 'venv',
                 #
