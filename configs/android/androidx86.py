@@ -90,11 +90,11 @@ config = {
         },
         "mochitest-1": {
             "category": "mochitest",
-            "extra_args": ["--total-chunks=2", "--this-chunk=1", "--run-only-tests=androidx86.json"],
+            "extra_args": ["--total-chunks=2", "--this-chunk=1"],
         },
         "mochitest-2": {
             "category": "mochitest",
-            "extra_args": ["--total-chunks=2", "--this-chunk=2", "--run-only-tests=androidx86.json"],
+            "extra_args": ["--total-chunks=2", "--this-chunk=2"],
         },
         "mochitest-gl": {
             "category": "mochitest",
