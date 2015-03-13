@@ -20,13 +20,15 @@ from mozharness.base.script import (
     PreScriptAction,
 )
 from mozharness.base.vcs.vcsbase import MercurialScript
+from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_options
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
 from mozharness.mozilla.mozbase import MozbaseMixin
 from mozharness.mozilla.buildbot import TBPL_SUCCESS
 from mozharness.mozilla.structuredlog import StructuredOutputParser
 from mozharness.mozilla.gaia import GaiaMixin
 
-class LuciddreamTest(TestingMixin, MercurialScript, MozbaseMixin, BaseScript, GaiaMixin):
+class LuciddreamTest(TestingMixin, MercurialScript, MozbaseMixin, BaseScript,
+                     BlobUploadMixin, GaiaMixin):
     config_options = [[
         ["--emulator-url"],
         {"action": "store",
@@ -101,20 +103,22 @@ class LuciddreamTest(TestingMixin, MercurialScript, MozbaseMixin, BaseScript, Ga
          "default": 'https://hg.mozilla.org/build/tools',
          "help": "Build tools repo",
      }
-    ]] + copy.deepcopy(testing_config_options)
-
+    ]] + copy.deepcopy(testing_config_options) \
+       + copy.deepcopy(blobupload_config_options)
 
 
     def __init__(self, require_config_file=False):
         super(LuciddreamTest, self).__init__(
             config_options=self.config_options,
             all_actions=['clobber',
+                         'read-buildbot-config',
                          'download-and-extract',
                          'pull',
                          'create-virtualenv',
                          'install',
                          'run-tests'],
             default_actions=['clobber',
+                             'read-buildbot-config',
                              'download-and-extract',
                              'pull',
                              'create-virtualenv',
