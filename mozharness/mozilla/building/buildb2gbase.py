@@ -434,7 +434,7 @@ class B2GBuildBaseScript(BuildbotMixin, MockMixin,
                     self.run_command(cmd, cwd=dirs['work_dir'])
 
                 config_result = self.run_command([
-                    './config.sh', '-j100', '-q', self.config['target'], manifest_filename,
+                    './config.sh', '-q', self.config['target'], manifest_filename,
                 ], cwd=dirs['work_dir'], output_timeout=55 * 60)
 
                 # TODO: Check return code from these? retry?
