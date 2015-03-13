@@ -41,7 +41,7 @@ class FxDesktopBuild(BuildScript, object):
                 'is_automation': True,
                 "pgo_build": False,
                 "debug_build": False,
-                "pgo_platforms": ['linux', 'linux64', 'win32'],
+                "pgo_platforms": ['linux', 'linux64', 'win32', 'win64'],
                 # nightly stuff
                 "nightly_build": False,
                 'balrog_credentials_file': 'oauth.txt',
