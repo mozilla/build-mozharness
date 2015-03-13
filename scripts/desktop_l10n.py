@@ -815,6 +815,11 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
         return SUCCESS
 
     def _requires_generate_mar(self, mar_type, locale):
+        # Bug 1136750 - Partial mar is generated but not uploaded
+        # do not use mozharness for complete/partial updates, testing
+        # a full cycle of intree only updates generation
+        return False
+
         generate = True
         if mar_type == 'complete':
             complete_filename = self.localized_marfile(locale)
