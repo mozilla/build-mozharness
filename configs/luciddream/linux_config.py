@@ -1,5 +1,6 @@
 # This is a template config file for luciddream production.
 import os
+import platform
 
 HG_SHARE_BASE_DIR = "/builds/hg-shared"
 
