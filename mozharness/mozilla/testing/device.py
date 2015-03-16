@@ -384,12 +384,27 @@ class ADBDeviceHandler(BaseDeviceHandler):
                 self.run_command([adb, "-s", device_id, "uninstall",
                                   c['device_package_name']],
                                  error_list=ADBErrorList)
-            self.run_command([adb, "-s", device_id, "install", '-r',
-                              file_path],
-                             error_list=ADBErrorList,
-                             halt_on_failure=True,
-                             fatal_exit_code=3,
-                             output_timeout=300)
+            # A slow-booting device may not allow installs, temporarily.
+            # Wait up to a few minutes if not immediately successful.
+            # Note that "adb install" typically writes status messages
+            # to stderr and the adb return code may not differentiate
+            # successful installations from failures; instead we check
+            # the command output.
+            install_complete = False
+            retries = 0
+            while retries < 6:
+                output = self.get_output_from_command([adb, "-s", device_id,
+                                                       "install", '-r',
+                                                       file_path],
+                                                       ignore_errors=True)
+                if output and output.lower().find("success") >= 0:
+                    install_complete = True
+                    break
+                self.warning("Failed to install %s" % file_path)
+                time.sleep(30)
+                retries = retries + 1
+            if not install_complete:
+                self.fatal("Failed to install %s!" % file_path)
 
     def uninstall_app(self, package_name, package_root="/data/data",
                       error_level="error"):
