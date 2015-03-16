@@ -151,7 +151,9 @@ class BouncerSubmitter(BaseScript, PurgeMixin, BouncerSubmitterMixin):
         for product, part_config in sorted(self.config["partials"].items()):
             product_name_tmpl = part_config["product-name"]
             for prev_version in prev_versions:
+                prev_version, prev_build_number = prev_version.split("build")
                 subs["prev_version"] = prev_version
+                subs["prev_build_number"] = prev_build_number
                 product_name = product_name_tmpl % subs
                 if self.product_exists(product_name):
                     self.warning("Product %s already exists. Skipping..." %
