@@ -195,7 +195,7 @@ config = {
             },
         },
         "candidates-dir": {
-            "product-name": "Firefox-%(version)sbuild%(build_number)s-Partial-%(prev_version)s",
+            "product-name": "Firefox-%(version)sbuild%(build_number)s-Partial-%(prev_version)sbuild%(prev_build_number)s",
             "ssl-only": False,
             "add-locales": True,
             "paths": {
