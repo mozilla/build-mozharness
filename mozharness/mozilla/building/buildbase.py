@@ -1434,7 +1434,7 @@ or run without that action (ie: --no-{action})"
         return_code = self.run_command_m(
             command=[python, 'mach', '--log-no-times', 'build', '-v'],
             cwd=self.query_abs_dirs()['abs_src_dir'],
-            env=env
+            env=env, output_timeout=self.config.get('max_build_output_timeout', 60 * 40)
         )
         if return_code:
             self.return_code = self.worst_level(

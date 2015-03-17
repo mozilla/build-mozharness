@@ -30,6 +30,7 @@ from mozharness.mozilla.release import ReleaseMixin
 from mozharness.mozilla.signing import SigningMixin
 from mozharness.mozilla.updates.balrog import BalrogMixin
 from mozharness.mozilla.mock import ERROR_MSGS
+from mozharness.base.log import FATAL
 
 try:
     import simplejson as json
@@ -142,6 +143,12 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
          "dest": "total_locale_chunks",
          "type": "int",
          "help": "Specify the total number of chunks of locales"}
+    ], [
+        ['--en-us-binary-url', ],
+        {"action": "store",
+         "dest": "en_us_binary_url",
+         "type": "string",
+         "help": "Specify the url of the en-us binary"}
     ]]
 
     def __init__(self, require_config_file=True):
@@ -695,6 +702,15 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
         env = self.query_bootstrap_env()
         dirs = self.query_abs_dirs()
         cwd = dirs['abs_locales_dir']
+        binary_file = env['EN_US_BINARY_URL']
+        if binary_file.endswith(('tar.bz2', 'dmg', 'zip')):
+            # specified EN_US_BINARY url is an installer file...
+            dst_filename = binary_file.split('/')[-1].strip()
+            dst_filename = os.path.join(dirs['abs_objdir'], 'dist', dst_filename)
+            self.info('Specified binary url, %s, appears to be an installer file' % (binary_file))
+            return self._retry_download_file(binary_file, dst_filename, error_level=FATAL)
+
+        # binary url is not an installer, use make wget-en-US to download it
         return self._make(target=["wget-en-US"], cwd=cwd, env=env)
 
     def make_upload(self, locale):
