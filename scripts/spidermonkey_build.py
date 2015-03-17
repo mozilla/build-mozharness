@@ -75,8 +75,8 @@ class SpidermonkeyBuild(MockMixin,
                             config_options=self.config_options,
                             # other stuff
                             all_actions=[
-                                'checkout-tools',
                                 'purge',
+                                'checkout-tools',
 
                                 # First, build an optimized JS shell for running the analysis
                                 'checkout-source',
@@ -100,8 +100,8 @@ class SpidermonkeyBuild(MockMixin,
                                 'check-expectations',
                             ],
                             default_actions=[
-                                'checkout-tools',
                                 'purge',
+                                'checkout-tools',
                                 'checkout-source',
                                 'get-blobs',
                                 'clobber-shell',
