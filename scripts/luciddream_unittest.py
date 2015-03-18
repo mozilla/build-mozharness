@@ -192,7 +192,6 @@ class LuciddreamTest(TestingMixin, MercurialScript, MozbaseMixin, BaseScript,
         self.info("Checking out luciddream harness")
         luciddream_dir = self.query_abs_dirs()['abs_luciddream_dir']
         self.mkdir_p(luciddream_dir)
-        tarfile = self.download_file(self.emulator_url,
         luciddream_repo = self.config['luciddream_repo']
         luciddream_rev = self.config['luciddream_rev']
         repos = [
