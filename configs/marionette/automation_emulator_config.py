@@ -7,6 +7,7 @@ config = {
     # marionette options
     "test_type": "b2g",
     "emulator": "arm",
+    "tooltool_cache": "/builds/tooltool_cache",
     "tooltool_servers": ["http://tooltool.pvt.build.mozilla.org/build/"],
     "test_manifest": "unit-tests.ini",
 
