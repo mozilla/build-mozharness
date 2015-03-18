@@ -25,10 +25,8 @@ from mozharness.mozilla.testing.errors import LogcatErrorList
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
 from mozharness.mozilla.testing.unittest import TestSummaryOutputParserHelper
 from mozharness.mozilla.structuredlog import StructuredOutputParser
-from mozharness.mozilla.tooltool import TooltoolMixin
 
-class MarionetteTest(TestingMixin, TooltoolMixin,
-                     MercurialScript, BlobUploadMixin, TransferMixin, GaiaMixin):
+class MarionetteTest(TestingMixin, MercurialScript, BlobUploadMixin, TransferMixin, GaiaMixin):
     config_options = [[
         ["--application"],
         {"action": "store",
@@ -320,9 +318,6 @@ class MarionetteTest(TestingMixin, TooltoolMixin,
                              cwd=dirs['abs_emulator_dir'],
                              error_list=TarErrorList,
                              halt_on_failure=True, fatal_exit_code=3)
-
-        if self.config.get('download_minidump_stackwalk'):
-            self.install_minidump_stackwalk()
 
     def install(self):
         if self.config.get('emulator'):

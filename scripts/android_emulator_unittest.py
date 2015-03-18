@@ -28,12 +28,11 @@ from mozharness.mozilla.mozbase import MozbaseMixin
 from mozharness.mozilla.buildbot import TBPL_WORST_LEVEL_TUPLE
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
 from mozharness.mozilla.testing.unittest import EmulatorMixin
-from mozharness.mozilla.tooltool import TooltoolMixin
 
 from mozharness.mozilla.testing.device import ADBDeviceHandler
 
 
-class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, EmulatorMixin, VCSMixin, BaseScript, MozbaseMixin):
+class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin, BaseScript, MozbaseMixin):
     config_options = [[
         ["--robocop-url"],
         {"action": "store",
@@ -664,12 +663,6 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, TooltoolMixin, Emulator
         # This will download and extract the fennec.apk and tests.zip
         super(AndroidEmulatorTest, self).download_and_extract()
         dirs = self.query_abs_dirs()
-        # XXX: Why is it called "download" since we don't download it?
-        if self.config.get('download_minidump_stackwalk'):
-            # XXX: install_minidump_stackwalk will clone tools regardless if
-            # I already have a stackwalk_path on the machine
-            # Does it make sense?
-            self.install_minidump_stackwalk()
 
         for suite_name in self.test_suites:
             if suite_name.startswith('robocop'):

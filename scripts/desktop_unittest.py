@@ -21,12 +21,13 @@ import glob
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
 from mozharness.base.errors import BaseErrorList
-from mozharness.base.log import INFO, ERROR
+from mozharness.base.log import INFO, ERROR, WARNING
 from mozharness.base.script import PreScriptAction
 from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_options
 from mozharness.mozilla.mozbase import MozbaseMixin
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
+from mozharness.mozilla.buildbot import TBPL_WARNING
 
 SUITE_CATEGORIES = ['cppunittest', 'jittest', 'mochitest', 'reftest', 'xpcshell', 'mozbase', 'mozmill']
 
@@ -147,7 +148,6 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
                 'read-buildbot-config',
                 'download-and-extract',
                 'create-virtualenv',
-                'pull',
                 'install',
                 'run-tests',
             ],
@@ -557,8 +557,9 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
                                                      config=self.config,
                                                      error_list=error_list,
                                                      log_obj=self.log_obj)
-                if c.get('minidump_stackwalk_path'):
-                    env['MINIDUMP_STACKWALK'] = c['minidump_stackwalk_path']
+
+                if self.query_minidump_stackwalk():
+                    env['MINIDUMP_STACKWALK'] = self.minidump_stackwalk_path
                 env['MOZ_UPLOAD_DIR'] = self.query_abs_dirs()['abs_blob_upload_dir']
                 env['MINIDUMP_SAVE_PATH'] = self.query_abs_dirs()['abs_blob_upload_dir']
                 if not os.path.isdir(env['MOZ_UPLOAD_DIR']):

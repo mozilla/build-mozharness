@@ -18,6 +18,7 @@ config = {
         'hg': 'c:/mozilla-build/hg/hg',
         'mozinstall': ['%s/build/venv/scripts/python' % os.getcwd(),
                        '%s/build/venv/scripts/mozinstall-script.py' % os.getcwd()],
+        'tooltool.py': [sys.executable, 'C:/mozilla-build/tooltool.py'],
     },
     ###
     "installer_path": INSTALLER_PATH,
@@ -145,13 +146,15 @@ config = {
             "enabled": ADJUST_MOUSE_AND_SCREEN
         },
     ],
-    "repos": [{"repo": "https://hg.mozilla.org/build/tools"}],
     "vcs_output_timeout": 1000,
-    "minidump_stackwalk_path": "%(abs_work_dir)s/tools/breakpad/win32/minidump_stackwalk.exe",
     "minidump_save_path": "%(abs_work_dir)s/../minidumps",
     "buildbot_max_log_size": 52428800,
     "default_blob_upload_servers": [
         "https://blobupload.elasticbeanstalk.com",
     ],
     "blob_uploader_auth_file": os.path.join(os.getcwd(), "oauth.txt"),
+    "download_minidump_stackwalk": True,
+    "minidump_stackwalk_path": "win32-minidump_stackwalk.exe",
+    "minidump_tooltool_manifest_path": "config/tooltool-manifests/win32/releng.manifest",
+    "tooltool_servers": ["http://runtime-binaries.pvt.build.mozilla.org/tooltool/"],
 }
