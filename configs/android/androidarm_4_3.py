@@ -4,7 +4,7 @@ config = {
     "buildbot_json_path": "buildprops.json",
     "host_utils_url": "http://talos-remote.pvt.build.mozilla.org/tegra/tegra-host-utils.Linux.1109310.2.zip",
     "robocop_package_name": "org.mozilla.roboexample.test",
-    "tooltool_manifest_path": "testing/config/tooltool-manifests/androidarm/releng.manifest",
+    "tooltool_manifest_path": "testing/config/tooltool-manifests/androidarm_4_3/releng.manifest",
     "tooltool_cache": "/builds/tooltool_cache",
     "tooltool_servers": ["http://tooltool.pvt.build.mozilla.org/build/"],
     ".avds_dir": "/home/cltbld/.android",
