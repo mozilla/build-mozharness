@@ -20,6 +20,7 @@ config = {
         'python': '/tools/buildbot/bin/python',
         'virtualenv': ['/tools/buildbot/bin/python', '/tools/misc-python/virtualenv.py'],
         'tooltool.py': "/tools/tooltool.py",
+        'gittool.py': '%(abs_tools_dir)s/buildfarm/utils/gittool.py',
     },
 
     "find_links": [

@@ -128,9 +128,6 @@ class LuciddreamTest(TestingMixin, MercurialScript, MozbaseMixin, BaseScript,
             config={
                 'require_test_zip': True,
                 'emulator': 'arm',
-                "exes": {
-                    'gittool.py': '%(abs_tools_dir)s/buildfarm/utils/gittool.py',
-                },
                 'virtualenv_modules': [
                     'mozinstall',
                 ],
