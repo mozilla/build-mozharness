@@ -99,8 +99,6 @@ class WebPlatformTest(TestingMixin, MercurialScript, BlobUploadMixin):
         self.register_virtualenv_module(requirements=[requirements],
                                         two_pass=True)
 
-        self.register_virtualenv_module(name='fxos_appgen')
-
     def _query_cmd(self):
         if not self.binary_path:
             self.fatal("Binary path could not be determined")
