@@ -252,7 +252,14 @@ class LuciddreamTest(TestingMixin, MercurialScript, MozbaseMixin, BaseScript,
 
     @PreScriptAction('create-virtualenv')
     def _pre_create_virtualenv(self, action):
-        luciddream_dir = self.query_abs_dirs()['abs_luciddream_dir']
+        dirs = self.query_abs_dirs()
+        requirements = os.path.join(dirs['abs_test_install_dir'],
+                                    'config',
+                                    'marionette_requirements.txt')
+        self.register_virtualenv_module(requirements=[requirements],
+                                        two_pass=True)
+
+        luciddream_dir = dirs['abs_luciddream_dir']
         self.register_virtualenv_module(
             'luciddream',
             url=luciddream_dir,
