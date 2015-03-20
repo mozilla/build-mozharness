@@ -972,8 +972,8 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
 
     def submit_to_balrog(self):
         """submit to barlog"""
-        if not self.config.get("balrog_api_root"):
-            self.info("balrog_api_root not set; skipping balrog submission.")
+        if not self.config.get("balrog_servers"):
+            self.info("balrog_servers not set; skipping balrog submission.")
             return
         self.info("Reading buildbot build properties...")
         self.read_buildbot_config()

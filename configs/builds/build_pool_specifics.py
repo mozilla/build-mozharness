@@ -3,11 +3,6 @@
 
 config = {
     "staging": {
-        'balrog_api_root': 'https://aus4-admin-dev.allizom.org/api',
-        'balrog_usernames': {
-            'firefox': 'stage-ffxbld',
-        },
-        'balrog_username': 'stage-ffxbld',
         # if not clobberer_url, only clobber 'abs_work_dir'
         # if true: possibly clobber, clobberer, and purge_builds
         # see PurgeMixin for clobber() conditions
@@ -26,11 +21,6 @@ config = {
         "sendchange_masters": ["dev-master1.srv.releng.scl3.mozilla.com:9038"],
     },
     "production": {
-        'balrog_api_root': 'https://aus4-admin.mozilla.org/api',
-        'balrog_usernames': {
-            'firefox': 'ffxbld',
-        },
-        'balrog_username': 'ffxbld',
         # if not clobberer_url, only clobber 'abs_work_dir'
         # if true: possibly clobber, clobberer, and purge_builds
         # see PurgeMixin for clobber() conditions

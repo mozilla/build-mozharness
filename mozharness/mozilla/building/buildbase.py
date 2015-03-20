@@ -1616,17 +1616,16 @@ or run without that action (ie: --no-{action})"
         # grab any props available from this or previous unclobbered runs
         self.generate_build_props(console_output=False,
                                   halt_on_failure=False)
-        if not self.config.get("balrog_api_root"):
-            self.fatal("balrog_api_root not set; skipping balrog submission.")
+        if not self.config.get("balrog_servers"):
+            self.fatal("balrog_servers not set; skipping balrog submission.")
             return
 
-        if c['balrog_api_root']:
-            if self.submit_balrog_updates():
-                # set the build to orange so it is at least caught
-                self.return_code = self.worst_level(
-                    EXIT_STATUS_DICT[TBPL_WARNING], self.return_code,
-                    AUTOMATION_EXIT_CODES[::-1]
-                )
+        if self.submit_balrog_updates():
+            # set the build to orange so it is at least caught
+            self.return_code = self.worst_level(
+                EXIT_STATUS_DICT[TBPL_WARNING], self.return_code,
+                AUTOMATION_EXIT_CODES[::-1]
+            )
 
     def _post_fatal(self, message=None, exit_code=None):
         if not self.return_code:  # only overwrite return_code if it's 0
