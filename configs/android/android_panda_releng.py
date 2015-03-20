@@ -36,7 +36,7 @@ config = {
         "mochitest-6": ["--total-chunks=8", "--this-chunk=6"],
         "mochitest-7": ["--total-chunks=8", "--this-chunk=7"],
         "mochitest-8": ["--total-chunks=8", "--this-chunk=8"],
-        "mochitest-gl": ["--manifest", "tests/dom/canvas/test/_webgl-conformance.ini"],
+        "mochitest-gl": ["--subsuite=webgl"],
     },
     "all_reftest_suites": {
         "reftest-1": ["--total-chunks=8", "--this-chunk=1"],
