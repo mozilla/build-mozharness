@@ -8,7 +8,6 @@ import re
 
 from mozharness.base.errors import HgErrorList, BaseErrorList, ZipErrorList
 from mozharness.base.log import ERROR, FATAL
-from mozharness.base.transfer import TransferMixin
 
 gaia_config_options = [
     [["--gaia-dir"],
@@ -29,7 +28,7 @@ gaia_config_options = [
     }],
 ]
 
-class GaiaMixin(TransferMixin):
+class GaiaMixin(object):
 
     npm_error_list = BaseErrorList + [
         {'substr': r'''npm ERR! Error:''', 'level': ERROR}

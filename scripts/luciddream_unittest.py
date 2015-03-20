@@ -19,6 +19,7 @@ from mozharness.base.script import (
     BaseScript,
     PreScriptAction,
 )
+from mozharness.base.transfer import TransferMixin
 from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_options
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
@@ -28,7 +29,7 @@ from mozharness.mozilla.structuredlog import StructuredOutputParser
 from mozharness.mozilla.gaia import GaiaMixin
 
 class LuciddreamTest(TestingMixin, MercurialScript, MozbaseMixin, BaseScript,
-                     BlobUploadMixin, GaiaMixin):
+                     BlobUploadMixin, TransferMixin, GaiaMixin):
     config_options = [[
         ["--emulator-url"],
         {"action": "store",
