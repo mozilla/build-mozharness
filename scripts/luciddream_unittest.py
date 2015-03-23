@@ -14,7 +14,7 @@ import sys
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
 from mozharness.base.errors import BaseErrorList, TarErrorList, ZipErrorList
-from mozharness.base.log import ERROR, WARNING, FATAL
+from mozharness.base.log import ERROR, WARNING, FATAL, INFO
 from mozharness.base.script import (
     BaseScript,
     PreScriptAction,
@@ -24,8 +24,9 @@ from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_options
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
 from mozharness.mozilla.mozbase import MozbaseMixin
-from mozharness.mozilla.buildbot import TBPL_SUCCESS
+from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_WARNING, TBPL_FAILURE
 from mozharness.mozilla.structuredlog import StructuredOutputParser
+from mozharness.mozilla.testing.unittest import TestSummaryOutputParserHelper
 from mozharness.mozilla.gaia import GaiaMixin
 
 class LuciddreamTest(TestingMixin, MercurialScript, MozbaseMixin, BaseScript,
@@ -142,6 +143,11 @@ class LuciddreamTest(TestingMixin, MercurialScript, MozbaseMixin, BaseScript,
         self.emulator_url = c.get('emulator_url')
         self.binary_path = c.get('binary_path')
         self.test_url = c.get('test_url')
+
+        if c.get('structured_output'):
+            self.parser_class = StructuredOutputParser
+        else:
+            self.parser_class = TestSummaryOutputParserHelper
 
     def query_abs_dirs(self):
         if self.abs_dirs:
@@ -280,13 +286,9 @@ class LuciddreamTest(TestingMixin, MercurialScript, MozbaseMixin, BaseScript,
         if self.config.get('b2gdesktop_path') or self.config.get('b2gdesktop_url'):
             self.setup_gaia()
 
-        # parser = StructuredOutputParser(
-        #     suite_category='luciddream',
-        #     strict=True,
-        #     config=self.config,
-        #     error_list=BaseErrorList,
-        #     log_obj=self.log_obj,
-        # )
+        ld_parser = self.parser_class(config=self.config,
+                                      log_obj=self.log_obj,
+                                      error_list=BaseErrorList)
 
         raw_log = os.path.join(dirs['abs_work_dir'], 'luciddream_raw.log')
         if self.config.get('emulator_url'):
@@ -313,10 +315,28 @@ class LuciddreamTest(TestingMixin, MercurialScript, MozbaseMixin, BaseScript,
                     'example-tests/luciddream.ini',
                 ]
 
-        return_code = self.run_command(cmd, cwd=cwd, env=env,
-                                       output_timeout=1000,
-                                       output_parser=None,
-                                       success_codes=[0])
+        code = self.run_command(cmd, cwd=cwd, env=env,
+                                output_timeout=1000,
+                                output_parser=ld_parser,
+                                success_codes=[0])
+
+        level = INFO
+        if code == 0 and ld_parser.passed > 0 and ld_parser.failed == 0:
+            status = "success"
+            tbpl_status = TBPL_SUCCESS
+        elif ld_parser.failed > 0:
+            status = "test failures"
+            tbpl_status = TBPL_WARNING
+        else:
+            status = "harness failures"
+            level = ERROR
+            tbpl_status = TBPL_FAILURE
+
+        ld_parser.print_summary('luciddream')
+
+        self.log("Luciddream exited with return code %s: %s" % (code, status),
+                 level=level)
+        self.buildbot_status(tbpl_status)
 
 if __name__ == '__main__':
     luciddreamTest = LuciddreamTest()
