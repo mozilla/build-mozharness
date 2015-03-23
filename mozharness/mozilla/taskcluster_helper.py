@@ -75,6 +75,7 @@ class Taskcluster(LogMixin):
             ".asc": "text/plain",
             ".checksums": "text/plain",
             ".json": "application/json",
+            ".log": "text/plain",
             ".tar.bz2": "application/x-gtar",
             ".txt": "text/plain",
             ".xpi": "application/x-xpinstall",
@@ -104,3 +105,9 @@ class Taskcluster(LogMixin):
             {
                 "success": True,
             })
+
+    def get_taskcluster_url(self, filename):
+        return 'https://queue.taskcluster.net/v1/task/%s/artifacts/public/build/%s' % (
+            self.task_id,
+            os.path.basename(filename)
+        )

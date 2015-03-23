@@ -319,6 +319,7 @@ class BaseLogger(object):
         if not self.append_to_log and os.path.exists(log_path):
             os.remove(log_path)
         file_handler = logging.FileHandler(log_path)
+        file_handler.setLevel(self.get_logger_level(log_level))
         file_handler.setFormatter(self.get_log_formatter(log_format=log_format,
                                                          date_format=date_format))
         self.logger.addHandler(file_handler)

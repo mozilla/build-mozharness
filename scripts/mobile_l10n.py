@@ -525,8 +525,8 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
             self.info("Not a nightly or release build, skipping balrog submission.")
             return
 
-        if not self.config.get("balrog_api_root"):
-            self.info("balrog_api_root not set; skipping balrog submission.")
+        if not self.config.get("balrog_servers"):
+            self.info("balrog_servers not set; skipping balrog submission.")
             return
 
         self.checkout_tools()

@@ -159,6 +159,14 @@ config = {
             "category": "mochitest-gl",
             "extra_args": ["--this-chunk=2"],
         },
+        "mochitest-gl-3": {
+            "category": "mochitest-gl",
+            "extra_args": ["--this-chunk=3"],
+        },
+        "mochitest-gl-4": {
+            "category": "mochitest-gl",
+            "extra_args": ["--this-chunk=4"],
+        },
         "reftest-1": {
             "category": "reftest",
             "extra_args": ["--total-chunks=16", "--this-chunk=1",

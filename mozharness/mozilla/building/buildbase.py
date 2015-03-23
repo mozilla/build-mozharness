@@ -1294,14 +1294,56 @@ or run without that action (ie: --no-{action})"
         task = tc.create_task()
         tc.claim_task(task)
 
+        property_conditions = [
+            # key: property name, value: condition
+            ('symbolsUrl', lambda m: m.endswith('crashreporter-symbols.zip') or
+                           m.endswith('crashreporter-symbols-full.zip')),
+            ('testsUrl', lambda m: m.endswith(('tests.tar.bz2', 'tests.zip'))),
+            ('unsignedApkUrl', lambda m: m.endswith('apk') and
+                               'unsigned-unaligned' in m),
+            ('robocopApkUrl', lambda m: m.endswith('apk') and 'robocop' in m),
+            ('jsshellUrl', lambda m: 'jsshell-' in m and m.endswith('.zip')),
+            ('completeMarUrl', lambda m: m.endswith('.complete.mar')),
+            ('partialMarUrl', lambda m: m.endswith('.mar') and '.partial.' in m),
+            ('codeCoverageURL', lambda m: m.endswith('code-coverage-gcno.zip')),
+            ('sdkUrl', lambda m: m.endswith(('sdk.tar.bz2', 'sdk.zip'))),
+            # packageUrl must be last!
+            ('packageUrl', lambda m: True),
+        ]
+
+        # Only those files uploaded with valid extensions are processed.
+        # This ensures that we get the correct packageUrl from the list.
+        valid_extensions = (
+            '.apk',
+            '.dmg',
+            '.mar',
+            '.rpm',
+            '.tar.bz2',
+            '.tar.gz',
+            '.zip',
+        )
+
         # Some trees may not be setting uploadFiles, so default to []. Normally
         # we'd only expect to get here if the build completes successfully,
         # which means we should have uploadFiles.
         files = self.query_buildbot_property('uploadFiles') or []
         if not files:
-            self.warning('No files to upload to S3: uploadFiles property is missing or empty.')
+            self.warning('No files from the build system to upload to S3: uploadFiles property is missing or empty.')
+
+        # Also upload our mozharness log files
+        files.extend([os.path.join(self.log_obj.abs_log_dir, x) for x in self.log_obj.log_files.values()])
+
         for upload_file in files:
+            # Create an S3 artifact for each file that gets uploaded. We also
+            # check the uploaded file against the property conditions so that we
+            # can set the buildbot config with the correct URLs for package
+            # locations.
             tc.create_artifact(task, upload_file)
+            if upload_file.endswith(valid_extensions):
+                for prop, condition in property_conditions:
+                    if condition(upload_file):
+                        self.set_buildbot_property(prop, tc.get_taskcluster_url(upload_file))
+                        break
         tc.report_completed(task)
 
     def _set_file_properties(self, file_name, find_dir, prop_type,
@@ -1450,15 +1492,7 @@ or run without that action (ie: --no-{action})"
         self.generate_build_props(console_output=console_output,
                                   halt_on_failure=True)
 
-        # TODO: Bug 1135756
-        # We ignore all exceptions from upload_files while the TC queue re-write
-        # is ongoing, but we need to remove that before switching testers to
-        # pull from S3.
-        try:
-            self.upload_files()
-        except:
-            self.warning('Temporarily ignoring S3 upload exception:')
-            self.exception(level=WARNING)
+        self.upload_files()
 
         if c.get('enable_talos_sendchange'):
             self._do_sendchange('talos')
@@ -1616,17 +1650,16 @@ or run without that action (ie: --no-{action})"
         # grab any props available from this or previous unclobbered runs
         self.generate_build_props(console_output=False,
                                   halt_on_failure=False)
-        if not self.config.get("balrog_api_root"):
-            self.fatal("balrog_api_root not set; skipping balrog submission.")
+        if not self.config.get("balrog_servers"):
+            self.fatal("balrog_servers not set; skipping balrog submission.")
             return
 
-        if c['balrog_api_root']:
-            if self.submit_balrog_updates():
-                # set the build to orange so it is at least caught
-                self.return_code = self.worst_level(
-                    EXIT_STATUS_DICT[TBPL_WARNING], self.return_code,
-                    AUTOMATION_EXIT_CODES[::-1]
-                )
+        if self.submit_balrog_updates():
+            # set the build to orange so it is at least caught
+            self.return_code = self.worst_level(
+                EXIT_STATUS_DICT[TBPL_WARNING], self.return_code,
+                AUTOMATION_EXIT_CODES[::-1]
+            )
 
     def _post_fatal(self, message=None, exit_code=None):
         if not self.return_code:  # only overwrite return_code if it's 0
