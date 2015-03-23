@@ -1328,7 +1328,11 @@ or run without that action (ie: --no-{action})"
         # which means we should have uploadFiles.
         files = self.query_buildbot_property('uploadFiles') or []
         if not files:
-            self.warning('No files to upload to S3: uploadFiles property is missing or empty.')
+            self.warning('No files from the build system to upload to S3: uploadFiles property is missing or empty.')
+
+        # Also upload our mozharness log files
+        files.extend([os.path.join(self.log_obj.abs_log_dir, x) for x in self.log_obj.log_files.values()])
+
         for upload_file in files:
             # Create an S3 artifact for each file that gets uploaded. We also
             # check the uploaded file against the property conditions so that we

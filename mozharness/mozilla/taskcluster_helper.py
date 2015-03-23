@@ -75,6 +75,7 @@ class Taskcluster(LogMixin):
             ".asc": "text/plain",
             ".checksums": "text/plain",
             ".json": "application/json",
+            ".log": "text/plain",
             ".tar.bz2": "application/x-gtar",
             ".txt": "text/plain",
             ".xpi": "application/x-xpinstall",
