@@ -104,3 +104,9 @@ class Taskcluster(LogMixin):
             {
                 "success": True,
             })
+
+    def get_taskcluster_url(self, filename):
+        return 'https://queue.taskcluster.net/v1/task/%s/artifacts/public/build/%s' % (
+            self.task_id,
+            os.path.basename(filename)
+        )

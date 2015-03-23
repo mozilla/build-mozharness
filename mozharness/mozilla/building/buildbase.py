@@ -1294,6 +1294,35 @@ or run without that action (ie: --no-{action})"
         task = tc.create_task()
         tc.claim_task(task)
 
+        property_conditions = [
+            # key: property name, value: condition
+            ('symbolsUrl', lambda m: m.endswith('crashreporter-symbols.zip') or
+                           m.endswith('crashreporter-symbols-full.zip')),
+            ('testsUrl', lambda m: m.endswith(('tests.tar.bz2', 'tests.zip'))),
+            ('unsignedApkUrl', lambda m: m.endswith('apk') and
+                               'unsigned-unaligned' in m),
+            ('robocopApkUrl', lambda m: m.endswith('apk') and 'robocop' in m),
+            ('jsshellUrl', lambda m: 'jsshell-' in m and m.endswith('.zip')),
+            ('completeMarUrl', lambda m: m.endswith('.complete.mar')),
+            ('partialMarUrl', lambda m: m.endswith('.mar') and '.partial.' in m),
+            ('codeCoverageURL', lambda m: m.endswith('code-coverage-gcno.zip')),
+            ('sdkUrl', lambda m: m.endswith(('sdk.tar.bz2', 'sdk.zip'))),
+            # packageUrl must be last!
+            ('packageUrl', lambda m: True),
+        ]
+
+        # Only those files uploaded with valid extensions are processed.
+        # This ensures that we get the correct packageUrl from the list.
+        valid_extensions = (
+            '.apk',
+            '.dmg',
+            '.mar',
+            '.rpm',
+            '.tar.bz2',
+            '.tar.gz',
+            '.zip',
+        )
+
         # Some trees may not be setting uploadFiles, so default to []. Normally
         # we'd only expect to get here if the build completes successfully,
         # which means we should have uploadFiles.
@@ -1301,7 +1330,16 @@ or run without that action (ie: --no-{action})"
         if not files:
             self.warning('No files to upload to S3: uploadFiles property is missing or empty.')
         for upload_file in files:
+            # Create an S3 artifact for each file that gets uploaded. We also
+            # check the uploaded file against the property conditions so that we
+            # can set the buildbot config with the correct URLs for package
+            # locations.
             tc.create_artifact(task, upload_file)
+            if upload_file.endswith(valid_extensions):
+                for prop, condition in property_conditions:
+                    if condition(upload_file):
+                        self.set_buildbot_property(prop, tc.get_taskcluster_url(upload_file))
+                        break
         tc.report_completed(task)
 
     def _set_file_properties(self, file_name, find_dir, prop_type,
