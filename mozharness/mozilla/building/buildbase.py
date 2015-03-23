@@ -1492,15 +1492,7 @@ or run without that action (ie: --no-{action})"
         self.generate_build_props(console_output=console_output,
                                   halt_on_failure=True)
 
-        # TODO: Bug 1135756
-        # We ignore all exceptions from upload_files while the TC queue re-write
-        # is ongoing, but we need to remove that before switching testers to
-        # pull from S3.
-        try:
-            self.upload_files()
-        except:
-            self.warning('Temporarily ignoring S3 upload exception:')
-            self.exception(level=WARNING)
+        self.upload_files()
 
         if c.get('enable_talos_sendchange'):
             self._do_sendchange('talos')
