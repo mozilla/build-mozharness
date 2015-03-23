@@ -54,6 +54,10 @@ class BalrogMixin(object):
                 "--api-root", server["balrog_api_root"],
                 "--username", self._query_balrog_username(server, product)
             ]
+            if server.get("url_replacements"):
+                for replacement in server["url_replacements"]:
+                    server_args.append("--url-replacement")
+                    server_args.append(",".join(replacement))
 
             self.info("Calling Balrog submission script")
             return_code = self.retry(
