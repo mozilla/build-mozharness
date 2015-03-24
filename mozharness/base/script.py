@@ -434,7 +434,10 @@ class ScriptMixin(object):
             self.mkdir_p(parent_dir, error_level=error_level)
         try:
             fh = open(file_path, open_mode)
-            fh.write(contents)
+            try:
+                fh.write(contents)
+            except UnicodeEncodeError:
+                fh.write(contents.encode('utf-8', 'replace'))
             fh.close()
             return file_path
         except IOError:

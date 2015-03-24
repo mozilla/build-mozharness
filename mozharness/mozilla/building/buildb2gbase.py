@@ -24,7 +24,7 @@ except ImportError:
     import json
 
 from mozharness.base.errors import MakefileErrorList
-from mozharness.base.log import WARNING, ERROR
+from mozharness.base.log import WARNING, ERROR, DEBUG
 from mozharness.base.script import BaseScript
 from mozharness.base.transfer import TransferMixin
 from mozharness.base.vcs.vcsbase import VCSMixin
@@ -39,6 +39,7 @@ from mozharness.mozilla.repo_manifest import (load_manifest, rewrite_remotes,
 # Let's turn those into WARNINGS instead
 B2GMakefileErrorList = MakefileErrorList + [
     {'substr': r'''NS_ERROR_FILE_ALREADY_EXISTS: Component returned failure code''', 'level': ERROR},
+    {'substr': r'''no version information available''', 'level': DEBUG},
 ]
 B2GMakefileErrorList.insert(0, {'substr': r'/bin/bash: java: command not found', 'level': WARNING})
 

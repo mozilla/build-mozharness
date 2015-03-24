@@ -734,6 +734,8 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
         if locale not in self.package_urls:
             self.package_urls[locale] = {}
         self.package_urls[locale].update(parser.matches)
+        self.package_urls[locale]['partialInfo'] = self._get_partial_info(
+            self.package_urls[locale]['partialMarUrl'])
         if retval == SUCCESS:
             self.info('Upload successful (%s)' % (locale))
             ret = SUCCESS
@@ -970,6 +972,29 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
         self.abs_dirs = abs_dirs
         return self.abs_dirs
 
+    def _get_partial_info(self, partial_url):
+        """takes a partial url and returns a partial info dictionary"""
+        partial_file = partial_url.split('/')[-1]
+        # now get from_build...
+        # firefox-39.0a1.ar.win32.partial.20150320030211-20150320075143.mar
+        # partial file ^                  ^            ^
+        #                                 |            |
+        # we need ------------------------+------------+
+        from_buildid = partial_file.partition('partial.')[2]
+        from_buildid = from_buildid.partition('-')[0]
+        self.info('from buildid: {0}'.format(from_buildid))
+
+        dirs = self.query_abs_dirs()
+        abs_partial_file = os.path.join(dirs['abs_objdir'], 'dist',
+                                        'update', partial_file)
+
+        size = self.query_filesize(abs_partial_file)
+        hash_ = self.query_sha512sum(abs_partial_file)
+        return [{'from_buildid': from_buildid,
+                 'hash': hash_,
+                 'size': size,
+                 'url': partial_url}]
+
     def submit_to_balrog(self):
         """submit to barlog"""
         if not self.config.get("balrog_servers"):
@@ -1024,8 +1049,8 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
         self.set_buildbot_property("completeMarHash", self.query_sha512sum(c_marfile))
         self.set_buildbot_property("completeMarUrl", c_mar_url)
         self.set_buildbot_property("locale", locale)
-        self.set_buildbot_property("partialInfo", self._get_partialInfo(locale))
-
+        self.set_buildbot_property("partialInfo",
+                                   self.package_urls[locale]["partialInfo"])
         ret = FAILURE
         try:
             result = self.submit_balrog_updates()
