@@ -59,6 +59,7 @@ config = {
     'enable_count_ctors': False,
     'enable_talos_sendchange': True,
     'enable_unittest_sendchange': True,
+    'max_build_output_timeout': 60 * 80,
     #########################################################################
 
 
