@@ -200,12 +200,14 @@ class GaiaLocalesMixin(object):
         if not root.endswith('/'):
             root = root + '/'
         vcs = l10n_config['vcs']
+        env = l10n_config.get('env', {})
         repos = []
         for locale in locales:
             repos.append({
                 'repo': urljoin(root, locale),
                 'dest': locale,
                 'vcs': vcs,
+                'env': env,
             })
         self.gaia_locale_revisions = self.vcs_checkout_repos(repo_list=repos, parent_dir=base_dir)
 

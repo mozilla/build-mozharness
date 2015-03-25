@@ -61,6 +61,7 @@ class GittoolVCS(ScriptMixin, LogMixin):
         clean = c.get('clean')
         share_base = c.get('vcs_share_base', os.environ.get("GIT_SHARE_BASE_DIR", None))
         env = {'PATH': os.environ.get('PATH')}
+        env.update(c.get('env', {}))
         if share_base is not None:
             env['GIT_SHARE_BASE_DIR'] = share_base
 
