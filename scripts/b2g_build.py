@@ -118,6 +118,10 @@ class B2GBuild(LocalesMixin, PurgeMixin,
             "dest": "complete_mar_url",
             "help": "the URL where the complete MAR was uploaded. Required if submit-to-balrog is requested and upload isn't.",
         }],
+        [["--platform"], {
+            "dest": "platform",
+            "help": "the platform used by balrog submmiter.",
+        }],
     ]
 
     def __init__(self, require_config_file=False, config={},
@@ -874,7 +878,7 @@ class B2GBuild(LocalesMixin, PurgeMixin,
         try:
             # for Try
             user = self.buildbot_config['sourcestamp']['changes'][0]['who']
-        except (KeyError, IndexError):
+        except (TypeError, KeyError, IndexError):
             user = "unknown"
 
         replace_dict = dict(
@@ -1094,7 +1098,10 @@ class B2GBuild(LocalesMixin, PurgeMixin,
         self.set_buildbot_property("appVersion", self.query_version())
         # The Balrog submitter translates this platform into a build target
         # via https://github.com/mozilla/build-tools/blob/master/lib/python/release/platforms.py#L23
-        self.set_buildbot_property("platform", self.buildbot_config["properties"]["platform"])
+        if "platform" in self.config:
+            self.set_buildbot_property("platform", self.config["platform"])
+        else:
+            self.set_buildbot_property("platform", self.buildbot_config["properties"]["platform"])
         # TODO: Is there a better way to get this?
         self.set_buildbot_property("appName", "B2G")
         # TODO: don't hardcode
@@ -1104,7 +1111,7 @@ class B2GBuild(LocalesMixin, PurgeMixin,
         self.set_buildbot_property("completeMarUrl", mar_url)
         self.set_buildbot_property("isOSUpdate", self.isOSUpdate)
 
-        self.submit_balrog_updates()
+        self.submit_balrog_updates(product='b2g')
 
 # main {{{1
 if __name__ == '__main__':

@@ -14,10 +14,16 @@ class BalrogMixin(object):
         else:
             raise KeyError("Couldn't find balrog username.")
 
-    def submit_balrog_updates(self, release_type="nightly"):
+    def submit_balrog_updates(self, release_type="nightly", product=None):
         c = self.config
         dirs = self.query_abs_dirs()
-        product = self.buildbot_config["properties"]["product"]
+
+        if self.buildbot_config and "properties" in self.buildbot_config:
+            product = self.buildbot_config["properties"]["product"]
+
+        if product is None:
+            self.fatal('There is no valid product information.')
+
         props_path = os.path.join(dirs["base_work_dir"], "balrog_props.json")
         credentials_file = os.path.join(
             dirs["base_work_dir"], c["balrog_credentials_file"]
@@ -29,14 +35,23 @@ class BalrogMixin(object):
             "hashType", c.get("hash_type", "sha512"), write_to_file=True
         )
 
+        if self.buildbot_config and "properties" in self.buildbot_config:
+            buildbot_properties = self.buildbot_config["properties"].items()
+        else:
+            buildbot_properties = []
+
         balrog_props = dict(properties=dict(chain(
-            self.buildbot_config["properties"].items(),
+            buildbot_properties,
             self.buildbot_properties.items(),
         )))
         # XXX: hack alert, turn fake graphene platforms into real ones. This
         # was done more generically originally (bug 1140437), but it broke
         # flame-kk updates (bug 1141633)
         balrog_props["properties"]["platform"] = balrog_props["properties"]["platform"].replace("_graphene", "")
+
+        if "branch" not in balrog_props["properties"]:
+            balrog_props["properties"]["branch"] = self.query_branch()
+
         self.dump_config(props_path, balrog_props)
         cmd = [
             self.query_exe("python"),
