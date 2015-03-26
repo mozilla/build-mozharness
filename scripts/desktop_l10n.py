@@ -160,6 +160,7 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
                 "list-locales",
                 "setup",
                 "repack",
+                "funsize-props",
                 "submit-to-balrog",
                 "summary",
             ],
@@ -1276,6 +1277,19 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
             dirname = os.path.join(dirs['abs_objdir'], make_dir)
             self.mkdir_p(dirname)
 
+
+    def funsize_props(self):
+        """writes funsize info into buildprops.json"""
+        # see bug
+        funsize_info = {
+            'locales': self.query_locales(),
+            'branch': self.config['branch'],
+            'appName': self.config['appName'],
+            'platform': self.config['platform'],
+        }
+        self.info('funsize info: %s' % funsize_info)
+        self.set_buildbot_property('funsize_info', funsize_info,
+                                   write_to_file=True)
 
 # main {{{
 if __name__ == '__main__':
