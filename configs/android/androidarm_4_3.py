@@ -283,6 +283,10 @@ config = {
             "category": "robocop",
             "extra_args": ["--this-chunk=4"],
         },
+        "cppunittest": {
+            "category": "cppunittest",
+            "extra_args": [],
+        },
     }, # end of "test_definitions"
     # test harness options are located in the gecko tree
     "in_tree_config": "config/mozharness/android_arm_4_3_config.py",
