@@ -1304,8 +1304,12 @@ or run without that action (ie: --no-{action})"
                                'unsigned-unaligned' in m),
             ('robocopApkUrl', lambda m: m.endswith('apk') and 'robocop' in m),
             ('jsshellUrl', lambda m: 'jsshell-' in m and m.endswith('.zip')),
-            ('completeMarUrl', lambda m: m.endswith('.complete.mar')),
-            ('partialMarUrl', lambda m: m.endswith('.mar') and '.partial.' in m),
+            # Temporarily use "TC" in MarUrl parameters. We don't want to
+            # override these to point to taskcluster just yet, and still
+            # need to use FTP. However, they can't be removed outright since
+            # that can affect packageUrl. See bug 1144985.
+            ('completeMarUrlTC', lambda m: m.endswith('.complete.mar')),
+            ('partialMarUrlTC', lambda m: m.endswith('.mar') and '.partial.' in m),
             ('codeCoverageURL', lambda m: m.endswith('code-coverage-gcno.zip')),
             ('sdkUrl', lambda m: m.endswith(('sdk.tar.bz2', 'sdk.zip'))),
             # packageUrl must be last!
