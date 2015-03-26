@@ -144,9 +144,9 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
          "type": "int",
          "help": "Specify the total number of chunks of locales"}
     ], [
-        ['--en-us-binary-url', ],
+        ['--en-us-installer-url', ],
         {"action": "store",
-         "dest": "en_us_binary_url",
+         "dest": "en_us_installer_url",
          "type": "string",
          "help": "Specify the url of the en-us binary"}
     ]]
@@ -160,6 +160,7 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
                 "list-locales",
                 "setup",
                 "repack",
+                "funsize-props",
                 "submit-to-balrog",
                 "summary",
             ],
@@ -578,6 +579,12 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
         _clobber_file = self._clobber_file()
         if os.path.exists(_clobber_file):
             self._touch_file(_clobber_file)
+        # and again...
+        # thanks to the last hg update, we can be on different firefox 'version'
+        # than the one on default,
+        self._mach_configure()
+        self._run_make_in_config_dir()
+        self.make_wget_en_US()
 
     def _run_make_in_config_dir(self):
         """this step creates nsinstall, needed my make_wget_en_US()
@@ -703,11 +710,15 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
         dirs = self.query_abs_dirs()
         cwd = dirs['abs_locales_dir']
         binary_file = env['EN_US_BINARY_URL']
-        if binary_file.endswith(('tar.bz2', 'dmg', 'zip')):
+        if binary_file.endswith(('tar.bz2', 'dmg', 'exe')):
             # specified EN_US_BINARY url is an installer file...
             dst_filename = binary_file.split('/')[-1].strip()
             dst_filename = os.path.join(dirs['abs_objdir'], 'dist', dst_filename)
-            self.info('Specified binary url, %s, appears to be an installer file' % (binary_file))
+            # we need to set ZIP_IN so make unpack finds this binary file.
+            # Please note this is required only if the en-us-binary-url provided
+            # has a different version number from the one in the current
+            # checkout.
+            self.bootstrap_env['ZIP_IN'] = dst_filename
             return self._retry_download_file(binary_file, dst_filename, error_level=FATAL)
 
         # binary url is not an installer, use make wget-en-US to download it
@@ -1266,6 +1277,19 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
             dirname = os.path.join(dirs['abs_objdir'], make_dir)
             self.mkdir_p(dirname)
 
+
+    def funsize_props(self):
+        """writes funsize info into buildprops.json"""
+        # see bug
+        funsize_info = {
+            'locales': self.query_locales(),
+            'branch': self.config['branch'],
+            'appName': self.config['appName'],
+            'platform': self.config['platform'],
+        }
+        self.info('funsize info: %s' % funsize_info)
+        self.set_buildbot_property('funsize_info', funsize_info,
+                                   write_to_file=True)
 
 # main {{{
 if __name__ == '__main__':
