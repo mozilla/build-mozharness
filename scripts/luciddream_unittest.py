@@ -39,20 +39,6 @@ class LuciddreamTest(TestingMixin, MercurialScript, MozbaseMixin, BaseScript,
          "help": "URL to the emulator zip",
      }
     ], [
-        ["--luciddream-repo"],
-        {"action": "store",
-         "dest": "luciddream_repo",
-         "default": "https://github.com/mozilla/luciddream.git",
-         "help": "Luciddream repository to use",
-     }
-    ], [
-        ["--luciddream-rev"],
-        {"action": "store",
-         "dest": "luciddream_rev",
-         "default": "master",
-         "help": "Revision of Luciddream to check out",
-     }
-    ], [
         ["--gaia-profile"],
         {"action": "store",
          "dest": "gaia_profile",
@@ -98,13 +84,6 @@ class LuciddreamTest(TestingMixin, MercurialScript, MozbaseMixin, BaseScript,
          "default": None,
          "help": "url of desktop xre archive"
          }
-    ], [
-        ["--tools-repo"],
-        {"action": "store",
-         "dest": "tools_repo",
-         "default": 'https://hg.mozilla.org/build/tools',
-         "help": "Build tools repo",
-     }
     ]] + copy.deepcopy(testing_config_options) \
        + copy.deepcopy(blobupload_config_options)
 
@@ -160,10 +139,6 @@ class LuciddreamTest(TestingMixin, MercurialScript, MozbaseMixin, BaseScript,
             abs_dirs['abs_work_dir'], 'emulator')
         dirs['abs_b2g-distro_dir'] = os.path.join(
             dirs['abs_emulator_dir'], 'b2g-distro')
-        dirs['abs_luciddream_dir'] = os.path.join(
-            abs_dirs['abs_work_dir'], 'luciddream')
-        dirs['abs_tools_dir'] = os.path.join(
-            abs_dirs['abs_work_dir'], 'tools')
         dirs['abs_b2g_desktop'] = os.path.join(
             abs_dirs['abs_work_dir'], 'b2gdesktop')
         gaia_root_dir = self.config.get('gaia_dir')
@@ -174,42 +149,6 @@ class LuciddreamTest(TestingMixin, MercurialScript, MozbaseMixin, BaseScript,
         self.abs_dirs = abs_dirs
 
         return self.abs_dirs
-
-    def checkout_tools(self):
-        # XXX - this will go away once luciddream is checked into the tree;
-        # we're only doing this so we can access gittool to sync the luciddream
-        # repo from github
-        dirs = self.query_abs_dirs()
-
-        # We need hg.m.o/build/tools checked out
-        self.info("Checking out tools")
-        repos = [{
-            'repo': self.config['tools_repo'],
-            'vcs': "hg",  # May not have hgtool yet
-            'dest': dirs['abs_tools_dir'],
-        }]
-        rev = self.vcs_checkout(**repos[0])
-        self.set_buildbot_property("tools_revision", rev, write_to_file=True)
-
-    def clone_luciddream(self):
-        # XXX - this will go away once luciddream is checked into the tree
-        self.info("Checking out luciddream harness")
-        luciddream_dir = self.query_abs_dirs()['abs_luciddream_dir']
-        self.mkdir_p(luciddream_dir)
-        luciddream_repo = self.config['luciddream_repo']
-        luciddream_rev = self.config['luciddream_rev']
-        repos = [
-            {'vcs': 'gittool', 'repo': luciddream_repo, 'dest': luciddream_dir, 'revision': luciddream_rev},
-        ]
-
-        # self.vcs_checkout already retries, so no need to wrap it in
-        # self.retry. We set the error_level to ERROR to prevent it going fatal
-        # so we can do our own handling here.
-        retval = self.vcs_checkout_repos(repos, error_level=ERROR)
-        if not retval:
-            self.rmtree(luciddream_dir)
-            self.fatal("Automation Error: couldn't clone luciddream", exit_code=4)
-        return retval
 
     def install_emulator(self):
         dirs = self.query_abs_dirs()
@@ -241,8 +180,6 @@ class LuciddreamTest(TestingMixin, MercurialScript, MozbaseMixin, BaseScript,
                        build_config_path=None)
 
     def pull(self, **kwargs):
-        self.checkout_tools()
-        self.clone_luciddream()
         if self.config.get('b2gdesktop_url') or self.config.get('b2gdesktop_path'):
             GaiaMixin.pull(self, **kwargs)
         super(LuciddreamTest, self).pull(**kwargs)
@@ -266,7 +203,8 @@ class LuciddreamTest(TestingMixin, MercurialScript, MozbaseMixin, BaseScript,
         self.register_virtualenv_module(requirements=[requirements],
                                         two_pass=True)
 
-        luciddream_dir = dirs['abs_luciddream_dir']
+        luciddream_dir = os.path.join(dirs['abs_test_install_dir'],
+                                      'luciddream')
         self.register_virtualenv_module(
             'luciddream',
             url=luciddream_dir,
@@ -281,7 +219,7 @@ class LuciddreamTest(TestingMixin, MercurialScript, MozbaseMixin, BaseScript,
         env = {}
         env = self.query_env(partial_env=env)
 
-        cwd = dirs['abs_luciddream_dir']
+        ld_dir = os.path.join(dirs['abs_test_install_dir'], 'luciddream')
 
         if self.config.get('b2gdesktop_path') or self.config.get('b2gdesktop_url'):
             self.setup_gaia()
@@ -291,31 +229,26 @@ class LuciddreamTest(TestingMixin, MercurialScript, MozbaseMixin, BaseScript,
                                       error_list=BaseErrorList)
 
         raw_log = os.path.join(dirs['abs_work_dir'], 'luciddream_raw.log')
+        cmd = [self.query_python_path('python'),
+               os.path.join(ld_dir, 'luciddream', 'runluciddream.py'),
+               '--log-raw=%s' % raw_log
+               ]
         if self.config.get('emulator_url'):
-            cmd = [
-                self.query_python_path('python'),
-                'luciddream/runluciddream.py',
-                '--b2gpath', dirs['abs_b2g-distro_dir'],
-                '--browser-path', self.binary_path,
-                '--log-raw=%s' % raw_log,
-                'example-tests/luciddream.ini',
-            ]
+            cmd += ['--b2gpath', dirs['abs_b2g-distro_dir'],
+                    '--browser-path', self.binary_path,
+                    ]
         else:
             if self.config.get('b2gdesktop_url'):
                 bin_path = os.path.join(dirs['abs_b2g_desktop'], 'b2g', 'b2g')
             else:
                 bin_path = self.config.get('b2gdesktop_path')
-            cmd = [
-                    self.query_python_path('python'),
-                    'luciddream/runluciddream.py',
-                    '--b2g-desktop-path', bin_path,
+            cmd += ['--b2g-desktop-path', bin_path,
                     '--browser-path', self.binary_path,
-                    '--log-raw=%s' % raw_log,
                     '--gaia-profile', os.path.join(dirs['abs_gaia_dir'], 'profile'),
-                    'example-tests/luciddream.ini',
-                ]
+                    ]
+        cmd += [os.path.join(ld_dir, 'example-tests', 'luciddream.ini')]
 
-        code = self.run_command(cmd, cwd=cwd, env=env,
+        code = self.run_command(cmd, env=env,
                                 output_timeout=1000,
                                 output_parser=ld_parser,
                                 success_codes=[0])
