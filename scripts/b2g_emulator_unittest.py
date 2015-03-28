@@ -188,7 +188,8 @@ class B2GEmulatorTest(TestingMixin, VCSMixin, BaseScript, BlobUploadMixin):
         return self.abs_dirs
 
     def download_and_extract(self):
-        super(B2GEmulatorTest, self).download_and_extract()
+        target_suite = self.config['test_suite']
+        super(B2GEmulatorTest, self).download_and_extract(suite_categories=[target_suite])
         dirs = self.query_abs_dirs()
 
         self.mkdir_p(dirs['abs_emulator_dir'])
@@ -371,11 +372,6 @@ class B2GEmulatorTest(TestingMixin, VCSMixin, BaseScript, BlobUploadMixin):
             suite = '%s-%s' % (suite_name, self.config['this_chunk'])
         else:
             suite = suite_name
-
-        if suite_name == 'cppunittest':
-            # check if separate test package required
-            if not os.path.isdir(dirs['abs_cppunittest_dir']):
-                self._download_unzip(self.test_url.replace('tests', 'tests.cppunit'), dirs['abs_test_install_dir'])
 
         env = {}
         if self.query_minidump_stackwalk():

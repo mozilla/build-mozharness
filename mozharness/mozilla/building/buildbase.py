@@ -1416,6 +1416,7 @@ or run without that action (ie: --no-{action})"
             ('partialMarUrlTC', lambda m: m.endswith('.mar') and '.partial.' in m),
             ('codeCoverageURL', lambda m: m.endswith('code-coverage-gcno.zip')),
             ('sdkUrl', lambda m: m.endswith(('sdk.tar.bz2', 'sdk.zip'))),
+            ('testPackagesUrl', lambda m: m.endswith('test_packages.json')),
             ('packageUrl', lambda m: m.endswith(packageName)),
         ]
 
@@ -1429,6 +1430,7 @@ or run without that action (ie: --no-{action})"
             '.tar.bz2',
             '.tar.gz',
             '.zip',
+            '.json',
         )
 
         # Also upload our mozharness log files
@@ -1764,6 +1766,12 @@ or run without that action (ie: --no-{action})"
             self.return_code = 1
             return
         tests_url = self.query_buildbot_property('testsUrl')
+        # Contains the url to a manifest describing the test packages required
+        # for each unittest harness.
+        # For the moment this property is only set on desktop builds. Android
+        # and b2g builds find the packages manifest based on the upload
+        # directory of the installer.
+        test_packages_url = self.query_buildbot_property('testPackagesUrl')
         pgo_build = c.get('pgo_build', False) or self._compile_against_pgo()
 
         # these cmds are sent to mach through env vars. We won't know the
@@ -1807,7 +1815,14 @@ or run without that action (ie: --no-{action})"
             unittest_branch = "%s-%s-%s" % (self.branch,
                                             platform_and_build_type,
                                             'unittest')
-            self.sendchange(downloadables=[installer_url, tests_url],
+
+            downloadables = [installer_url]
+            if test_packages_url:
+                downloadables.append(test_packages_url)
+            else:
+                downloadables.append(tests_url)
+
+            self.sendchange(downloadables=downloadables,
                             branch=unittest_branch,
                             sendchange_props=sendchange_props)
         else:

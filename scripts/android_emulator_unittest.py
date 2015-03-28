@@ -570,7 +570,12 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
         """
         Download and extract fennec APK, tests.zip, host utils, and robocop (if required).
         """
-        super(AndroidEmulatorTest, self).download_and_extract()
+        suite_category = self.test_suite_definitions[self.test_suite]['category']
+        # mochitest-gl tests have a suite category of mochitest-gl (not mochitest),
+        # but we don't have such a specific zip.
+        suite_category = 'mochitest' if suite_category == 'mochitest-gl' else suite_category
+
+        super(AndroidEmulatorTest, self).download_and_extract(suite_categories=[suite_category])
         dirs = self.query_abs_dirs()
         if self.test_suite.startswith('robocop'):
             robocop_url = self.installer_url[:self.installer_url.rfind('/')] + '/robocop.apk'
