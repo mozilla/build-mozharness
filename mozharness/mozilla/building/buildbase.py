@@ -761,6 +761,10 @@ or run without that action (ie: --no-{action})"
             # with python, not with bash so we need to fix the slashes here
             env['MOZ_SIGN_CMD'] = moz_sign_cmd.replace('\\', '\\\\\\\\')
 
+        # to activate the right behaviour in mozonfigs while we transition
+        if c.get('enable_release_promotion'):
+            env['ENABLE_RELEASE_PROMOTION'] = "1"
+
         # we can't make env an attribute of self because env can change on
         # every call for reasons like MOZ_SIGN_CMD
         return env
