@@ -22,6 +22,7 @@ from mozharness.base.errors import BaseErrorList, MakefileErrorList
 from mozharness.base.script import BaseScript
 from mozharness.base.vcs.vcsbase import VCSMixin
 from mozharness.mozilla.buildbot import BuildbotMixin
+from mozharness.mozilla.purge import PurgeMixin
 from mozharness.mozilla.building.buildbase import MakeUploadOutputParser
 from mozharness.mozilla.l10n.locales import LocalesMixin
 from mozharness.mozilla.mar import MarMixin
@@ -68,7 +69,7 @@ runtime_config_tokens = ('buildid', 'version', 'locale', 'from_buildid',
 
 # DesktopSingleLocale {{{1
 class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
-                          VCSMixin, SigningMixin, BaseScript,
+                          VCSMixin, SigningMixin, PurgeMixin, BaseScript,
                           BalrogMixin, MarMixin):
     """Manages desktop repacks"""
     config_options = [[
@@ -516,8 +517,7 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
         dirs = self.query_abs_dirs()
         clobber_dirs = (dirs['abs_objdir'], dirs['abs_compare_locales_dir'],
                         dirs['abs_upload_dir'])
-        for directory in clobber_dirs:
-            self.rmtree(directory)
+        PurgeMixin.clobber(self, always_clobber_dirs=clobber_dirs)
 
     def pull(self):
         """pulls source code"""
@@ -1276,7 +1276,6 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
         for make_dir in config.get('make_dirs', []):
             dirname = os.path.join(dirs['abs_objdir'], make_dir)
             self.mkdir_p(dirname)
-
 
     def funsize_props(self):
         """writes funsize info into buildprops.json"""
