@@ -285,6 +285,7 @@ class BuildOptionParser(object):
         'mulet': 'builds/releng_sub_%s_configs/%s_mulet.py',
         'code-coverage': 'builds/releng_sub_%s_configs/%s_code_coverage.py',
         'graphene': 'builds/releng_sub_%s_configs/%s_graphene.py',
+        'source': 'builds/releng_sub_%s_configs/%s_source.py',
     }
     build_pools = {
         'staging': 'builds/build_pool_specifics.py',
@@ -759,6 +760,10 @@ or run without that action (ie: --no-{action})"
             # windows fix. This is passed to mach build env and we call that
             # with python, not with bash so we need to fix the slashes here
             env['MOZ_SIGN_CMD'] = moz_sign_cmd.replace('\\', '\\\\\\\\')
+
+        # to activate the right behaviour in mozonfigs while we transition
+        if c.get('enable_release_promotion'):
+            env['ENABLE_RELEASE_PROMOTION'] = "1"
 
         # we can't make env an attribute of self because env can change on
         # every call for reasons like MOZ_SIGN_CMD
@@ -1510,6 +1515,37 @@ or run without that action (ie: --no-{action})"
 
         if self.config.get('enable_ccache'):
             self._ccache_s()
+
+    def preflight_package_source(self):
+        """ a subset of preflight_build"""
+        self._checkout_source()
+        self._get_mozconfig()
+
+    def package_source(self):
+        """generates source archives and uploads them"""
+        env = self.query_build_env()
+        env.update(self.query_mach_build_env())
+
+        self.run_command_m(
+            command=['make', '-f', 'client.mk', 'configure', 'no_tooltool=1'],
+            cwd=self.query_abs_dirs()['abs_src_dir'],
+            env=env, output_timeout=60*3
+        )
+        return_code = self.run_command_m(
+            command=['make', 'source-package',
+                     'hg-bundle', 'HG_BUNDLE_REVISION=%s' % self.query_revision(),
+                     'source-upload', 'UPLOAD_HG_BUNDLE=1'],
+            cwd=self.query_abs_dirs()['abs_obj_dir'],
+            env=env, output_timeout=60*45
+        )
+
+        if return_code:
+            self.return_code = self.worst_level(
+                EXIT_STATUS_DICT[TBPL_FAILURE],  self.return_code,
+                AUTOMATION_EXIT_CODES[::-1]
+            )
+            self.fatal("make did not run successfully. Please check "
+                       "log for errors.")
 
     def _check_test(self):
         c = self.config

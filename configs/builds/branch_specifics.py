@@ -109,6 +109,28 @@ config = {
     'ux': {
         "graph_server_branch_name": "UX",
     },
+    # When build promotion goes live the mozconfig changes are probably better
+    # expressed once in files like configs/builds/releng_base_windows_32_builds.py
+    'date': {
+        'enable_release_promotion': 1,
+        'platform_overrides': {
+            'linux': {
+                'src_mozconfig': 'browser/config/mozconfigs/linux32/beta',
+            },
+            'linux64': {
+                'src_mozconfig': 'browser/config/mozconfigs/linux64/beta',
+            },
+            'macosx64': {
+                'src_mozconfig': 'browser/config/mozconfigs/macosx-universal/beta',
+            },
+            'win32': {
+                'src_mozconfig': 'browser/config/mozconfigs/win32/beta',
+            },
+            'win64': {
+                'src_mozconfig': 'browser/config/mozconfigs/win64/beta',
+            },
+        },
+    },
 
     ### other branches that do not require anything special:
     # 'alder': {},
@@ -117,7 +139,6 @@ config = {
     # 'build-system': {}
     # 'cedar': {},
     # "cypress": {},
-    # 'date': {},
     # 'elm': {},
     # 'fig': {},
     # 'graphics': {}
