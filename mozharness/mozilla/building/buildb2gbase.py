@@ -293,7 +293,7 @@ class B2GBuildBaseScript(BuildbotMixin, MockMixin,
     def query_gitweb_url(self, repo, rev, filename=None):
         # Git does not support raw files download, so each git
         # provider has its own way to make that possible
-        if 'github.com' in repo:
+        if 'github.com' in repo or 'bitbucket.org' in repo:
             if filename:
                 url = '{repo}/raw/{rev}/{filename}'.format(
                         repo=repo,
