@@ -427,8 +427,9 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
                     target_unzip_dirs.extend(c['specific_tests_zip_dirs'][category])
         super(DesktopUnittest, self).download_and_extract(target_unzip_dirs=target_unzip_dirs)
 
-        dirs = self.query_abs_dirs()
-        self._download_unzip(self.query_jsshell_url(), dirs['abs_test_bin_dir'])
+        if self._query_specified_suites('jittest') is not None:
+            dirs = self.query_abs_dirs()
+            self._download_unzip(self.query_jsshell_url(), dirs['abs_test_bin_dir'])
 
     # pull defined in VCSScript.
     # preflight_run_tests defined in TestingMixin.
