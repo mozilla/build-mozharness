@@ -269,9 +269,6 @@ class B2GEmulatorTest(TestingMixin, VCSMixin, BaseScript, BlobUploadMixin):
             'modules_dir': dirs['abs_modules_dir'],
             'remote_webserver': self.config['remote_webserver'],
             'xre_path': os.path.join(dirs['abs_xre_dir'], 'bin'),
-            # XXX test_manifest is no longer used by the in-tree config.
-            # Remove it when Gecko 35 is no longer in tbpl.
-            'test_manifest': self.test_manifest,
             'symbols_path': self.symbols_path,
             'busybox': self.busybox_path,
             'total_chunks': self.config.get('total_chunks'),
@@ -280,20 +277,6 @@ class B2GEmulatorTest(TestingMixin, VCSMixin, BaseScript, BlobUploadMixin):
             'certificate_path': dirs['abs_certs_dir'],
             'raw_log_file': raw_log_file,
         }
-
-        # Bug 978233 - hack to get around multiple mochitest manifest arguments
-        if suite == 'mochitest':
-            if os.path.isfile(os.path.join(dirs['abs_mochitest_dir'], self.test_manifest)):
-                if self.test_manifest.endswith('.ini'):
-                    manifest_param = '--manifest'
-                else:
-                    manifest_param = '--test-manifest'
-                manifest_param = '%s=%s' % (manifest_param, self.test_manifest)
-            else:
-                self.log('Ignoring non-existent manifest \'%s\'.' % self.test_manifest,
-                         level=WARNING)
-                manifest_param = ''
-            str_format_values['test_manifest'] = manifest_param
 
         missing_key = True
         if "suite_definitions" in self.tree_config: # new structure
@@ -329,12 +312,7 @@ class B2GEmulatorTest(TestingMixin, VCSMixin, BaseScript, BlobUploadMixin):
         suite = self.config['test_suite']
         # set default test manifest by suite if none specified
         if not self.test_manifest:
-            if suite == 'mochitest':
-                self.test_manifest = 'b2g.json'
-                if self.buildbot_config:
-                    if 'debug' in self.buildbot_config['properties']['buildername']:
-                        self.test_manifest = 'b2g-debug.json'
-            elif suite == 'reftest':
+            if suite == 'reftest':
                 self.test_manifest = os.path.join('tests', 'layout',
                                                   'reftests', 'reftest.list')
             elif suite == 'xpcshell':
@@ -345,8 +323,6 @@ class B2GEmulatorTest(TestingMixin, VCSMixin, BaseScript, BlobUploadMixin):
             elif suite == 'jsreftest':
                 self.test_manifest = os.path.join('jsreftest', 'tests',
                                                   'jstests.list')
-            elif suite == 'cppunittest':
-                self.test_manifest = None
 
         if not os.path.isfile(self.adb_path):
             self.fatal("The adb binary '%s' is not a valid file!" % self.adb_path)
