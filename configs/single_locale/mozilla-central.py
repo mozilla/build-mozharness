@@ -19,7 +19,7 @@ config = {
         "vcs": "hg",
         "repo": "https://hg.mozilla.org/mozilla-central",
         "revision": "default",
-        "dest": "ash",
+        "dest": "mozilla-central",
     }, {
         "vcs": "hg",
         "repo": "https://hg.mozilla.org/build/tools",
