@@ -17,7 +17,6 @@ sys.path.insert(1, os.path.dirname(sys.path[0]))
 from mozharness.base.script import BaseScript
 from mozharness.mozilla.googleplay import GooglePlayMixin
 from mozharness.base.python import VirtualenvMixin
-from mozharness.base.script import PreScriptAction
 
 
 class PushAPK(BaseScript, GooglePlayMixin, VirtualenvMixin):
@@ -136,15 +135,14 @@ class PushAPK(BaseScript, GooglePlayMixin, VirtualenvMixin):
         if not os.path.isfile(self.config['google_play_credentials_file']):
             self.fatal("Could not find " + self.config['google_play_credentials_file'])
 
-    def upload_apks(self, service, package_name, apk_files):
+    def upload_apks(self, service, apk_files):
         """ Upload the APK to google play
 
         service -- The session to Google play
-        package_name -- The name of the package
         apk_files -- The files
         """
         edit_request = service.edits().insert(body={},
-                                              packageName=package_name)
+                                              packageName=self.config['package_name'])
         result = edit_request.execute()
         edit_id = result['id']
         # Store all the versions to set the tracks (needs to happen
@@ -157,7 +155,7 @@ class PushAPK(BaseScript, GooglePlayMixin, VirtualenvMixin):
                 # Upload the file
                 apk_response = service.edits().apks().upload(
                     editId=edit_id,
-                    packageName=package_name,
+                    packageName=self.config['package_name'],
                     media_body=apk_file).execute()
                 self.log('Version code %d has been uploaded. '
                          'Filename "%s" edit_id %s' %
@@ -173,14 +171,14 @@ class PushAPK(BaseScript, GooglePlayMixin, VirtualenvMixin):
         service.edits().tracks().update(
             editId=edit_id,
             track=self.config['track'],
-            packageName=package_name,
+            packageName=self.config['package_name'],
             body={u'versionCodes': versions}).execute()
         self.log('Application "%s" set to track "%s" for versions %s' %
-                 (package_name, self.config['track'], versions))
+                 (self.config['package_name'], self.config['track'], versions))
 
         # Commit our changes
         commit_request = service.edits().commit(
-            editId=edit_id, packageName=package_name).execute()
+            editId=edit_id, packageName=self.config['package_name']).execute()
         self.log('Edit "%s" has been committed' % (commit_request['id']))
 
     def push_apk(self):
@@ -190,7 +188,7 @@ class PushAPK(BaseScript, GooglePlayMixin, VirtualenvMixin):
         apks = [self.config['apk_file_armv7_v9'], self.config['apk_file_armv7_v11'], self.config['apk_file_x86']]
         if self.config.get('apk_file_armv6'):
             apks.append(self.config['apk_file_armv6'])
-        self.upload_apks(service, self.config['package_name'], apks)
+        self.upload_apks(service, apks)
 
     def test(self):
         """ Test if the connexion can be done """

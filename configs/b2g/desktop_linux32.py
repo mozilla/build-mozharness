@@ -39,6 +39,7 @@ config = {
         ('/builds/gapi.data', '/builds/gapi.data'),
         ('/tools/tooltool.py', '/builds/tooltool.py'),
         ('/builds/mozilla-desktop-geoloc-api.key', '/builds/mozilla-desktop-geoloc-api.key'),
+        ('/builds/crash-stats-api.token', '/builds/crash-stats-api.token'),
     ],
     'enable_ccache': True,
     'enable_check_test': True,
