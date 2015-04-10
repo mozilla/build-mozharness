@@ -1,8 +1,5 @@
 import os
 
-STAGE_USERNAME = 'ffxbld'
-STAGE_SSH_KEY = 'ffxbld_rsa'
-
 config = {
     #########################################################################
     ######## LINUX GENERIC CONFIG KEYS/VAlUES
