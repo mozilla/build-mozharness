@@ -12,7 +12,7 @@ else:
 config = {
     # mozharness script options
     "xre_url": xre_url,
-    "b2gdesktop_url": "http://ftp.mozilla.org/pub/mozilla.org/b2g/nightly/2015-03-09-00-25-06-mozilla-b2g37_v2_2/b2g-37.0.multi.linux-i686.tar.bz2",
+    "b2gdesktop_url": "http://ftp.mozilla.org/pub/mozilla.org/b2g/nightly/2015/03/2015-03-09-00-25-06-mozilla-b2g37_v2_2/b2g-37.0.multi.linux-i686.tar.bz2",
 
     # mozharness configuration
     "vcs_share_base": HG_SHARE_BASE_DIR,
