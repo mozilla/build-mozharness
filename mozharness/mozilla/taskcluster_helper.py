@@ -11,10 +11,11 @@ class Taskcluster(LogMixin):
     """
     Helper functions to report data to Taskcluster
     """
-    def __init__(self, branch, stage_platform, revision, client_id, access_token, log_obj):
+    def __init__(self, branch, stage_platform, revision, pushdate, client_id, access_token, log_obj):
         self.branch = branch
         self.platform = stage_platform
         self.revision = revision
+        self.pushdate = pushdate
         self.log_obj = log_obj
 
         # Try builds use a different set of credentials which have access to the
@@ -51,6 +52,11 @@ class Taskcluster(LogMixin):
                 "index.buildbot.revisions.%s.%s.%s" % (self.revision, self.branch, self.platform),
             ],
             "payload": {
+            },
+            "extra": {
+                "index": {
+                    "rank": self.pushdate,
+                },
             },
             "metadata": {
                 "name": "Buildbot/mozharness S3 uploader",
