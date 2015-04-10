@@ -62,6 +62,12 @@ class GittoolVCS(ScriptMixin, LogMixin):
         share_base = c.get('vcs_share_base', os.environ.get("GIT_SHARE_BASE_DIR", None))
         env = {'PATH': os.environ.get('PATH')}
         env.update(c.get('env', {}))
+        if self._is_windows():
+            # git.exe is not in the PATH by default
+            env['PATH'] = '%s;C:/mozilla-build/Git/bin' % env['PATH']
+            # SYSTEMROOT is needed for 'import random'
+            if 'SYSTEMROOT' not in env:
+                env['SYSTEMROOT'] = os.environ.get('SYSTEMROOT')
         if share_base is not None:
             env['GIT_SHARE_BASE_DIR'] = share_base
 

@@ -74,6 +74,13 @@ class HgtoolVCS(ScriptMixin, LogMixin):
             env.update(c['env'])
         if share_base is not None:
             env['HG_SHARE_BASE_DIR'] = share_base
+        if self._is_windows():
+            # SYSTEMROOT is needed for 'import random'
+            if 'SYSTEMROOT' not in env:
+                env['SYSTEMROOT'] = os.environ.get('SYSTEMROOT')
+            # HOME is needed for the 'hg help share' check
+            if 'HOME' not in env:
+                env['HOME'] = os.environ.get('HOME')
 
         cmd = self.hgtool[:]
 

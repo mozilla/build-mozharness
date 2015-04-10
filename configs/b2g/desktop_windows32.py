@@ -75,7 +75,7 @@ config = {
         'MOZ_OBJDIR': 'obj-firefox',
         'PATH': 'C:/mozilla-build/nsis-3.0a2;C:/mozilla-build/nsis-2.46u;C:/mozilla-build/python27;'
                 'C:/mozilla-build/buildbotve/scripts;'
-                '%s;C:/mozilla-build/Git/bin' % (os.environ.get('path')),
+                '%s' % (os.environ.get('path')),
         'PDBSTR_PATH': '/c/Program Files (x86)/Windows Kits/8.0/Debuggers/x64/srcsrv/pdbstr.exe',
         'PROPERTIES_FILE': os.path.join(os.getcwd(), 'buildprops.json'),
         'TINDERBOX_OUTPUT': '1',

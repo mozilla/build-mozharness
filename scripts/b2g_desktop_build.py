@@ -14,7 +14,7 @@ from mozharness.mozilla.l10n.locales import GaiaLocalesMixin
 
 
 class B2GDesktopBuild(FxDesktopBuild, GaiaLocalesMixin, VCSMixin, object):
-    def _checkout_gaia(self, env):
+    def _checkout_gaia(self):
         # Checkout gaia; read gaia.json
         try:
             dirs = self.query_abs_dirs()
@@ -29,7 +29,6 @@ class B2GDesktopBuild(FxDesktopBuild, GaiaLocalesMixin, VCSMixin, object):
                 'repo': gaia_json['git']['remote'],
                 'revision': gaia_json['git']['git_revision'],
                 'dest': gaia_dir,
-                'env': env,
             }
 
             gaia_rev = self.vcs_checkout(**vcs_checkout_kwargs)
@@ -38,7 +37,7 @@ class B2GDesktopBuild(FxDesktopBuild, GaiaLocalesMixin, VCSMixin, object):
             self.exception("failed to checkout gaia")
             raise
 
-    def _checkout_gaia_l10n(self, env):
+    def _checkout_gaia_l10n(self):
         # Checkout gaia l10n
         try:
             dirs = self.query_abs_dirs()
@@ -47,7 +46,6 @@ class B2GDesktopBuild(FxDesktopBuild, GaiaLocalesMixin, VCSMixin, object):
             config_json = json.load(open(config_json_path))
             self.debug("got %s" % config_json)
             l10n_config = config_json['gaia']['l10n']
-            l10n_config['env'] = env
 
             languages_file = os.path.join(dirs['abs_src_dir'], 'gaia/locales/languages_all.json')
             l10n_base_dir = os.path.join(dirs['abs_work_dir'], 'build-gaia-l10n')
@@ -66,13 +64,8 @@ class B2GDesktopBuild(FxDesktopBuild, GaiaLocalesMixin, VCSMixin, object):
     def _checkout_source(self):
         super(B2GDesktopBuild, self)._checkout_source()
 
-        env = self.query_build_env()
-        # The properties file may try to change the branch or revision of the
-        # gaia/l10n trees, which we don't want.
-        env.pop('PROPERTIES_FILE', None)
-
-        self._checkout_gaia(env)
-        self._checkout_gaia_l10n(env)
+        self._checkout_gaia()
+        self._checkout_gaia_l10n()
 
 
 if __name__ == '__main__':
