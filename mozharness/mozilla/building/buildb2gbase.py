@@ -77,6 +77,14 @@ class B2GBuildBaseScript(BuildbotMixin, MockMixin,
             "dest": "checkout_revision",
             "help": "checkout a specific gecko revision.",
         }],
+        [["--repotool-repo"], {
+            "dest": "repo_repo",
+            "help": "where to pull repo tool source from",
+        }],
+        [["--repotool-revision"], {
+            "dest": "repo_rev",
+            "help": "which revision of repo tool to use",
+        }],
         [["--disable-mock"], {
             "dest": "disable_mock",
             "action": "store_true",
@@ -95,6 +103,8 @@ class B2GBuildBaseScript(BuildbotMixin, MockMixin,
             'buildbot_json_path': os.environ.get('PROPERTIES_FILE'),
             'tooltool_servers': None,
             'tools_repo': 'https://hg.mozilla.org/build/tools',
+            'repo_repo': "https://git.mozilla.org/external/google/gerrit/git-repo.git",
+            'repo_rev': 'stable',
             'hgurl': 'https://hg.mozilla.org/',
         }
         default_config.update(config)
@@ -323,6 +333,23 @@ class B2GBuildBaseScript(BuildbotMixin, MockMixin,
 
 
     # Actions {{{2
+    def checkout_repotool(self, repo_dir):
+        self.info("Checking out repo tool")
+        repo_repo = self.config['repo_repo']
+        repo_rev = self.config['repo_rev']
+        repos = [
+            {'vcs': 'gittool', 'repo': repo_repo, 'dest': repo_dir, 'revision': repo_rev},
+        ]
+
+        # self.vcs_checkout already retries, so no need to wrap it in
+        # self.retry. We set the error_level to ERROR to prevent it going fatal
+        # so we can do our own handling here.
+        retval = self.vcs_checkout_repos(repos, error_level=ERROR)
+        if not retval:
+            self.rmtree(repo_dir)
+            self.fatal("Automation Error: couldn't clone repo", exit_code=4)
+        return retval
+
     def checkout_tools(self):
         dirs = self.query_abs_dirs()
 

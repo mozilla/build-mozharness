@@ -1,9 +1,6 @@
 import os
 import sys
 
-STAGE_USERNAME = 'b2gbld'
-STAGE_SSH_KEY = 'b2gbld_rsa'
-
 config = {
     #########################################################################
     ######## WINDOWS GENERIC CONFIG KEYS/VAlUES
@@ -48,8 +45,6 @@ config = {
         ],
     },
     'app_ini_path': '%(obj_dir)s/dist/bin/application.ini',
-    # decides whether we want to use moz_sign_cmd in env
-    'enable_signing': False,
     'purge_skip': ['info', 'rel-*:45d', 'tb-rel-*:45d'],
     'purge_basedirs':  [],
     'enable_ccache': False,
@@ -59,7 +54,6 @@ config = {
     'tooltool_script': [sys.executable,
                         'C:/mozilla-build/tooltool.py'],
     'tooltool_bootstrap': "setup.sh",
-    'enable_count_ctors': False,
     'enable_talos_sendchange': False,
     'enable_unittest_sendchange': False,
     #########################################################################
@@ -81,7 +75,7 @@ config = {
         'MOZ_OBJDIR': 'obj-firefox',
         'PATH': 'C:/mozilla-build/nsis-3.0a2;C:/mozilla-build/nsis-2.46u;C:/mozilla-build/python27;'
                 'C:/mozilla-build/buildbotve/scripts;'
-                '%s;C:/mozilla-build/Git/bin' % (os.environ.get('path')),
+                '%s' % (os.environ.get('path')),
         'PDBSTR_PATH': '/c/Program Files (x86)/Windows Kits/8.0/Debuggers/x64/srcsrv/pdbstr.exe',
         'PROPERTIES_FILE': os.path.join(os.getcwd(), 'buildprops.json'),
         'TINDERBOX_OUTPUT': '1',

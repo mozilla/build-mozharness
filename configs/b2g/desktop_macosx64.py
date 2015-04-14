@@ -1,9 +1,6 @@
 import os
 import sys
 
-STAGE_USERNAME = 'b2gbld'
-STAGE_SSH_KEY = 'b2gbld_rsa'
-
 config = {
     #########################################################################
     ######## MACOSX GENERIC CONFIG KEYS/VAlUES
@@ -22,8 +19,6 @@ config = {
         "buildbot": "/tools/buildbot/bin/buildbot",
     },
     'app_ini_path': '%(obj_dir)s/dist/bin/application.ini',
-    # decides whether we want to use moz_sign_cmd in env
-    'enable_signing': False,
     'purge_skip': ['info', 'rel-*:45d', 'tb-rel-*:45d'],
     'purge_basedirs':  [],
     'enable_ccache': True,
@@ -32,7 +27,6 @@ config = {
     'objdir': 'obj-firefox',
     'tooltool_script': ["/builds/tooltool.py"],
     'tooltool_bootstrap': "setup.sh",
-    'enable_count_ctors': False,
     'enable_talos_sendchange': False,
     'enable_unittest_sendchange': False,
     #########################################################################

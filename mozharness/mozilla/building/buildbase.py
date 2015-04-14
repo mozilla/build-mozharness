@@ -29,6 +29,7 @@ import re
 from mozharness.base.config import BaseConfig, parse_config_file
 from mozharness.base.log import ERROR, OutputParser, FATAL, WARNING
 from mozharness.base.script import PostScriptRun
+from mozharness.base.transfer import TransferMixin
 from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.buildbot import BuildbotMixin, TBPL_STATUS_DICT, \
     TBPL_EXCEPTION, TBPL_RETRY, EXIT_STATUS_DICT, TBPL_WARNING, TBPL_SUCCESS, \
@@ -496,7 +497,8 @@ def generate_build_UID():
 
 
 class BuildScript(BuildbotMixin, PurgeMixin, MockMixin, BalrogMixin,
-                  SigningMixin, VirtualenvMixin, MercurialScript):
+                  SigningMixin, VirtualenvMixin, MercurialScript,
+                  TransferMixin):
     def __init__(self, **kwargs):
         # objdir is referenced in _query_abs_dirs() so let's make sure we
         # have that attribute before calling BaseScript.__init__
@@ -521,6 +523,7 @@ class BuildScript(BuildbotMixin, PurgeMixin, MockMixin, BalrogMixin,
         self.repo_path = None
         self.buildid = None
         self.builduid = None
+        self.pushdate = None
         self.query_buildid()  # sets self.buildid
         self.query_builduid()  # sets self.builduid
         self.generated_build_props = False
@@ -689,6 +692,39 @@ or run without that action (ie: --no-{action})"
 
         self.buildid = buildid
         return self.buildid
+
+    def query_pushdate(self):
+        if self.pushdate:
+            return self.pushdate
+
+        try:
+            url = '%s/json-pushes?changeset=%s' % (
+                self._query_repo(),
+                self.query_revision(),
+            )
+            self.info('Pushdate URL is: %s' % url)
+            contents = self.retry(self.load_json_from_url, args=(url,))
+
+            # The contents should be something like:
+            # {
+            #   "28537": {
+            #    "changesets": [
+            #     "1d0a914ae676cc5ed203cdc05c16d8e0c22af7e5",
+            #    ],
+            #    "date": 1428072488,
+            #    "user": "user@mozilla.com"
+            #   }
+            # }
+            #
+            # So we grab the first element ("28537" in this case) and then pull
+            # out the 'date' field.
+            self.pushdate = contents.itervalues().next()['date']
+            self.info('Pushdate is: %s' % self.pushdate)
+        except Exception:
+            self.exception("Failed to get pushdate from hg.mozilla.org")
+            raise
+
+        return self.pushdate
 
     def _query_objdir(self):
         if self.objdir:
@@ -1292,6 +1328,7 @@ or run without that action (ie: --no-{action})"
         tc = Taskcluster(self.branch,
                          self.stage_platform,
                          self.query_revision(),
+                         self.query_pushdate(),
                          client_id,
                          access_token,
                          self.log_obj,

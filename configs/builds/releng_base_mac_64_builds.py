@@ -1,9 +1,6 @@
 import os
 import sys
 
-STAGE_USERNAME = 'ffxbld'
-STAGE_SSH_KEY = 'ffxbld_rsa'
-
 config = {
     #########################################################################
     ######## MACOSX GENERIC CONFIG KEYS/VAlUES
