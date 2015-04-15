@@ -36,12 +36,15 @@ class Proxxy(ScriptMixin, LogMixin):
             # pypi
             ('http://pypi.pvt.build.mozilla.org', 'pypi.pvt.build.mozilla.org'),
             ('http://pypi.pub.build.mozilla.org', 'pypi.pub.build.mozilla.org'),
+            # taskcluster stuff
+            ('https://queue.taskcluster.net', 'queue.taskcluster.net'),
         ],
         "instances": [
             'proxxy1.srv.releng.use1.mozilla.com',
             'proxxy1.srv.releng.usw2.mozilla.com',
+            'proxxy1.srv.releng.scl3.mozilla.com',
         ],
-        "regions": [".use1.", ".usw2."],
+        "regions": [".use1.", ".usw2.", ".scl3"],
     }
 
     def __init__(self, config, log_obj):

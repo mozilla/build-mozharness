@@ -1,3 +1,4 @@
+import os
 import sys
 
 config = {
@@ -66,5 +67,11 @@ config = {
     "enable_mozmake": True,
     'exes': {
         'python2.7': sys.executable,
+        'hgtool.py': [
+            sys.executable,
+            os.path.join(
+                os.getcwd(), 'build', 'tools', 'buildfarm', 'utils', 'hgtool.py'
+            )
+        ],
     }
 }
