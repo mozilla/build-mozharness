@@ -1,3 +1,5 @@
+import os
+
 config = {
     "platform": "linux64",
     "update_platform": "Linux_x86_64-gcc3",
@@ -95,4 +97,9 @@ config = {
         ('/builds/gapi.data', '/builds/gapi.data'),
         ('/tools/tooltool.py', '/builds/tooltool.py'),
     ],
+    'exes': {
+        'hgtool.py': os.path.join(
+            os.getcwd(), 'build', 'tools', 'buildfarm', 'utils', 'hgtool.py'
+        ),
+    },
 }

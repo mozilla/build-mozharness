@@ -35,16 +35,16 @@ config = {
     "mozilla_dir": "ash",
     "repos": [{
         "vcs": "hg",
-        "repo": "https://hg.mozilla.org/mozilla-central",
-        "revision": "default",
-        "dest": "ash",
-    }, {
-        "vcs": "hg",
         "repo": "https://hg.mozilla.org/build/tools",
         "revision": "default",
         "dest": "tools",
     }, {
-        "vcs": "hg",
+        "vcs": "hgtool",
+        "repo": "https://hg.mozilla.org/mozilla-central",
+        "revision": "default",
+        "dest": "ash",
+    }, {
+        "vcs": "hgtool",
         "repo": "https://hg.mozilla.org/build/compare-locales",
         "revision": "RELEASE_AUTOMATION"
     }],
