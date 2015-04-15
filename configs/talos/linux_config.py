@@ -1,7 +1,7 @@
 import os
 
 PYTHON = '/tools/buildbot/bin/python'
-VENV_PATH = '/home/cltbld/talos-slave/test/build/venv'
+VENV_PATH = '%s/build/venv' % os.getcwd()
 
 config = {
     "log_name": "talos",
@@ -32,7 +32,7 @@ config = {
         "run-tests",
     ],
     "python_webserver": False,
-    "webroot": '/builds/slave/talos-slave/talos-data',
+    "webroot": '%s/../talos-data' % os.getcwd(),
     "populate_webroot": True,
     "default_blob_upload_servers": [
         "https://blobupload.elasticbeanstalk.com",
