@@ -16,8 +16,6 @@ config = {
     'enable_check_test': False,
     #### 64 bit build specific #####
     'env': {
-        # disable sccache for bug 1154377
-        'SCCACHE_DISABLE': '1',
         'MOZBUILD_STATE_PATH': os.path.join(os.getcwd(), '.mozbuild'),
         'MOZ_AUTOMATION': '1',
         'HG_SHARE_BASE_DIR': '/builds/hg-shared',
