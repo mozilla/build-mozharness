@@ -30,7 +30,7 @@ class B2GLightsaber(B2GBuild):
         dirs = self.query_abs_dirs()
         lightsaber_dir = os.path.join(dirs['base_work_dir'] , 'lightsaber')
         self.rmtree(lightsaber_dir)
-        lightsaber_repo = {'vcs': 'tc_vcs', 'repo': 'http://github.com/fxos/lightsaber', 'dest': lightsaber_dir}
+        lightsaber_repo = {'vcs': 'gittool', 'repo': 'http://github.com/fxos/lightsaber', 'dest': lightsaber_dir}
         self.vcs_checkout_repos([lightsaber_repo])
         return self.run_command(os.path.join(lightsaber_dir, 'replace-B2G.sh'), env=self.query_env(), cwd=lightsaber_dir)
 
