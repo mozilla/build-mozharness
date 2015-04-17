@@ -732,11 +732,7 @@ or run without that action (ie: --no-{action})"
 
         if not self.config.get('objdir'):
             return self.fatal(MISSING_CFG_KEY_MSG % ('objdir',))
-
-        if self.query_is_nightly() and self.config.get('nightly_objdir'):
-            self.objdir = self.config['nightly_objdir']
-        else:
-            self.objdir = self.config['objdir']
+        self.objdir = self.config['objdir']
         return self.objdir
 
     def _query_repo(self):
@@ -991,14 +987,9 @@ or run without that action (ie: --no-{action})"
         c = self.config
         dirs = self.query_abs_dirs()
         if c.get('src_mozconfig'):
-            if self.query_is_nightly() and c.get('nightly_mozconfig'):
-                self.info('Using nightly mozconfig')
-                mozconfig_path = c.get('nightly_mozconfig')
-            else:
-                self.info('Using in-tree mozconfig')
-                mozconfig_path = c.get('src_mozconfig')
+            self.info('Using in-tree mozconfig')
             abs_src_mozconfig = os.path.join(dirs['abs_src_dir'],
-                                             mozconfig_path)
+                                             c.get('src_mozconfig'))
             if not os.path.exists(abs_src_mozconfig):
                 self.info('abs_src_mozconfig: %s' % (abs_src_mozconfig,))
                 self.fatal(ERROR_MSGS['src_mozconfig_path_not_found'])

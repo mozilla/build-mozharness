@@ -36,6 +36,10 @@ class TooltoolMixin(object):
 
         # get the tooltools servers from configuration
         default_urls = self.config['tooltool_servers']
+        # add slashes (bug 1155630)
+        def add_slash(url):
+            return url if url.endswith('/') else (url + '/')
+        default_urls = [add_slash(u) for u in default_urls]
         proxxy = Proxxy(self.config, self.log_obj)
         proxxy_urls = proxxy.get_proxies_and_urls(default_urls)
 
