@@ -1286,7 +1286,7 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
             'platform': self.config['platform'],
         }
         self.info('funsize info: %s' % funsize_info)
-        self.set_buildbot_property('funsize_info', funsize_info,
+        self.set_buildbot_property('funsize_info', json.dumps(funsize_info),
                                    write_to_file=True)
 
 # main {{{
