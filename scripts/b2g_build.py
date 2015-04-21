@@ -191,7 +191,7 @@ class B2GBuild(LocalesMixin, PurgeMixin,
         if self.buildbot_config and 'properties' in self.buildbot_config:
             return self.buildbot_config['properties']['branch']
         else:
-            return os.path.basename(self.query_repo())
+            return os.path.basename(self.query_repo().rstrip('/'))
 
     def query_buildid(self):
         if self.buildid:
