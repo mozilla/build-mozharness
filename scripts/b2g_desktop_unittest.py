@@ -159,20 +159,6 @@ class B2GDesktopTest(BlobUploadMixin, TestingMixin, MercurialScript):
             'raw_log_file': raw_log_file,
         }
 
-        # Bug 978233 - hack to get around multiple mochitest manifest arguments
-        if suite == 'mochitest':
-            if os.path.isfile(os.path.join(dirs['abs_mochitest_dir'], self.test_manifest)):
-                if self.test_manifest.endswith('.ini'):
-                    manifest_param = '--manifest'
-                else:
-                    manifest_param = '--test-manifest'
-                manifest_param = '%s=%s' % (manifest_param, self.test_manifest)
-            else:
-                self.log('Ignoring non-existent manifest \'%s\'.' % self.test_manifest,
-                         level=WARNING)
-                manifest_param = ''
-            str_format_values['test_manifest'] = manifest_param
-
         missing_key = True
         if "suite_definitions" in self.tree_config: # new structure
             if suite in self.tree_config["suite_definitions"]:
@@ -202,9 +188,7 @@ class B2GDesktopTest(BlobUploadMixin, TestingMixin, MercurialScript):
         suite = self.config['test_suite']
         # set default test manifest by suite if none specified
         if not self.test_manifest:
-            if suite == 'mochitest':
-                self.test_manifest = 'b2g-desktop.json'
-            elif suite == 'reftest':
+            if suite == 'reftest':
                 self.test_manifest = os.path.join('tests', 'layout',
                                                   'reftests', 'reftest.list')
 
