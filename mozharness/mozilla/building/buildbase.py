@@ -96,6 +96,7 @@ class MakeUploadOutputParser(OutputParser):
         ('jsshellUrl', "'jsshell-' in m and m.endswith('.zip')"),
         ('partialMarUrl', "m.endswith('.mar') and '.partial.' in m"),
         ('completeMarUrl', "m.endswith('.mar')"),
+        ('codeCoverageUrl', "m.endswith('code-coverage-gcno.zip')"),
     ]
 
     def __init__(self, **kwargs):

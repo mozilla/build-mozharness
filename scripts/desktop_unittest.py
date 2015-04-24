@@ -26,6 +26,10 @@ from mozharness.base.script import PreScriptAction
 from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_options
 from mozharness.mozilla.mozbase import MozbaseMixin
+from mozharness.mozilla.testing.codecoverage import (
+    CodeCoverageMixin,
+    code_coverage_config_options
+)
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
 from mozharness.mozilla.buildbot import TBPL_WARNING
 
@@ -33,7 +37,7 @@ SUITE_CATEGORIES = ['cppunittest', 'jittest', 'mochitest', 'reftest', 'xpcshell'
 
 
 # DesktopUnittest {{{1
-class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMixin):
+class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMixin, CodeCoverageMixin):
     config_options = [
         [['--mochitest-suite', ], {
             "action": "extend",
@@ -136,7 +140,8 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
             "help": "Number of this chunk"}
          ],
     ] + copy.deepcopy(testing_config_options) + \
-        copy.deepcopy(blobupload_config_options)
+        copy.deepcopy(blobupload_config_options) + \
+        copy.deepcopy(code_coverage_config_options)
 
     def __init__(self, require_config_file=True):
         # abs_dirs defined already in BaseScript but is here to make pylint happy
