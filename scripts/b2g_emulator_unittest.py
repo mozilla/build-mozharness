@@ -132,7 +132,6 @@ class B2GEmulatorTest(TestingMixin, VCSMixin, BaseScript, BlobUploadMixin):
             require_config_file=require_config_file,
             config={
                 'require_test_zip': True,
-                'emulator': 'arm',
                 # This is a special IP that has meaning to the emulator
                 'remote_webserver': '10.0.2.2',
             }
@@ -261,10 +260,14 @@ class B2GEmulatorTest(TestingMixin, VCSMixin, BaseScript, BlobUploadMixin):
 
         raw_log_file = os.path.join(dirs['abs_blob_upload_dir'],
                                     '%s_raw.log' % suite)
+        emulator_type = 'x86' if os.path.isdir(os.path.join(dirs['abs_b2g-distro_dir'],
+                        'out', 'target', 'product', 'generic_x86')) else 'arm'
+        self.info("The emulator type: %s" % emulator_type)
+
         str_format_values = {
             'adbpath': self.adb_path,
             'b2gpath': dirs['abs_b2g-distro_dir'],
-            'emulator': self.config['emulator'],
+            'emulator': emulator_type,
             'logcat_dir': dirs['abs_work_dir'],
             'modules_dir': dirs['abs_modules_dir'],
             'remote_webserver': self.config['remote_webserver'],
