@@ -96,6 +96,7 @@ class MakeUploadOutputParser(OutputParser):
         ('jsshellUrl', "'jsshell-' in m and m.endswith('.zip')"),
         ('partialMarUrl', "m.endswith('.mar') and '.partial.' in m"),
         ('completeMarUrl', "m.endswith('.mar')"),
+        ('codeCoverageUrl', "m.endswith('code-coverage-gcno.zip')"),
     ]
 
     def __init__(self, **kwargs):
@@ -484,6 +485,11 @@ BUILD_BASE_CONFIG_OPTIONS = [
         "dest": "who",
         "default": '',
         "help": "stores who made the created the buildbot change."}],
+    [["--disable-mock"], {
+        "dest": "disable_mock",
+        "action": "store_true",
+        "help": "do not run under mock despite what gecko-config says",
+    }],
 
 ]
 

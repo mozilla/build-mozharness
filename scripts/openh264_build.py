@@ -90,7 +90,7 @@ class OpenH264Build(MockMixin, TransferMixin, VCSScript):
             'mock_target': 'mozilla-centos6-x86_64',
             'mock_packages': ['make', 'git', 'nasm', 'glibc-devel.i686', 'libstdc++-devel.i686', 'zip', 'yasm'],
             'mock_files': [],
-            'upload_ssh_key': os.path.expanduser("~/.ssh/ffxbld_dsa"),
+            'upload_ssh_key': os.path.expanduser("~/.ssh/ffxbld_rsa"),
             'upload_ssh_user': 'ffxbld',
             'upload_ssh_host': 'stage.mozilla.org',
             'upload_path_base': '/home/ffxbld/openh264',

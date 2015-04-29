@@ -284,7 +284,7 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin, Tool
                     elif f['name'].endswith('crashreporter-symbols.zip'):  # yuk
                         self.symbols_url = str(f['name'])
                         self.info("Found symbols url %s." % self.symbols_url)
-                    else:
+                    elif not any(f['name'].endswith(s) for s in ('code-coverage-gcno.zip',)):
                         if not self.installer_url:
                             self.installer_url = str(f['name'])
                             self.info("Found installer url %s." % self.installer_url)
