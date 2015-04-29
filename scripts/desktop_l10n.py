@@ -1249,6 +1249,18 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
                     pgc_files.append(os.path.join(dirpath, pgc))
         return pgc_files
 
+    # TODO: replace with ToolToolMixin
+    def _get_tooltool_auth_file(self):
+        # set the default authentication file based on platform; this
+        # corresponds to where puppet puts the token
+        if 'tooltool_authentication_file' in self.config:
+            return self.config['tooltool_authentication_file']
+
+        if self._is_windows():
+            return r'c:\builds\relengapi.tok'
+        else:
+            return '/builds/relengapi.tok'
+
     def _run_tooltool(self):
         config = self.config
         dirs = self.query_abs_dirs()
@@ -1266,6 +1278,7 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
             config['tooltool_bootstrap'],
         ]
         cmd.extend(config['tooltool_script'])
+        cmd.extend(['--authentication-file', self._get_tooltool_auth_file()])
         self.info(str(cmd))
         self.run_command(cmd, cwd=dirs['abs_mozilla_dir'], halt_on_failure=True)
 
