@@ -1,5 +1,6 @@
 """module for tooltool operations"""
 import os
+import sys
 
 from mozharness.base.errors import PythonErrorList
 from mozharness.base.log import ERROR, FATAL
@@ -23,8 +24,22 @@ TOOLTOOL_SERVERS = [
 class TooltoolMixin(object):
     """Mixin class for handling tooltool manifests.
     To use a tooltool server other than the Mozilla server, override
-    config['tooltool_servers'].
+    config['tooltool_servers'].  To specify a different authentication
+    file than that used in releng automation,override
+    config['tooltool_authentication_file']; set it to None to not pass
+    any authentication information (OK for public files)
     """
+    def _get_auth_file(self):
+        # set the default authentication file based on platform; this
+        # corresponds to where puppet puts the token
+        if 'tooltool_authentication_file' in self.config:
+            return self.config['tooltool_authentication_file']
+
+        if self._is_windows():
+            return r'c:\builds\relengapi.tok'
+        else:
+            return '/builds/relengapi.tok'
+
     def tooltool_fetch(self, manifest, bootstrap_cmd=None,
                        output_dir=None, privileged=False, cache=None):
         """docstring for tooltool_fetch"""
@@ -53,6 +68,11 @@ class TooltoolMixin(object):
 
         for proxyied_url in proxxy_urls:
             cmd.extend(['--url', proxyied_url])
+
+        # handle authentication file, if given
+        auth_file = self._get_auth_file()
+        if auth_file:
+            cmd.extend(['--authentication-file', auth_file])
 
         cmd.extend(['fetch', '-m', manifest, '-o'])
 
