@@ -51,6 +51,10 @@ class SpidermonkeyBuild(MockMixin,
             "dest": "repo",
             "help": "which gecko repo to get spidermonkey from",
         }],
+        [["--source"], {
+            "dest": "source",
+            "help": "directory containing gecko source tree (instead of --repo)",
+        }],
         [["--revision"], {
             "dest": "revision",
         }],
@@ -124,6 +128,7 @@ class SpidermonkeyBuild(MockMixin,
                                 'upload_ssh_server': None,
                                 'upload_remote_basepath': None,
                                 'enable_try_uploads': True,
+                                'source': None,
                             },
         )
 
@@ -131,6 +136,8 @@ class SpidermonkeyBuild(MockMixin,
         self.analysis = HazardAnalysis()
 
     def _pre_config_lock(self, rw_config):
+        if self.config['source']:
+            self.config['srcdir'] = self.config['source']
         super(SpidermonkeyBuild, self)._pre_config_lock(rw_config)
 
         if self.buildbot_config is None:
@@ -192,6 +199,7 @@ class SpidermonkeyBuild(MockMixin,
 
         abs_dirs.update(dirs)
         self.abs_dirs = abs_dirs
+
         return self.abs_dirs
 
     def query_repo(self):
@@ -349,8 +357,12 @@ class SpidermonkeyBuild(MockMixin,
         self.set_buildbot_property("tools_revision", rev, write_to_file=True)
 
     def do_checkout_source(self):
+        # --source option means to use an existing source directory instead of checking one out.
+        if self.config['source']:
+            return
+
         dirs = self.query_abs_dirs()
-        dest = os.path.join(dirs['abs_work_dir'], 'source')
+        dest = dirs['gecko_src']
 
         # Pre-create the directory to appease the share extension
         if not os.path.exists(dest):
@@ -365,7 +377,6 @@ class SpidermonkeyBuild(MockMixin,
         )
         self.set_buildbot_property('source_revision', rev, write_to_file=True)
 
-    @requires(query_repo)
     def checkout_source(self):
         try:
             self.do_checkout_source()
@@ -429,6 +440,9 @@ class SpidermonkeyBuild(MockMixin,
         self.analysis.collect_output(self)
 
     def upload_analysis(self):
+        if not self.config['is_automation']:
+            return
+
         if not self.query_do_upload():
             self.info("Uploads disabled for this build. Skipping...")
             return

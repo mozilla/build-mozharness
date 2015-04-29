@@ -15,7 +15,7 @@ config = {
     "sixgill": "sixgill/usr/libexec/sixgill",
     "sixgill_bin": "sixgill/usr/bin",
 
-    "python": PYTHON_DIR + "/bin/python2.7",
+    "python": "python",
 
     "exes": {
         'hgtool.py': '%(abs_tools_dir)s/buildfarm/utils/hgtool.py',
