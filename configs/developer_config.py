@@ -41,8 +41,5 @@ config = {
                                         "builds/tooltool_cache"),
     # Android related
     "host_utils_url":
-        "https://secure.pub.build.mozilla.org/tooltool" +
-        "/pvt/build/sha512/372c89f9dccaf5ee3b9d35fd1cfeb089e1e5db3ff1c04e35" +
-        "aa3adc8800bc61a2ae10e321f37ae7bab20b56e60941f91bb003bcb22035902a73" +
-        "d70872e7bd3282",
+        "https://api.pub.build.mozilla.org/tooltool/sha512/372c89f9dccaf5ee3b9d35fd1cfeb089e1e5db3ff1c04e35aa3adc8800bc61a2ae10e321f37ae7bab20b56e60941f91bb003bcb22035902a73d70872e7bd3282",
 }
