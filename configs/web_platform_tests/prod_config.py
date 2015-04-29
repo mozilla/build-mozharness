@@ -34,8 +34,6 @@ config = {
 
     "download_minidump_stackwalk": True,
 
-    "tooltool_servers": ["http://runtime-binaries.pvt.build.mozilla.org/tooltool/"],
-
     "tooltool_cache": "/builds/tooltool_cache",
 
 }

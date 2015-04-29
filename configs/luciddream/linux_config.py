@@ -39,6 +39,5 @@ config = {
     # "in_tree_config": "config/mozharness/luciddream.py",
     "download_symbols": "ondemand",
     "download_minidump_stackwalk": True,
-    "tooltool_servers": ["http://tooltool.pvt.build.mozilla.org/build/"],
     "tooltool_cache": "/builds/tooltool_cache",
 }

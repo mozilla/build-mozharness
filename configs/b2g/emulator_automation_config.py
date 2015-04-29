@@ -6,7 +6,6 @@ config = {
     "application": "b2g",
     "busybox_url": "https://api.pub.build.mozilla.org/tooltool/sha512/0748e900821820f1a42e2f1f3fa4d9002ef257c351b9e6b78e7de0ddd0202eace351f440372fbb1ae0b7e69e8361b036f6bd3362df99e67fc585082a311fc0df",
     "xre_url": "https://api.pub.build.mozilla.org/tooltool/sha512/dc9503b21c87b5a469118746f99e4f41d73888972ce735fa10a80f6d218086da0e3da525d9a4cd8e4ea497ec199fef720e4a525873d77a1af304ac505e076462",
-    "tooltool_servers": ["http://tooltool.pvt.build.mozilla.org/build/"],
     "tooltool_cache": "/builds/tooltool_cache",
 
     "exes": {

@@ -20,7 +20,6 @@ config = {
             "upload_dep_target_exclusions": [],
         },
     },
-    "tooltool_servers": ["http://tooltool.pvt.build.mozilla.org/build/"],
     "gittool_share_base": "/builds/git-shared/git",
     "gittool_base_mirror_urls": [],
     "hgtool_share_base": "/builds/hg-shared",

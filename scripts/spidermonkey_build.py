@@ -119,7 +119,6 @@ class SpidermonkeyBuild(MockMixin,
                                 'vcs_share_base': os.environ.get('HG_SHARE_BASE_DIR'),
                                 'ccache': True,
                                 'buildbot_json_path': os.environ.get('PROPERTIES_FILE'),
-                                'tooltool_servers': None,
                                 'tools_repo': 'https://hg.mozilla.org/build/tools',
 
                                 'upload_ssh_server': None,
@@ -148,7 +147,6 @@ class SpidermonkeyBuild(MockMixin,
                         ('purge_maxage', 'purge_maxage', None),
                         ('purge_skip', 'purge_skip', None),
                         ('force_clobber', 'force_clobber', None),
-                        ('tooltool_url_list', 'tooltool_servers', ['http://tooltool.pvt.build.mozilla.org/build']),
                         ]
             buildbot_props = self.buildbot_config.get('properties', {})
             for bb_prop, cfg_prop, default in bb_props:
@@ -376,7 +374,6 @@ class SpidermonkeyBuild(MockMixin,
 
     def get_blobs(self):
         dirs = self.query_abs_dirs()
-        assert self.config['tooltool_servers']
         self.tooltool_fetch(self.query_compiler_manifest(), "sh " + self.config['compiler_setup'],
                             dirs['abs_work_dir'])
         self.tooltool_fetch(self.query_sixgill_manifest(), "sh " + self.config['sixgill_setup'],

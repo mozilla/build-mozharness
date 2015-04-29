@@ -15,10 +15,15 @@ TooltoolErrorList = PythonErrorList + [{
 TOOLTOOL_PY_URL = \
     "https://raw.githubusercontent.com/mozilla/build-tooltool/master/tooltool.py"
 
+TOOLTOOL_SERVERS = [
+    'https://api.pub.build.mozilla.org/tooltool/',
+]
+
 
 class TooltoolMixin(object):
     """Mixin class for handling tooltool manifests.
-    Requires self.config['tooltool_servers'] to be a list of base urls
+    To use a tooltool server other than the Mozilla server, override
+    config['tooltool_servers'].
     """
     def tooltool_fetch(self, manifest, bootstrap_cmd=None,
                        output_dir=None, privileged=False, cache=None):
@@ -34,12 +39,15 @@ class TooltoolMixin(object):
         else:
             cmd = tooltool
 
-        # get the tooltools servers from configuration
-        default_urls = self.config['tooltool_servers']
+        # get the tooltool servers from configuration
+        default_urls = self.config.get('tooltool_servers', TOOLTOOL_SERVERS)
+
         # add slashes (bug 1155630)
         def add_slash(url):
             return url if url.endswith('/') else (url + '/')
         default_urls = [add_slash(u) for u in default_urls]
+
+        # proxxy-ify
         proxxy = Proxxy(self.config, self.log_obj)
         proxxy_urls = proxxy.get_proxies_and_urls(default_urls)
 

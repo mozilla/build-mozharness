@@ -31,7 +31,6 @@ config = {
     "exes": {
         'tooltool.py': '/tools/tooltool.py',
     },
-    "tooltool_servers": ["http://tooltool.pvt.build.mozilla.org/build/"],
     "repos": [{
         "repo": "https://hg.mozilla.org/mozilla-central",
         "revision": "default",

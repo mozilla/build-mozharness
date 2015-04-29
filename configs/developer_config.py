@@ -24,18 +24,12 @@ config = {
     "replace_urls": [
         ("http://pvtbuilds.pvt.build",
          "https://pvtbuilds"),
-        ("http://tooltool.pvt.build.mozilla.org/build",
-         "https://secure.pub.build.mozilla.org/tooltool/pvt/build")
     ],
 
     # Talos related
     "python_webserver": True,
     "virtualenv_path": '%s/build/venv' % os.getcwd(),
 
-    # Tooltool related
-    "tooltool_servers": [
-        "https://secure.pub.build.mozilla.org/tooltool/pvt/build"
-    ],
     "tooltool_cache": os.path.join(LOCAL_WORKDIR, "builds/tooltool_cache"),
     "tooltool_cache_path": os.path.join(LOCAL_WORKDIR,
                                         "builds/tooltool_cache"),

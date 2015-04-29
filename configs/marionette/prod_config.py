@@ -39,6 +39,5 @@ config = {
     "in_tree_config": "config/mozharness/marionette.py",
     "download_symbols": "ondemand",
     "download_minidump_stackwalk": True,
-    "tooltool_servers": ["http://runtime-binaries.pvt.build.mozilla.org/tooltool/"],
     "tooltool_cache": "/builds/tooltool_cache",
 }

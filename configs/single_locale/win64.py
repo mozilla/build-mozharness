@@ -23,7 +23,7 @@ config = {
     "vcs_share_base": "c:/builds/hg-shared",
 
     # tooltool
-    'tooltool_url': 'http://tooltool.pvt.build.mozilla.org/build/',
+    'tooltool_url': 'https://api.pub.build.mozilla.org/tooltool/',
     'tooltool_script': [sys.executable,
                         'C:/mozilla-build/tooltool.py'],
     'tooltool_bootstrap': "setup.sh",

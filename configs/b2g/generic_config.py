@@ -2,9 +2,6 @@
 import os
 
 config = {
-    # mozharness options
-    "tooltool_servers": ["http://tooltool.pvt.build.mozilla.org/build/"],
-
     "exes": {
         'python': '/tools/buildbot/bin/python',
         'virtualenv': ['/tools/buildbot/bin/python', '/tools/misc-python/virtualenv.py'],

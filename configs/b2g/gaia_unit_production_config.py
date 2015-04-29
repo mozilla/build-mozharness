@@ -13,9 +13,6 @@ config = {
     # mozharness script options
     "xre_url": xre_url,
 
-    # mozharness configuration
-    "tooltool_servers": ["http://tooltool.pvt.build.mozilla.org/build/"],
-
     "vcs_share_base": HG_SHARE_BASE_DIR,
     "exes": {
         'python': '/tools/buildbot/bin/python',
