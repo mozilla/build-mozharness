@@ -358,6 +358,7 @@ class B2GEmulatorTest(TestingMixin, VCSMixin, BaseScript, BlobUploadMixin):
 
         cmd = self._query_abs_base_cmd(suite)
         cwd = dirs['abs_%s_dir' % suite]
+        cmd = self.append_harness_extra_args(cmd)
 
         # TODO we probably have to move some of the code in
         # scripts/desktop_unittest.py and scripts/marionette.py to

@@ -452,6 +452,7 @@ class MarionetteTest(TestingMixin, MercurialScript, BlobUploadMixin, TransferMix
             self.fatal("Could not create blobber upload directory")
 
         cmd.append(manifest)
+        cmd = self.append_harness_extra_args(cmd)
 
         env = {}
         if self.query_minidump_stackwalk():

@@ -470,6 +470,8 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
         """
         dirs = self.query_abs_dirs()
         cmd = self._build_command(self.emulators[emulator_index], suite_name)
+        cmd = self.append_harness_extra_args(cmd)
+
         try:
             cwd = self._query_tests_dir(suite_name)
         except:
