@@ -9,6 +9,7 @@ config = {
         'clone-tools',
         'setup-mock',
         'build',
+        'multi-l10n',
     ],
     "buildbot_json_path": "buildprops.json",
     'exes': {
@@ -41,6 +42,7 @@ config = {
     'enable_count_ctors': False,
     'enable_talos_sendchange': True,
     'enable_unittest_sendchange': True,
+    'multi_locale': True,
     #########################################################################
 
 
