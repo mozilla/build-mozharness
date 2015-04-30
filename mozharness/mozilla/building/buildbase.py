@@ -43,6 +43,7 @@ from mozharness.mozilla.testing.unittest import tbox_print_summary
 from mozharness.mozilla.updates.balrog import BalrogMixin
 from mozharness.mozilla.taskcluster_helper import Taskcluster
 from mozharness.base.python import VirtualenvMixin
+from mozharness.base.python import InfluxRecordingMixin
 
 AUTOMATION_EXIT_CODES = EXIT_STATUS_DICT.values()
 AUTOMATION_EXIT_CODES.sort()
@@ -512,7 +513,7 @@ def generate_build_UID():
 
 class BuildScript(BuildbotMixin, PurgeMixin, MockMixin, BalrogMixin,
                   SigningMixin, VirtualenvMixin, MercurialScript,
-                  TransferMixin):
+                  TransferMixin, InfluxRecordingMixin):
     def __init__(self, **kwargs):
         # objdir is referenced in _query_abs_dirs() so let's make sure we
         # have that attribute before calling BaseScript.__init__
@@ -541,6 +542,14 @@ class BuildScript(BuildbotMixin, PurgeMixin, MockMixin, BalrogMixin,
         self.query_buildid()  # sets self.buildid
         self.query_builduid()  # sets self.builduid
         self.generated_build_props = False
+
+        # Call this before creating the virtualenv so that we have things like
+        # symbol_server_host in the config
+        self.query_build_env()
+
+        # We need to create the virtualenv directly (without using an action) in
+        # order to use python modules in PreScriptRun/Action listeners
+        self.create_virtualenv()
 
     def _pre_config_lock(self, rw_config):
         c = self.config

@@ -70,6 +70,7 @@ class FxDesktopBuild(BuildScript, object):
                 'compare_locales_repo': 'https://hg.mozilla.org/build/compare-locales',
                 'compare_locales_rev': 'RELEASE_AUTOMATION',
                 'compare_locales_vcs': 'hgtool',
+                'influx_credentials_file': 'oauth.txt',
 
                 # try will overwrite these
                 'clone_with_purge': False,
