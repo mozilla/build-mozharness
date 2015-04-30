@@ -288,6 +288,11 @@ class BuildOptionParser(object):
         'code-coverage': 'builds/releng_sub_%s_configs/%s_code_coverage.py',
         'graphene': 'builds/releng_sub_%s_configs/%s_graphene.py',
         'source': 'builds/releng_sub_%s_configs/%s_source.py',
+        'api-9': 'builds/releng_sub_%s_configs/%s_api_9.py',
+        'api-11': 'builds/releng_sub_%s_configs/%s_api_11.py',
+        'api-9-debug': 'builds/releng_sub_%s_configs/%s_api_9_debug.py',
+        'api-11-debug': 'builds/releng_sub_%s_configs/%s_api_11_debug.py',
+        'x86': 'builds/releng_sub_%s_configs/%s_x86.py',
     }
     build_pools = {
         'staging': 'builds/build_pool_specifics.py',
@@ -337,9 +342,12 @@ class BuildOptionParser(object):
                 if 'linux' in cfg_file_name:
                     cls.platform = 'linux'
                     break
+                if 'android' in cfg_file_name:
+                    cls.platform = 'android'
+                    break
             else:
                 sys.exit(error_msg % (target_option, 'platform', '--platform',
-                                      '"linux", "windows", or "mac"'))
+                                      '"linux", "windows", "mac", or "android"'))
         return cls.bits, cls.platform
 
     @classmethod
