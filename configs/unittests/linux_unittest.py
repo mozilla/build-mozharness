@@ -163,6 +163,5 @@ config = {
     "download_minidump_stackwalk": True,
     "minidump_stackwalk_path": MINIDUMP_STACKWALK_PATH,
     "minidump_tooltool_manifest_path": TOOLTOOL_MANIFEST_PATH,
-    "tooltool_servers": ["http://runtime-binaries.pvt.build.mozilla.org/tooltool/"],
     "tooltool_cache": "/builds/tooltool_cache",
 }

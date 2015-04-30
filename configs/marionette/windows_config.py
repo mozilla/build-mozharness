@@ -41,6 +41,5 @@ config = {
     "blob_uploader_auth_file" : os.path.join(os.getcwd(), "oauth.txt"),
     "in_tree_config": "config/mozharness/marionette.py",
     "download_minidump_stackwalk": True,
-    "tooltool_servers": ["http://runtime-binaries.pvt.build.mozilla.org/tooltool/"],
     "download_symbols": "ondemand",
 }

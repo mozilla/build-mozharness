@@ -337,18 +337,10 @@ class B2GEmulatorTest(TestingMixin, VCSMixin, BaseScript, BlobUploadMixin):
         pass
 
     def _get_success_codes(self, suite_name):
-        chunk = int(self.config.get('this_chunk', 0))
-        branch = self.buildbot_config['properties'].get('branch')
-        platform = self.buildbot_config['properties'].get('stage_platform')
-
         success_codes = None
         if suite_name == 'xpcshell':
             # bug 773703
             success_codes = [0, 1]
-        elif suite_name == 'mochitest' and platform == 'emulator':
-            if chunk == 11 or (chunk == 12 and branch in ('mozilla-b2g32_v2_0', 'mozilla-b2g34_v2_1')):
-                # bug 1120580
-                success_codes = [0, 247]
         return success_codes
 
     def run_tests(self):

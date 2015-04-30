@@ -38,7 +38,6 @@ config = {
     'platform': 'macosx64_gecko',
     'stage_platform': 'macosx64_gecko',
     'stage_product': 'b2g',
-    'enable_max_vsize': False,
     'env': {
         'MOZBUILD_STATE_PATH': os.path.join(os.getcwd(), '.mozbuild'),
         'MOZ_AUTOMATION': '1',

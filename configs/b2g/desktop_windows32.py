@@ -65,7 +65,6 @@ config = {
     'platform': 'win32_gecko',
     'stage_platform': 'win32_gecko',
     'stage_product': 'b2g',
-    'enable_max_vsize': True,
     'env': {
         'MOZBUILD_STATE_PATH': os.path.join(os.getcwd(), '.mozbuild'),
         'MOZ_AUTOMATION': '1',

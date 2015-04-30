@@ -58,7 +58,6 @@ config = {
     'base_name': 'Linux_%(branch)s',
     'platform': 'linux',
     'stage_platform': 'linux',
-    'enable_max_vsize': False,
     'env': {
         'MOZBUILD_STATE_PATH': os.path.join(os.getcwd(), '.mozbuild'),
         'MOZ_AUTOMATION': '1',

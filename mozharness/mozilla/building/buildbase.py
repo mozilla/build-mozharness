@@ -1011,7 +1011,18 @@ or run without that action (ie: --no-{action})"
                        "tree to use use. Please provide the path in your "
                        "config via 'src_mozconfig'")
 
-    # TODO add this or merge to ToolToolMixin
+    # TODO: replace with ToolToolMixin
+    def _get_tooltool_auth_file(self):
+        # set the default authentication file based on platform; this
+        # corresponds to where puppet puts the token
+        if 'tooltool_authentication_file' in self.config:
+            return self.config['tooltool_authentication_file']
+
+        if self._is_windows():
+            return r'c:\builds\relengapi.tok'
+        else:
+            return '/builds/relengapi.tok'
+
     def _run_tooltool(self):
         self._assert_cfg_valid_for_action(
             ['tooltool_script', 'tooltool_bootstrap', 'tooltool_url'],
@@ -1033,6 +1044,7 @@ or run without that action (ie: --no-{action})"
             c['tooltool_bootstrap'],
         ]
         cmd.extend(c['tooltool_script'])
+        cmd.extend(['--authentication-file', self._get_tooltool_auth_file()])
         self.info(str(cmd))
         self.run_command(cmd, cwd=dirs['abs_src_dir'], halt_on_failure=True)
 
@@ -1117,20 +1129,6 @@ or run without that action (ie: --no-{action})"
         self.set_buildbot_property('num_ctors',
                                    num_ctors,
                                    write_to_file=True)
-        self.set_buildbot_property('testresults',
-                                   testresults,
-                                   write_to_file=True)
-
-    def _count_vsize(self):
-        """gets linker vsize and sets it to testresults."""
-        dirs = self.query_abs_dirs()
-        vsize_path = os.path.join(
-            dirs['abs_obj_dir'], 'toolkit', 'library', 'linker-vsize'
-        )
-        cmd = ['cat', vsize_path]
-        vsize = self.get_output_from_command(cmd, cwd=dirs['abs_src_dir'])
-        testresults = [('libxul_link', 'libxul_link', int(vsize), str(vsize))]
-        self.set_buildbot_property('vsize', vsize, write_to_file=True)
         self.set_buildbot_property('testresults',
                                    testresults,
                                    write_to_file=True)
@@ -1623,8 +1621,8 @@ or run without that action (ie: --no-{action})"
     def generate_build_stats(self):
         """grab build stats following a compile.
 
-        This action handles all statitics from a build: 'count_ctors' and
-        'vsize' and then posts to graph server the results.
+        This action handles all statistics from a build: 'count_ctors'
+        and then posts to graph server the results.
         We only post to graph server for non nightly build
         """
         c = self.config
@@ -1633,27 +1631,19 @@ or run without that action (ie: --no-{action})"
         self.generate_build_props(console_output=False,
                                   halt_on_failure=False)
 
-        # enable_max_vsize will be True for builds like pgo win32 builds
-        # but not for nightlies (nightlies are pgo builds too so the
-        # check is needed).
-        enable_max_vsize = c.get('enable_max_vsize') and c.get('pgo_build')
-
-        if enable_max_vsize or c.get('enable_count_ctors'):
+        if c.get('enable_count_ctors'):
             if c.get('enable_count_ctors'):
                 self.info("counting ctors...")
                 self._count_ctors()
                 num_ctors = self.buildbot_properties.get('num_ctors', 'unknown')
                 self.info("TinderboxPrint: num_ctors: %s" % (num_ctors,))
-            if enable_max_vsize:
-                self.info("getting vsize...")
-                self._count_vsize()
             if not self.query_is_nightly():
                 self._graph_server_post()
             else:
                 self.info("We are not posting to graph server as this is a "
                           "nightly build.")
         else:
-            self.info("Nothing to do for this action since ctors and vsize "
+            self.info("Nothing to do for this action since ctors "
                       "counts are disabled for this build.")
 
     def _do_sendchange(self, test_type):
