@@ -157,6 +157,7 @@ class WebPlatformTest(TestingMixin, MercurialScript, BlobUploadMixin):
     def run_tests(self):
         dirs = self.query_abs_dirs()
         cmd = self._query_cmd()
+        cmd = self.append_harness_extra_args(cmd)
 
         parser = StructuredOutputParser(config=self.config,
                                         log_obj=self.log_obj)

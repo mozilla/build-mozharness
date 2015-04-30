@@ -553,6 +553,8 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
                 for arg in options_list:
                     cmd.append(arg % replace_dict)
 
+                cmd = self.append_harness_extra_args(cmd)
+
                 suite_name = suite_category + '-' + suite
                 tbpl_status, log_level = None, None
                 error_list = BaseErrorList + [{
