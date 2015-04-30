@@ -5,16 +5,13 @@ import os
 HG_SHARE_BASE_DIR = "/builds/hg-shared"
 
 if platform.system().lower() == 'darwin':
-    xre_url = "http://tooltool.pvt.build.mozilla.org/build/sha512/4d8d7a37d90c34a2a2fda3066a8fe85c189b183d05389cb957fc6fed31f10a6924e50c1b84488ff61c015293803f58a3aed5d4819374d04c8e0ee2b9e3997278"
+    xre_url = "https://api.pub.build.mozilla.org/tooltool/sha512/4d8d7a37d90c34a2a2fda3066a8fe85c189b183d05389cb957fc6fed31f10a6924e50c1b84488ff61c015293803f58a3aed5d4819374d04c8e0ee2b9e3997278"
 else:
-    xre_url = "http://tooltool.pvt.build.mozilla.org/build/sha512/dc9503b21c87b5a469118746f99e4f41d73888972ce735fa10a80f6d218086da0e3da525d9a4cd8e4ea497ec199fef720e4a525873d77a1af304ac505e076462"
+    xre_url = "https://api.pub.build.mozilla.org/tooltool/sha512/dc9503b21c87b5a469118746f99e4f41d73888972ce735fa10a80f6d218086da0e3da525d9a4cd8e4ea497ec199fef720e4a525873d77a1af304ac505e076462"
 
 config = {
     # mozharness script options
     "xre_url": xre_url,
-
-    # mozharness configuration
-    "tooltool_servers": ["http://tooltool.pvt.build.mozilla.org/build/"],
 
     "vcs_share_base": HG_SHARE_BASE_DIR,
     "exes": {

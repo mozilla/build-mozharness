@@ -586,7 +586,7 @@ Did you run with --create-virtualenv? Is mozinstall in virtualenv_modules?""")
                     cache=c.get('tooltool_cache')
                 )
             except KeyError:
-                self.error('missing a required key. is "tooltool_servers" in self.config?')
+                self.error('missing a required key.')
 
             abs_minidump_path = os.path.join(dirs['abs_work_dir'],
                                              minidump_stackwalk_path)

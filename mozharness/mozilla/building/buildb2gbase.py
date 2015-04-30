@@ -101,7 +101,6 @@ class B2GBuildBaseScript(BuildbotMixin, MockMixin,
         default_config = {
             'vcs_share_base': os.environ.get('HG_SHARE_BASE_DIR'),
             'buildbot_json_path': os.environ.get('PROPERTIES_FILE'),
-            'tooltool_servers': None,
             'tools_repo': 'https://hg.mozilla.org/build/tools',
             'repo_repo': "https://git.mozilla.org/external/google/gerrit/git-repo.git",
             'repo_rev': 'stable',

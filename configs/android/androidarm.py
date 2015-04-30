@@ -9,7 +9,6 @@ config = {
     "default_sut_port2": "20700", # does not prompt for commands
     "tooltool_manifest_path": "testing/config/tooltool-manifests/androidarm/releng.manifest",
     "tooltool_cache": "/builds/tooltool_cache",
-    "tooltool_servers": ["http://tooltool.pvt.build.mozilla.org/build/"],
     "emulator_manifest": """
         [
         {

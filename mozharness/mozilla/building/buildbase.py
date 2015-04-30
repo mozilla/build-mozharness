@@ -1011,7 +1011,18 @@ or run without that action (ie: --no-{action})"
                        "tree to use use. Please provide the path in your "
                        "config via 'src_mozconfig'")
 
-    # TODO add this or merge to ToolToolMixin
+    # TODO: replace with ToolToolMixin
+    def _get_tooltool_auth_file(self):
+        # set the default authentication file based on platform; this
+        # corresponds to where puppet puts the token
+        if 'tooltool_authentication_file' in self.config:
+            return self.config['tooltool_authentication_file']
+
+        if self._is_windows():
+            return r'c:\builds\relengapi.tok'
+        else:
+            return '/builds/relengapi.tok'
+
     def _run_tooltool(self):
         self._assert_cfg_valid_for_action(
             ['tooltool_script', 'tooltool_bootstrap', 'tooltool_url'],
@@ -1033,6 +1044,7 @@ or run without that action (ie: --no-{action})"
             c['tooltool_bootstrap'],
         ]
         cmd.extend(c['tooltool_script'])
+        cmd.extend(['--authentication-file', self._get_tooltool_auth_file()])
         self.info(str(cmd))
         self.run_command(cmd, cwd=dirs['abs_src_dir'], halt_on_failure=True)
 

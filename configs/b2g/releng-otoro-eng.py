@@ -33,7 +33,6 @@ config = {
             "post_upload_nightly_cmd": "post_upload.py --tinderbox-builds-dir %(branch)s-%(target)s -b %(branch)s-%(target)s -p b2g -i %(buildid)s --revision %(revision)s --release-to-tinderbox-dated-builds --release-to-latest --release-to-dated",
         },
     },
-    "tooltool_servers": ["http://tooltool.pvt.build.mozilla.org/build/"],
     "gittool_share_base": "/builds/git-shared/git",
     "gittool_base_mirror_urls": [],
     "hgtool_share_base": "/builds/hg-shared",
