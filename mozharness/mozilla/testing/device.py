@@ -341,49 +341,18 @@ class ADBDeviceHandler(BaseDeviceHandler):
         c = self.config
         device_id = self.query_device_id()
         adb = self.query_exe('adb')
-        uptime = self.query_device_exe('uptime')
-        if c['enable_automation']:
-            self.set_device_time()
         if self._log_level_at_least(DEBUG):
             self.run_command([adb, "-s", device_id, "shell", "ps"],
                              error_list=ADBErrorList)
-        # TODO dm.getInfo('memory')
-        if self._log_level_at_least(DEBUG):
+            uptime = self.query_device_exe('uptime')
             self.run_command([adb, "-s", "shell", uptime],
                              error_list=ADBErrorList)
-        # TODO getResolution ?        # for tegra250:
-        # adb shell getprop persist.tegra.dpy3.mode.width
-        # adb shell getprop persist.tegra.dpy3.mode.height
-        #
-        # for non-tegra250, this ugliness:
-        # adb -s device_id shell screencap /mnt/sdcard/tests/foo.png
-        # adb -s device_id shell ls -l /mnt/sdcard/tests/foo.png
-        # -rw-rw-r-- root     sdcard_rw   207187 2011-10-04 18:12 foo.png
-        # adb pull /mnt/sdcard/tests/foo.png
-        # Can do via PIL:
-        # import Image
-        # Image.open("foo.png").size
-        # (1280, 800)
-        # I hate requiring another module just for this, if we can help it.
-        #
-        # adb -s device_id shell am display-size 1024x768
-        # reboot; adb wait-for-device; sleep
-        # (later) adb -s device_id shell am display-size 1680:1050
-        # TODO error checking
         if not c['enable_automation']:
             # -s to install on sdcard? Needs to be config driven
             self.run_command([adb, "-s", device_id, "install", '-r',
                               file_path],
                              error_list=ADBErrorList)
         else:
-            output = self.get_output_from_command([adb, "-s", device_id,
-                                                   "shell",
-                                                   "ls -d /data/data/%s" %
-                                                   c['device_package_name']])
-            if output is not None and "No such file" not in output:
-                self.run_command([adb, "-s", device_id, "uninstall",
-                                  c['device_package_name']],
-                                 error_list=ADBErrorList)
             # A slow-booting device may not allow installs, temporarily.
             # Wait up to a few minutes if not immediately successful.
             # Note that "adb install" typically writes status messages
