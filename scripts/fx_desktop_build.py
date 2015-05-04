@@ -33,6 +33,7 @@ class FxDesktopBuild(BuildScript, object):
                 'setup-mock',
                 'build',
                 'package-source',
+                'multi-l10n',
                 'generate-build-stats',
                 'update',
             ],
@@ -66,6 +67,10 @@ class FxDesktopBuild(BuildScript, object):
                 'platform_supports_post_upload_to_latest': True,
                 'use_branch_in_symbols_extra_buildid': True,
                 'latest_mar_dir': '/pub/mozilla.org/firefox/nightly/latest-%(branch)s',
+                'compare_locales_repo': 'https://hg.mozilla.org/build/compare-locales',
+                'compare_locales_rev': 'RELEASE_AUTOMATION',
+                'compare_locales_vcs': 'hgtool',
+                'influx_credentials_file': 'oauth.txt',
 
                 # try will overwrite these
                 'clone_with_purge': False,
@@ -125,10 +130,10 @@ class FxDesktopBuild(BuildScript, object):
             # BuildFactories in factory.py refer to a 'build' dir on the slave.
             # This contains all the source code/objdir to compile.  However,
             # there is already a build dir in mozharness for every mh run. The
-            # 'build' that factory refers to I named: 'source' so
+            # 'build' that factory refers to I named: 'src' so
             # there is a seperation in mh.  for example, rather than having
             # '{mozharness_repo}/build/build/', I have '{
-            # mozharness_repo}/build/source/'
+            # mozharness_repo}/build/src/'
             'abs_src_dir': os.path.join(abs_dirs['abs_work_dir'],
                                         'src'),
             'abs_obj_dir': os.path.join(abs_dirs['abs_work_dir'],
@@ -140,6 +145,7 @@ class FxDesktopBuild(BuildScript, object):
                                         'src',
                                         self._query_objdir())
             },
+            'compare_locales_dir': os.path.join(abs_dirs['abs_work_dir'], 'compare-locales'),
         }
         abs_dirs.update(dirs)
         self.abs_dirs = abs_dirs

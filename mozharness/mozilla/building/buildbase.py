@@ -43,6 +43,7 @@ from mozharness.mozilla.testing.unittest import tbox_print_summary
 from mozharness.mozilla.updates.balrog import BalrogMixin
 from mozharness.mozilla.taskcluster_helper import Taskcluster
 from mozharness.base.python import VirtualenvMixin
+from mozharness.base.python import InfluxRecordingMixin
 
 AUTOMATION_EXIT_CODES = EXIT_STATUS_DICT.values()
 AUTOMATION_EXIT_CODES.sort()
@@ -288,6 +289,11 @@ class BuildOptionParser(object):
         'code-coverage': 'builds/releng_sub_%s_configs/%s_code_coverage.py',
         'graphene': 'builds/releng_sub_%s_configs/%s_graphene.py',
         'source': 'builds/releng_sub_%s_configs/%s_source.py',
+        'api-9': 'builds/releng_sub_%s_configs/%s_api_9.py',
+        'api-11': 'builds/releng_sub_%s_configs/%s_api_11.py',
+        'api-9-debug': 'builds/releng_sub_%s_configs/%s_api_9_debug.py',
+        'api-11-debug': 'builds/releng_sub_%s_configs/%s_api_11_debug.py',
+        'x86': 'builds/releng_sub_%s_configs/%s_x86.py',
     }
     build_pools = {
         'staging': 'builds/build_pool_specifics.py',
@@ -337,9 +343,12 @@ class BuildOptionParser(object):
                 if 'linux' in cfg_file_name:
                     cls.platform = 'linux'
                     break
+                if 'android' in cfg_file_name:
+                    cls.platform = 'android'
+                    break
             else:
                 sys.exit(error_msg % (target_option, 'platform', '--platform',
-                                      '"linux", "windows", or "mac"'))
+                                      '"linux", "windows", "mac", or "android"'))
         return cls.bits, cls.platform
 
     @classmethod
@@ -504,7 +513,7 @@ def generate_build_UID():
 
 class BuildScript(BuildbotMixin, PurgeMixin, MockMixin, BalrogMixin,
                   SigningMixin, VirtualenvMixin, MercurialScript,
-                  TransferMixin):
+                  TransferMixin, InfluxRecordingMixin):
     def __init__(self, **kwargs):
         # objdir is referenced in _query_abs_dirs() so let's make sure we
         # have that attribute before calling BaseScript.__init__
@@ -533,6 +542,14 @@ class BuildScript(BuildbotMixin, PurgeMixin, MockMixin, BalrogMixin,
         self.query_buildid()  # sets self.buildid
         self.query_builduid()  # sets self.builduid
         self.generated_build_props = False
+
+        # Call this before creating the virtualenv so that we have things like
+        # symbol_server_host in the config
+        self.query_build_env()
+
+        # We need to create the virtualenv directly (without using an action) in
+        # order to use python modules in PreScriptRun/Action listeners
+        self.create_virtualenv()
 
     def _pre_config_lock(self, rw_config):
         c = self.config
@@ -811,8 +828,10 @@ or run without that action (ie: --no-{action})"
         # every call for reasons like MOZ_SIGN_CMD
         return env
 
-    def query_mach_build_env(self):
+    def query_mach_build_env(self, multiLocale=None):
         c = self.config
+        if multiLocale is None:
+            multiLocale = c.get('multi_locale', False)
         mach_env = {}
         if c.get('upload_env'):
             mach_env.update(c['upload_env'])
@@ -833,7 +852,7 @@ or run without that action (ie: --no-{action})"
 
         # _query_post_upload_cmd returns a list (a cmd list), for env sake here
         # let's make it a string
-        pst_up_cmd = ' '.join([str(i) for i in self._query_post_upload_cmd()])
+        pst_up_cmd = ' '.join([str(i) for i in self._query_post_upload_cmd(multiLocale)])
         mach_env['POST_UPLOAD_CMD'] = pst_up_cmd
 
         return mach_env
@@ -907,7 +926,7 @@ or run without that action (ie: --no-{action})"
                 pass
         return _who
 
-    def _query_post_upload_cmd(self):
+    def _query_post_upload_cmd(self, multiLocale):
         c = self.config
         post_upload_cmd = ["post_upload.py"]
         buildid = self.query_buildid()
@@ -937,6 +956,14 @@ or run without that action (ie: --no-{action})"
             post_upload_cmd.extend(
                 ["--builddir", "%s-%s" % (self.branch, platform)]
             )
+        elif multiLocale:
+            # Android builds with multilocale enabled upload the en-US builds
+            # to an en-US subdirectory, and the multilocale builds to the
+            # top-level directory.
+            post_upload_cmd.extend(
+                ["--builddir", "en-US"]
+            )
+
         post_upload_cmd.extend(["--tinderbox-builds-dir", tinderbox_build_dir])
         post_upload_cmd.extend(["-p", c['stage_product']])
         post_upload_cmd.extend(['-i', buildid])
@@ -1536,6 +1563,54 @@ or run without that action (ie: --no-{action})"
             )
             self.fatal("'mach build' did not run successfully. Please check "
                        "log for errors.")
+
+    def _checkout_compare_locales(self):
+        dirs = self.query_abs_dirs()
+        dest = dirs['compare_locales_dir']
+        repo = self.config['compare_locales_repo']
+        rev = self.config['compare_locales_rev']
+        vcs = self.config['compare_locales_vcs']
+        abs_rev = self.vcs_checkout(repo=repo, dest=dest, revision=rev, vcs=vcs)
+        self.set_buildbot_property('compare_locales_revision', abs_rev, write_to_file=True)
+
+    def multi_l10n(self):
+        if not self.query_is_nightly():
+            self.info("Not a nightly build, skipping multi l10n.")
+            return
+
+        self._checkout_compare_locales()
+        dirs = self.query_abs_dirs()
+        base_work_dir = dirs['base_work_dir']
+        objdir = dirs['abs_obj_dir']
+        branch = self.buildbot_config['properties']['branch']
+
+        # Some android versions share the same .json config - if
+        # multi_locale_config_platform is set, use that the .json name;
+        # otherwise, use the buildbot platform.
+        multi_config_pf = self.config.get('multi_locale_config_platform',
+                                          self.buildbot_config['properties']['platform'])
+
+        cmd = [
+            self.query_exe('python'),
+            '%s/scripts/scripts/multil10n.py' % base_work_dir,
+            '--config-file',
+            'multi_locale/%s_%s.json' % (branch, multi_config_pf),
+            '--config-file',
+            'multi_locale/android-mozharness-build.json',
+            '--merge-locales',
+            '--pull-locale-source',
+            '--add-locales',
+            '--package-multi',
+            '--summary',
+        ]
+
+        self.run_command_m(cmd, env=self.query_build_env(), cwd=base_work_dir,
+                           halt_on_failure=True)
+
+        upload_cmd = ['make', 'upload', 'AB_CD=multi']
+        self.run_command_m(upload_cmd,
+                           env=self.query_mach_build_env(multiLocale=False),
+                           cwd=objdir, halt_on_failure=True)
 
     def postflight_build(self, console_output=True):
         """grabs properties from post build and calls ccache -s"""

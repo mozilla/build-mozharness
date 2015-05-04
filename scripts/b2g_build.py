@@ -264,7 +264,10 @@ class B2GBuild(LocalesMixin, PurgeMixin,
 
         # Force B2G_UPDATER so that eng builds (like the emulator) will get
         # the updater included. Otherwise the xpcshell updater tests won't run.
-        env['B2G_UPDATER'] = '1'
+        # Bug 1154947: we don't want nightly builds for eng phones, but nightly
+        # builds fail if we don't have OTA updates.
+        if self.query_is_nightly() or self.config['target'].startswith('emulator'):
+            env['B2G_UPDATER'] = '1'
         # Bug 1059992 -- see gonk-misc/Android.mk
         env['FORCE_GECKO_BUILD_OUTPUT'] = '1'
         if self.config.get('debug_build'):
