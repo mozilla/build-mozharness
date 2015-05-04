@@ -1,4 +1,4 @@
-BRANCH = "mozilla-beta"
+BRANCH = "mozilla-release"
 MOZ_UPDATE_CHANNEL = "beta"
 MOZILLA_DIR = BRANCH
 OBJDIR = "obj-l10n"
@@ -33,7 +33,7 @@ config = {
         'tooltool.py': '/tools/tooltool.py',
     },
     "repos": [{
-        "repo": "https://hg.mozilla.org/releases/mozilla-beta",
+        "repo": "https://hg.mozilla.org/releases/mozilla-release",
         "revision": "default",
         "dest": MOZILLA_DIR,
     }, {
