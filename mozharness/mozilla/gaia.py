@@ -355,12 +355,26 @@ class GaiaMixin(object):
 
         self.run_command(['npm', 'cache', 'clean'])
 
-        # run 'make node_modules' first, so we can separately handle
+        # get the node modules first from the node module cache, if this fails it will 
+        # install the node modules from npmjs.org.
+        cmd = ['taskcluster-npm-cache-get',
+               '--namespace gaia.npm_cache', 
+               './package.json']
+        kwargs = {
+            'cwd': dirs['abs_gaia_dir'],
+            'output_timeout': 300
+        }
+        code = self.retry(self.run_command, attempts=3, good_statuses=(0,),
+                          args=[cmd], cleanup=cleanup_node_modules, kwargs=kwargs)
+        if code:
+            self.fatal('Error occurred fetching node modules from cache',
+                       exit_code=code)
+
+        # run 'make node_modules' second, so we can separately handle
         # errors that occur here
         cmd = ['make',
                'node_modules',
-               'NODE_MODULES_GIT_URL=https://git.mozilla.org/b2g/gaia-node-modules.git',
-               'VIRTUALENV_EXISTS=1']
+               'NODE_MODULES_SRC=npm-cache']
         kwargs = {
             'cwd': dirs['abs_gaia_dir'],
             'output_timeout': 300,
