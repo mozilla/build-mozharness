@@ -813,12 +813,15 @@ or run without that action (ie: --no-{action})"
             env['MOZ_PGO'] = '1'
 
         if c.get('enable_signing'):
-            moz_sign_cmd = subprocess.list2cmdline(
-                self.query_moz_sign_cmd(formats=None)
-            )
-            # windows fix. This is passed to mach build env and we call that
-            # with python, not with bash so we need to fix the slashes here
-            env['MOZ_SIGN_CMD'] = moz_sign_cmd.replace('\\', '\\\\\\\\')
+            if os.environ.get('MOZ_SIGNING_SERVERS'):
+                moz_sign_cmd = subprocess.list2cmdline(
+                    self.query_moz_sign_cmd(formats=None)
+                )
+                # windows fix. This is passed to mach build env and we call that
+                # with python, not with bash so we need to fix the slashes here
+                env['MOZ_SIGN_CMD'] = moz_sign_cmd.replace('\\', '\\\\\\\\')
+            else:
+                self.warning("signing disabled because MOZ_SIGNING_SERVERS is not set")
 
         # to activate the right behaviour in mozonfigs while we transition
         if c.get('enable_release_promotion'):
