@@ -1,6 +1,6 @@
-NEW_ESR_REPO = "ssh://hg.mozilla.org/releases/mozilla-esr38"
-OLD_ESR_REPO = "https://hg.mozilla.org/releases/mozilla-esr31"
-OLD_ESR_CHANGESET = "450086c0ded0"
+NEW_ESR_REPO = "ssh://hg.mozilla.org/releases/mozilla-esr45"
+OLD_ESR_REPO = "https://hg.mozilla.org/releases/mozilla-esr38"
+OLD_ESR_CHANGESET = "16351963d75c"
 
 config = {
     "log_name": "relese_to_esr",
