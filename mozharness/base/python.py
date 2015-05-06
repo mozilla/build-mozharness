@@ -562,6 +562,10 @@ class InfluxRecordingMixin(object):
         self.recording = False
         self.post = None
         self.posturl = None
+        self.res_props = os.path.join(
+            self.query_abs_dirs()['abs_obj_dir'], '.mozbuild', 'build_resources.json'
+        )
+        self.rmtree(self.res_props)
 
         try:
             site_packages_path = self.query_python_site_packages_path()
@@ -630,6 +634,90 @@ class InfluxRecordingMixin(object):
                 "buildid",
             ],
         }])
+
+    def _get_resource_usage(self, res, name, iolen, cpulen):
+        c = {}
+        p = {}
+        if self.buildbot_config:
+            c = self.buildbot_config.get('properties', {})
+        if self.buildbot_properties:
+            p = self.buildbot_properties
+
+        data = [
+            # Build properties
+            c.get('buildername'),
+            c.get('product'),
+            c.get('platform'),
+            c.get('branch'),
+            c.get('slavename'),
+            c.get('revision'),
+            p.get('gaia_revision'),
+            c.get('buildid'),
+
+            # Mach step properties
+            name,
+            res.get('start'),
+            res.get('end'),
+            res.get('duration'),
+            res.get('cpu_percent'),
+        ]
+        # The io and cpu_times fields are arrays, though they aren't always
+        # present if a step completes before resource utilization is measured.
+        # We add the arrays if they exist, otherwise we just do an array of None
+        # to fill up the stat point.
+        data.extend(res.get('io', [None] * iolen))
+        data.extend(res.get('cpu_times', [None] * cpulen))
+        return data
+
+    @PostScriptAction('build')
+    def record_mach_stats(self, action, success=None):
+        if not self.recording:
+            return
+        if not os.path.exists(self.res_props):
+            self.info('No build_resources.json found, not logging stats')
+            return
+        with open(self.res_props) as fh:
+            resources = json.load(fh)
+            data = {
+                "points": [
+                ],
+                "name": "mach",
+                "columns": [
+                    # Build properties
+                    "buildername",
+                    "product",
+                    "platform",
+                    "branch",
+                    "slavename",
+                    "gecko_revision",
+                    "gaia_revision",
+                    "buildid",
+
+                    # Mach step properties
+                    "name",
+                    "start",
+                    "end",
+                    "duration",
+                    "cpu_percent",
+                ],
+            }
+            # The io and cpu_times fields aren't static - they may vary based
+            # on the specific platform being measured. Mach records the field
+            # names, which we use as the column names here.
+            data['columns'].extend(resources['io_fields'])
+            data['columns'].extend(resources['cpu_times_fields'])
+            iolen = len(resources['io_fields'])
+            cpulen = len(resources['cpu_times_fields'])
+
+            # The top-level data has the overall resource usage, which we record
+            # under the name 'TOTAL' to separate it from the individual tiers.
+            data['points'].append(self._get_resource_usage(resources, 'TOTAL', iolen, cpulen))
+
+            # Each tier also has the same resource stats as the top-level.
+            for tier in resources['tiers']:
+                data['points'].append(self._get_resource_usage(tier, tier['name'], iolen, cpulen))
+
+            self.record_influx_stat([data])
 
     def record_influx_stat(self, json_data):
         try:

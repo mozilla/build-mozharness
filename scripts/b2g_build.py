@@ -157,6 +157,7 @@ class B2GBuild(LocalesMixin, PurgeMixin,
 
         dirs = self.query_abs_dirs()
         self.objdir = os.path.join(dirs['work_dir'], 'objdir-gecko')
+        self.abs_dirs['abs_obj_dir'] = self.objdir
         if self.config.get("update_type", "ota") == "fota":
             self.make_updates_cmd = ['./build.sh', 'gecko-update-fota']
             self.extra_update_attrs = 'isOsUpdate="true"'
