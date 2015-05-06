@@ -46,11 +46,12 @@ class TooltoolMixin(object):
         tooltool = self.query_exe('tooltool.py', return_type='list')
 
         if self.config.get("developer_mode"):
-            if not os.path.exists(str(tooltool)):
-                tooltool = self._fetch_tooltool_py()
-            cmd = [tooltool,
-                   "--authentication-file",
-                   get_credentials_path()]
+            tooltool = [bin for bin in tooltool if os.path.exists(bin)]
+            if tooltool:
+                cmd = [tooltool[0]]
+            else:
+                cmd = [self._fetch_tooltool_py()]
+            cmd.extend(["--authentication-file", get_credentials_path()])
         else:
             cmd = tooltool
 
