@@ -9,6 +9,7 @@ config = {
         'clobber',
         'clone-tools',
         # 'setup-mock',
+        'checkout-sources',
         'build',
         'generate-build-stats',
         'update',  # decided by query_is_nightly()

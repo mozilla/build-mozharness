@@ -27,7 +27,7 @@ import sys
 from datetime import datetime
 import re
 from mozharness.base.config import BaseConfig, parse_config_file
-from mozharness.base.log import ERROR, OutputParser, FATAL, WARNING
+from mozharness.base.log import ERROR, OutputParser, FATAL
 from mozharness.base.script import PostScriptRun
 from mozharness.base.transfer import TransferMixin
 from mozharness.base.vcs.vcsbase import MercurialScript
@@ -1516,6 +1516,9 @@ or run without that action (ie: --no-{action})"
             self.warning("mozbuild_path could not be determined. skipping "
                          "creating it.")
 
+    def checkout_sources(self):
+        self._checkout_source()
+
     def preflight_build(self):
         """set up machine state for a complete build."""
         c = self.config
@@ -1526,7 +1529,6 @@ or run without that action (ie: --no-{action})"
             # this for nighties since we clobber the whole work_dir in
             # clobber()
             self._rm_old_package()
-        self._checkout_source()
         self._get_mozconfig()
         self._run_tooltool()
         self._create_mozbuild_dir()

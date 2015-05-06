@@ -4,6 +4,7 @@ config = {
     'default_actions': [
         'clobber',
         'clone-tools',
+        'checkout-sources',
         'setup-mock',
         'build',
     ],
