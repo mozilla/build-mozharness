@@ -4,6 +4,7 @@ config = {
     'default_actions': [
         'clobber',
         'clone-tools',
+        'checkout-sources',
         'build',
     ],
     'stage_platform': 'win32-mulet',

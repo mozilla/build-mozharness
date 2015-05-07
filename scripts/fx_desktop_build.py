@@ -30,6 +30,7 @@ class FxDesktopBuild(BuildScript, object):
             'all_actions': [
                 'clobber',
                 'clone-tools',
+                'checkout-sources',
                 'setup-mock',
                 'build',
                 'package-source',

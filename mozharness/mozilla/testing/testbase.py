@@ -5,7 +5,6 @@
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 # ***** END LICENSE BLOCK *****
 
-import argparse
 import copy
 import os
 import platform
@@ -25,6 +24,7 @@ from mozharness.mozilla.buildbot import BuildbotMixin, TBPL_WARNING
 from mozharness.mozilla.proxxy import Proxxy
 from mozharness.mozilla.structuredlog import StructuredOutputParser
 from mozharness.mozilla.testing.unittest import DesktopUnittestOutputParser
+from mozharness.mozilla.testing.try_tools import TryToolsMixin
 from mozharness.mozilla.tooltool import TooltoolMixin
 
 from mozharness.lib.python.authentication import get_credentials
@@ -79,7 +79,8 @@ testing_config_options = [
 
 
 # TestingMixin {{{1
-class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin, TooltoolMixin):
+class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin, TooltoolMixin,
+                   TryToolsMixin):
     """
     The steps to identify + download the proper bits for [browser] unit
     tests and Talos.
@@ -97,7 +98,6 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin, Tool
     minidump_stackwalk_path = None
     default_tools_repo = 'https://hg.mozilla.org/build/tools'
     proxxy = None
-    harness_extra_args = None
 
     def _query_proxxy(self):
         """manages the proxxy"""
@@ -246,89 +246,6 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin, Tool
             return _urlopen_basic_auth(url, **kwargs)
         else:
             return urllib2.urlopen(url, **kwargs)
-
-    def _parse_extra_try_arguments(self, known_try_arguments):
-        """
-        Given a buildbot config, parse an existing try syntax to extract additional
-        arguments to pass on to the test harness command line.
-
-        Acceptable arguments are configured by a white-list in tree to reduce the likelihood
-        an off-label use of try syntax or noise from a commit message will send unexpected
-        arguments to the harness and fail a run.
-
-        Extracting arguments from a commit message taken directly from the try_parser.
-        """
-        if not self.buildbot_config or self.buildbot_config['properties']['branch'] != 'try':
-            return
-
-        comments = self.buildbot_config['sourcestamp']['changes'][-1]['comments']
-
-        all_try_args = None
-        for line in comments.splitlines():
-            if 'try: ' in line:
-                # Allow spaces inside of [filter expressions]
-                try_message = line.strip().split('try: ', 1)
-                all_try_args = re.findall(r'(?:\[.*?\]|\S)+', try_message[1])
-                break
-
-        if not all_try_args:
-            self.warning('Try syntax not found in buildbot config, unable to append '
-                         'arguments from try.')
-            return
-
-
-        parser = argparse.ArgumentParser(
-            description=('Parse an additional subset of arguments passed to try syntax'
-                         ' and forward them to the underlying test harness command.'))
-
-        label_dict = {}
-        def label_from_val(val):
-            if val in label_dict:
-                return label_dict[val]
-            return '--%s' % val.replace('_', '-')
-
-        for label, opts in known_try_arguments.iteritems():
-            if 'action' in opts and opts['action'] not in ('append', 'store',
-                                                           'store_true', 'store_false'):
-                self.fatal('Try syntax does not support passing custom or store_const '
-                           'arguments to the harness process.' %
-                           opts['action'])
-            if 'dest' in opts:
-                label_dict[opts['dest']] = label
-
-            parser.add_argument(label, **opts)
-
-        (args, _) = parser.parse_known_args(all_try_args)
-        out_args = []
-        # This is a pretty hacky way to echo arguments down to the harness.
-        # Hopefully this can be improved once we have a configuration system
-        # in tree for harnesses that relies less on a command line.
-        for (arg, value) in vars(args).iteritems():
-            if value:
-                label = label_from_val(arg)
-                if isinstance(value, bool):
-                    # A store_true or store_false argument.
-                    out_args.append(label)
-                elif isinstance(value, list):
-                    out_args.extend(['%s=%s' % (label, el) for el in value])
-                else:
-                    out_args.append('%s=%s' % (label, value))
-
-        self.info('TinderboxPrint: The following arguments were forwarded from try syntax '
-                  ' to the test command:\nTinderboxPrint: \t%s' %
-                  out_args)
-        self.harness_extra_args = out_args
-
-    def append_harness_extra_args(self, cmd):
-        """Append arguments derived from try syntax to a command."""
-        # TODO: Detect and reject incompatible arguments
-        if not self.harness_extra_args:
-            return cmd
-
-        out_cmd = cmd[:]
-        out_cmd.extend(self.harness_extra_args)
-        return out_cmd
-
 
     # read_buildbot_config is in BuildbotMixin.
 
@@ -490,11 +407,13 @@ You can set this by:
             self.dump_config(file_path=os.path.join(dirs['abs_log_dir'], 'treeconfig.json'),
                              config=self.tree_config)
 
-        try_config_path = os.path.join(test_install_dir, 'config', 'mozharness',
-                                       'try_arguments.py')
+        if self.buildbot_config and self.buildbot_config['properties']['branch'] == 'try':
+            try_config_path = os.path.join(test_install_dir, 'config', 'mozharness',
+                                           'try_arguments.py')
+            known_try_arguments = parse_config_file(try_config_path)
+            comments = self.buildbot_config['sourcestamp']['changes'][-1]['comments']
+            self.parse_extra_try_arguments(comments, known_try_arguments)
 
-        known_try_arguments = parse_config_file(try_config_path)
-        self._parse_extra_try_arguments(known_try_arguments)
         self.tree_config.lock()
 
     def structured_output(self, suite_category):
