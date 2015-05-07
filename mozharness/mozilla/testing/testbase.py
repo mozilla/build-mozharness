@@ -407,7 +407,8 @@ You can set this by:
             self.dump_config(file_path=os.path.join(dirs['abs_log_dir'], 'treeconfig.json'),
                              config=self.tree_config)
 
-        if self.buildbot_config and self.buildbot_config['properties']['branch'] == 'try':
+        if (self.buildbot_config and 'properties' in self.buildbot_config and
+            self.buildbot_config['properties'].get('branch') == 'try'):
             try_config_path = os.path.join(test_install_dir, 'config', 'mozharness',
                                            'try_arguments.py')
             known_try_arguments = parse_config_file(try_config_path)
