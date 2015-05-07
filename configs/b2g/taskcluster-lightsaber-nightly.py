@@ -15,7 +15,6 @@ config = {
     "env": {
         "GAIA_OPTIMIZE": "1",
         "B2G_UPDATER": "1",
-        "B2G_UPDATE_CHANNEL": "cypress",
         "LIGHTSABER": "1",
         "BOWER_FLAGS": "--allow-root",
         "B2G_PATH": "%(work_dir)s",
