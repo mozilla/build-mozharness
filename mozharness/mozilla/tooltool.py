@@ -51,7 +51,8 @@ class TooltoolMixin(object):
                 cmd = [tooltool[0]]
             else:
                 cmd = [self._fetch_tooltool_py()]
-            cmd.extend(["--authentication-file", get_credentials_path()])
+            if os.path.exists(get_credentials_path()):
+                cmd.extend(["--authentication-file", get_credentials_path()])
         else:
             cmd = tooltool
 
