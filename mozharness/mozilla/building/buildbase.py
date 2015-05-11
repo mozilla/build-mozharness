@@ -565,7 +565,7 @@ class BuildScript(BuildbotMixin, PurgeMixin, MockMixin, BalrogMixin,
         build_pool_cfg = BuildOptionParser.build_pools.get(build_pool)
         branch_cfg = BuildOptionParser.branch_cfg_file
 
-        cfg_match_msg = "Script was ran with '%(option)s %(type)s' and \
+        cfg_match_msg = "Script was run with '%(option)s %(type)s' and \
 '%(type)s' matches a key in '%(type_config_file)s'. Updating self.config with \
 items from that key's value."
         pf_override_msg = "The branch '%(branch)s' has custom behavior for the \
