@@ -413,6 +413,10 @@ You can set this by:
                                            'try_arguments.py')
             known_try_arguments = parse_config_file(try_config_path)
             comments = self.buildbot_config['sourcestamp']['changes'][-1]['comments']
+            if not comments and 'try_syntax' in self.buildbot_config['properties']:
+                # If we don't find try syntax in the usual place, check for it in an
+                # alternate property available to tools using self-serve.
+                comments = self.buildbot_config['properties']['try_syntax']
             self.parse_extra_try_arguments(comments, known_try_arguments)
 
         self.tree_config.lock()
