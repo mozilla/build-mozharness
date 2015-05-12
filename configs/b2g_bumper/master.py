@@ -58,10 +58,6 @@ config = {
             'ignore_groups': ['darwin'],
             'manifest_file': 'emulator.xml',
         },
-        'flame': {
-            'ignore_projects': ['gecko'],
-            'ignore_groups': ['darwin'],
-        },
         'flame-kk': {
             'ignore_projects': ['gecko'],
             'ignore_groups': ['darwin'],
