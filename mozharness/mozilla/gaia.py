@@ -355,33 +355,19 @@ class GaiaMixin(object):
 
         self.run_command(['npm', 'cache', 'clean'])
 
-        # get the node modules first from the node module cache, if this fails it will 
-        # install the node modules from npmjs.org.
-        cmd = ['taskcluster-npm-cache-get',
-               '--namespace',
-               'gaia.npm_cache',
-               'package.json']
-        kwargs = {
-            'output_timeout': 300
-        }
-        code = self.retry(self.run_command, attempts=3, good_statuses=(0,),
-                          args=[cmd, dirs['abs_gaia_dir']], cleanup=cleanup_node_modules, kwargs=kwargs)
-        if code:
-            self.fatal('Error occurred fetching node modules from cache',
-                       exit_code=code)
-
-        # run 'make node_modules' second, so we can separately handle
+        # run 'make node_modules' first, so we can separately handle
         # errors that occur here
         cmd = ['make',
                'node_modules',
-               'NODE_MODULES_SRC=npm-cache',
+               'NODE_MODULES_GIT_URL=https://git.mozilla.org/b2g/gaia-node-modules.git',
                'VIRTUALENV_EXISTS=1']
         kwargs = {
+            'cwd': dirs['abs_gaia_dir'],
             'output_timeout': 300,
             'error_list': self.npm_error_list
         }
         code = self.retry(self.run_command, attempts=3, good_statuses=(0,),
-                          args=[cmd, dirs['abs_gaia_dir']], kwargs=kwargs)
+                          args=[cmd], cleanup=cleanup_node_modules, kwargs=kwargs)
         if code:
             # Dump npm-debug.log, if it exists
             npm_debug = os.path.join(dirs['abs_gaia_dir'], 'npm-debug.log')
@@ -395,10 +381,11 @@ class GaiaMixin(object):
         cmd = ['make',
                'update-common']
         kwargs = {
+            'cwd': dirs['abs_gaia_dir'],
             'output_timeout': 300
         }
         code = self.retry(self.run_command, attempts=3, good_statuses=(0,),
-                          args=[cmd, dirs['abs_gaia_dir']], kwargs=kwargs)
+                          args=[cmd], kwargs=kwargs)
         if code:
             self.fatal('Errors during make update-common')
 

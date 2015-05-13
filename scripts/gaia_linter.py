@@ -127,9 +127,7 @@ class GaiaIntegrationTest(GaiaTest):
 
         code = self.run_command([
             'make',
-            'lint',
-            'NODE_MODULES_SRC=npm-cache',
-            'VIRTUALENV_EXISTS=1'
+            'lint'
         ], cwd=dirs['abs_gaia_dir'],
            output_parser=output_parser,
            output_timeout=330)
