@@ -53,7 +53,9 @@ class GaiaIntegrationTest(GaiaTest):
             'make',
             'test-integration',
             'REPORTER=mocha-tbpl-reporter',
-            'TEST_MANIFEST=./shared/test/integration/tbpl-manifest.json'
+            'TEST_MANIFEST=./shared/test/integration/tbpl-manifest.json',
+            'NODE_MODULE_SRC=npm-cache',
+            'VIRTUALENV_EXISTS=1'
         ]
 
         # for Mulet
