@@ -29,16 +29,28 @@ class CodeCoverageMixin(object):
     """
     gcov_dir = None
 
+    @property
+    def code_coverage_enabled(self):
+        try:
+            if self.config.get('code_coverage'):
+                return True
+
+            # XXX workaround because bug 1110465 is hard
+            return self.buildbot_config['properties']['stage_platform'] in ('linux64-cc',)
+        except (AttributeError, KeyError):
+            return False
+
+
     @PreScriptAction('run-tests')
     def _set_gcov_prefix(self, action):
-        if not self.config.get('code_coverage'):
+        if not self.code_coverage_enabled:
             return
         self.gcov_dir = tempfile.mkdtemp()
         os.environ['GCOV_PREFIX'] = self.gcov_dir
 
     @PostScriptAction('run-tests')
     def _package_coverage_data(self, action, success=None):
-        if not self.config.get('code_coverage'):
+        if not self.code_coverage_enabled:
             return
         del os.environ['GCOV_PREFIX']
 
