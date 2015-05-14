@@ -12,6 +12,7 @@ config = {
     'default_actions': [
         'clobber',
         'clone-tools',
+        'checkout-sources',
         'build',
     ],
     "buildbot_json_path": "buildprops.json",
