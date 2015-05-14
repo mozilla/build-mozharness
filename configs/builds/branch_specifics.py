@@ -125,6 +125,10 @@ config = {
             },
         },
     },
+    'cypress': {
+        # bug 1164935
+        'branch_uses_per_checkin_strategy': True,
+    }
 
     ### other branches that do not require anything special:
     # 'alder': {},
@@ -132,7 +136,6 @@ config = {
     # 'birch': {},
     # 'build-system': {}
     # 'cedar': {},
-    # "cypress": {},
     # 'elm': {},
     # 'fig': {},
     # 'graphics': {}
