@@ -83,6 +83,35 @@ class TryToolsMixin(object):
         if not self.try_test_paths:
             return None
 
+        target_manifests = set(self.try_test_paths)
+
+        def filter_ini_manifest(line):
+            # Lines are formatted as [include:<path>], we care about <path>.
+            parts = line.split(':')
+            term = line
+            if len(parts) == 2:
+                term = parts[1]
+            if term.endswith(']'):
+                term = term[:-1]
+            if (term in target_manifests or
+                any(term.startswith(l) for l in target_manifests)):
+                return True
+            return False
+
+        def filter_list_manifest(line):
+            # Lines are usually formatted as "include <path>", we care about <path>.
+            parts = line.split()
+            term = line
+            if len(parts) == 2:
+                term = parts[1]
+            # Reftest master manifests also include skip-if lines and relative
+            # paths we aren't doing to resolve here, so unlike above this is just
+            # a substring check.
+            if (term in target_manifests or
+                any(l in term for l in target_manifests)):
+                return True
+            return False
+
         # The master manifests we need to filter for target manifests.
         # TODO: All this needs to go in a config file somewhere and get sewn
         # into the job definition so its less likely to break as things are
@@ -91,39 +120,32 @@ class TryToolsMixin(object):
         # tree manifests don't distinguish between flavors of mochitests to this
         # isn't straightforward.
         master_manifests = [
-            'mochitest/chrome/chrome.ini',
-            'mochitest/browser/browser-chrome.ini',
-            'mochitest/tests/mochitest.ini',
-            'xpcshell/tests/all-test-dirs.list',
-            'xpcshell/tests/xpcshell.ini',
+            ('mochitest/chrome/chrome.ini', filter_ini_manifest),
+            ('mochitest/browser/browser-chrome.ini', filter_ini_manifest),
+            ('mochitest/tests/mochitest.ini', filter_ini_manifest),
+            ('xpcshell/tests/all-test-dirs.list', filter_ini_manifest),
+            ('xpcshell/tests/xpcshell.ini', filter_ini_manifest),
+            ('reftest/tests/layout/reftests/reftest.list', filter_list_manifest),
+            ('reftest/tests/testing/crashtest/crashtests.list', filter_list_manifest),
         ]
 
         dirs = self.query_abs_dirs()
         tests_dir = dirs.get('abs_test_install_dir',
                              os.path.join(dirs['abs_work_dir'], 'tests'))
-        master_manifests = [os.path.join(tests_dir, name) for name in master_manifests]
-        target_manifests = set(self.try_test_paths)
-        for m in master_manifests:
+        master_manifests = [(os.path.join(tests_dir, name), filter_fn) for (name, filter_fn) in
+                            master_manifests]
+        for m, filter_fn in master_manifests:
             if not os.path.isfile(m):
                 continue
 
             self.info("Filtering master manifest at: %s" % m)
             lines = self.read_from_file(m).splitlines()
-            out_lines = []
-            for line in lines:
-                # Lines are formatted as [include:<path>], we care about <path>.
-                parts = line.split(':')
-                term = line
-                if len(parts) == 2:
-                    term = parts[1]
-                if term.endswith(']'):
-                    term = term[:-1]
-                if term in target_manifests:
-                    out_lines.append(line)
-                elif any(term.startswith(l) for l in target_manifests):
-                    out_lines.append(line)
-            os.remove(m)
+
+            out_lines = [line for line in lines if filter_fn(line)]
+
+            self.rmtree(m)
             self.write_to_file(m, '\n'.join(out_lines))
+
 
     def append_harness_extra_args(self, cmd):
         """Append arguments derived from try syntax to a command."""
