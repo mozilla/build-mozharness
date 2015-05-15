@@ -522,6 +522,33 @@ config = {
             ],
         },
     }, {
+        "repo": "https://hg.mozilla.org/releases/mozilla-esr38",
+        "revision": "default",
+        "repo_name": "mozilla-esr38",
+        "targets": [{
+            "target_dest": "beagle/.git",
+            "vcs": "git",
+            "test_push": True,
+        }, {
+            "target_dest": "gitmo-beagle",
+        }, {
+            "target_dest": "github-beagle",
+        }],
+        "vcs": "hg",
+        "branch_config": {
+            "branches": {
+                "default": "esr38",
+            },
+            "branch_regexes": [
+                "^GECKO[0-9]+esr_[0-9]+_RELBRANCH$",
+            ],
+        },
+        "tag_config": {
+            "tag_regexes": [
+                "^B2G_",
+            ],
+        },
+    }, {
         "repo": "https://hg.mozilla.org/integration/mozilla-inbound",
         "revision": "default",
         "repo_name": "mozilla-inbound",
