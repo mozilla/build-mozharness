@@ -277,12 +277,13 @@ class BaseConfig(object):
         )
         self.config_parser.add_option(
             "-c", "--config-file", "--cfg", action="extend", dest="config_files",
-            type="string", help="Specify the config files"
+            type="string", help="Specify a config file; can be repeated"
         )
         self.config_parser.add_option(
             "-C", "--opt-config-file", "--opt-cfg", action="extend",
             dest="opt_config_files", type="string", default=[],
-            help="Specify the optional config files"
+            help="Specify an optional config file, like --config-file but with no "
+                 "error if the file is missing; can be repeated"
         )
         self.config_parser.add_option(
             "--dump-config", action="store_true",
@@ -293,7 +294,7 @@ class BaseConfig(object):
         self.config_parser.add_option(
             "--dump-config-hierarchy", action="store_true",
             dest="dump_config_hierarchy",
-            help="Like dump config but will list and dump which config "
+            help="Like --dump-config but will list and dump which config "
                  "files were used making up the config and specify their own "
                  "keys/values that were not overwritten by another cfg -- "
                  "held the highest hierarchy."
