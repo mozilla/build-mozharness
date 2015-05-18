@@ -410,17 +410,23 @@ class BaseConfig(object):
             print "    " + ("*" if a in self.default_actions else " "), a
         raise SystemExit(0)
 
-    def get_cfgs_from_files(self, all_config_files, parser):
-        """ returns a dict from a given list of config files.
+    def get_cfgs_from_files(self, all_config_files, options):
+        """Returns the configuration derived from the list of configuration
+        files.  The result is represented as a list of `(filename,
+        config_dict)` tuples; they will be combined with keys in later
+        dictionaries taking precedence over earlier.
 
-        this method can be overwritten in a subclassed BaseConfig to add extra
-        logic to the way that self.config is made up.
-        For eg:
-            Say you don't wish to update self.config with the entire contents
-            of a config file. You may have a config file that represents a dict
-            of branches.  These branches could be a series of dicts. You could
-            then look for the presence of such a known config file and take the
-            branch dict you desire from it.
+        `all_config_files` is all files specified with `--config-file` and
+        `--opt-config-file`; `options` is the argparse options object giving
+        access to any other command-line options.
+
+        This function is also responsible for downloading any configuration
+        files specified by URL.  It uses ``parse_config_file`` in this module
+        to parse individual files.
+
+        This method can be overridden in a subclass to add extra logic to the
+        way that self.config is made up.  See
+        `mozharness.mozilla.building.buildbase.BuildingConfig` for an example.
         """
         all_cfg_files_and_dicts = []
         for cf in all_config_files:
@@ -435,7 +441,7 @@ class BaseConfig(object):
                 else:
                     all_cfg_files_and_dicts.append((cf, parse_config_file(cf)))
             except Exception:
-                if cf in parser.opt_config_files:
+                if cf in options.opt_config_files:
                     print(
                         "WARNING: optional config file not found %s" % cf
                     )
