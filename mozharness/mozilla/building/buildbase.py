@@ -1088,6 +1088,9 @@ or run without that action (ie: --no-{action})"
          first will look for it in buildbot_properties and then in
          buildbot_config. Failing that, it will actually poll the source of
          the repo if it exists yet.
+
+         This method is used both to figure out what revision to check out and
+         to figure out what revision *was* checked out.
         """
         # this is basically a copy from b2g_build.py
         # TODO get b2g_build.py to use this version of query_revision
