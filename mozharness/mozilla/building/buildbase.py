@@ -278,7 +278,7 @@ class BuildOptionParser(object):
     ]
 
     # add to this list and you can automagically do things like
-    # --custom-build-variant asan
+    # --custom-build-variant-cfg asan
     # and the script will pull up the appropriate path for the config
     # against the current platform and bits.
     # *It will warn and fail if there is not a config for the current
