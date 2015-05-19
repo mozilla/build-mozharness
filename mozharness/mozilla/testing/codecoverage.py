@@ -37,7 +37,7 @@ class CodeCoverageMixin(object):
 
             # XXX workaround because bug 1110465 is hard
             return self.buildbot_config['properties']['stage_platform'] in ('linux64-cc',)
-        except (AttributeError, KeyError):
+        except (AttributeError, KeyError, TypeError):
             return False
 
 
