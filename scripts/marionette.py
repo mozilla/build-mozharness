@@ -80,7 +80,7 @@ class MarionetteTest(TestingMixin, MercurialScript, BlobUploadMixin, TransferMix
         ["--emulator"],
         {"action": "store",
          "type": "choice",
-         "choices": ['arm'],
+         "choices": ['arm', 'x86'],
          "dest": "emulator",
          "default": None,
          "help": "Use an emulator for testing",
@@ -206,6 +206,8 @@ class MarionetteTest(TestingMixin, MercurialScript, BlobUploadMixin, TransferMix
             abs_dirs['abs_work_dir'], 'gecko')
         dirs['abs_emulator_dir'] = os.path.join(
             abs_dirs['abs_work_dir'], 'emulator')
+        dirs['abs_b2g-distro_dir'] = os.path.join(
+            dirs['abs_emulator_dir'], 'b2g-distro')
 
         gaia_root_dir = self.config.get('gaia_dir')
         if not gaia_root_dir:
@@ -347,7 +349,8 @@ class MarionetteTest(TestingMixin, MercurialScript, BlobUploadMixin, TransferMix
             'xml_output': os.path.join(dirs['abs_work_dir'], 'output.xml'),
             'html_output': os.path.join(dirs['abs_blob_upload_dir'], 'output.html'),
             'logcat_dir': dirs['abs_work_dir'],
-            'emulator': self.config.get('emulator'),
+            'emulator': 'x86' if os.path.isdir(os.path.join(dirs['abs_b2g-distro_dir'], 'out',
+                'target', 'product', 'generic_x86')) else 'arm',
             'symbols_path': self.symbols_path,
             'homedir': os.path.join(dirs['abs_emulator_dir'], 'b2g-distro'),
             'binary': self.binary_path,
@@ -358,6 +361,7 @@ class MarionetteTest(TestingMixin, MercurialScript, BlobUploadMixin, TransferMix
             'total_chunks': self.config.get('total_chunks', 1)
         }
 
+        self.info("The emulator type: %s" % config_fmt_args["emulator"])
         # build the marionette command arguments
         python = self.query_python_path('python')
 
