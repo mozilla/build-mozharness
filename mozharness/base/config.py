@@ -474,7 +474,7 @@ class BaseConfig(object):
             # let's store this to self for things like --interpret-config-files
             self.all_cfg_files_and_dicts.extend(self.get_cfgs_from_files(
                 # append opt_config to allow them to overwrite previous configs
-                options.config_files + options.opt_config_files, parser=options
+                options.config_files + options.opt_config_files, options=options
             ))
             config = {}
             for i, (c_file, c_dict) in enumerate(self.all_cfg_files_and_dicts):
