@@ -1378,6 +1378,9 @@ or run without that action (ie: --no-{action})"
         task = tc.create_task()
         tc.claim_task(task)
 
+        packageName = self.query_buildbot_property('packageFilename')
+        self.info('packageFilename is: %s' % packageName)
+
         property_conditions = [
             # key: property name, value: condition
             ('symbolsUrl', lambda m: m.endswith('crashreporter-symbols.zip') or
@@ -1395,8 +1398,7 @@ or run without that action (ie: --no-{action})"
             ('partialMarUrlTC', lambda m: m.endswith('.mar') and '.partial.' in m),
             ('codeCoverageURL', lambda m: m.endswith('code-coverage-gcno.zip')),
             ('sdkUrl', lambda m: m.endswith(('sdk.tar.bz2', 'sdk.zip'))),
-            # packageUrl must be last!
-            ('packageUrl', lambda m: True),
+            ('packageUrl', lambda m: m.endswith(packageName)),
         ]
 
         # Only those files uploaded with valid extensions are processed.
