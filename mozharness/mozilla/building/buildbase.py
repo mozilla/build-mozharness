@@ -177,11 +177,15 @@ class CheckTestCompleteParser(OutputParser):
 
 class BuildingConfig(BaseConfig):
     # TODO add nosetests for this class
-    def get_cfgs_from_files(self, all_config_files, parser):
-        """ create a config based upon config files passed
+    def get_cfgs_from_files(self, all_config_files, options):
+        """
+        Determine the configuration from the normal options and from
+        `--branch`, `--build-pool`, and `--custom-build-variant-cfg`.  If the
+        files for any of the latter options are also given with `--config-file`
+        or `--opt-config-file`, they are only parsed once.
 
-        This is class specific. It recognizes certain config files
-        by knowing how to combine them in an organized hierarchy
+        The build pool has highest precedence, followed by branch, build
+        variant, and any normally-specified configuration files.
         """
         # override from BaseConfig
 
@@ -215,14 +219,14 @@ class BuildingConfig(BaseConfig):
         # so, let's first assign the configs that hold a known position of
         # importance (1 through 3)
         for i, cf in enumerate(all_config_files):
-            if parser.build_pool:
-                if cf == BuildOptionParser.build_pools[parser.build_pool]:
+            if options.build_pool:
+                if cf == BuildOptionParser.build_pools[options.build_pool]:
                     pool_cfg_file = all_config_files[i]
 
             if cf == BuildOptionParser.branch_cfg_file:
                 branch_cfg_file = all_config_files[i]
 
-            if cf == parser.build_variant:
+            if cf == options.build_variant:
                 variant_cfg_file = all_config_files[i]
 
         # now remove these from the list if there was any.
@@ -236,7 +240,7 @@ class BuildingConfig(BaseConfig):
         # this functionality is the same as the base class
         all_config_dicts.extend(
             super(BuildingConfig, self).get_cfgs_from_files(all_config_files,
-                                                            parser)
+                                                            options)
         )
 
         # stack variant, branch, and pool cfg files on top of that,
@@ -249,16 +253,16 @@ class BuildingConfig(BaseConfig):
         if branch_cfg_file:
             # take only the specific branch, if present
             branch_configs = parse_config_file(branch_cfg_file)
-            if branch_configs.get(parser.branch or ""):
+            if branch_configs.get(options.branch or ""):
                 all_config_dicts.append(
-                    (branch_cfg_file, branch_configs[parser.branch])
+                    (branch_cfg_file, branch_configs[options.branch])
                 )
         if pool_cfg_file:
             # take only the specific pool. If we are here, the pool
             # must be present
             build_pool_configs = parse_config_file(pool_cfg_file)
             all_config_dicts.append(
-                (pool_cfg_file, build_pool_configs[parser.build_pool])
+                (pool_cfg_file, build_pool_configs[options.build_pool])
             )
         return all_config_dicts
 
@@ -274,7 +278,7 @@ class BuildOptionParser(object):
     ]
 
     # add to this list and you can automagically do things like
-    # --custom-build-variant asan
+    # --custom-build-variant-cfg asan
     # and the script will pull up the appropriate path for the config
     # against the current platform and bits.
     # *It will warn and fail if there is not a config for the current
@@ -1084,6 +1088,9 @@ or run without that action (ie: --no-{action})"
          first will look for it in buildbot_properties and then in
          buildbot_config. Failing that, it will actually poll the source of
          the repo if it exists yet.
+
+         This method is used both to figure out what revision to check out and
+         to figure out what revision *was* checked out.
         """
         # this is basically a copy from b2g_build.py
         # TODO get b2g_build.py to use this version of query_revision
@@ -1371,6 +1378,9 @@ or run without that action (ie: --no-{action})"
         task = tc.create_task()
         tc.claim_task(task)
 
+        packageName = self.query_buildbot_property('packageFilename')
+        self.info('packageFilename is: %s' % packageName)
+
         property_conditions = [
             # key: property name, value: condition
             ('symbolsUrl', lambda m: m.endswith('crashreporter-symbols.zip') or
@@ -1388,8 +1398,7 @@ or run without that action (ie: --no-{action})"
             ('partialMarUrlTC', lambda m: m.endswith('.mar') and '.partial.' in m),
             ('codeCoverageURL', lambda m: m.endswith('code-coverage-gcno.zip')),
             ('sdkUrl', lambda m: m.endswith(('sdk.tar.bz2', 'sdk.zip'))),
-            # packageUrl must be last!
-            ('packageUrl', lambda m: True),
+            ('packageUrl', lambda m: m.endswith(packageName)),
         ]
 
         # Only those files uploaded with valid extensions are processed.

@@ -34,7 +34,7 @@ class PurgeMixin(object):
         # Try clobbering first
         c = self.config
         dirs = self.query_abs_dirs()
-        if 'clobberer_url' in c:
+        if 'clobberer_url' in c and c.get('use_clobberer', True):
             self.clobberer()
 
         min_size = min_size or c['purge_minsize']

@@ -277,12 +277,13 @@ class BaseConfig(object):
         )
         self.config_parser.add_option(
             "-c", "--config-file", "--cfg", action="extend", dest="config_files",
-            type="string", help="Specify the config files"
+            type="string", help="Specify a config file; can be repeated"
         )
         self.config_parser.add_option(
             "-C", "--opt-config-file", "--opt-cfg", action="extend",
             dest="opt_config_files", type="string", default=[],
-            help="Specify the optional config files"
+            help="Specify an optional config file, like --config-file but with no "
+                 "error if the file is missing; can be repeated"
         )
         self.config_parser.add_option(
             "--dump-config", action="store_true",
@@ -293,7 +294,7 @@ class BaseConfig(object):
         self.config_parser.add_option(
             "--dump-config-hierarchy", action="store_true",
             dest="dump_config_hierarchy",
-            help="Like dump config but will list and dump which config "
+            help="Like --dump-config but will list and dump which config "
                  "files were used making up the config and specify their own "
                  "keys/values that were not overwritten by another cfg -- "
                  "held the highest hierarchy."
@@ -409,17 +410,23 @@ class BaseConfig(object):
             print "    " + ("*" if a in self.default_actions else " "), a
         raise SystemExit(0)
 
-    def get_cfgs_from_files(self, all_config_files, parser):
-        """ returns a dict from a given list of config files.
+    def get_cfgs_from_files(self, all_config_files, options):
+        """Returns the configuration derived from the list of configuration
+        files.  The result is represented as a list of `(filename,
+        config_dict)` tuples; they will be combined with keys in later
+        dictionaries taking precedence over earlier.
 
-        this method can be overwritten in a subclassed BaseConfig to add extra
-        logic to the way that self.config is made up.
-        For eg:
-            Say you don't wish to update self.config with the entire contents
-            of a config file. You may have a config file that represents a dict
-            of branches.  These branches could be a series of dicts. You could
-            then look for the presence of such a known config file and take the
-            branch dict you desire from it.
+        `all_config_files` is all files specified with `--config-file` and
+        `--opt-config-file`; `options` is the argparse options object giving
+        access to any other command-line options.
+
+        This function is also responsible for downloading any configuration
+        files specified by URL.  It uses ``parse_config_file`` in this module
+        to parse individual files.
+
+        This method can be overridden in a subclass to add extra logic to the
+        way that self.config is made up.  See
+        `mozharness.mozilla.building.buildbase.BuildingConfig` for an example.
         """
         all_cfg_files_and_dicts = []
         for cf in all_config_files:
@@ -434,7 +441,7 @@ class BaseConfig(object):
                 else:
                     all_cfg_files_and_dicts.append((cf, parse_config_file(cf)))
             except Exception:
-                if cf in parser.opt_config_files:
+                if cf in options.opt_config_files:
                     print(
                         "WARNING: optional config file not found %s" % cf
                     )
@@ -467,7 +474,7 @@ class BaseConfig(object):
             # let's store this to self for things like --interpret-config-files
             self.all_cfg_files_and_dicts.extend(self.get_cfgs_from_files(
                 # append opt_config to allow them to overwrite previous configs
-                options.config_files + options.opt_config_files, parser=options
+                options.config_files + options.opt_config_files, options=options
             ))
             config = {}
             for i, (c_file, c_dict) in enumerate(self.all_cfg_files_and_dicts):

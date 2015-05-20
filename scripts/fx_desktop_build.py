@@ -80,6 +80,8 @@ class FxDesktopBuild(BuildScript, object):
                 'to_tinderbox_dated': True,
                 'release_to_try_builds': False,
                 'include_post_upload_builddir': False,
+                'use_clobberer': True,
+
                 'stage_username': 'ffxbld',
                 'stage_ssh_key': 'ffxbld_rsa',
                 'virtualenv_modules': [
