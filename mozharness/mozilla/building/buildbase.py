@@ -557,7 +557,7 @@ class BuildScript(BuildbotMixin, PurgeMixin, MockMixin, BalrogMixin,
                 BuildOptionParser.platform,
                 BuildOptionParser.bits
             )
-        build_pool_cfg = BuildOptionParser.build_pools.get(build_pool)
+        build_pool_cfg = BuildOptionParser.build_pool_cfg_file
         branch_cfg = BuildOptionParser.branch_cfg_file
 
         cfg_match_msg = "Script was run with '%(option)s %(type)s' and \
@@ -581,9 +581,7 @@ platform '%(platform)s'. Updating self.config with the following from \
                     cfg_match_msg % {
                         'option': '--build-pool',
                         'type': build_pool,
-                        'type_config_file': BuildOptionParser.build_pools[
-                            build_pool
-                        ]
+                        'type_config_file': build_pool_cfg,
                     }
                 )
             if variant_cfg and variant_cfg in target_file:
