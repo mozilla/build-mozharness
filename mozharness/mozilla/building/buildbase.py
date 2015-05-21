@@ -220,7 +220,7 @@ class BuildingConfig(BaseConfig):
         # importance (1 through 3)
         for i, cf in enumerate(all_config_files):
             if options.build_pool:
-                if cf == BuildOptionParser.build_pools[options.build_pool]:
+                if cf == BuildOptionParser.build_pool_cfg_file:
                     pool_cfg_file = all_config_files[i]
 
             if cf == BuildOptionParser.branch_cfg_file:
@@ -299,10 +299,7 @@ class BuildOptionParser(object):
         'api-11-debug': 'builds/releng_sub_%s_configs/%s_api_11_debug.py',
         'x86': 'builds/releng_sub_%s_configs/%s_x86.py',
     }
-    build_pools = {
-        'staging': 'builds/build_pool_specifics.py',
-        'production': 'builds/build_pool_specifics.py',
-    }
+    build_pool_cfg_file = 'builds/build_pool_specifics.py'
     branch_cfg_file = 'builds/branch_specifics.py'
 
     @classmethod
@@ -402,16 +399,10 @@ class BuildOptionParser(object):
 
     @classmethod
     def set_build_pool(cls, option, opt, value, parser):
-        if cls.build_pools.get(value):
-            # first let's add the build pool file where there may be pool
-            # specific keys/values. Then let's store the pool name
-            parser.values.config_files.append(cls.build_pools[value])
-            setattr(parser.values, option.dest, value)  # the pool
-        else:
-            sys.exit(
-                "Whoops!\n--build-pool was passed with '%s' but only "
-                "'%s' are valid options" % (value, str(cls.build_pools.keys()))
-            )
+        # first let's add the build pool file where there may be pool
+        # specific keys/values. Then let's store the pool name
+        parser.values.config_files.append(cls.build_pool_cfg_file)
+        setattr(parser.values, option.dest, value)  # the pool
 
     @classmethod
     def set_build_branch(cls, option, opt, value, parser):

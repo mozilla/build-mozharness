@@ -5,6 +5,7 @@ config = {
     "default_actions": [
         'checkout-sources',
         'build',
+        'build-symbols',
         'make-updates',
         'prep-upload',
         'submit-to-balrog'

@@ -6,6 +6,7 @@ config = {
         'checkout-sources',
         'checkout-lightsaber',
         'build',
+        'build-symbols',
         'make-updates',
         'prep-upload',
         'submit-to-balrog'

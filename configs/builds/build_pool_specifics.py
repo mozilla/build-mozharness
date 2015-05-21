@@ -33,4 +33,7 @@ config = {
         'stage_server': 'stage.mozilla.org',
         "sendchange_masters": ["buildbot-master81.build.mozilla.org:9301"],
     },
+    "taskcluster": {
+        'graph_server': 'graphs.mozilla.org',
+    },
 }
