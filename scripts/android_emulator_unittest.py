@@ -25,7 +25,6 @@ from mozharness.base.script import BaseScript, PostScriptRun
 from mozharness.base.vcs.vcsbase import VCSMixin
 from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_options
 from mozharness.mozilla.mozbase import MozbaseMixin
-from mozharness.mozilla.buildbot import TBPL_WORST_LEVEL_TUPLE
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
 from mozharness.mozilla.testing.unittest import EmulatorMixin
 
@@ -453,41 +452,6 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
         if not os.path.isfile(self.adb_path):
             self.fatal("The adb binary '%s' is not a valid file!" % self.adb_path)
 
-    def _trigger_test(self):
-        """
-        Run a test suite on the emulator
-
-        We return a dictionary with the following information:
-         - subprocess object that is running the test on the emulator
-         - the filename where the stdout is going to
-         - the stdout where the output is going to
-         - the suite name that is associated
-        """
-        dirs = self.query_abs_dirs()
-        cmd = self._build_command()
-        cmd = self.append_harness_extra_args(cmd)
-
-        try:
-            cwd = self._query_tests_dir()
-        except:
-            self.fatal("Don't know how to run --test-suite '%s'!" % self.test_suite)
-
-        env = self.query_env()
-        if self.query_minidump_stackwalk():
-            env['MINIDUMP_STACKWALK'] = self.minidump_stackwalk_path
-        env['MOZ_UPLOAD_DIR'] = self.query_abs_dirs()['abs_blob_upload_dir']
-        env['MINIDUMP_SAVE_PATH'] = self.query_abs_dirs()['abs_blob_upload_dir']
-
-        self.info("Running on %s the command %s" % (self.emulator["name"], subprocess.list2cmdline(cmd)))
-        tmp_file = tempfile.NamedTemporaryFile(mode='w')
-        tmp_stdout = open(tmp_file.name, 'w')
-        self.info("Created temp file %s." % tmp_file.name)
-        return {
-            "process": subprocess.Popen(cmd, cwd=cwd, stdout=tmp_stdout, stderr=tmp_stdout, env=env),
-            "tmp_file": tmp_file,
-            "tmp_stdout": tmp_stdout
-        }
-
     def _tooltool_fetch(self, url):
         c = self.config
         dirs = self.query_abs_dirs()
@@ -689,50 +653,36 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
         """
         Run the tests
         """
-        proc = self._trigger_test()
+        cmd = self._build_command()
+        cmd = self.append_harness_extra_args(cmd)
+        try:
+            cwd = self._query_tests_dir()
+        except:
+            self.fatal("Don't know how to run --test-suite '%s'!" % self.test_suite)
+        env = self.query_env()
+        if self.query_minidump_stackwalk():
+            env['MINIDUMP_STACKWALK'] = self.minidump_stackwalk_path
+        env['MOZ_UPLOAD_DIR'] = self.query_abs_dirs()['abs_blob_upload_dir']
+        env['MINIDUMP_SAVE_PATH'] = self.query_abs_dirs()['abs_blob_upload_dir']
 
-        joint_tbpl_status = None
-        joint_log_level = None
-        start_time = int(time.time())
-        while True:
-            return_code = proc["process"].poll()
-            if return_code is not None:
-                # To make reading the log of the suite not mix with the previous line
-                sys.stdout.write('\n')
-                self.info("##### %s log begins" % self.test_suite)
-                # Let's close the stdout
-                proc["tmp_stdout"].close()
-                # Let's read the file that now has the output
-                output = self.read_from_file(proc["tmp_file"].name, verbose=False)
-                # Let's parse the output (which also prints it)
-                # and determine what the results should be
-                parser = self.get_test_output_parser(
-                    self.test_suite_definitions[self.test_suite]["category"],
-                    config=self.config,
-                    log_obj=self.log_obj,
-                    error_list=self.error_list)
-                for line in output.splitlines():
-                    parser.parse_single_line(line)
+        self.info("Running on %s the command %s" % (self.emulator["name"], subprocess.list2cmdline(cmd)))
+        self.info("##### %s log begins" % self.test_suite)
 
-                # After parsing each line we should know what the summary for this suite should be
-                tbpl_status, log_level = parser.evaluate_parser(0)
-                parser.append_tinderboxprint_line(self.test_suite)
-                # After running all jobs we will report the worst status of all emulator runs
-                joint_tbpl_status = self.worst_level(tbpl_status, joint_tbpl_status, TBPL_WORST_LEVEL_TUPLE)
-                joint_log_level = self.worst_level(log_level, joint_log_level)
+        parser = self.get_test_output_parser(
+            self.test_suite_definitions[self.test_suite]["category"],
+            config=self.config,
+            log_obj=self.log_obj,
+            error_list=self.error_list)
+        return_code = self.run_command(cmd,
+                                       cwd=cwd,
+                                       env=env,
+                                       output_parser=parser)
+        tbpl_status, log_level = parser.evaluate_parser(0)
+        parser.append_tinderboxprint_line(self.test_suite)
 
-                self.info("##### %s log ends" % self.test_suite)
-                self._dump_emulator_log()
-                break
-            else:
-                # Every 5 minutes let's print something to stdout
-                # so buildbot won't kill the process due to lack of output
-                if int(time.time()) - start_time > 5 * 60:
-                    self.info('#')
-                    start_time = int(time.time())
-                time.sleep(30)
-
-        self.buildbot_status(joint_tbpl_status, level=joint_log_level)
+        self.info("##### %s log ends" % self.test_suite)
+        self._dump_emulator_log()
+        self.buildbot_status(tbpl_status, level=log_level)
 
     def stop_emulator(self):
         '''
