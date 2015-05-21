@@ -45,22 +45,20 @@ config = {
         'clobber',
         'read-buildbot-config',
         'setup-avds',
-        'start-emulators',
+        'start-emulator',
         'download-and-extract',
         'create-virtualenv',
         'install',
         'run-tests',
-        'stop-emulators',
+        'stop-emulator',
     ],
-    "emulators": [
-        {
+    "emulator": {
             "name": "test-1",
             "device_id": "emulator-5554",
             "http_port": "8854", # starting http port to use for the mochitest server
             "ssl_port": "4454", # starting ssl port to use for the server
             "emulator_port": 5554,
         },
-    ],
     "test_suite_definitions": {
         "jsreftest-1": {
             "category": "jsreftest",
