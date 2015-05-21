@@ -408,12 +408,20 @@ class GaiaMixin(object):
         """
         dirs = self.query_abs_dirs()
 
+        # Set-up node modules for project first. They must be older than 
+        # the b2g build we copy into place. Otherwise the b2g build will
+        # be considered an out of date target and we don't want that! It
+        # can cause our desired b2g-desktop build to be overwritten!
+        self.make_node_modules()
+
         # Copy the b2g desktop we built to the gaia directory so that it
         # gets used by the marionette-js-runner.
+        b2g_dest = os.path.join(dirs['abs_gaia_dir'], 'b2g') 
         self.copytree(
             os.path.join(os.path.dirname(self.binary_path)),
-            os.path.join(dirs['abs_gaia_dir'], 'b2g'),
+            b2g_dest,
             overwrite='clobber'
         )
+        # Ensure modified time is more recent than node_modules!
+        self.run_command(['touch', '-c', b2g_dest])
 
-        self.make_node_modules()
