@@ -51,6 +51,7 @@ config = {
     'base_name': 'Android 2.3 %(branch)s',
     'platform': 'android',
     'stage_platform': 'android',
+    'stage_product': 'mobile',
     'enable_max_vsize': False,
     'env': {
         'MOZBUILD_STATE_PATH': os.path.join(os.getcwd(), '.mozbuild'),

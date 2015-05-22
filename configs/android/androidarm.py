@@ -37,15 +37,15 @@ config = {
         'clobber',
         'read-buildbot-config',
         'setup-avds',
-        'start-emulators',
+        'start-emulator',
         'download-and-extract',
         'create-virtualenv',
+        'verify-emulator',
         'install',
         'run-tests',
-        'stop-emulators',
+        'stop-emulator',
     ],
-    "emulators": [
-        {
+    "emulator": {
             "name": "test-1",
             "device_id": "emulator-5554",
             "http_port": "8854", # starting http port to use for the mochitest server
@@ -54,34 +54,6 @@ config = {
             "sut_port1": 20701,
             "sut_port2": 20700
         },
-        {
-            "name": "test-2",
-            "device_id": "emulator-5556",
-            "http_port": "8856", # starting http port to use for the mochitest server
-            "ssl_port": "4456", # starting ssl port to use for the server
-            "emulator_port": 5556,
-            "sut_port1": 20703,
-            "sut_port2": 20702
-        },
-        {
-            "name": "test-3",
-            "device_id": "emulator-5558",
-            "http_port": "8858", # starting http port to use for the mochitest server
-            "ssl_port": "4458", # starting ssl port to use for the server
-            "emulator_port": 5558,
-            "sut_port1": 20705,
-            "sut_port2": 20704
-        },
-        {
-            "name": "test-4",
-            "device_id": "emulator-5560",
-            "http_port": "8860", # starting http port to use for the mochitest server
-            "ssl_port": "4460", # starting ssl port to use for the server
-            "emulator_port": 5560,
-            "sut_port1": 20707,
-            "sut_port2": 20706
-        }
-    ],
     "test_suite_definitions": {
         "jsreftest-1": {
             "category": "jsreftest",
