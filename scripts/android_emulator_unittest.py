@@ -28,8 +28,6 @@ from mozharness.mozilla.mozbase import MozbaseMixin
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
 from mozharness.mozilla.testing.unittest import EmulatorMixin
 
-from mozharness.mozilla.testing.device import ADBDeviceHandler
-
 
 class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin, BaseScript, MozbaseMixin):
     config_options = [[
@@ -81,6 +79,7 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
                          'start-emulator',
                          'download-and-extract',
                          'create-virtualenv',
+                         'verify-emulator',
                          'install',
                          'run-tests',
                          'stop-emulator'],
@@ -88,6 +87,7 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
                              'start-emulator',
                              'download-and-extract',
                              'create-virtualenv',
+                             'verify-emulator',
                              'install',
                              'run-tests',
                              'stop-emulator'],
@@ -125,7 +125,6 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
             test_dir = self.tree_config["suite_definitions"][suite_category]["testsdir"]
         except:
             test_dir = suite_category
-
         return os.path.join(dirs['abs_test_install_dir'], test_dir)
 
     def query_abs_dirs(self):
@@ -156,57 +155,6 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
         self.abs_dirs = abs_dirs
         return self.abs_dirs
 
-    def _build_arg(self, option, value):
-        """
-        Build a command line argument
-        """
-        if not value:
-            return []
-        return [str(option), str(value)]
-
-    def _redirectSUT(self):
-        '''
-        This redirects the default SUT ports for the emulator.
-        '''
-        emuport = self.emulator["emulator_port"]
-        sutport1 = self.emulator["sut_port1"]
-        sutport2 = self.emulator["sut_port2"]
-        attempts = 0
-        tn = None
-        redirect_completed = False
-        while attempts < 5:
-            if attempts == 0:
-                self.info("Sleeping 10 seconds")
-                time.sleep(10)
-            else:
-                self.info("Sleeping 30 seconds")
-                time.sleep(30)
-            attempts += 1
-            self.info("  Attempt #%d to redirect ports: (%d, %d, %d)" %
-                      (attempts, emuport, sutport1, sutport2))
-            try:
-                tn = telnetlib.Telnet('localhost', emuport, 300)
-                break
-            except socket.error, e:
-                self.info("Trying again after exception: %s" % str(e))
-                pass
-
-        if tn is not None:
-            res = tn.read_until('OK')
-            if res.find('OK') == -1:
-                self.warning('initial OK prompt not received from emulator: ' + str(res))
-            tn.write('redir add tcp:' + str(sutport1) + ':' + str(self.config["default_sut_port1"]) + '\n')
-            tn.write('redir add tcp:' + str(sutport2) + ':' + str(self.config["default_sut_port2"]) + '\n')
-            tn.write('quit\n')
-            res = tn.read_all()
-            if res.find('OK') == -1:
-                self.warning('error adding redirect: ' + str(res))
-            else:
-                redirect_completed = True
-        else:
-            self.warning('failed to establish a telnet connection with the emulator')
-        return redirect_completed
-
     def _launch_emulator(self):
         env = self.query_env()
 
@@ -234,119 +182,179 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
         return {
             "process": proc,
             "tmp_file": tmp_file,
-            "tmp_stdout": tmp_stdout
         }
 
-    def _check_emulator(self):
-        self.info('Checking emulator %s' % self.emulator["name"])
-
-        if self.config["device_manager"] == "sut":
-            attempts = 0
-            tn = None
-            contacted_sut = False
-            while attempts < 8 and not contacted_sut:
-                if attempts != 0:
-                    self.info("Sleeping 30 seconds")
-                    time.sleep(30)
-                attempts += 1
-                self.info("  Attempt #%d to connect to SUT on port %d" %
-                          (attempts, self.emulator["sut_port1"]))
-                try:
-                    tn = telnetlib.Telnet('localhost', self.emulator["sut_port1"], 10)
-                    if tn is not None:
-                        self.info('Connected to port %d' % self.emulator["sut_port1"])
-                        res = tn.read_until('$>', 10)
-                        tn.write('quit\n')
-                        if res.find('$>') == -1:
-                            self.warning('Unexpected SUT response: %s' % res)
-                        else:
-                            self.info('SUT response: %s' % res)
-                            contacted_sut = True
-                        tn.read_all()
-                    else:
-                        self.warning('Unable to connect to the SUT agent on port %d' % self.emulator["sut_port1"])
-                except socket.error, e:
-                    self.info('Trying again after socket error: %s' % str(e))
-                    pass
-                except EOFError:
-                    self.info('Trying again after EOF')
-                    pass
-                except:
-                    self.info('Trying again after unexpected exception')
-                    pass
-                finally:
-                    if tn is not None:
-                        tn.close()
-            if not contacted_sut:
-                self.warning('Unable to communicate with SUT agent on port %d' % self.emulator["sut_port1"])
-
+    def _retry(self, max_attempts, interval, func, description):
+        '''
+        Execute func until it returns True, up to max_attempts times, waiting for
+        interval seconds between each attempt. description is logged on each attempt.
+        '''
+        status = False
         attempts = 0
-        tn = None
-        contacted_emu = False
-        while attempts < 4:
+        while attempts < max_attempts and not status:
             if attempts != 0:
-                self.info("Sleeping 30 seconds")
-                time.sleep(30)
+                self.info("Sleeping %d seconds" % interval)
+                time.sleep(interval)
             attempts += 1
-            self.info("  Attempt #%d to connect to emulator on port %d" %
-                      (attempts, self.emulator["emulator_port"]))
-            try:
-                tn = telnetlib.Telnet('localhost', self.emulator["emulator_port"], 10)
-                if tn is not None:
-                    self.info('Connected to port %d' % self.emulator["emulator_port"])
-                    res = tn.read_until('OK', 10)
-                    self.info(res)
-                    tn.write('avd status\n')
-                    res = tn.read_until('OK', 10)
-                    self.info('avd status: %s' % res)
-                    tn.write('redir list\n')
-                    res = tn.read_until('OK', 10)
-                    self.info('redir list: %s' % res)
-                    tn.write('network status\n')
-                    res = tn.read_until('OK', 10)
-                    self.info('network status: %s' % res)
-                    tn.write('quit\n')
-                    tn.read_all()
-                    tn.close()
-                    contacted_emu = True
-                    break
-                else:
-                    self.warning('Unable to connect to the emulator on port %d' % self.emulator["emulator_port"])
-            except socket.error, e:
-                self.info('Trying again after socket error: %s' % str(e))
-                pass
-            except EOFError:
-                self.info('Trying again after EOF')
-                pass
-            except:
-                self.info('Trying again after unexpected exception')
-                pass
-            finally:
-                if tn is not None:
-                    tn.close()
-        if not contacted_emu:
-            self.warning('Unable to communicate with emulator on port %d' % self.emulator["emulator_port"])
+            self.info(">> %s: Attempt #%d of %d" % (description, attempts, max_attempts))
+            status = func()
+        return status
 
-        ps_cmd = [self.adb_path, '-s', self.emulator["device_id"], 'shell', 'ps']
-        p = subprocess.Popen(ps_cmd, stdout=subprocess.PIPE)
+    def _run_with_timeout(self, timeout, cmd):
+        timeout_cmd = ['timeout', '%s' % timeout] + cmd
+        return self._run_proc(timeout_cmd)
+
+    def _run_proc(self, cmd):
+        self.info('Running %s' % subprocess.list2cmdline(cmd))
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
         out, err = p.communicate()
-        self.info('%s:\n%s\n%s' % (ps_cmd, out, err))
+        if out:
+            self.info('%s' % str(out.strip()))
+        if err:
+            self.info('stderr: %s' % str(err.strip()))
+        return out
+
+    def _telnet_cmd(self, telnet, command):
+        telnet.write('%s\n' % command)
+        result = telnet.read_until('OK', 10)
+        self.info('%s: %s' % (command, result))
+        return result
+
+    def _verify_adb(self):
+        self.info('Verifying adb connectivity')
+        if not os.path.isfile(self.adb_path):
+            self.fatal("The adb binary '%s' is not a valid file!" % self.adb_path)
+        self._run_with_timeout(300, [self.adb_path, 'wait-for-device'])
+        out = self._run_with_timeout(300, [self.adb_path, 'devices'])
+        if self.emulator['device_id'] in out:
+            return True
+        return False
+
+    def _is_boot_completed(self):
+        boot_cmd = [self.adb_path, '-s', self.emulator['device_id'],
+                    'shell', 'getprop', 'sys.boot_completed']
+        out = self._run_with_timeout(300, boot_cmd)
+        if out.strip() == '1':
+            return True
+        return False
+
+    def _telnet_to_emulator(self):
+        port = self.emulator["emulator_port"]
+        telnet_ok = False
+        try:
+            tn = telnetlib.Telnet('localhost', port, 10)
+            if tn is not None:
+                self.info('Connected to port %d' % port)
+                res = tn.read_until('OK', 10)
+                self.info(res)
+                self._telnet_cmd(tn, 'avd status')
+                if self.config["device_manager"] == "sut":
+                    sutport1 = self.emulator["sut_port1"]
+                    sutport2 = self.emulator["sut_port2"]
+                    cmd = 'redir add tcp:' + str(sutport1) + ':' + str(self.config["default_sut_port1"])
+                    self._telnet_cmd(tn, cmd)
+                    cmd = 'redir add tcp:' + str(sutport2) + ':' + str(self.config["default_sut_port2"])
+                    self._telnet_cmd(tn, cmd)
+                self._telnet_cmd(tn, 'redir list')
+                self._telnet_cmd(tn, 'network status')
+                tn.write('quit\n')
+                tn.read_all()
+                telnet_ok = True
+            else:
+                self.warning('Unable to connect to port %d' % port)
+        except socket.error, e:
+            self.info('Trying again after socket error: %s' % str(e))
+            pass
+        except EOFError:
+            self.info('Trying again after EOF')
+            pass
+        except:
+            self.info('Trying again after unexpected exception')
+            pass
+        finally:
+            if tn is not None:
+                tn.close()
+        return telnet_ok
+
+    def _telnet_to_sut(self):
+        port = self.emulator["sut_port1"]
+        contacted_sut = False
+        try:
+            tn = telnetlib.Telnet('localhost', port, 10)
+            if tn is not None:
+                self.info('Connected to port %d' % port)
+                res = tn.read_until('$>', 10)
+                if res.find('$>') == -1:
+                    self.warning('Unexpected SUT response: %s' % res)
+                else:
+                    self.info('SUT response: %s' % res)
+                    contacted_sut = True
+                tn.write('quit\n')
+                tn.read_all()
+            else:
+                self.warning('Unable to connect to port %d' % port)
+        except socket.error, e:
+            self.info('Trying again after socket error: %s' % str(e))
+            pass
+        except EOFError:
+            self.info('Trying again after EOF')
+            pass
+        except:
+            self.info('Trying again after unexpected exception')
+            pass
+        finally:
+            if tn is not None:
+                tn.close()
+        return contacted_sut
+
+    def _verify_emulator(self):
+        adb_ok = self._verify_adb()
+        if not adb_ok:
+            self.warning('Unable to communicate with emulator via adb')
+            return False
+        boot_ok = self._retry(30, 10, self._is_boot_completed, "Verify Android boot completed")
+        if not boot_ok:
+            self.warning('Unable to verify Android boot completion')
+            return False
+        telnet_ok = self._retry(4, 30, self._telnet_to_emulator, "Verify telnet to emulator")
+        if not telnet_ok:
+            self.warning('Unable to telnet to emulator on port %d' % self.emulator["emulator_port"])
+            return False
+        if self.config["device_manager"] == "sut":
+            sut_ok = self._retry(8, 30, self._telnet_to_sut, "Verify telnet to SUT agent")
+            if not sut_ok:
+                self.warning('Unable to communicate with SUT agent on port %d' % self.emulator["sut_port1"])
+                return False
+        return True
+
+    def _verify_emulator_and_restart_on_fail(self):
+        emulator_ok = self._verify_emulator()
+        if not emulator_ok:
+            self._dump_host_state()
+            self._kill_processes(self.config["emulator_process_name"])
+            self._dump_emulator_log()
+            self.emulator_proc = self._launch_emulator()
+        return emulator_ok
+
+    def _install_fennec_apk(self):
+        install_ok = False
+        cmd = [self.adb_path, '-s', self.emulator['device_id'], 'install', '-r', self.installer_path]
+        out = self._run_with_timeout(300, cmd)
+        if 'Success' in out:
+            install_ok = True
+        return install_ok
+
+    def _install_robocop_apk(self):
+        install_ok = False
+        cmd = [self.adb_path, '-s', self.emulator['device_id'], 'install', '-r', self.robocop_path]
+        out = self._run_with_timeout(300, cmd)
+        if 'Success' in out:
+            install_ok = True
+        return install_ok
 
     def _dump_host_state(self):
-        p = subprocess.Popen(['ps', '-ef'], stdout=subprocess.PIPE)
-        out, err = p.communicate()
-        self.info("output from ps -ef follows...")
-        if out:
-            self.info(out)
-        if err:
-            self.info(err)
-        p = subprocess.Popen(['netstat', '-a', '-p', '-n', '-t', '-u'], stdout=subprocess.PIPE)
-        out, err = p.communicate()
-        self.info("output from netstat -a -p -n -t -u follows...")
-        if out:
-            self.info(out)
-        if err:
-            self.info(err)
+        self._run_proc(['ps', '-ef'])
+        self._run_proc(['netstat', '-a', '-p', '-n', '-t', '-u'])
 
     def _dump_emulator_log(self):
         self.info("##### %s emulator log begins" % self.emulator["name"])
@@ -368,14 +376,6 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
     @PostScriptRun
     def _post_script(self):
         self._kill_processes(self.config["emulator_process_name"])
-
-    # XXX: This and android_panda.py's function might make sense to take higher up
-    def _download_robocop_apk(self):
-        dirs = self.query_abs_dirs()
-        self.apk_url = self.installer_url[:self.installer_url.rfind('/')]
-        robocop_url = self.apk_url + '/robocop.apk'
-        self.info("Downloading robocop...")
-        self.download_file(robocop_url, 'robocop.apk', dirs['abs_work_dir'], error_level=FATAL)
 
     def _query_package_name(self):
         if self.app_name is None:
@@ -446,12 +446,6 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
 
         return cmd
 
-    def preflight_run_tests(self):
-        super(AndroidEmulatorTest, self).preflight_run_tests()
-
-        if not os.path.isfile(self.adb_path):
-            self.fatal("The adb binary '%s' is not a valid file!" % self.adb_path)
-
     def _tooltool_fetch(self, url):
         c = self.config
         dirs = self.query_abs_dirs()
@@ -516,10 +510,9 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
             proc.run()
             proc.wait()
 
-
     def start_emulator(self):
         '''
-        This action starts the emulator and redirects the two SUT ports
+        Starts the emulator
         '''
         if 'emulator_url' in self.config or 'emulator_manifest' in self.config or 'tools_manifest' in self.config:
             self.install_emulator()
@@ -547,39 +540,16 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
                 self.mkdir_p(self.abs_dirs['abs_work_dir'])
                 os.symlink(libfile, linkfile)
                 break
+        self.emulator_proc = self._launch_emulator()
 
-        attempts = 0
-        redirect_failed = True
-        # Launch the emulator and redirect its SUT ports. If unable
-        # to redirect the SUT ports, kill the emulator and try starting it again.
-        # The wait-and-retry logic is necessary because the emulator intermittently fails
-        # to respond to telnet connections immediately after startup: bug 949740. In this
-        # case, the emulator log shows "ioctl(KVM_CREATE_VM) failed: Interrupted system call".
-        # We do not know how to avoid this error and the only way we have found to
-        # recover is to kill the emulator and start again.
-        while attempts < 3 and redirect_failed:
-            if attempts > 0:
-                self.info("Sleeping 30 seconds before retry")
-                time.sleep(30)
-            attempts += 1
-            self.info('Attempt #%d to launch emulator...' % attempts)
-            self._dump_host_state()
-            redirect_failed = False
-            self.emulator_proc = self._launch_emulator()
-            if self.config["device_manager"] == "sut":
-                if self._redirectSUT():
-                    self.info("%s: %s; sut port: %s/%s" %
-                              (self.emulator["name"], self.emulator["emulator_port"], 
-                               self.emulator["sut_port1"], self.emulator["sut_port2"]))
-                else:
-                    self._dump_emulator_log()
-                    self._kill_processes(self.config["emulator_process_name"])
-                    redirect_failed = True
-        if redirect_failed:
-            self.fatal('We have not been able to establish a telnet connection with the emulator')
-
-        # Verify that we can communicate with the emulator
-        self._check_emulator()
+    def verify_emulator(self):
+        '''
+        Check to see if the emulator can be contacted via adb, telnet, and sut, if configured. 
+        If any communication attempt fails, kill the emulator, re-launch, and re-check.
+        '''
+        emulator_ok = self._retry(3, 30, self._verify_emulator_and_restart_on_fail, "Check emulator")
+        if not emulator_ok:
+            self.fatal('Unable to start emulator after %d attempts' % attempts)
         # Start logcat for the emulator. The adb process runs until the
         # corresponding emulator is killed. Output is written directly to
         # the blobber upload directory so that it is uploaded automatically
@@ -587,28 +557,31 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
         self.mkdir_p(self.abs_dirs['abs_blob_upload_dir'])
         logcat_filename = 'logcat-%s.log' % self.emulator["device_id"]
         logcat_path = os.path.join(self.abs_dirs['abs_blob_upload_dir'], logcat_filename)
-        logcat_cmd = '%s -s %s logcat -v time Trace:S StrictMode:S ExchangeService:S > %s &' % \
+        logcat_cmd = '%s -s %s logcat -v threadtime Trace:S StrictMode:S ExchangeService:S > %s &' % \
             (self.adb_path, self.emulator["device_id"], logcat_path)
         self.info(logcat_cmd)
         os.system(logcat_cmd)
-        # Create the /data/anr directory on each emulator image.
-        mkdir_cmd = [self.adb_path, '-s', self.emulator["device_id"], 'shell', 'mkdir', '/data/anr']
-        p = subprocess.Popen(mkdir_cmd, stdout=subprocess.PIPE)
-        out, err = p.communicate()
-        self.info('%s:\n%s\n%s' % (mkdir_cmd, out, err))
+        # Get a post-boot emulator process list for diagnostics
+        ps_cmd = [self.adb_path, '-s', self.emulator["device_id"], 'shell', 'ps']
+        self._run_with_timeout(300, ps_cmd)
 
     def download_and_extract(self):
-        # This will download and extract the fennec.apk and tests.zip
+        """
+        Download and extract fennec APK, tests.zip, host utils, and robocop (if required).
+        """
         super(AndroidEmulatorTest, self).download_and_extract()
         dirs = self.query_abs_dirs()
-
         if self.test_suite.startswith('robocop'):
-            self._download_robocop_apk()
-
+            robocop_url = self.installer_url[:self.installer_url.rfind('/')] + '/robocop.apk'
+            self.info("Downloading robocop...")
+            self.download_file(robocop_url, 'robocop.apk', dirs['abs_work_dir'], error_level=FATAL)
         self.mkdir_p(dirs['abs_xre_dir'])
         self._download_unzip(self.host_utils_url, dirs['abs_xre_dir'])
 
     def install(self):
+        """
+        Install APKs on the emulator
+        """
         assert self.installer_path is not None, \
             "Either add installer_path to the config or use --installer-path."
 
@@ -619,33 +592,16 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
         }
         config = dict(config.items() + self.config.items())
 
-        self.info("Creating ADBDevicHandler for %s with config %s" % (self.emulator["name"], config))
-        dh = ADBDeviceHandler(config=config, log_obj=self.log_obj, script_obj=self)
-        dh.device_id = self.emulator['device_id']
-
-        # Wait for Android to finish booting
-        completed = None
-        retries = 0
-        while retries < 30:
-            completed = self.get_output_from_command([self.adb_path,
-                "-s", self.emulator['device_id'], "shell",
-                "getprop", "sys.boot_completed"])
-            if completed == '1':
-                break
-            time.sleep(10)
-            retries = retries + 1
-        if completed != '1':
-            self.warning('Retries exhausted waiting for Android boot.')
-
         # Install Fennec
-        self.info("Installing Fennec for %s" % self.emulator["name"])
-        dh.install_app(self.installer_path)
+        install_ok = self._retry(3, 30, self._install_fennec_apk, "Install Fennec APK")
+        if not install_ok:
+            self.fatal('Failed to install %s on %s' % (self.installer_path, self.emulator["name"]))
 
-        # Install the robocop apk if required
+        # Install Robocop if required
         if self.test_suite.startswith('robocop'):
-            self.info("Installing Robocop for %s" % self.emulator["name"])
-            config['device_package_name'] = self.config["robocop_package_name"]
-            dh.install_app(self.robocop_path)
+            install_ok = self._retry(3, 30, self._install_robocop_apk, "Install Robocop APK")
+            if not install_ok:
+                self.fatal('Failed to install %s on %s' % (self.robocop_path, self.emulator["name"]))
 
         self.info("Finished installing apps for %s" % self.emulator["name"])
 
@@ -688,7 +644,7 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
         '''
         Report emulator health, then make sure that the emulator has been stopped
         '''
-        self._check_emulator()
+        self._verify_emulator()
         self._kill_processes(self.config["emulator_process_name"])
 
 if __name__ == '__main__':
