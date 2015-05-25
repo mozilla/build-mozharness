@@ -132,7 +132,7 @@ class GaiaIntegrationTest(GaiaTest):
             'VIRTUALENV_EXISTS=1'
         ], cwd=dirs['abs_gaia_dir'],
            output_parser=output_parser,
-           output_timeout=330)
+           output_timeout=600)
 
         output_parser.print_summary('gaia-lint')
         self.publish(code)

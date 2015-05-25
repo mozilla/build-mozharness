@@ -547,9 +547,10 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
         Check to see if the emulator can be contacted via adb, telnet, and sut, if configured. 
         If any communication attempt fails, kill the emulator, re-launch, and re-check.
         '''
-        emulator_ok = self._retry(3, 30, self._verify_emulator_and_restart_on_fail, "Check emulator")
+        max_restarts = 3
+        emulator_ok = self._retry(max_restarts, 30, self._verify_emulator_and_restart_on_fail, "Check emulator")
         if not emulator_ok:
-            self.fatal('Unable to start emulator after %d attempts' % attempts)
+            self.fatal('Unable to start emulator after %d attempts' % max_restarts)
         # Start logcat for the emulator. The adb process runs until the
         # corresponding emulator is killed. Output is written directly to
         # the blobber upload directory so that it is uploaded automatically
