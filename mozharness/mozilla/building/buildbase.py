@@ -826,7 +826,7 @@ or run without that action (ie: --no-{action})"
 
     def query_mach_build_env(self, multiLocale=None):
         c = self.config
-        if multiLocale is None:
+        if multiLocale is None and self.query_is_nightly():
             multiLocale = c.get('multi_locale', False)
         mach_env = {}
         if c.get('upload_env'):
@@ -971,7 +971,10 @@ or run without that action (ie: --no-{action})"
         if c.get('release_to_try_builds'):
             post_upload_cmd.append('--release-to-try-builds')
         if self.query_is_nightly():
-            post_upload_cmd.extend(['-b', self.branch])
+            if c.get('post_upload_include_platform'):
+                post_upload_cmd.extend(['-b', '%s-%s' % (self.branch, platform)])
+            else:
+                post_upload_cmd.extend(['-b', self.branch])
             post_upload_cmd.append('--release-to-dated')
             if c['platform_supports_post_upload_to_latest']:
                 post_upload_cmd.append('--release-to-latest')
@@ -1361,6 +1364,7 @@ or run without that action (ie: --no-{action})"
                          self.query_pushdate(),
                          client_id,
                          access_token,
+                         self.config.get('taskcluster_index', 'index'),
                          self.log_obj,
                          )
 

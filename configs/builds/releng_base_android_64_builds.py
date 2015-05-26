@@ -52,6 +52,7 @@ config = {
     'platform': 'android',
     'stage_platform': 'android',
     'stage_product': 'mobile',
+    'post_upload_include_platform': True,
     'enable_max_vsize': False,
     'env': {
         'MOZBUILD_STATE_PATH': os.path.join(os.getcwd(), '.mozbuild'),
