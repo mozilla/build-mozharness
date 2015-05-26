@@ -37,5 +37,7 @@ config = {
     },
     "taskcluster": {
         'graph_server': 'graphs.mozilla.org',
+        'symbol_server_host': "symbolpush.mozilla.org",
+        'stage_server': 'stage.mozilla.org',
     },
 }
