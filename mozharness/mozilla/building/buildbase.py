@@ -826,7 +826,7 @@ or run without that action (ie: --no-{action})"
 
     def query_mach_build_env(self, multiLocale=None):
         c = self.config
-        if multiLocale is None:
+        if multiLocale is None and self.query_is_nightly():
             multiLocale = c.get('multi_locale', False)
         mach_env = {}
         if c.get('upload_env'):
