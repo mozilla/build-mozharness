@@ -11,11 +11,12 @@ class Taskcluster(LogMixin):
     """
     Helper functions to report data to Taskcluster
     """
-    def __init__(self, branch, stage_platform, revision, pushdate, client_id, access_token, log_obj):
+    def __init__(self, branch, stage_platform, revision, pushdate, client_id, access_token, index, log_obj):
         self.branch = branch
         self.platform = stage_platform
         self.revision = revision
         self.pushdate = pushdate
+        self.index = index
         self.log_obj = log_obj
 
         # Try builds use a different set of credentials which have access to the
@@ -48,8 +49,8 @@ class Taskcluster(LogMixin):
             "created": curdate,
             "deadline": curdate + timedelta(hours=1),
             "routes": [
-                "index.buildbot.branches.%s.%s" % (self.branch, self.platform),
-                "index.buildbot.revisions.%s.%s.%s" % (self.revision, self.branch, self.platform),
+                "%s.buildbot.branches.%s.%s" % (self.index, self.branch, self.platform),
+                "%s.buildbot.revisions.%s.%s.%s" % (self.index, self.revision, self.branch, self.platform),
             ],
             "payload": {
             },

@@ -1361,6 +1361,7 @@ or run without that action (ie: --no-{action})"
                          self.query_pushdate(),
                          client_id,
                          access_token,
+                         self.config.get('taskcluster_index', 'index'),
                          self.log_obj,
                          )
 
