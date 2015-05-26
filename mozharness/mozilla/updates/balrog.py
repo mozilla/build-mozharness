@@ -77,6 +77,7 @@ class BalrogMixin(object):
             self.info("Calling Balrog submission script")
             return_code = self.retry(
                 self.run_command, attempts=5, args=(cmd + server_args,),
+                good_statuses=(0,),
             )
             if server["ignore_failures"]:
                 self.info("Ignoring result, ignore_failures set to True")
@@ -104,7 +105,8 @@ class BalrogMixin(object):
             self.info("Calling Balrog release pusher script")
             return_code = self.retry(
                 self.run_command, args=(cmd + server_args,),
-                kwargs={'cwd': dirs['abs_work_dir']}
+                kwargs={'cwd': dirs['abs_work_dir']},
+                good_statuses=(0,),
             )
             if server["ignore_failures"]:
                 self.info("Ignoring result, ignore_failures set to True")
