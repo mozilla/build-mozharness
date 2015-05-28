@@ -7,4 +7,4 @@ export MOZBUILD_STATE_PATH=$TOP/mozbuild-state
 
 export MOZCONFIG=$SOURCE/browser/config/mozconfigs/linux64/hazards
 
-exec ./mach -l build.$(date +'%s') build -v -j1 binaries
+exec ./mach build -v -j8
