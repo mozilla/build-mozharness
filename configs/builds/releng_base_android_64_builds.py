@@ -11,6 +11,7 @@ config = {
         'setup-mock',
         'build',
         'multi-l10n',
+        'update',  # decided by query_is_nightly()
     ],
     "buildbot_json_path": "buildprops.json",
     'exes': {
@@ -54,6 +55,7 @@ config = {
     'stage_product': 'mobile',
     'post_upload_include_platform': True,
     'enable_max_vsize': False,
+    'use_package_as_marfile': True,
     'env': {
         'MOZBUILD_STATE_PATH': os.path.join(os.getcwd(), '.mozbuild'),
         'MOZ_AUTOMATION': '1',
