@@ -1371,8 +1371,33 @@ or run without that action (ie: --no-{action})"
         task = tc.create_task()
         tc.claim_task(task)
 
+        # Some trees may not be setting uploadFiles, so default to []. Normally
+        # we'd only expect to get here if the build completes successfully,
+        # which means we should have uploadFiles.
+        files = self.query_buildbot_property('uploadFiles') or []
+        if not files:
+            self.warning('No files from the build system to upload to S3: uploadFiles property is missing or empty.')
+
         packageName = self.query_buildbot_property('packageFilename')
         self.info('packageFilename is: %s' % packageName)
+
+        if self.config.get('use_package_as_marfile'):
+            self.info('Using packageUrl for the MAR file')
+            self.set_buildbot_property('completeMarUrl',
+                                       self.query_buildbot_property('packageUrl'),
+                                       write_to_file=True)
+
+            # Find the full path to the package in uploadFiles so we can
+            # get the size/hash of the mar
+            for upload_file in files:
+                if upload_file.endswith(packageName):
+                    self.set_buildbot_property('completeMarSize',
+                                               self.query_filesize(upload_file),
+                                               write_to_file=True)
+                    self.set_buildbot_property('completeMarHash',
+                                               self.query_sha512sum(upload_file),
+                                               write_to_file=True)
+                    break
 
         property_conditions = [
             # key: property name, value: condition
@@ -1405,13 +1430,6 @@ or run without that action (ie: --no-{action})"
             '.tar.gz',
             '.zip',
         )
-
-        # Some trees may not be setting uploadFiles, so default to []. Normally
-        # we'd only expect to get here if the build completes successfully,
-        # which means we should have uploadFiles.
-        files = self.query_buildbot_property('uploadFiles') or []
-        if not files:
-            self.warning('No files from the build system to upload to S3: uploadFiles property is missing or empty.')
 
         # Also upload our mozharness log files
         files.extend([os.path.join(self.log_obj.abs_log_dir, x) for x in self.log_obj.log_files.values()])
