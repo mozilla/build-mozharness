@@ -1639,21 +1639,8 @@ or run without that action (ie: --no-{action})"
 
     def postflight_build(self, console_output=True):
         """grabs properties from post build and calls ccache -s"""
-        c = self.config
         self.generate_build_props(console_output=console_output,
                                   halt_on_failure=True)
-
-        self.upload_files()
-
-        if c.get('enable_talos_sendchange'):
-            self._do_sendchange('talos')
-
-        if c.get('enable_unittest_sendchange'):
-            self._do_sendchange('unittest')
-
-        if self.config.get('enable_check_test'):
-            self._check_test()
-
         if self.config.get('enable_ccache'):
             self._ccache_s()
 
@@ -1688,7 +1675,11 @@ or run without that action (ie: --no-{action})"
             self.fatal("make did not run successfully. Please check "
                        "log for errors.")
 
-    def _check_test(self):
+    def check_test(self):
+        if not self.config.get('enable_check_test'):
+            self.info("'enable_check_test' is false; skipping")
+            return
+
         c = self.config
         dirs = self.query_abs_dirs()
 
@@ -1746,6 +1737,17 @@ or run without that action (ie: --no-{action})"
             self.info("Nothing to do for this action since ctors "
                       "counts are disabled for this build.")
 
+    def sendchange(self):
+        if self.config.get('enable_talos_sendchange'):
+            self._do_sendchange('talos')
+        else:
+            self.info("'enable_talos_sendchange' is false; skipping")
+
+        if self.config.get('enable_unittest_sendchange'):
+            self._do_sendchange('unittest')
+        else:
+            self.info("'enable_unittest_sendchange' is false; skipping")
+
     def _do_sendchange(self, test_type):
         c = self.config
 
@@ -1785,7 +1787,7 @@ or run without that action (ie: --no-{action})"
                                            self.stage_platform,
                                            build_type,
                                            'talos')
-            self.sendchange(downloadables=[installer_url],
+            self.invoke_sendchange(downloadables=[installer_url],
                             branch=talos_branch,
                             username='sendchange',
                             sendchange_props=sendchange_props)
@@ -1807,7 +1809,7 @@ or run without that action (ie: --no-{action})"
             unittest_branch = "%s-%s-%s" % (self.branch,
                                             platform_and_build_type,
                                             'unittest')
-            self.sendchange(downloadables=[installer_url, tests_url],
+            self.invoke_sendchange(downloadables=[installer_url, tests_url],
                             branch=unittest_branch,
                             sendchange_props=sendchange_props)
         else:
