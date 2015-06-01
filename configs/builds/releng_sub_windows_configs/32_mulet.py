@@ -8,7 +8,6 @@ config = {
         'build',
         'upload-files',
         'sendchange',
-        'check-test',
     ],
     'stage_platform': 'win32-mulet',
     'stage_product': 'b2g',
@@ -16,7 +15,6 @@ config = {
     'enable_signing': False,
     'enable_talos_sendchange': False,
     'enable_unittest_sendchange': False,
-    'enable_check_test': False,
     #### 32 bit build specific #####
     'env': {
         'BINSCOPE': 'C:/Program Files (x86)/Microsoft/SDL BinScope/BinScope.exe',

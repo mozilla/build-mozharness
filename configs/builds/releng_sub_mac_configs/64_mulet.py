@@ -8,7 +8,6 @@ config = {
         'build',
         'upload-files',
         'sendchange',
-        'check-test',
     ],
     'stage_platform': 'macosx64-mulet',
     'stage_product': 'b2g',
@@ -17,7 +16,6 @@ config = {
     'enable_signing': False,
     'enable_unittest_sendchange': False,
     'enable_talos_sendchange': False,
-    'enable_check_test': False,
     #### 64 bit build specific #####
     'env': {
         'MOZBUILD_STATE_PATH': os.path.join(os.getcwd(), '.mozbuild'),
