@@ -163,8 +163,8 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
         self.global_test_options = []
         self.installer_url = c.get('installer_url')
         self.test_url = c.get('test_url')
+        self.test_packages_url = c.get('test_packages_url')
         self.symbols_url = c.get('symbols_url')
-        self.jsshell_url = c.get('jsshell_url')
         # this is so mozinstall in install() doesn't bug out if we don't run
         # the download_and_extract action
         self.installer_path = c.get('installer_path')
@@ -430,11 +430,14 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
                 if c['run_all_suites'] or self._query_specified_suites(category) \
                         or 'run-tests' not in self.actions:
                     target_unzip_dirs.extend(c['specific_tests_zip_dirs'][category])
-        super(DesktopUnittest, self).download_and_extract(target_unzip_dirs=target_unzip_dirs)
 
-        if self._query_specified_suites('jittest') is not None:
-            dirs = self.query_abs_dirs()
-            self._download_unzip(self.query_jsshell_url(), dirs['abs_test_bin_dir'])
+        if c.get('run_all_suites'):
+            target_categories = SUITE_CATEGORIES
+        else:
+            target_categories = [cat for cat in SUITE_CATEGORIES
+                                 if self._query_specified_suites(cat) is not None]
+        super(DesktopUnittest, self).download_and_extract(target_unzip_dirs=target_unzip_dirs,
+                                                          suite_categories=target_categories)
 
     # pull defined in VCSScript.
     # preflight_run_tests defined in TestingMixin.
@@ -487,11 +490,6 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
         abs_res_dir = self.query_abs_res_dir()
         dirs = self.query_abs_dirs()
         abs_cppunittest_dir = dirs['abs_cppunittest_dir']
-
-        # check if separate test package required
-        if suites and 'cppunittest' in suites:
-            if not os.path.isdir(abs_cppunittest_dir):
-                self._download_unzip(self.test_url.replace('tests', 'tests.cppunit'), dirs['abs_test_install_dir'])
 
         # move manifest and js fils to resources dir, where tests expect them
         files = glob.glob(os.path.join(abs_cppunittest_dir, '*.js'))

@@ -206,6 +206,17 @@ class PandaTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixin, Bu
         self.info("Current time on device: %s - %s" %
                   (device_time, time.strftime("%x %H:%M:%S", time.gmtime(float(device_time)))))
 
+    def download_and_extract(self):
+        """
+        Provides the target suite categories to TestingMixin.download_
+        """
+        if self.config.get('run_all_suites'):
+            target_categories = SUITE_CATEGORIES
+        else:
+            target_categories = [cat for cat in SUITE_CATEGORIES
+                                 if self._query_specified_suites(cat) is not None]
+        super(PandaTest, self).download_and_extract(suite_categories=target_categories)
+
     def _run_category_suites(self, suite_category, preflight_run_method=None):
         """run suite(s) to a specific category"""
 
@@ -227,15 +238,10 @@ class PandaTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixin, Bu
                 should_install_app = True
                 if 'cppunittest' in suite:
                     should_install_app = False
-                    # check if separate test package required
-                    if not os.path.isdir(dirs['abs_cppunittest_dir']):
-                        self._download_unzip(self.test_url.replace('tests', 'tests.cppunit'), dirs['abs_test_install_dir'])
-
                 if 'robocop' in suite:
                     self._download_robocop_apk()
                 if 'jittest' in suite:
                     should_install_app = False
-                    self._download_unzip(self.query_jsshell_url(), dirs['abs_test_bin_dir'])
 
                 if should_install_app:
                     self._install_app()

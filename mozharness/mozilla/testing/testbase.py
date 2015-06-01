@@ -8,9 +8,10 @@
 import copy
 import os
 import platform
+import pprint
 import re
 import urllib2
-import getpass
+import json
 
 from mozharness.base.config import ReadOnlyDict, parse_config_file
 from mozharness.base.errors import BaseErrorList
@@ -62,6 +63,12 @@ testing_config_options = [
      "default": None,
      "help": "URL to the zip file containing the actual tests",
       }],
+    [["--test-packages-url"],
+     {"action": "store",
+     "dest": "test_packages_url",
+     "default": None,
+     "help": "URL to a json file describing which tests archives to download",
+      }],
     [["--jsshell-url"],
      {"action": "store",
      "dest": "jsshell_url",
@@ -90,6 +97,7 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin, Tool
     installer_path = None
     binary_path = None
     test_url = None
+    test_packages_url = None
     test_zip_path = None
     tree_config = ReadOnlyDict({})
     symbols_url = None
@@ -133,29 +141,23 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin, Tool
         """
         return self.tree_config.get(key, self.config.get(key))
 
-    def query_jsshell_url(self):
+    def query_build_dir_url(self, file_name):
         """
-        Attempt to determine the url of the js shell package given
-        the installer url.
+        Resolve a file name to a potential url in the build upload directory where
+        that file can be found.
         """
-        if self.jsshell_url:
-            return self.jsshell_url
-        if not self.installer_url:
-            self.fatal("Can't figure out jsshell without an installer_url!")
-
-        last_slash = self.installer_url.rfind('/')
-        base_url = self.installer_url[:last_slash]
-
-        for suffix in INSTALLER_SUFFIXES:
-            if self.installer_url.endswith(suffix):
-                no_suffix = self.installer_url[:-len(suffix)]
-                last_dot = no_suffix.rfind('.')
-                pf = no_suffix[last_dot + 1:]
-
-                self.jsshell_url = base_url + '/jsshell-' + pf + '.zip'
-                return self.jsshell_url
+        if self.test_packages_url:
+            reference_url = self.test_packages_url
+        elif self.installer_url:
+            reference_url = self.installer_url
         else:
-            self.fatal("Can't figure out jsshell from installer_url %s!" % self.installer_url)
+            self.fatal("Can't figure out build directory urls without an installer_url "
+                       "or test_packages_url!")
+
+        last_slash = reference_url.rfind('/')
+        base_url = reference_url[:last_slash]
+
+        return '%s/%s' % (base_url, file_name)
 
     def query_symbols_url(self):
         if self.symbols_url:
@@ -204,11 +206,14 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin, Tool
 
         assert c["installer_url"], "You must use --installer-url with developer_config.py"
         if c.get("require_test_zip"):
-            assert c["test_url"], "You must use --test-url with developer_config.py"
+            if not c.get('test_url') and not c.get('test_packages_url'):
+                raise AssertionError("You must use --test-url or --test-packages-url with developer_config.py")
 
         c["installer_url"] = _replace_url(c["installer_url"], c["replace_urls"])
         if c.get("test_url"):
             c["test_url"] = _replace_url(c["test_url"], c["replace_urls"])
+        if c.get("test_packages_url"):
+            c["test_packages_url"] = _replace_url(c["test_packages_url"], c["replace_urls"])
 
         for key, value in self.config.iteritems():
             if type(value) == str and value.startswith("http"):
@@ -261,6 +266,8 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin, Tool
                 self.installer_url = c['installer_url']
             if c.get("test_url"):
                 self.test_url = c['test_url']
+            if c.get("test_packages_url"):
+                self.test_packages_url = c['test_packages_url']
             try:
                 files = self.buildbot_config['sourcestamp']['changes'][-1]['files']
                 buildbot_prop_branch = self.buildbot_config['properties']['branch']
@@ -286,6 +293,9 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin, Tool
                     elif f['name'].endswith('crashreporter-symbols.zip'):  # yuk
                         self.symbols_url = str(f['name'])
                         self.info("Found symbols url %s." % self.symbols_url)
+                    elif f['name'].endswith('test_packages.json'):
+                        self.test_packages_url = str(f['name'])
+                        self.info("Found a test packages url %s." % self.test_packages_url)
                     elif not any(f['name'].endswith(s) for s in ('code-coverage-gcno.zip',)):
                         if not self.installer_url:
                             self.installer_url = str(f['name'])
@@ -295,7 +305,7 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin, Tool
             missing = []
             if not self.installer_url:
                 missing.append("installer_url")
-            if c.get("require_test_zip") and not self.test_url:
+            if c.get("require_test_zip") and not self.test_url and not self.test_packages_url:
                 missing.append("test_url")
             if missing:
                 self.fatal("%s!" % (message % ('+'.join(missing))))
@@ -317,7 +327,7 @@ You can set this by:
 2. running via buildbot and running the read-buildbot-config action
 
 """
-        if self.config.get("require_test_zip") and not self.test_url:
+        if self.config.get("require_test_zip") and not self.test_url and not self.test_packages_url:
             message += """test_url isn't set!
 
 You can set this by:
@@ -348,11 +358,54 @@ You can set this by:
         # try to use our proxxy servers
         # create a proxxy object and get the binaries from it
         source = self.download_file(self.test_url, file_name=file_name,
-                                            parent_dir=dirs['abs_work_dir'],
-                                            error_level=FATAL)
+                                    parent_dir=dirs['abs_work_dir'],
+                                    error_level=FATAL)
         self.test_zip_path = os.path.realpath(source)
 
-    def _download_unzip(self, url, parent_dir):
+    def _read_packages_manifest(self):
+        dirs = self.query_abs_dirs()
+        source = self.download_file(self.test_packages_url,
+                                    parent_dir=dirs['abs_work_dir'],
+                                    error_level=FATAL)
+
+        with self.opened(os.path.realpath(source)) as (fh, err):
+            package_requirements = json.load(fh)
+            if not package_requirements or err:
+                self.fatal("There was an error reading test package requirements from %s "
+                           "requirements: `%s` - error: `%s`" % (source,
+                                                                 package_requirements or 'None',
+                                                                 err or 'No error'))
+        self.info("Using the following test package requirements:\n%s" %
+                  pprint.pformat(package_requirements))
+        return package_requirements
+
+    def _download_test_packages(self, suite_categories, target_unzip_dirs):
+        dirs = self.query_abs_dirs()
+        test_install_dir = dirs.get('abs_test_install_dir',
+                                    os.path.join(dirs['abs_work_dir'], 'tests'))
+        self.mkdir_p(test_install_dir)
+        package_requirements = self._read_packages_manifest()
+        for category in suite_categories:
+            if category in package_requirements:
+                target_packages = package_requirements[category]
+            else:
+                # If we don't harness specific requirements, assume the common zip
+                # has everything we need to run tests for this suite.
+                target_packages = package_requirements['common']
+
+            self.info("Downloading packages: %s for test suite category: %s" %
+                      (target_packages, category))
+            for file_name in target_packages:
+                target_dir = test_install_dir
+                unzip_dirs = target_unzip_dirs
+                if "jsshell-" in file_name:
+                    unzip_dirs = None
+                    target_dir = dirs['abs_test_bin_dir']
+                url = self.query_build_dir_url(file_name)
+                self._download_unzip(url, target_dir,
+                                     target_unzip_dirs=unzip_dirs)
+
+    def _download_unzip(self, url, parent_dir, target_unzip_dirs=None):
         """Generic download+unzip.
         This is hardcoded to halt on failure.
         We should probably change some other methods to call this."""
@@ -361,7 +414,10 @@ You can set this by:
                                              error_level=FATAL)
         command = self.query_exe('unzip', return_type='list')
         command.extend(['-q', '-o', zipfile])
+        if target_unzip_dirs:
+            command.extend(target_unzip_dirs)
         self.run_command(command, cwd=parent_dir, halt_on_failure=True,
+                         success_codes=[0, 11],
                          fatal_exit_code=3, output_timeout=1760)
 
     def _extract_test_zip(self, target_unzip_dirs=None):
@@ -472,7 +528,7 @@ You can set this by:
         self.run_command(['unzip', '-q', source], cwd=self.symbols_path,
                          halt_on_failure=True, fatal_exit_code=3)
 
-    def download_and_extract(self, target_unzip_dirs=None):
+    def download_and_extract(self, target_unzip_dirs=None, suite_categories=None):
         """
         download and extract test zip / download installer
         """
@@ -480,17 +536,35 @@ You can set this by:
         # See bug 957502 and friends
         from_ = "http://ftp.mozilla.org"
         to_ = "https://ftp-ssl.mozilla.org"
-        for attr in 'test_url', 'symbols_url', 'installer_url':
+        for attr in 'symbols_url', 'installer_url', 'test_packages_url', 'test_url':
             url = getattr(self, attr)
             if url and url.startswith(from_):
                 new_url = url.replace(from_, to_)
                 self.info("Replacing url %s -> %s" % (url, new_url))
                 setattr(self, attr, new_url)
 
-        if self.test_url:
+        if 'test_url' in self.config:
+            # A user has specified a test_url directly, any test_packages_url will
+            # be ignored.
+            if self.test_packages_url:
+                self.error('Test data will be downloaded from "%s", the specified test '
+                           ' package data at "%s" will be ignored.' %
+                           (self.config('test_url'), self.test_packages_url))
+
             self._download_test_zip()
             self._extract_test_zip(target_unzip_dirs=target_unzip_dirs)
-            self._read_tree_config()
+        else:
+            if not self.test_packages_url:
+                # The caller intends to download harness specific packages, but doesn't know
+                # where the packages manifest is located. This is the case when the
+                # test package manifest isn't set as a buildbot property, which is true
+                # for some self-serve jobs and platforms using parse_make_upload.
+                self.test_packages_url = self.query_build_dir_url('test_packages.json')
+
+            suite_categories = suite_categories or ['common']
+            self._download_test_packages(suite_categories, target_unzip_dirs)
+
+        self._read_tree_config()
         self._download_installer()
         if self.config.get('download_symbols'):
             self._download_and_extract_symbols()
