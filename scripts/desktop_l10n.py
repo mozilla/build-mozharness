@@ -591,7 +591,7 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
         dirs = self.query_abs_dirs()
         config_dir = os.path.join(dirs['abs_objdir'], 'config')
         env = self.query_bootstrap_env()
-        return self._make(target=None, cwd=config_dir, env=env)
+        return self._make(target='export', cwd=config_dir, env=env)
 
     def _clobber_file(self):
         """returns the full path of the clobber file"""
