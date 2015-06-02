@@ -14,6 +14,9 @@ config = {
         'checkout-sources',
         'setup-mock',
         'build',
+        'upload-files',
+        'sendchange',
+        'check-test',
     ],
     "buildbot_json_path": "buildprops.json",
     'exes': {
