@@ -14,6 +14,9 @@ config = {
         'checkout-sources',
         'setup-mock',
         'build',
+        'upload-files',
+        'sendchange',
+        'check-test',
     ],
     "buildbot_json_path": "buildprops.json",
     'exes': {
@@ -39,7 +42,6 @@ config = {
         ('/builds/crash-stats-api.token', '/builds/crash-stats-api.token'),
     ],
     'enable_ccache': True,
-    'enable_check_test': True,
     'vcs_share_base': '/builds/hg-shared',
     'objdir': 'obj-firefox',
     'tooltool_script': ["/builds/tooltool.py"],

@@ -139,7 +139,7 @@ class BuildbotMixin(object):
             contents += "%s:%s\n" % (prop, self.buildbot_properties.get(prop, "None"))
         return self.write_to_file(file_name, contents)
 
-    def sendchange(self, downloadables=None, branch=None,
+    def invoke_sendchange(self, downloadables=None, branch=None,
                    username="sendchange-unittest", sendchange_props=None):
         """ Generic sendchange, currently b2g- and unittest-specific.
             """

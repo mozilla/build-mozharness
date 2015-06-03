@@ -920,7 +920,7 @@ class B2GBuild(LocalesMixin, PurgeMixin,
                     tests_url = "%s/%s" % (download_url, os.path.basename(matches[0]))
                     downloadables.append(tests_url)
                     self.set_buildbot_property('testsUrl', tests_url, write_to_file=True)
-                    self.sendchange(downloadables=downloadables)
+                    self.invoke_sendchange(downloadables=downloadables)
 
         if self.query_is_nightly() and os.path.exists(dirs['abs_public_upload_dir']) and self.config['upload'].get('public'):
             self.info("Uploading public bits...")
