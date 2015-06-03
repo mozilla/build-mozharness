@@ -6,6 +6,9 @@ config = {
         'clone-tools',
         'checkout-sources',
         'build',
+        'upload-files',
+        'sendchange',
+        'check-test',
         'update',  # may or may not happen based on query_is_nightly()
     ],
     'stage_platform': 'win64',

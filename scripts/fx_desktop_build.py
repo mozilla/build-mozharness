@@ -33,6 +33,9 @@ class FxDesktopBuild(BuildScript, object):
                 'checkout-sources',
                 'setup-mock',
                 'build',
+                'upload-files',  # upload from BB to TC
+                'sendchange',
+                'check-test',
                 'package-source',
                 'multi-l10n',
                 'generate-build-stats',

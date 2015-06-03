@@ -9,6 +9,9 @@ config = {
         'checkout-sources',
         'setup-mock',
         'build',
+        'upload-files',
+        'sendchange',
+        'check-test',
         # 'generate-build-stats',
         'update',  # decided by query_is_nightly()
     ],

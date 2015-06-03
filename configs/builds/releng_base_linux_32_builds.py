@@ -14,6 +14,9 @@ config = {
         'checkout-sources',
         'setup-mock',
         'build',
+        'upload-files',
+        'sendchange',
+        'check-test',
         'generate-build-stats',
         'update',  # decided by query_is_nightly()
     ],
@@ -44,7 +47,6 @@ config = {
         ('/builds/adjust-sdk.token', '/builds/adjust-sdk.token'),
     ],
     'enable_ccache': True,
-    'enable_check_test': True,
     'vcs_share_base': '/builds/hg-shared',
     'objdir': 'obj-firefox',
     'tooltool_script': ["/builds/tooltool.py"],

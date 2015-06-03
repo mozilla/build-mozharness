@@ -7,6 +7,8 @@ config = {
         'checkout-sources',
         'setup-mock',
         'build',
+        'upload-files',
+        'sendchange',
     ],
     'stage_platform': 'linux64-mulet',
     'stage_product': 'b2g',
@@ -15,7 +17,6 @@ config = {
     'enable_signing': False,
     'enable_talos_sendchange': False,
     'enable_count_ctors': False,
-    'enable_check_test': False,
     #### 64 bit build specific #####
     'env': {
         'MOZBUILD_STATE_PATH': os.path.join(os.getcwd(), '.mozbuild'),
