@@ -39,6 +39,7 @@ TalosErrorList = PythonErrorList + [
 
 # TODO: check for running processes on script invocation
 
+
 class TalosOutputParser(OutputParser):
     minidump_regex = re.compile(r'''talosError: "error executing: '(\S+) (\S+) (\S+)'"''')
     minidump_output = None
@@ -159,11 +160,7 @@ class Talos(TestingMixin, MercurialScript, BlobUploadMixin):
                                               'run-tests',
                                               ])
         kwargs.setdefault('config', {})
-        kwargs['config'].setdefault(
-            'virtualenv_modules', ["mozinstall", "mozdevice", "pyyaml", "mozversion", "datazilla",
-                                   "mozcrash", "mozhttpd", "mozprofile", "mozfile", "mozinfo",
-                                   "moznetwork", "mozprocess", "httplib2"]
-        )
+        kwargs['config'].setdefault('virtualenv_modules', ["talos", "mozinstall"])
         super(Talos, self).__init__(**kwargs)
 
         self.workdir = self.query_abs_dirs()['abs_work_dir']  # convenience
@@ -537,16 +534,23 @@ class Talos(TestingMixin, MercurialScript, BlobUploadMixin):
         # XXX This method could likely be replaced with a PreScriptAction hook.
         if self.has_cloned_talos:
             virtualenv_modules = list(self.config.get('virtualenv_modules', []))
+            if 'talos' in virtualenv_modules:
 
-            # Bug 900015 - Silent warnings on osx when libyaml is not found
-            pyyaml_module = {
-                'name': 'PyYAML',
-                'url': None,
-                'global_options': ['--without-libyaml']
-            }
-            virtualenv_modules.insert(0, pyyaml_module)
+                # Bug 900015 - Silent warnings on osx when libyaml is not found
+                pyyaml_module = {
+                    'name': 'PyYAML',
+                    'url': None,
+                    'global_options': ['--without-libyaml']
+                }
+                virtualenv_modules.insert(0, pyyaml_module)
 
-            self.info(pprint.pformat(virtualenv_modules))
+                i = virtualenv_modules.index('talos')
+                virtualenv_modules[i] = {
+                    'name': 'talos',
+                    'url': self.talos_path,
+                    'global_options': []
+                }
+                self.info(pprint.pformat(virtualenv_modules))
             return super(Talos, self).create_virtualenv(modules=virtualenv_modules)
         else:
             return super(Talos, self).create_virtualenv(**kwargs)
@@ -580,8 +584,8 @@ class Talos(TestingMixin, MercurialScript, BlobUploadMixin):
         python = self.query_python_path()
         self.run_command([python, "--version"])
         # run talos tests
-        talos = os.path.join(self.talos_path, 'talos', 'PerfConfigurator.py')
-        command = [python, talos] + options
+        talos = self.query_python_path('talos')
+        command = [talos, '--noisy', '--debug'] + options
         parser = TalosOutputParser(config=self.config, log_obj=self.log_obj,
                                    error_list=TalosErrorList)
         env = {}
@@ -592,15 +596,6 @@ class Talos(TestingMixin, MercurialScript, BlobUploadMixin):
         env = self.query_env(partial_env=env, log_level=INFO)
         # sets a timeout for how long talos should run without output
         output_timeout = self.config.get('talos_output_timeout', 3600)
-        # Call PerfConfigurator to generate talos.yml
-        self.return_code = self.run_command(command, cwd=self.workdir,
-                                            output_timeout=output_timeout,
-                                            output_parser=parser,
-                                            env=env)
-        # Call run_tests on generated talos.yml
-        run_tests = os.path.join(self.talos_path, 'talos', 'run_tests.py')
-        options = "talos.yml"
-        command = [python, run_tests, '--noisy', '--debug'] + [options]
         self.return_code = self.run_command(command, cwd=self.workdir,
                                             output_timeout=output_timeout,
                                             output_parser=parser,

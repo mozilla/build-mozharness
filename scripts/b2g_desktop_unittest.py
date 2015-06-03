@@ -95,6 +95,7 @@ class B2GDesktopTest(BlobUploadMixin, TestingMixin, MercurialScript):
         self.installer_url = c.get('installer_url')
         self.installer_path = c.get('installer_path')
         self.test_url = c.get('test_url')
+        self.test_packages_url = c.get('test_packages_url')
         self.test_manifest = c.get('test_manifest')
 
         suite = self.config['test_suite']
@@ -182,6 +183,10 @@ class B2GDesktopTest(BlobUploadMixin, TestingMixin, MercurialScript):
                 if not option.endswith('None'):
                     cmd.append(option)
         return cmd
+
+    def download_and_extract(self):
+        suite_category = self.config['test_suite']
+        super(B2GDesktopTest, self).download_and_extract(suite_categories=[suite_category])
 
     def preflight_run_tests(self):
         super(B2GDesktopTest, self).preflight_run_tests()
