@@ -48,9 +48,55 @@ from mozharness.base.config import BaseConfig
 from mozharness.base.log import SimpleFileLogger, MultiFileLogger, \
     LogMixin, OutputParser, DEBUG, INFO, ERROR, FATAL
 
+def platform_name():
+    pm = PlatformMixin()
+
+    if pm._is_linux() and pm._is_64_bit():
+        return 'linux64'
+    elif pm._is_linux() and not pm._is_64_bit():
+        return 'linux'
+    elif pm._is_darwin():
+        return 'macosx'
+    elif pm._is_windows() and pm._is_64_bit():
+        return 'win64'
+    elif pm._is_windows() and not pm._is_64_bit():
+        return 'win32'
+    else:
+        return None
+
+
+class PlatformMixin(object):
+    def _is_windows(self):
+        system = platform.system()
+        if system in ("Windows", "Microsoft"):
+            return True
+        if system.startswith("CYGWIN"):
+            return True
+        if os.name == 'nt':
+            return True
+
+    def _is_darwin(self):
+        if platform.system() in ("Darwin"):
+            return True
+        if sys.platform.startswith("darwin"):
+            return True
+
+    def _is_linux(self):
+        if platform.system() in ("Linux"):
+            return True
+        if sys.platform.startswith("linux"):
+            return True
+
+    def _is_64_bit(self):
+        if self._is_darwin():
+            # osx is a special snowflake and to ensure the arch, it is better to use the following
+            return sys.maxsize > 2**32  # context: https://docs.python.org/2/library/platform.html
+        else:
+            return '64' in platform.architecture()[0]  # architecture() returns (bits, linkage)
+
 
 # ScriptMixin {{{1
-class ScriptMixin(object):
+class ScriptMixin(PlatformMixin):
     """This mixin contains simple filesystem commands and the like.
 
     It also contains some very special but very complex methods that,
@@ -118,34 +164,6 @@ class ScriptMixin(object):
                 )
         else:
             self.debug("%s doesn't exist." % path)
-
-    def _is_windows(self):
-        system = platform.system()
-        if system in ("Windows", "Microsoft"):
-            return True
-        if system.startswith("CYGWIN"):
-            return True
-        if os.name == 'nt':
-            return True
-
-    def _is_darwin(self):
-        if platform.system() in ("Darwin"):
-            return True
-        if sys.platform.startswith("darwin"):
-            return True
-
-    def _is_linux(self):
-        if platform.system() in ("Linux"):
-            return True
-        if sys.platform.startswith("linux"):
-            return True
-
-    def _is_64_bit(self):
-        if self._is_darwin():
-            # osx is a special snowflake and to ensure the arch, it is better to use the following
-            return sys.maxsize > 2**32  # context: https://docs.python.org/2/library/platform.html
-        else:
-            return '64' in platform.architecture()[0]  # architecture() returns (bits, linkage)
 
     def query_msys_path(self, path):
         if not isinstance(path, basestring):
@@ -491,26 +509,35 @@ class ScriptMixin(object):
         self.log("Changing directory to %s." % dir_name)
         os.chdir(dir_name)
 
+    def is_exe(self, fpath):
+        """
+        Determine if fpath is a file and if it is executable.
+        """
+        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
     def which(self, program):
         """
         OS independent implementation of Unix's which command
         Takes in a program name
         Returns path to executable or None
         """
-        def is_exe(fpath):
-            return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
-
         if self._is_windows() and not program.endswith(".exe"):
             program += ".exe"
         fpath, fname = os.path.split(program)
         if fpath:
-            if is_exe(program):
+            if self.is_exe(program):
                 return program
         else:
+            # If the exe file is defined in the configs let's use that
+            exe = self.query_exe(program)
+            if self.is_exe(exe):
+                return exe
+
+            # If not defined, let's look for it in the $PATH
             env = self.query_env()
             for path in env["PATH"].split(os.pathsep):
                 exe_file = os.path.join(path, program)
-                if is_exe(exe_file):
+                if self.is_exe(exe_file):
                     return exe_file
         return None
 
