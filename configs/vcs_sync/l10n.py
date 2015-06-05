@@ -288,7 +288,7 @@ config = {
         "remote_path": "/home/pmoore/public_html/vcs2vcs/l10n",
     }],
 
-    "default_notify_from": "vcs2vcs@%s" % hostname,
+    "default_notify_from": "developer-services@mozilla.org",
     "notify_config": [{
         "to": "releng-ops-trial@mozilla.com",
         "failure_only": False,
