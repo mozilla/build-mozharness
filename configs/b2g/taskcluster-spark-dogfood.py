@@ -4,7 +4,6 @@ config = {
     "default_vcs": "tc-vcs",
     "default_actions": [
         'checkout-sources',
-        'checkout-lightsaber',
         'build',
         'build-symbols',
         'make-updates',
@@ -21,6 +20,7 @@ config = {
         "B2G_UPDATE_CHANNEL": "dogfood",
         "BOWER_FLAGS": "--allow-root",
         "B2G_PATH": "%(work_dir)s",
+        "GAIA_DISTRIBUTION_DIR": "%(work_dir)s/gaia/distros/spark",
         "WGET_OPTS": "-c -q"
     },
     "is_automation": True,
