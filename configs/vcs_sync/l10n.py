@@ -281,13 +281,6 @@ config = {
     ],
     "pip_index": False,
 
-    "upload_config": [{
-        "ssh_key": "~/.ssh/vcs-sync_rsa",
-        "ssh_user": "pmoore",
-        "remote_host": "people.mozilla.org",
-        "remote_path": "/home/pmoore/public_html/vcs2vcs/l10n",
-    }],
-
     "default_notify_from": "developer-services@mozilla.org",
     "notify_config": [{
         "to": "releng-ops-trial@mozilla.com",
