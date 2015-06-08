@@ -26,6 +26,10 @@ class TryToolsMixin(object):
         all_try_args = None
         for line in msg.splitlines():
             if 'try: ' in line:
+                # Autoland adds quotes to try strings that will confuse our
+                # args later on.
+                if line.startswith('"') and line.endswith('"'):
+                    line = line[1:-1]
                 # Allow spaces inside of [filter expressions]
                 try_message = line.strip().split('try: ', 1)
                 all_try_args = re.findall(r'(?:\[.*?\]|\S)+', try_message[1])
