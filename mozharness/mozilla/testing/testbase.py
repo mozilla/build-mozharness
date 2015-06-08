@@ -380,6 +380,18 @@ You can set this by:
         return package_requirements
 
     def _download_test_packages(self, suite_categories, target_unzip_dirs):
+        # Some platforms define more suite categories/names than others.
+        # This is a difference in the convention of the configs more than
+        # to how these tests are run, so we pave over these differences here.
+        aliases = {
+            'robocop': 'mochitest',
+            'mochitest-chrome': 'mochitest',
+            'mochitest-gl': 'mochitest',
+            'jsreftest': 'reftest',
+            'crashtest': 'reftest',
+        }
+        suite_categories = [aliases.get(name, name) for name in suite_categories]
+
         dirs = self.query_abs_dirs()
         test_install_dir = dirs.get('abs_test_install_dir',
                                     os.path.join(dirs['abs_work_dir'], 'tests'))
