@@ -1,25 +1,25 @@
 #!/usr/bin/env python
-import os.path
 config = {
     "default_vcs": "tc-vcs",
     "default_actions": [
         'checkout-sources',
-        'checkout-lightsaber',
         'build',
         'build-symbols',
-        'make-updates',
-        'prep-upload',
-        'submit-to-balrog'
+        'prep-upload'
     ],
-    "balrog_credentials_file": "balrog_credentials",
-    "nightly_build": True,
+    "upload": {
+        "default": {
+            "upload_dep_target_exclusions": []
+        }
+    },
     "env": {
         "GAIA_OPTIMIZE": "1",
-        "B2G_UPDATER": "1",
+        "WGET_OPTS": "-c -q",
         "LIGHTSABER": "1",
-        "BOWER_FLAGS": "--allow-root",
         "B2G_PATH": "%(work_dir)s",
-        "WGET_OPTS": "-c -q"
+        "BOWER_FLAGS": "--allow-root",
+        "GAIA_DISTRIBUTION_DIR": "%(work_dir)s/gaia/distros/spark",
+        "WGET_OPTS": "-c -q",
     },
     "is_automation": True,
     "repo_remote_mappings": {
