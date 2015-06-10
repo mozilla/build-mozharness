@@ -730,6 +730,7 @@ config = {
         "mozfile==0.9",
         "mozinfo==0.5",
         "mozprocess==0.11",
+        "requests==2.2.1",
     ],
     "find_links": [
         "http://pypi.pvt.build.mozilla.org/pub",
