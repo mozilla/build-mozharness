@@ -22,7 +22,7 @@ config = {
 
     'gaia_repo_url': 'https://hg.mozilla.org/integration/gaia-central',
     'gaia_revision_file': 'b2g/config/gaia.json',
-    'gaia_max_revisions': 5,
+    'gaia_max_revisions': 1,
     # Which git branch this hg repo corresponds to
     'gaia_git_branch': 'master',
     'gaia_git_repo': 'https://git.mozilla.org/releases/gaia.git',
