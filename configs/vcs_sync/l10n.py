@@ -306,7 +306,6 @@ config = {
         'publish-to-mapper',
         'push',
         'combine-mapfiles',
-        'upload',
         'notify',
     ],
 }
