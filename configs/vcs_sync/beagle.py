@@ -36,6 +36,10 @@ config = {
             "target_dest": "github-beagle",
         }],
         "vcs": "hg",
+        "mapper": {
+            "url": "https://api.pub.build.mozilla.org/mapper",
+            "project": "gecko-dev"
+        },
         "branch_config": {
             "branches": {
                 "default": "master",
@@ -666,4 +670,14 @@ config = {
     # Disallow sharing, since we want pristine .hg and .git directories.
     "vcs_share_base": None,
     "hg_share_base": None,
+    "default_actions": [
+        'list-repos',
+        'create-virtualenv',
+        'update-stage-mirror',
+        'update-work-mirror',
+        'publish-to-mapper',
+        'push',
+        'combine-mapfiles',
+        'notify',
+    ],
 }
