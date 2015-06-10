@@ -341,6 +341,8 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
             if binary.endswith('.exe'):
                 binary_path = binary_path.replace('\\', '\\\\\\\\')
             bootstrap_env[name] = binary_path
+        if self.query_is_nightly():
+            bootstrap_env["IS_NIGHTLY"] = "yes"
         self.bootstrap_env = bootstrap_env
         return self.bootstrap_env
 
@@ -744,8 +746,9 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
         if locale not in self.package_urls:
             self.package_urls[locale] = {}
         self.package_urls[locale].update(parser.matches)
-        self.package_urls[locale]['partialInfo'] = self._get_partial_info(
-            self.package_urls[locale]['partialMarUrl'])
+        if 'partialMarUrl' in self.package_urls[locale]:
+            self.package_urls[locale]['partialInfo'] = self._get_partial_info(
+                self.package_urls[locale]['partialMarUrl'])
         if retval == SUCCESS:
             self.info('Upload successful (%s)' % (locale))
             ret = SUCCESS
@@ -1059,8 +1062,9 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
         self.set_buildbot_property("completeMarHash", self.query_sha512sum(c_marfile))
         self.set_buildbot_property("completeMarUrl", c_mar_url)
         self.set_buildbot_property("locale", locale)
-        self.set_buildbot_property("partialInfo",
-                                   self.package_urls[locale]["partialInfo"])
+        if "partialInfo" in self.package_urls[locale]:
+            self.set_buildbot_property("partialInfo",
+                                       self.package_urls[locale]["partialInfo"])
         ret = FAILURE
         try:
             result = self.submit_balrog_updates()
