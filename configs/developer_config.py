@@ -26,6 +26,9 @@ config = {
         "hgtool.py": os.path.join(LOCAL_WORKDIR, "hgtool.py"),
         "gittool.py": os.path.join(LOCAL_WORKDIR, "gittool.py"),
     },
+    "env": {
+        "PIP_TRUSTED_HOST": "pypi.pub.build.mozilla.org",
+    },
 
     # Pip
     "find_links": ["http://pypi.pub.build.mozilla.org/pub"],

@@ -189,6 +189,7 @@ class VirtualenvMixin(object):
         """
         c = self.config
         dirs = self.query_abs_dirs()
+        env = self.query_env()
         venv_path = self.query_virtualenv_path()
         self.info("Installing %s into virtualenv %s" % (module, venv_path))
         if not module_url:
@@ -270,6 +271,7 @@ class VirtualenvMixin(object):
             kwargs={
                 'error_list': VirtualenvErrorList,
                 'cwd': cwd,
+                'env': env,
                 # WARNING only since retry will raise final FATAL if all
                 # retry attempts are unsuccessful - and we only want
                 # an ERROR of FATAL if *no* retry attempt works
