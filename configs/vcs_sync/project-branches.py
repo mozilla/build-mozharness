@@ -101,9 +101,6 @@ config = {
     "pip_index": False,
 
     "combined_mapfile": "combined_gecko_mapfile",
-    "external_mapfile_urls": [
-        "http://people.mozilla.org/~pmoore/vcs2vcs/gecko-dev/gecko-mapfile",
-    ],
 
     "default_notify_from": "vcs2vcs@%s" % hostname,
     "notify_config": [{
