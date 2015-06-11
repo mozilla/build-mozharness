@@ -52,10 +52,12 @@ class FirefoxUITests(VCSToolsScript, VirtualenvMixin):
         )
 
         self.firefox_ui_repo = self.config['firefox_ui_repo']
-        try:
-            self.firefox_ui_branch = self.config['firefox_ui_branch']
-        except:
-            self.fatal('Please specify --firefox-ui-branch')
+
+        if 'checkout' in self.actions:
+            try:
+                self.firefox_ui_branch = self.config['firefox_ui_branch']
+            except:
+                self.fatal('Please specify --firefox-ui-branch')
 
     def query_abs_dirs(self):
         if self.abs_dirs:
