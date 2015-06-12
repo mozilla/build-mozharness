@@ -189,6 +189,7 @@ class VirtualenvMixin(object):
         """
         c = self.config
         dirs = self.query_abs_dirs()
+        env = self.query_env()
         venv_path = self.query_virtualenv_path()
         self.info("Installing %s into virtualenv %s" % (module, venv_path))
         if not module_url:
@@ -270,6 +271,7 @@ class VirtualenvMixin(object):
             kwargs={
                 'error_list': VirtualenvErrorList,
                 'cwd': cwd,
+                'env': env,
                 # WARNING only since retry will raise final FATAL if all
                 # retry attempts are unsuccessful - and we only want
                 # an ERROR of FATAL if *no* retry attempt works
@@ -562,10 +564,10 @@ class InfluxRecordingMixin(object):
         self.recording = False
         self.post = None
         self.posturl = None
-        self.res_props = os.path.join(
-            self.query_abs_dirs()['abs_obj_dir'], '.mozbuild', 'build_resources.json'
-        )
-        self.rmtree(self.res_props)
+        self.res_props = self.config.get('build_resources_path') % self.query_abs_dirs()
+        self.info("build_resources.json path: %s" % self.res_props)
+        if self.res_props:
+            self.rmtree(self.res_props)
 
         try:
             site_packages_path = self.query_python_site_packages_path()

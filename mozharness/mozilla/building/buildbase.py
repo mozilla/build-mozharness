@@ -100,10 +100,11 @@ class MakeUploadOutputParser(OutputParser):
         ('codeCoverageUrl', "m.endswith('code-coverage-gcno.zip')"),
     ]
 
-    def __init__(self, **kwargs):
+    def __init__(self, use_package_as_marfile=False, **kwargs):
         super(MakeUploadOutputParser, self).__init__(**kwargs)
         self.matches = {}
         self.tbpl_status = TBPL_SUCCESS
+        self.use_package_as_marfile = use_package_as_marfile
 
     def parse_single_line(self, line):
         prop_assigned = False
@@ -120,6 +121,26 @@ class MakeUploadOutputParser(OutputParser):
                 # if we found a match but haven't identified the prop then this
                 # is the packageURL. Let's consider this the else block
                 self.matches['packageUrl'] = m
+
+                # For android builds, the package is also used as the mar file.
+                # Grab the first one, since that is the one in the
+                # nightly/YYYY/MM directory
+                if self.use_package_as_marfile and 'completeMarUrl' not in self.matches:
+                    self.info("Using package as mar file: %s" % m)
+                    self.matches['completeMarUrl'] = m
+
+        if self.use_package_as_marfile:
+            pat = r'''^Uploading (.*\.(tar\.bz2|dmg|zip|apk|rpm|mar|tar\.gz))$'''
+            m = re.compile(pat).match(line)
+            if m:
+                m = m.group(1)
+                isPackage = True
+                for prop, condition in self.property_conditions:
+                    if eval(condition):
+                        isPackage = False
+                        break
+                if isPackage:
+                    self.matches['packageFilename'] = m
 
         # now let's check for retry errors which will give log levels:
         # tbpl status as RETRY and mozharness status as WARNING
@@ -1634,10 +1655,27 @@ or run without that action (ie: --no-{action})"
         self.run_command_m(cmd, env=self.query_build_env(), cwd=base_work_dir,
                            halt_on_failure=True)
 
+        parser = MakeUploadOutputParser(config=self.config,
+                                        log_obj=self.log_obj,
+                                        use_package_as_marfile=self.config.get('use_package_as_marfile'))
         upload_cmd = ['make', 'upload', 'AB_CD=multi']
         self.run_command_m(upload_cmd,
                            env=self.query_mach_build_env(multiLocale=False),
-                           cwd=objdir, halt_on_failure=True)
+                           cwd=objdir, halt_on_failure=True,
+                           output_parser=parser)
+        for prop in parser.matches:
+            self.set_buildbot_property(prop,
+                                       parser.matches[prop],
+                                       write_to_file=True)
+            if prop == 'packageFilename':
+                filename = parser.matches[prop]
+                self.info("Setting mar properties to match package: %s" % filename)
+                self.set_buildbot_property('completeMarSize',
+                                           self.query_filesize(filename),
+                                           write_to_file=True)
+                self.set_buildbot_property('completeMarHash',
+                                           self.query_sha512sum(filename),
+                                           write_to_file=True)
 
     def postflight_build(self, console_output=True):
         """grabs properties from post build and calls ccache -s"""

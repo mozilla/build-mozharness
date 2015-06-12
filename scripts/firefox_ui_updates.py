@@ -53,16 +53,16 @@ class FirefoxUIUpdates(FirefoxUITests):
             [['--tools-repo'], {
                 'dest': 'tools_repo',
                 'default': 'http://hg.mozilla.org/build/tools',
-                'help': 'which tools repo to check out',
+                'help': 'Which tools repo to check out',
             }],
             [['--tools-tag'], {
                 'dest': 'tools_tag',
                 'default': 'default',
-                'help': 'which revision/tag to use for tools',
+                'help': 'Which revision/tag to use for the tools repository.',
             }],
             [['--update-verify-config'], {
                 'dest': 'update_verify_config',
-                'help': 'which revision/tag to use for firefox_ui_tests',
+                'help': 'Which update verify config file to use.',
             }],
             [['--this-chunk'], {
                 'dest': 'this_chunk',
@@ -120,7 +120,7 @@ class FirefoxUIUpdates(FirefoxUITests):
                 self.critical('Please make sure that the path to the installer exists.')
                 exit(1)
 
-        if self.installer_url or self.installer_path:
+        if 'checkout' in self.actions and (self.installer_url or self.installer_path):
             assert self.firefox_ui_branch, \
                 'When you use --installer-url or --installer-path you need to specify ' \
                 '--firefox-ui-branch. Valid values are mozilla-{central,aurora,beta,release,esr38}.'
@@ -265,7 +265,7 @@ class FirefoxUIUpdates(FirefoxUITests):
         # Return more output if we fail
         if return_code != 0:
             self.warning('== Dumping gecko output ==')
-            contents = self.read_from_file('gecko.txt', verbose=False)
+            contents = self.read_from_file(gecko_log, verbose=False)
             if contents:
                 self.warning(contents)
             self.warning('== End of gecko output ==')
