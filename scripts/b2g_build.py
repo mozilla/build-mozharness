@@ -136,6 +136,7 @@ class B2GBuild(LocalesMixin, PurgeMixin,
             'repo_remote_mappings': {},
             'influx_credentials_file': 'oauth.txt',
             'balrog_credentials_file': 'oauth.txt',
+            'build_resources_path': '%(abs_obj_dir)s/.mozbuild/build_resources.json',
             'virtualenv_modules': [
                 'requests==2.2.1',
             ],

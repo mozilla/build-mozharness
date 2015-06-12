@@ -564,10 +564,10 @@ class InfluxRecordingMixin(object):
         self.recording = False
         self.post = None
         self.posturl = None
-        self.res_props = os.path.join(
-            self.query_abs_dirs()['abs_obj_dir'], '.mozbuild', 'build_resources.json'
-        )
-        self.rmtree(self.res_props)
+        self.res_props = self.config.get('build_resources_path') % self.query_abs_dirs()
+        self.info("build_resources.json path: %s" % self.res_props)
+        if self.res_props:
+            self.rmtree(self.res_props)
 
         try:
             site_packages_path = self.query_python_site_packages_path()
