@@ -112,6 +112,7 @@ class GaiaTest(TestingMixin, MercurialScript, TransferMixin, GaiaMixin, BlobUplo
         self.installer_path = c.get('installer_path')
         self.binary_path = c.get('binary_path')
         self.test_url = c.get('test_url')
+        self.test_packages_url = c.get('test_packages_url')
 
     def pull(self, **kwargs):
         GaiaMixin.pull(self, **kwargs)

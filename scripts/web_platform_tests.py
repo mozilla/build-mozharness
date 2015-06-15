@@ -152,7 +152,8 @@ class WebPlatformTest(TestingMixin, MercurialScript, BlobUploadMixin):
                                "config/*",
                                "mozbase/*",
                                "marionette/*",
-                               "web-platform/*"])
+                               "web-platform/*"],
+            suite_categories=["web-platform"])
 
     def run_tests(self):
         dirs = self.query_abs_dirs()
