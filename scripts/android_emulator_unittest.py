@@ -6,6 +6,7 @@
 # ***** END LICENSE BLOCK *****
 
 import copy
+import datetime
 import os
 import sys
 import signal
@@ -184,14 +185,24 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
             "tmp_file": tmp_file,
         }
 
-    def _retry(self, max_attempts, interval, func, description):
+    def _retry(self, max_attempts, interval, func, description, max_time = 0):
         '''
         Execute func until it returns True, up to max_attempts times, waiting for
         interval seconds between each attempt. description is logged on each attempt.
+        If max_time is specified, no further attempts will be made once max_time
+        seconds have elapsed; this provides some protection for the case where
+        the run-time for func is long or highly variable.
         '''
         status = False
         attempts = 0
+        if max_time > 0:
+            end_time = datetime.datetime.now() + datetime.timedelta(seconds = max_time)
+        else:
+            end_time = None
         while attempts < max_attempts and not status:
+            if (end_time is not None) and (datetime.datetime.now() > end_time):
+                self.info("Maximum retry run-time of %d seconds exceeded; remaining attempts abandoned" % max_time)
+                break
             if attempts != 0:
                 self.info("Sleeping %d seconds" % interval)
                 time.sleep(interval)
@@ -225,7 +236,7 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
         if not os.path.isfile(self.adb_path):
             self.fatal("The adb binary '%s' is not a valid file!" % self.adb_path)
         self._run_with_timeout(300, [self.adb_path, 'wait-for-device'])
-        out = self._run_with_timeout(300, [self.adb_path, 'devices'])
+        out = self._run_with_timeout(30, [self.adb_path, 'devices'])
         if self.emulator['device_id'] in out:
             return True
         return False
@@ -233,7 +244,7 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
     def _is_boot_completed(self):
         boot_cmd = [self.adb_path, '-s', self.emulator['device_id'],
                     'shell', 'getprop', 'sys.boot_completed']
-        out = self._run_with_timeout(300, boot_cmd)
+        out = self._run_with_timeout(30, boot_cmd)
         if out.strip() == '1':
             return True
         return False
@@ -312,7 +323,7 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
         if not adb_ok:
             self.warning('Unable to communicate with emulator via adb')
             return False
-        boot_ok = self._retry(30, 10, self._is_boot_completed, "Verify Android boot completed")
+        boot_ok = self._retry(30, 10, self._is_boot_completed, "Verify Android boot completed", max_time = 330)
         if not boot_ok:
             self.warning('Unable to verify Android boot completion')
             return False
@@ -564,7 +575,7 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
         os.system(logcat_cmd)
         # Get a post-boot emulator process list for diagnostics
         ps_cmd = [self.adb_path, '-s', self.emulator["device_id"], 'shell', 'ps']
-        self._run_with_timeout(300, ps_cmd)
+        self._run_with_timeout(30, ps_cmd)
 
     def download_and_extract(self):
         """
