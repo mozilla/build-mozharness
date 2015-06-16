@@ -51,7 +51,6 @@ for repo in build_repos:
 #               "^.*$"
 #           ]
 #       },
-        "generate_git_notes": True, # False by default
     })
     remote_targets["build-%s-github" % repo] = {
         "repo": "git@github.com:mozilla/build-%s.git" % repo,
@@ -106,7 +105,6 @@ config = {
         'create-virtualenv',
         'update-stage-mirror',
         'update-work-mirror',
-        'create-git-notes',
         'publish-to-mapper',
         'push',
         'combine-mapfiles',
