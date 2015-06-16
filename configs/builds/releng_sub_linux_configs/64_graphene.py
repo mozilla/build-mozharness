@@ -40,5 +40,6 @@ config = {
         "SYMBOL_SERVER_PATH": "/mnt/netapp/breakpad/symbols_ffx",
     },
     'src_mozconfig': 'b2g/graphene/config/mozconfigs/linux64/nightly',
+    'balrog_platform': 'linux64',
     #######################
 }

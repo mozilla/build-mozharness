@@ -17,13 +17,13 @@ config = {
     'enable_talos_sendchange': False,
     'enable_unittest_sendchange': False,
     'enable_count_ctors': False,
-    'objdir': 'obj-graphene',
+    'objdir': 'obj-horizon',
     #### 64 bit build specific #####
     'env': {
         'MOZBUILD_STATE_PATH': os.path.join(os.getcwd(), '.mozbuild'),
         'MOZ_AUTOMATION': '1',
         'HG_SHARE_BASE_DIR': '/builds/hg-shared',
-        'MOZ_OBJDIR': 'obj-graphene',
+        'MOZ_OBJDIR': 'obj-horizon',
         'TINDERBOX_OUTPUT': '1',
         'CCACHE_DIR': '/builds/ccache',
         'CCACHE_COMPRESS': '1',
@@ -37,7 +37,7 @@ config = {
         "SYMBOL_SERVER_USER": "ffxbld",
         "SYMBOL_SERVER_PATH": "/mnt/netapp/breakpad/symbols_ffx",
     },
-    'src_mozconfig': 'b2g/graphene/config/mozconfigs/macosx64/nightly',
+    'src_mozconfig': 'b2g/graphene/config/horizon-mozconfigs/macosx64/nightly',
     'balrog_platform': 'macosx64',
     #######################
 }
