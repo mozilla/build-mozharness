@@ -380,7 +380,7 @@ config = {
         "remote_path": "/home/pmoore/upload/gecko-git-upload",
     }],
 
-    "default_notify_from": "vcs2vcs@%s" % hostname,
+    "default_notify_from": "developer-services@mozilla.org",
     "notify_config": [{
         "to": "pmoore@mozilla.com",
         "failure_only": False,
