@@ -260,7 +260,7 @@ config = {
     ],
     "pip_index": False,
 
-    "default_notify_from": "vcs2vcs@%s" % hostname,
+    "default_notify_from": "developer-services@mozilla.org",
     "notify_config": [{
         "to": "pmoore@mozilla.com",
         "failure_only": False,
