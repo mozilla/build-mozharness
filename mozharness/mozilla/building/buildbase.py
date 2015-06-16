@@ -105,6 +105,7 @@ class MakeUploadOutputParser(OutputParser):
         self.matches = {}
         self.tbpl_status = TBPL_SUCCESS
         self.use_package_as_marfile = use_package_as_marfile
+        self.package_filename = None
 
     def parse_single_line(self, line):
         prop_assigned = False
@@ -128,19 +129,14 @@ class MakeUploadOutputParser(OutputParser):
                 if self.use_package_as_marfile and 'completeMarUrl' not in self.matches:
                     self.info("Using package as mar file: %s" % m)
                     self.matches['completeMarUrl'] = m
+                    u, self.package_filename = os.path.split(m)
 
-        if self.use_package_as_marfile:
-            pat = r'''^Uploading (.*\.(tar\.bz2|dmg|zip|apk|rpm|mar|tar\.gz))$'''
+        if self.use_package_as_marfile and self.package_filename:
+            pat = r'''^Uploading (.*/%s)$''' % self.package_filename
             m = re.compile(pat).match(line)
             if m:
                 m = m.group(1)
-                isPackage = True
-                for prop, condition in self.property_conditions:
-                    if eval(condition):
-                        isPackage = False
-                        break
-                if isPackage:
-                    self.matches['packageFilename'] = m
+                self.matches['packageFilename'] = m
 
         # now let's check for retry errors which will give log levels:
         # tbpl status as RETRY and mozharness status as WARNING
