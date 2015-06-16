@@ -28,7 +28,7 @@ config = {
         }
         ] """,
     "emulator_process_name": "emulator64-arm",
-    "emulator_extra_args": "-debug init,console,gles,memcheck,adbserver,adbclient,adb,avd_config,socket",
+    "emulator_extra_args": "-show-kernel -debug init,console,gles,memcheck,adbserver,adbclient,adb,avd_config,socket",
     "device_manager": "adb",
     "exes": {
         'adb': '%(abs_work_dir)s/android-sdk18/platform-tools/adb',
