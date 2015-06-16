@@ -44,11 +44,8 @@ class BalrogMixin(object):
             buildbot_properties,
             self.buildbot_properties.items(),
         )))
-        # XXX: hack alert, turn fake graphene platforms into real ones. This
-        # was done more generically originally (bug 1140437), but it broke
-        # flame-kk updates (bug 1141633)
-        balrog_props["properties"]["platform"] = balrog_props["properties"]["platform"].replace("_graphene", "")
-
+        if self.config.get('balrog_platform'):
+            balrog_props["properties"]["platform"] = self.config['balrog_platform']
         if "branch" not in balrog_props["properties"]:
             balrog_props["properties"]["branch"] = self.query_branch()
 

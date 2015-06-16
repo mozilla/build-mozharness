@@ -13,6 +13,7 @@ config = {
                 'mobile': 'ffxbld',
                 'Fennec': 'ffxbld',
                 'graphene': 'ffxbld',
+                'horizon': 'ffxbld',
             }
         },
         {
@@ -25,6 +26,7 @@ config = {
                 'mobile': 'stage-ffxbld',
                 'Fennec': 'stage-ffxbld',
                 'graphene': 'stage-ffxbld',
+                'horizon': 'stage-ffxbld',
             }
         }
     ]

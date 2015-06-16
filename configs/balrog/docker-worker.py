@@ -13,6 +13,7 @@ config = {
                 'mobile': 'ffxbld',
                 'Fennec': 'ffxbld',
                 'graphene': 'ffxbld',
+                'horizon': 'ffxbld',
             }
         }
     ]
