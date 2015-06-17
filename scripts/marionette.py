@@ -434,6 +434,9 @@ class MarionetteTest(TestingMixin, MercurialScript, BlobUploadMixin, TransferMix
             if self.config.get('e10s'):
                 cmd.append('--e10s')
 
+            cmd.append('--gecko-log=%s' % os.path.join(dirs["abs_blob_upload_dir"],
+                                                       'gecko.log'))
+
         options_group = self._get_options_group(self.config.get('emulator'),
                                                 self.config.get('gaiatest'))
 
