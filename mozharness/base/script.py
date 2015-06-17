@@ -67,6 +67,11 @@ def platform_name():
 
 class PlatformMixin(object):
     def _is_windows(self):
+        """ check if the current operating system is Windows.
+
+        Returns:
+            bool: True if the current platform is Windows, False otherwise
+        """
         system = platform.system()
         if system in ("Windows", "Microsoft"):
             return True
@@ -76,12 +81,22 @@ class PlatformMixin(object):
             return True
 
     def _is_darwin(self):
+        """ check if the current operating system is Darwin.
+
+        Returns:
+            bool: True if the current platform is Darwin, False otherwise
+        """
         if platform.system() in ("Darwin"):
             return True
         if sys.platform.startswith("darwin"):
             return True
 
     def _is_linux(self):
+        """ check if the current operating system is a Linux distribution.
+
+        Returns:
+            bool: True if the current platform is a Linux distro, False otherwise
+        """
         if platform.system() in ("Linux"):
             return True
         if sys.platform.startswith("linux"):
@@ -103,7 +118,16 @@ class ScriptMixin(PlatformMixin):
     together with logging and config, provide the base for all scripts
     in this harness.
 
-    Depends on LogMixin and a self.config of some sort.
+    WARNING !!!
+    This class depends entirely on `LogMixin` methods in such a way that it will
+    only works if a class inherits from both `ScriptMixin` and `LogMixin`
+    simultaneously.
+
+    Depends on self.config of some sort.
+
+    Attributes:
+        env (dict): a mapping object representing the string environment.
+        script_obj (ScriptMixin): reference to a ScriptMixin instance.
     """
 
     env = None
@@ -111,9 +135,19 @@ class ScriptMixin(PlatformMixin):
 
     # Simple filesystem commands {{{2
     def mkdir_p(self, path, error_level=ERROR):
+        """ Create a directory if it doesn't exists.
+        This method also logs the creation, error or current existence of the
+        directory to be created.
+
+        Args:
+            path (str): path of the directory to be created.
+            error_level (str): log level name to be used in case of error.
+
+        Returns:
+            None: for sucess.
+            int: -1 on error
         """
-        Returns None for success, not None for failure
-        """
+
         if not os.path.exists(path):
             self.info("mkdir: %s" % path)
             try:
@@ -127,9 +161,23 @@ class ScriptMixin(PlatformMixin):
 
     def rmtree(self, path, log_level=INFO, error_level=ERROR,
                exit_code=-1):
+        """ Delete an entire directory tree and log its result.
+        This method also logs the platform rmtree function, its retries, errors,
+        and current existence of the directory.
+
+        Args:
+            path (str): path to the directory tree root to remove.
+            log_level (str, optional): log level name to for this operation. Defaults
+                                       to `INFO`.
+            error_level (str, optional): log level name to use in case of error.
+                                         Defaults to `ERROR`.
+            exit_code (int, optional): useless parameter, not use here.
+                                       Defaults to -1
+
+        Returns:
+            None: for success
         """
-        Returns None for success, not None for failure
-        """
+
         self.log("rmtree: %s" % path, level=log_level)
         error_message = "Unable to remove %s!" % path
         if self._is_windows():
@@ -166,6 +214,16 @@ class ScriptMixin(PlatformMixin):
             self.debug("%s doesn't exist." % path)
 
     def query_msys_path(self, path):
+        """ replaces the Windows harddrive letter path style with a linux
+        path style, e.g. C:// --> /C/
+        Note: method, not used in any script.
+
+        Args:
+            path (str?): path to convert to the linux path style.
+        Returns:
+            str: in case `path` is a string. The result is the path with the new notation.
+            type(path): `path` itself is returned in case `path` is not str type.
+        """
         if not isinstance(path, basestring):
             return path
         path = path.replace("\\", "/")
@@ -178,7 +236,18 @@ class ScriptMixin(PlatformMixin):
     def _rmtree_windows(self, path):
         """ Windows-specific rmtree that handles path lengths longer than MAX_PATH.
             Ported from clobberer.py.
+
+        Args:
+            path (str): directory path to remove.
+
+        Returns:
+            None: if the path doesn't exists.
+            int: the return number of calling `self.run_command`
+            int: in case the path specified is not a directory but a file.
+                 0 on success, non-zero on error. Note: The returned value
+                 is the result of calling `win32file.DeleteFile`
         """
+
         assert self._is_windows()
         path = os.path.realpath(path)
         full_path = '\\\\?\\' + path
@@ -210,6 +279,16 @@ class ScriptMixin(PlatformMixin):
         win32file.RemoveDirectory('\\\\?\\' + path)
 
     def get_filename_from_url(self, url):
+        """ parse a filename base on an url.
+
+        Args:
+            url (str): url to parse for the filename
+
+        Returns:
+            str: filename parsed from the url, or `netloc` network location part
+                 of the url.
+        """
+
         parsed = urlparse.urlsplit(url.rstrip('/'))
         if parsed.path != '':
             return parsed.path.rsplit('/', 1)[-1]
@@ -217,12 +296,44 @@ class ScriptMixin(PlatformMixin):
             return parsed.netloc
 
     def _urlopen(self, url, **kwargs):
-        """ This method can be overwritten to extend its complexity
+        """ open the url `url` using `urllib2`.
+        This method can be overwritten to extend its complexity
+
+        Args:
+            url (str | urllib2.Request): url to open
+            kwargs: Arbitrary keyword arguments passed to the `urllib2.urlopen` function.
+
+        Returns:
+            file-like: file-like object with additional methods as defined in
+                       `urllib2.urlopen`_.
+            None: None may be returned if no handler handles the request.
+
+        Raises:
+            urllib2.URLError: on errors
+
+        .. _urllib2.urlopen:
+        https://docs.python.org/2/library/urllib2.html#urllib2.urlopen
         """
         return urllib2.urlopen(url, **kwargs)
 
     def _download_file(self, url, file_name):
         """ Helper script for download_file()
+        Additionaly this function logs all exceptions as warnings before
+        re-raising them
+
+        Args:
+            url (str): string containing the URL with the file location
+            file_name (str): name of the file where the downloaded file
+                             is written.
+
+        Returns:
+            str: filename of the written file on disk
+
+        Raises:
+            urllib2.URLError: on incomplete download.
+            urllib2.HTTPError: on Http error code
+            socket.timeout: on connection timeout
+            socket.error: on socket error
         """
         # If our URLs look like files, prefix them with file:// so they can
         # be loaded like URLs.
@@ -281,10 +392,23 @@ class ScriptMixin(PlatformMixin):
 
     def _retry_download_file(self, url, file_name, error_level, retry_config=None):
         """ Helper method to retry _download_file().
+        Split out so we can alter the retry logic in mozharness.mozilla.testing.gaia_test.
 
-            Split out so we can alter the retry logic in
-            mozharness.mozilla.testing.gaia_test.
-            """
+        This method calls `self.retry` on `self._download_file` using the passed
+        parameters.
+
+        Args:
+            url (str): URL path where the file is located.
+            file_name (str): file_name where the file will be written to.
+            error_level (str): log level to use in case an error occurs.
+            retry_config (dict, optional): key-value pairs to be passed to
+                                           `self.retry`. Defaults to `None`
+
+        Returns:
+            str: `self._download_file` return value is returned
+            unknown: `self.retry` `failure_status` is returned on failure, which
+                     defaults to -1
+        """
         retry_args = dict(
             failure_status=None,
             retry_exceptions=(urllib2.HTTPError, urllib2.URLError,
@@ -309,6 +433,27 @@ class ScriptMixin(PlatformMixin):
                       create_parent_dir=True, error_level=ERROR,
                       exit_code=3, retry_config=None):
         """ Python wget.
+        Download the filename at `url` into `file_name` and put it on `parent_dir`.
+        On error log with the specified `error_level`, on fatal exit with `exit_code`.
+        Execute all the above based on `retry_config` parameter.
+
+        Args:
+            url (str): URL path where the file to be downloaded is located.
+            file_name (str, optional): file_name where the file will be written to.
+                                       Defaults to urls' filename.
+            parent_dir (str, optional): directory where the downloaded file will
+                                        be written to. Defaults to current working
+                                        directory
+            create_parent_dir (bool, optional): create the parent directory if it
+                                                doesn't exist. Defaults to `True`
+            error_level (str, optional): log level to use in case an error occurs.
+                                         Defaults to `ERROR`
+            retry_config (dict, optional): key-value pairs to be passed to
+                                          `self.retry`. Defaults to `None`
+
+        Returns:
+            str: filename where the downloaded file was written to.
+            unknown: on failure, `failure_status` is returned.
         """
         if not file_name:
             try:
@@ -329,6 +474,18 @@ class ScriptMixin(PlatformMixin):
 
     def move(self, src, dest, log_level=INFO, error_level=ERROR,
              exit_code=-1):
+        """ recursively move a file or directory (src) to another location (dest).
+
+        Args:
+            src (str): file or directory path to move.
+            dest (str): file or directory path where to move the content to.
+            log_level (str): log level to use for normal operation. Defaults to
+                                `INFO`
+            error_level (str): log level to use on error. Defaults to `ERROR`
+
+        Returns:
+            int: 0 on success. -1 on error.
+        """
         self.log("Moving %s to %s" % (src, dest), level=log_level)
         try:
             shutil.move(src, dest)
@@ -344,10 +501,38 @@ class ScriptMixin(PlatformMixin):
         return 0
 
     def chmod(self, path, mode):
+        """ change `path` mode to `mode`.
+
+        Args:
+            path (str): path whose mode will be modified.
+            mode (hex): one of the values defined at `stat`_
+
+        .. _stat:
+        https://docs.python.org/2/library/os.html#os.chmod
+        """
+
         self.info("Chmoding %s to %s" % (path, str(oct(mode))))
         os.chmod(path, mode)
 
     def copyfile(self, src, dest, log_level=INFO, error_level=ERROR, copystat=False, compress=False):
+        """ copy or compress `src` into `dest`.
+
+        Args:
+            src (str): filepath to copy.
+            dest (str): filepath where to move the content to.
+            log_level (str, optional): log level to use for normal operation. Defaults to
+                                      `INFO`
+            error_level (str, optional): log level to use on error. Defaults to `ERROR`
+            copystat (bool, optional): whether or not to copy the files metadata.
+                                       Defaults to `False`.
+            compress (bool, optional): whether or not to compress the destination file.
+                                       Defaults to `False`.
+
+        Returns:
+            int: -1 on error
+            None: on success
+        """
+
         if compress:
             self.log("Compressing %s to %s" % (src, dest), level=log_level)
             try:
@@ -379,14 +564,26 @@ class ScriptMixin(PlatformMixin):
 
     def copytree(self, src, dest, overwrite='no_overwrite', log_level=INFO,
                  error_level=ERROR):
-        """an implementation of shutil.copytree however it allows for
-        dest to exist and implements different overwrite levels.
-        overwrite uses:
-        'no_overwrite' will keep all(any) existing files in destination tree
-        'overwrite_if_exists' will only overwrite destination paths that have
-                   the same path names relative to the root of the src and
-                   destination tree
-        'clobber' will replace the whole destination tree(clobber) if it exists"""
+        """ An implementation of `shutil.copytree` that allows for `dest` to exist
+        and implements different overwrite levels:
+        - 'no_overwrite' will keep all(any) existing files in destination tree
+        - 'overwrite_if_exists' will only overwrite destination paths that have
+                                the same path names relative to the root of the
+                                src and destination tree
+        - 'clobber' will replace the whole destination tree(clobber) if it exists
+
+        Args:
+            src (str): directory path to move.
+            dest (str): directory path where to move the content to.
+            overwrite (str): string specifying the overwrite level.
+            log_level (str, optional): log level to use for normal operation. Defaults to
+                                      `INFO`
+            error_level (str, optional): log level to use on error. Defaults to `ERROR`
+
+        Returns:
+            int: -1 on error
+            None: on success
+        """
 
         self.info('copying tree: %s to %s' % (src, dest))
         try:
@@ -433,14 +630,22 @@ class ScriptMixin(PlatformMixin):
     def write_to_file(self, file_path, contents, verbose=True,
                       open_mode='w', create_parent_dir=False,
                       error_level=ERROR):
-        """
-        Write contents to file_path.
+        """ Write `contents` to `file_path`, according to `open_mode`.
 
-        This doesn't currently create the parent_dir or translate into
-        abs_path; that needs to be done beforehand, since ScriptMixin doesn't
-        necessarily have access to query_abs_dirs().
+        Args:
+            file_path (str): filepath where the content will be written to.
+            contents (str): content to write to the filepath.
+            verbose (bool, optional): whether or not to log `contents` value.
+                                      Defaults to `True`
+            open_mode (str, optional): open mode to use for openning the file.
+                                       Defaults to `w`
+            create_parent_dir (bool, optional): whether or not to create the
+                                                parent directory of `file_path`
+            error_level (str, optional): log level to use on error. Defaults to `ERROR`
 
-        Returns file_path if successful, None if not.
+        Returns:
+            str: `file_path` on success
+            None: on error.
         """
         self.info("Writing to file %s" % file_path)
         if verbose:
@@ -465,14 +670,21 @@ class ScriptMixin(PlatformMixin):
     @contextmanager
     def opened(self, file_path, verbose=True, open_mode='r',
                error_level=ERROR):
-        """
-        Returns an open file, error pair, for use in a 'with' statement:
+        """ Create a context manager to use on a with statement.
 
-            with self.opened("file.txt") as (fh, err):
-                if err:
-                    self.log("badness")
-                else:
-                    for line in fh: ...
+        Args:
+            file_path (str): filepath of the file to open.
+            verbose (bool, optional): useless parameter, not used here.
+                Defaults to True.
+            open_mode (str, optional): open mode to use for openning the file.
+                Defaults to `r`
+            error_level (str, optional): log level name to use on error.
+                Defaults to `ERROR`
+
+        Yields:
+            tuple: (file object, error) pair. In case of error `None` is yielded
+                as file object, together with the corresponding error.
+                If there is no error, `None` is returned as the error.
         """
         # See opened_w_error in http://www.python.org/dev/peps/pep-0343/
         self.info("Reading from file %s" % file_path)
@@ -490,10 +702,21 @@ class ScriptMixin(PlatformMixin):
 
     def read_from_file(self, file_path, verbose=True, open_mode='r',
                        error_level=ERROR):
-        """
-        Reads from file_path.
+        """ Use `self.opened` context manager to open a file and read its
+        content.
 
-        Returns contents if successful, None if not.
+        Args:
+            file_path (str): filepath of the file to read.
+            verbose (bool, optional): whether or not to log the file content.
+                Defaults to True.
+            open_mode (str, optional): open mode to use for openning the file.
+                Defaults to `r`
+            error_level (str, optional): log level name to use on error.
+                Defaults to `ERROR`
+
+        Returns:
+            None: on error.
+            str: file content on success.
         """
         with self.opened(file_path, verbose, open_mode, error_level) as (fh, err):
             if err:
@@ -516,10 +739,15 @@ class ScriptMixin(PlatformMixin):
         return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
 
     def which(self, program):
-        """
-        OS independent implementation of Unix's which command
-        Takes in a program name
-        Returns path to executable or None
+        """ OS independent implementation of Unix's which command
+
+        Args:
+            program (str): name or path to the program whose executable is
+                being searched.
+
+        Returns:
+            None: if the executable was not found.
+            str: filepath of the executable file.
         """
         if self._is_windows() and not program.endswith(".exe"):
             program += ".exe"
@@ -546,31 +774,46 @@ class ScriptMixin(PlatformMixin):
               retry_exceptions=(Exception, ), good_statuses=None, cleanup=None,
               error_level=ERROR, error_message="%(action)s failed after %(attempts)d tries!",
               failure_status=-1, log_level=INFO, args=(), kwargs={}):
-        """ Generic retry command.
-            Ported from tools util.retry.
+        """ generic retry command. Ported from `util.retry`_
 
-            Call `action' a maximum of `attempts' times until it succeeds,
-            defaulting to self.config.get('global_retries', 5).
+        Args:
+            action (func): callable object to retry.
+            attempts (int, optinal): maximum number of times to call actions.
+                Defaults to `self.config.get('global_retries', 5)`
+            sleeptime (int, optional): number of seconds to wait between
+                attempts. Defaults to 60 and doubles each retry attempt, to
+                a maximum of `max_sleeptime'
+            max_sleeptime (int, optional): maximum value of sleeptime. Defaults
+                to 5 minutes
+            retry_exceptions (tuple, optional): Exceptions that should be caught.
+                If exceptions other than those listed in `retry_exceptions' are
+                raised from `action', they will be raised immediately. Defaults
+                to (Exception)
+            good_statuses (object, optional): return values which, if specified,
+                will result in retrying if the return value isn't listed.
+                Defaults to `None`.
+            cleanup (func, optional): If `cleanup' is provided and callable
+                it will be called immediately after an Exception is caught.
+                No arguments will be passed to it. If your cleanup function
+                requires arguments it is recommended that you wrap it in an
+                argumentless function.
+                Defaults to `None`.
+            error_level (str, optional): log level name in case of error.
+                Defaults to `ERROR`.
+            error_message (str, optional): string format to use in case
+                none of the attempts success. Defaults to
+                '%(action)s failed after %(attempts)d tries!'
+            failure_status (int, optional): flag to return in case the retries
+                were not successfull. Defaults to -1.
+            log_level (str, optional): log level name to use for normal activity.
+                Defaults to `INFO`.
+            args (tuple, optional): positional arguments to pass onto `action`.
+            kwargs (dict, optional): key-value arguments to pass onto `action`.
 
-            `sleeptime' is the number of seconds to wait between attempts,
-            defaulting to 60 and doubling each retry attempt, to a maximum of
-            `max_sleeptime'.
-
-            `retry_exceptions' is a tuple of Exceptions that should be caught.
-            If exceptions other than those listed in `retry_exceptions' are
-            raised from `action', they will be raised immediately.
-
-            `good_statuses' is a tuple of return values which, if specified,
-            will result in retrying if the return value isn't listed.
-
-            If `cleanup' is provided and callable it will be called immediately
-            after an Exception is caught.  No arguments will be passed to it.
-            If your cleanup function requires arguments it is recommended that
-            you wrap it in an argumentless function.
-
-            `args' and `kwargs' are a tuple and dict of arguments to pass onto
-            to `callable'.
-            """
+        Returns:
+            object: return value of `action`.
+            int: failure status in case of failure retries.
+        """
         if not callable(action):
             self.fatal("retry() called with an uncallable method %s!" % action)
         if cleanup and not callable(cleanup):
@@ -614,8 +857,7 @@ class ScriptMixin(PlatformMixin):
     def query_env(self, partial_env=None, replace_dict=None,
                   purge_env=(),
                   set_self_env=None, log_level=DEBUG):
-        """Environment query/generation method.
-
+        """ Environment query/generation method.
         The default, self.query_env(), will look for self.config['env']
         and replace any special strings in there ( %(PATH)s ).
         It will then store it as self.env for speeding things up later.
@@ -623,6 +865,22 @@ class ScriptMixin(PlatformMixin):
         If you specify partial_env, partial_env will be used instead of
         self.config['env'], and we don't save self.env as it's a one-off.
 
+
+        Args:
+            partial_env (dict, optional): key-value pairs of the name and value
+                of different environment variables. Defaults to an empty dictionary.
+            replace_dict (dict, optional): key-value pairs to replace the old
+                environment variables.
+            purge_env (list): environment names to delete from the final
+                environment dictionary.
+            set_self_env (boolean, optional): whether or not the environment
+                variables dictionary should be copied to `self`.
+                Defaults to True.
+            log_level (str, optional): log level name to use on normal operation.
+                Defaults to `DEBUG`.
+
+        Returns:
+            dict: environment variables names with their values.
         """
         if partial_env is None:
             if self.env is not None:
@@ -660,10 +918,24 @@ class ScriptMixin(PlatformMixin):
         However, if self.config[exe_dict][exe_name] exists, return that.
         This lets us override exe paths via config file.
 
-        'return_type' can be None (don't do anything to the value),
-        'list' (return a list), or 'string' (return a string).
-
         If we need runtime setting, we can build in self.exes support later.
+
+        Args:
+            exe_name (str): name of the executable to search for.
+            exe_dict(str, optional): name of the dictionary of executables
+              present in `self.config`. Defaults to `exes`.
+            default (str, optional): default name of the executable to search
+              for. Defaults to `exe_name`.
+            return_type (str, optional): type to which the original return
+              value will be turn into. Only 'list', 'string' and `None` are
+              supported. Defaults to `None`.
+            error_level (str, optional): log level name to use on error.
+
+        Returns:
+            list: in case return_type is 'list'
+            str: in case return_type is 'string'
+            None: in case return_type is `None`
+            Any: if the found executable is not of type list, tuple nor str.
         """
         if default is None:
             default = exe_name
@@ -697,14 +969,7 @@ class ScriptMixin(PlatformMixin):
                     output_timeout=None, fatal_exit_code=2,
                     error_level=ERROR, **kwargs):
         """Run a command, with logging and error parsing.
-
-        output_timeout is the number of seconds without output before the process
-        is killed.
-
         TODO: context_lines
-
-        output_parser lets you provide an instance of your own OutputParser
-        subclass, or pass None to use OutputParser.
 
         error_list example:
         [{'regex': re.compile('^Error: LOL J/K'), level=IGNORE},
@@ -712,6 +977,41 @@ class ScriptMixin(PlatformMixin):
          {'substr': 'THE WORLD IS ENDING', level=FATAL, contextLines='20:'}
         ]
         (context_lines isn't written yet)
+
+        Args:
+            command (str | list | tuple): command or sequence of commands to
+              execute and log.
+            cwd (str, optional): directory path from where to execute the
+              command. Defaults to `None`.
+            error_list (list, optional): list of errors to pass to
+              `mozharness.base.log.OutputParser`. Defaults to `None`.
+            halt_on_failure (bool, optional): whether or not to redefine the
+              log level as `FATAL` on errors. Defaults to False.
+            success_codes (int, optional): numeric value to compare against
+              the command return value.
+            env (dict, optional): key-value of environment values to use to
+              run the command. Defaults to None.
+            partial_env (dict, optional): key-value of environment values to
+              replace from the current environment values. Defaults to None.
+            return_type (str, optional): if equal to 'num_errors' then the
+              amount of errors matched by `error_list` is returned. Defaults
+              to 'status'.
+            throw_exception (bool, optional): whether or not to raise an
+              exception if the return value of the command doesn't match
+              any of the `success_codes`. Defaults to False.
+            output_parser (OutputParser, optional): lets you provide an
+              instance of your own OutputParser subclass. Defaults to `OutputParser`.
+            output_timeout (int): amount of seconds to wait for output before
+              the process is killed.
+            fatal_exit_code (int, optional): call `self.fatal` if the return value
+              of the command is not on in `success_codes`. Defaults to 2.
+            error_level (str, optional): log level name to use on error. Defaults
+              to `ERROR`.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            int: -1 on error.
+            Any: `command` return value is returned otherwise.
         """
         if success_codes is None:
             success_codes = [0]
@@ -838,6 +1138,42 @@ class ScriptMixin(PlatformMixin):
         ignore_errors=True is for the case where a command might produce standard
         error output, but you don't particularly care; setting to True will
         cause standard error to be logged at DEBUG rather than ERROR
+
+        Args:
+            command (str | list): command or list of commands to
+              execute and log.
+            cwd (str, optional): directory path from where to execute the
+              command. Defaults to `None`.
+            halt_on_failure (bool, optional): whether or not to redefine the
+              log level as `FATAL` on error. Defaults to False.
+            env (dict, optional): key-value of environment values to use to
+              run the command. Defaults to None.
+            silent (bool, optional): whether or not to output the stdout of
+              executing the command. Defaults to False.
+            log_level (str, optional): log level name to use on normal execution.
+              Defaults to `INFO`.
+            tmpfile_base_path (str, optional): base path of the file to which
+              the output will be writen to. Defaults to 'tmpfile'.
+            return_type (str, optional): if equal to 'output' then the complete
+              output of the executed command is returned, otherwise the written
+              filenames are returned. Defaults to 'output'.
+            save_tmpfiles (bool, optional): whether or not to save the temporary
+              files created from the command output. Defaults to False.
+            throw_exception (bool, optional): whether or not to raise an
+              exception if the return value of the command is not zero.
+              Defaults to False.
+            fatal_exit_code (int, optional): call self.fatal if the return value
+              of the command match this value.
+            ignore_errors (bool, optional): whether or not to change the log
+              level to `ERROR` for the output of stderr. Defaults to False.
+            success_codes (int, optional): numeric value to compare against
+              the command return value.
+
+        Returns:
+            None: if the cwd is not a directory.
+            None: on IOError.
+            tuple: stdout and stderr filenames.
+            str: stdout output.
         """
         if cwd:
             if not os.path.isdir(cwd):
@@ -936,8 +1272,17 @@ class ScriptMixin(PlatformMixin):
             return output
 
     def _touch_file(self, file_name, times=None, error_level=FATAL):
-        """touch a file; If times is None, then the file's access and modified
-           times are set to the current time
+        """touch a file.
+
+        Args:
+            file_name (str): name of the file to touch.
+            times (tuple, optional): 2-tuple as specified by `os.utime`_
+              Defaults to None.
+            error_level (str, optional): log level name in case of error.
+              Defaults to `FATAL`.
+
+        .. _`os.utime`:
+           https://docs.python.org/3.4/library/os.html?highlight=os.utime#os.utime
         """
         self.info("Touching: %s" % file_name)
         try:
@@ -953,6 +1298,10 @@ class ScriptMixin(PlatformMixin):
     def unpack(self, filename, extract_to):
         '''
         This method allows us to extract a file regardless of its extension
+
+        Args:
+            filename (str): filename of the compressed file.
+            extract_to (str): where to extract the compressed file.
         '''
         # XXX: Make sure that filename has a extension of one of our supported file formats
         m = re.search('\.tar\.(bz2|gz)$', filename)
@@ -1551,4 +1900,5 @@ class BaseScript(ScriptMixin, LogMixin, object):
 
 # __main__ {{{1
 if __name__ == '__main__':
+    """ Useless comparison, due to the `pass` keyword on its body"""
     pass
