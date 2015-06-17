@@ -1713,10 +1713,6 @@ or run without that action (ie: --no-{action})"
                        "log for errors.")
 
     def check_test(self):
-        if not self.config.get('enable_check_test'):
-            self.info("'enable_check_test' is false; skipping")
-            return
-
         c = self.config
         dirs = self.query_abs_dirs()
 
