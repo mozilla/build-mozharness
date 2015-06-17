@@ -2,7 +2,7 @@ config = {
     "nightly_build": True,
     "branch": "mozilla-aurora",
     "en_us_binary_url": "http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/latest-mozilla-aurora/",
-    "update_channel": "nightly",
+    "update_channel": "aurora",
     "latest_mar_dir": '/pub/mozilla.org/firefox/nightly/latest-mozilla-aurora-l10n',
 
     # l10n
