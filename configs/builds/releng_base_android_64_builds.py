@@ -12,7 +12,6 @@ config = {
         'build',
         'upload-files',
         'sendchange',
-        'check-test',
         'multi-l10n',
         'update',  # decided by query_is_nightly()
     ],
