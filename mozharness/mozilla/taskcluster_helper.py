@@ -11,17 +11,13 @@ class Taskcluster(LogMixin):
     """
     Helper functions to report data to Taskcluster
     """
-    def __init__(self, branch, stage_platform, revision, pushdate, client_id, access_token, index, log_obj):
-        self.branch = branch
-        self.platform = stage_platform
-        self.revision = revision
-        self.pushdate = pushdate
-        self.index = index
+    def __init__(self, branch, rank, client_id, access_token, log_obj):
+        self.rank = rank
         self.log_obj = log_obj
 
         # Try builds use a different set of credentials which have access to the
         # buildbot-try scope.
-        if self.branch == 'try':
+        if branch == 'try':
             self.buildbot = 'buildbot-try'
         else:
             self.buildbot = 'buildbot'
@@ -37,9 +33,10 @@ class Taskcluster(LogMixin):
         self.task_id = taskcluster.slugId()
         self.put_file = taskcluster.utils.putFile
 
-    def create_task(self):
+    def create_task(self, routes):
         curdate = datetime.utcnow()
         self.info("Taskcluster taskId: %s" % self.task_id)
+        self.info("Routes: %s" % routes)
         task = self.taskcluster_queue.createTask({
             # The null-provisioner and buildbot worker type don't actually exist.
             # So this task doesn't actually run - we just need to create the task so
@@ -48,15 +45,12 @@ class Taskcluster(LogMixin):
             "workerType": self.buildbot,
             "created": curdate,
             "deadline": curdate + timedelta(hours=1),
-            "routes": [
-                "%s.buildbot.branches.%s.%s" % (self.index, self.branch, self.platform),
-                "%s.buildbot.revisions.%s.%s.%s" % (self.index, self.revision, self.branch, self.platform),
-            ],
+            "routes": routes,
             "payload": {
             },
             "extra": {
                 "index": {
-                    "rank": self.pushdate,
+                    "rank": self.rank,
                 },
             },
             "metadata": {

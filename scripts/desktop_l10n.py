@@ -12,6 +12,8 @@ In this version, a single partial is supported.
 import os
 import re
 import sys
+import shlex
+import logging
 
 import subprocess
 
@@ -20,6 +22,7 @@ sys.path.insert(1, os.path.dirname(sys.path[0]))
 
 from mozharness.base.errors import BaseErrorList, MakefileErrorList
 from mozharness.base.script import BaseScript
+from mozharness.base.transfer import TransferMixin
 from mozharness.base.vcs.vcsbase import VCSMixin
 from mozharness.mozilla.buildbot import BuildbotMixin
 from mozharness.mozilla.purge import PurgeMixin
@@ -30,6 +33,8 @@ from mozharness.mozilla.mock import MockMixin
 from mozharness.mozilla.release import ReleaseMixin
 from mozharness.mozilla.signing import SigningMixin
 from mozharness.mozilla.updates.balrog import BalrogMixin
+from mozharness.mozilla.taskcluster_helper import Taskcluster
+from mozharness.base.python import VirtualenvMixin
 from mozharness.mozilla.mock import ERROR_MSGS
 from mozharness.base.log import FATAL
 
@@ -70,7 +75,7 @@ runtime_config_tokens = ('buildid', 'version', 'locale', 'from_buildid',
 # DesktopSingleLocale {{{1
 class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
                           VCSMixin, SigningMixin, PurgeMixin, BaseScript,
-                          BalrogMixin, MarMixin):
+                          BalrogMixin, MarMixin, VirtualenvMixin, TransferMixin):
     """Manages desktop repacks"""
     config_options = [[
         ['--balrog-config', ],
@@ -161,6 +166,7 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
                 "list-locales",
                 "setup",
                 "repack",
+                "taskcluster-upload",
                 "funsize-props",
                 "submit-to-balrog",
                 "summary",
@@ -182,6 +188,13 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
                 "clobber_file": 'CLOBBER',
                 "appName": "Firefox",
                 "hashType": "sha512",
+                "taskcluster_credentials_file": "oauth.txt",
+                'virtualenv_modules': [
+                    'requests==2.2.1',
+                    'PyHawk-with-a-single-extra-commit==0.1.5',
+                    'taskcluster==0.0.15',
+                ],
+                'virtualenv_path': 'venv',
             },
         }
         #
@@ -205,6 +218,13 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
         self.l10n_dir = None
         self.package_urls = {}
         self.partials = {}
+        self.pushdate = None
+        # Each locale adds its list of files to upload_files - some will be
+        # duplicates (like the mar binaries), so we use a set to prune those
+        # when uploading to taskcluster.
+        self.upload_files = set()
+
+        self.create_virtualenv()
         if 'mock_target' in self.config:
             self.enable_mock()
 
@@ -757,6 +777,26 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
             ret = FAILURE
         return ret
 
+    def get_upload_files(self, locale):
+        # The tree doesn't have a good way of exporting the list of files
+        # created during locale generation, but we can grab them by echoing the
+        # UPLOAD_FILES variable for each locale.
+        env = self.query_l10n_env()
+        target = ['echo-variable-UPLOAD_FILES', 'AB_CD=%s' % (locale)]
+        dirs = self.query_abs_dirs()
+        cwd = dirs['abs_locales_dir']
+        output = self._get_output_from_make(target=target, cwd=cwd, env=env)
+        self.info('UPLOAD_FILES is "%s"' % (output))
+        files = shlex.split(output)
+        if not files:
+            self.error('failed to get upload file list for locale %s' % (locale))
+            return FAILURE
+
+        for f in files:
+            abs_file = os.path.abspath(os.path.join(cwd, f))
+            self.upload_files.update([abs_file])
+        return SUCCESS
+
     def make_installers(self, locale):
         """wrapper for make installers-(locale)"""
         env = self.query_l10n_env()
@@ -839,6 +879,9 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
             if self.generate_partial_updates(locale) != 0:
                 self.error("generate partials %s failed" % (locale))
                 return FAILURE
+        if self.get_upload_files(locale):
+            self.error("failed to get list of files to upload for locale %s" % (locale))
+            return FAILURE
         # now try to upload the artifacts
         if self.make_upload(locale):
             self.error("make upload for locale %s failed!" % (locale))
@@ -1305,6 +1348,98 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
         self.info('funsize info: %s' % funsize_info)
         self.set_buildbot_property('funsize_info', json.dumps(funsize_info),
                                    write_to_file=True)
+
+    def taskcluster_upload(self):
+        auth = os.path.join(os.getcwd(), self.config['taskcluster_credentials_file'])
+        credentials = {}
+        execfile(auth, credentials)
+        client_id = credentials.get('taskcluster_clientId')
+        access_token = credentials.get('taskcluster_accessToken')
+        if not client_id or not access_token:
+            self.warning('Skipping S3 file upload: No taskcluster credentials.')
+            return
+
+        # We need to activate the virtualenv so that we can import taskcluster
+        # (and its dependent modules, like requests and hawk).  Normally we
+        # could create the virtualenv as an action, but due to some odd
+        # dependencies with query_build_env() being called from build(), which
+        # is necessary before the virtualenv can be created.
+        self.activate_virtualenv()
+
+        # Enable Taskcluster debug logging, so at least we get some debug
+        # messages while we are testing uploads.
+        logging.getLogger('taskcluster').setLevel(logging.DEBUG)
+
+        branch = self.config['branch']
+        platform = self.config['platform']
+        revision = self._query_revision()
+        tc = Taskcluster(self.config['branch'],
+                         self.query_pushdate(),
+                         client_id,
+                         access_token,
+                         self.log_obj,
+                         )
+
+        index = self.config.get('taskcluster_index', 'index.garbage.staging')
+        # TODO: Bug 1165980 - these should be in tree. Note the '.l10n' suffix.
+        routes = [
+            "%s.buildbot.branches.%s.%s.l10n" % (index, branch, platform),
+            "%s.buildbot.revisions.%s.%s.%s.l10n" % (index, revision, branch, platform),
+        ]
+
+        task = tc.create_task(routes)
+        tc.claim_task(task)
+
+        self.info("Uploading files to S3: %s" % self.upload_files)
+        for upload_file in self.upload_files:
+            # Create an S3 artifact for each file that gets uploaded. We also
+            # check the uploaded file against the property conditions so that we
+            # can set the buildbot config with the correct URLs for package
+            # locations.
+            tc.create_artifact(task, upload_file)
+        tc.report_completed(task)
+
+    def query_pushdate(self):
+        if self.pushdate:
+            return self.pushdate
+
+        mozilla_dir = self.config['mozilla_dir']
+        repo = None
+        for repository in self.config['repos']:
+            if repository.get('dest') == mozilla_dir:
+                repo = repository['repo']
+                break
+
+        if not repo:
+            self.fatal("Unable to determine repository for querying the pushdate.")
+        try:
+            url = '%s/json-pushes?changeset=%s' % (
+                repo,
+                self._query_revision(),
+            )
+            self.info('Pushdate URL is: %s' % url)
+            contents = self.retry(self.load_json_from_url, args=(url,))
+
+            # The contents should be something like:
+            # {
+            #   "28537": {
+            #    "changesets": [
+            #     "1d0a914ae676cc5ed203cdc05c16d8e0c22af7e5",
+            #    ],
+            #    "date": 1428072488,
+            #    "user": "user@mozilla.com"
+            #   }
+            # }
+            #
+            # So we grab the first element ("28537" in this case) and then pull
+            # out the 'date' field.
+            self.pushdate = contents.itervalues().next()['date']
+            self.info('Pushdate is: %s' % self.pushdate)
+        except Exception:
+            self.exception("Failed to get pushdate from hg.mozilla.org")
+            raise
+
+        return self.pushdate
 
 # main {{{
 if __name__ == '__main__':
