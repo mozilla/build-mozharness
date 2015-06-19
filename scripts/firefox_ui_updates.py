@@ -57,7 +57,6 @@ class FirefoxUIUpdates(FirefoxUITests):
             }],
             [['--tools-tag'], {
                 'dest': 'tools_tag',
-                'default': 'default',
                 'help': 'Which revision/tag to use for the tools repository.',
             }],
             [['--update-verify-config'], {
@@ -108,6 +107,11 @@ class FirefoxUIUpdates(FirefoxUITests):
                 dirs['tools_dir'], 'release', 'updates',
                 self.config['update_verify_config']
             )
+
+        if self.config.get('tools_tag') is None:
+            # We want to make sure that anyone trying to reproduce a job will
+            # is using the exact tools tag for reproducibility's sake
+            self.fatal('Make sure to specify the --tools-tag')
 
         self.tools_repo = self.config['tools_repo']
         self.tools_tag = self.config['tools_tag']
@@ -264,15 +268,18 @@ class FirefoxUIUpdates(FirefoxUITests):
 
         # Return more output if we fail
         if return_code != 0:
-            self.warning('== Dumping gecko output ==')
-            contents = self.read_from_file(gecko_log, verbose=False)
-            if contents:
+            if os.path.exists(gecko_log):
+                contents = self.read_from_file(gecko_log, verbose=False)
+                self.warning('== Dumping gecko output ==')
                 self.warning(contents)
-            self.warning('== End of gecko output ==')
+                self.warning('== End of gecko output ==')
+            else:
+                self.warning('No gecko.log was found: %s' % gecko_log)
 
         if cleanup:
             for filepath in (installer_path, gecko_log):
                 if os.path.exists(filepath):
+                    self.debug('Removing %s' % filepath)
                     os.remove(filepath)
 
         return return_code
@@ -315,11 +322,16 @@ class FirefoxUIUpdates(FirefoxUITests):
                     retcode = self._run_test(installer_path, self.channel)
                     if retcode != 0:
                         self.warning('FAIL: firefox-ui-update has failed.' )
-                        self.info('You can run the following command to reproduce the issue:')
-                        self.info('python scripts/firefox_ui_updates.py --run-tests '
-                                  '--installer-url %s --update-channel %s --firefox-ui-branch %s'
-                                  % (url, self.channel, self.firefox_ui_branch))
+                        self.info('You can run the following command on the same machine to reproduce the issue:')
+                        self.info('python scripts/firefox_ui_updates.py --cfg generic_releng_config.py '
+                                  '--cfg update_tests/%s.py --tools-tag %s --installer-url %s '
+                                  '--determine-testing-configuration --run-tests '
+                                  % (self.firefox_ui_branch, self.tools_tag, url))
                         self.info('If you want to run this on your development machine:')
+                        self.info('python scripts/firefox_ui_updates.py '
+                                  '--cfg update_tests/%s.py --tools-tag %s --installer-url %s '
+                                  '--cfg developer_config.py '
+                                  % (self.firefox_ui_branch, self.tools_tag, url))
                         self.info('python scripts/firefox_ui_updates.py --cfg developer_config.py '
                                   '--installer-url %s --update-channel %s --firefox-ui-branch %s'
                                   % (url, self.channel, self.firefox_ui_branch))
