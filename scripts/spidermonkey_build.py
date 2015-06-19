@@ -384,11 +384,13 @@ class SpidermonkeyBuild(MockMixin,
             self.fatal("checkout failed: " + str(e), exit_code=RETRY)
 
     def get_blobs(self):
-        dirs = self.query_abs_dirs()
+        work_dir = self.query_abs_dirs()['abs_work_dir']
+        if not os.path.exists(work_dir):
+            self.mkdir_p(work_dir)
         self.tooltool_fetch(self.query_compiler_manifest(), "sh " + self.config['compiler_setup'],
-                            dirs['abs_work_dir'])
+                            work_dir)
         self.tooltool_fetch(self.query_sixgill_manifest(), "sh " + self.config['sixgill_setup'],
-                            dirs['abs_work_dir'])
+                            work_dir)
 
     def clobber_shell(self):
         self.analysis.clobber_shell(self)
