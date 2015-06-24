@@ -336,7 +336,7 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
                               error_list=MakefileErrorList):
             self.fatal("Configure failed!")
         for make_dir in c.get('make_dirs', []):
-            self.run_command_m([make],
+            self.run_command_m([make, 'export'],
                                cwd=os.path.join(dirs['abs_objdir'], make_dir),
                                env=env,
                                error_list=MakefileErrorList,

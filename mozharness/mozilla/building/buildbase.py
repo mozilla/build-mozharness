@@ -1377,16 +1377,19 @@ or run without that action (ie: --no-{action})"
         logging.getLogger('taskcluster').setLevel(logging.DEBUG)
 
         tc = Taskcluster(self.branch,
-                         self.stage_platform,
-                         self.query_revision(),
-                         self.query_pushdate(),
+                         self.query_pushdate(), # Use pushdate as the rank
                          client_id,
                          access_token,
-                         self.config.get('taskcluster_index', 'index'),
                          self.log_obj,
                          )
 
-        task = tc.create_task()
+        index = self.config.get('taskcluster_index', 'index.garbage.staging')
+        # TODO: Bug 1165980 - these should be in tree
+        routes = [
+            "%s.buildbot.branches.%s.%s" % (index, self.branch, self.stage_platform),
+            "%s.buildbot.revisions.%s.%s.%s" % (index, self.query_revision(), self.branch, self.stage_platform),
+        ]
+        task = tc.create_task(routes)
         tc.claim_task(task)
 
         # Some trees may not be setting uploadFiles, so default to []. Normally

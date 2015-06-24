@@ -72,5 +72,9 @@ config = {
                 os.getcwd(), 'build', 'tools', 'buildfarm', 'utils', 'hgtool.py'
             )
         ],
+        'virtualenv': [
+            sys.executable,
+            'c:/mozilla-build/buildbotve/virtualenv.py'
+        ],
     }
 }
