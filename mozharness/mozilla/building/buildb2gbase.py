@@ -461,9 +461,12 @@ class B2GBuildBaseScript(BuildbotMixin, MockMixin,
                     cmd = ['./repo', 'forall', '-c', 'git show-ref -q --head HEAD || rm -rfv $PWD']
                     self.run_command(cmd, cwd=dirs['work_dir'])
 
+                # bug https://bugzil.la/1177190 - workaround - change
+                # timeout from 55 to 10 min, based on "normal" being
+                # about 7.5 minutes
                 config_result = self.run_command([
                     './config.sh', '-q', self.config['target'], manifest_filename,
-                ], cwd=dirs['work_dir'], output_timeout=55 * 60)
+                ], cwd=dirs['work_dir'], output_timeout=10 * 60)
 
                 # TODO: Check return code from these? retry?
                 # Run git reset --hard to make sure we're in a clean state
