@@ -7,7 +7,6 @@
 
 import copy
 import os
-import re
 import sys
 
 # load modules from parent dir
@@ -133,6 +132,8 @@ class LuciddreamTest(TestingMixin, MercurialScript, MozbaseMixin, BaseScript,
             return self.abs_dirs
         abs_dirs = super(LuciddreamTest, self).query_abs_dirs()
         dirs = {}
+        dirs['abs_blob_upload_dir'] = os.path.join(
+            abs_dirs['abs_work_dir'], 'logs')
         dirs['abs_test_install_dir'] = os.path.join(
             abs_dirs['abs_work_dir'], 'tests')
         dirs['abs_emulator_dir'] = os.path.join(
@@ -251,7 +252,8 @@ class LuciddreamTest(TestingMixin, MercurialScript, MozbaseMixin, BaseScript,
         code = self.run_command(cmd, env=env,
                                 output_timeout=1000,
                                 output_parser=ld_parser,
-                                success_codes=[0])
+                                success_codes=[0],
+                                cwd=dirs['abs_work_dir'])
 
         level = INFO
         if code == 0 and ld_parser.passed > 0 and ld_parser.failed == 0:
@@ -270,6 +272,14 @@ class LuciddreamTest(TestingMixin, MercurialScript, MozbaseMixin, BaseScript,
         self.log("Luciddream exited with return code %s: %s" % (code, status),
                  level=level)
         self.buildbot_status(tbpl_status)
+
+        if not os.path.exists(dirs['abs_blob_upload_dir']):
+            self.mkdir_p(dirs['abs_blob_upload_dir'])
+        for filename in os.listdir(dirs['abs_work_dir']):
+            if filename.endswith('.log'):
+                self.copyfile(os.path.join(dirs['abs_work_dir'], filename),
+                              os.path.join(dirs['abs_blob_upload_dir'], filename))
+
 
 if __name__ == '__main__':
     luciddreamTest = LuciddreamTest()
