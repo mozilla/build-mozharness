@@ -1470,6 +1470,18 @@ or run without that action (ie: --no-{action})"
                         break
         tc.report_completed(task)
 
+        # Report some important file sizes for display in treeherder
+        dirs = self.query_abs_dirs()
+        paths = [
+            (packageName, os.path.join(dirs['abs_obj_dir'], 'dist', packageName)),
+            ('libxul.so', os.path.join(dirs['abs_obj_dir'], 'dist', 'bin', 'libxul.so')),
+            ('omni.ja', os.path.join(dirs['abs_obj_dir'], 'dist', 'fennec', 'assets', 'omni.ja')),
+            ('classes.dex', os.path.join(dirs['abs_obj_dir'], 'dist', 'fennec', 'classes.dex'))
+        ]
+        for (name, path) in paths:
+            if os.path.exists(path):
+                self.info('TinderboxPrint: Size of %s<br/>%s bytes\n' % (name, self.query_filesize(path)))
+
     def _set_file_properties(self, file_name, find_dir, prop_type,
                              error_level=ERROR):
         c = self.config
