@@ -224,7 +224,6 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
         # when uploading to taskcluster.
         self.upload_files = set()
 
-        self.create_virtualenv()
         if 'mock_target' in self.config:
             self.enable_mock()
 
@@ -1364,6 +1363,9 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
         # could create the virtualenv as an action, but due to some odd
         # dependencies with query_build_env() being called from build(), which
         # is necessary before the virtualenv can be created.
+        self.disable_mock()
+        self.create_virtualenv()
+        self.enable_mock()
         self.activate_virtualenv()
 
         # Enable Taskcluster debug logging, so at least we get some debug
