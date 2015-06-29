@@ -237,7 +237,8 @@ class FirefoxUIUpdates(FirefoxUITests):
             exit(1)
 
 
-    def _run_test(self, installer_path, update_channel=None, cleanup=True):
+    def _run_test(self, installer_path, update_channel=None, cleanup=True,
+                  marionette_port=2828):
         '''
         All required steps for running the tests against an installer.
         '''
@@ -251,7 +252,9 @@ class FirefoxUIUpdates(FirefoxUITests):
         cmd = [
             fx_ui_tests_bin,
             '--installer', installer_path,
-            '--gecko-log=%s' % gecko_log,
+            # Log to stdout until tests are stable.
+            '--gecko-log=-',
+            '--address=localhost:%s' % marionette_port,
         ]
 
         for arg in self.harness_extra_args:
@@ -308,6 +311,9 @@ class FirefoxUIUpdates(FirefoxUITests):
                 if self.config['dry_run']:
                     continue
 
+                # Each locale gets a fresh port to avoid address in use errors in case of
+                # tests that time out unexpectedly.
+                marionette_port = 2827
                 for locale in rel_info['locales']:
                     # Determine from where to download the file
                     url = '%s/%s' % (
@@ -319,7 +325,9 @@ class FirefoxUIUpdates(FirefoxUITests):
                         parent_dir=dirs['abs_work_dir']
                     )
 
-                    retcode = self._run_test(installer_path, self.channel)
+                    marionette_port += 1
+                    retcode = self._run_test(installer_path, self.channel,
+                                             marionette_port=marionette_port)
                     if retcode != 0:
                         self.warning('FAIL: firefox-ui-update has failed.' )
                         self.info('You can run the following command on the same machine to reproduce the issue:')
