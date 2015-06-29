@@ -79,7 +79,7 @@ config = {
         "jittest": []
     },
     "all_cppunittest_suites": {
-        "cppunittest": ['cppunittest']
+        "cppunittest": ['cppunittests']
     },
     "find_links": [
         "http://pypi.pvt.build.mozilla.org/pub",

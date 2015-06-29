@@ -1457,6 +1457,10 @@ or run without that action (ie: --no-{action})"
         # Also upload our mozharness log files
         files.extend([os.path.join(self.log_obj.abs_log_dir, x) for x in self.log_obj.log_files.values()])
 
+        # Also upload our buildprops.json file.
+        dirs = self.query_abs_dirs()
+        files.extend([os.path.join(dirs['base_work_dir'], 'buildprops.json')])
+
         for upload_file in files:
             # Create an S3 artifact for each file that gets uploaded. We also
             # check the uploaded file against the property conditions so that we

@@ -180,7 +180,7 @@ class B2GEmulatorTest(TestingMixin, VCSMixin, BaseScript, BlobUploadMixin):
         dirs['abs_xpcshell_dir'] = os.path.join(
             dirs['abs_test_install_dir'], 'xpcshell')
         dirs['abs_cppunittest_dir'] = os.path.join(
-            dirs['abs_test_install_dir'], 'cppunittest')
+            dirs['abs_test_install_dir'], 'cppunittests')
         for key in dirs.keys():
             if key not in abs_dirs:
                 abs_dirs[key] = dirs[key]
