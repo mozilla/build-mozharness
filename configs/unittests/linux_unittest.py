@@ -50,7 +50,7 @@ config = {
         "webapprt": ["mochitest/*"],
         "reftest": ["reftest/*", "jsreftest/*"],
         "xpcshell": ["xpcshell/*"],
-        "cppunittest": ["cppunittest/*"],
+        "cppunittest": ["cppunittests/*"],
         "jittest": ["jit-test/*"],
         "mozbase": ["mozbase/*"],
         "mozmill": ["mozmill/*"],
@@ -112,7 +112,7 @@ config = {
                      "%(abs_app_dir)s/" + XPCSHELL_NAME]
     },
     "all_cppunittest_suites": {
-        "cppunittest": ['tests/cppunittest']
+        "cppunittest": ['tests/cppunittests']
     },
     "all_jittest_suites": {
         "jittest": [],

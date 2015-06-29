@@ -206,7 +206,7 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
         dirs['abs_webapprt_dir'] = os.path.join(dirs['abs_test_install_dir'], "mochitest")
         dirs['abs_reftest_dir'] = os.path.join(dirs['abs_test_install_dir'], "reftest")
         dirs['abs_xpcshell_dir'] = os.path.join(dirs['abs_test_install_dir'], "xpcshell")
-        dirs['abs_cppunittest_dir'] = os.path.join(dirs['abs_test_install_dir'], "cppunittest")
+        dirs['abs_cppunittest_dir'] = os.path.join(dirs['abs_test_install_dir'], "cppunittests")
         dirs['abs_blob_upload_dir'] = os.path.join(abs_dirs['abs_work_dir'], 'blobber_upload_dir')
         dirs['abs_jittest_dir'] = os.path.join(dirs['abs_test_install_dir'], "jit-test", "jit-test")
         dirs['abs_mozbase_dir'] = os.path.join(dirs['abs_test_install_dir'], "mozbase")

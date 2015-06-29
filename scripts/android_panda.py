@@ -414,7 +414,7 @@ class PandaTest(TestingMixin, MercurialScript, BlobUploadMixin, MozpoolMixin, Bu
         dirs['abs_jittest_dir'] = os.path.join(dirs['abs_test_install_dir'], "jit-test", "jit-test")
         dirs['shutdown_dir'] = abs_dirs['abs_work_dir'].rsplit("/", 2)[0]
         dirs['abs_cppunittest_dir'] = os.path.join(
-            dirs['abs_test_install_dir'], 'cppunittest')
+            dirs['abs_test_install_dir'], 'cppunittests')
         for key in dirs.keys():
             if key not in abs_dirs:
                 abs_dirs[key] = dirs[key]
