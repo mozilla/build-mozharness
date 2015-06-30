@@ -663,7 +663,9 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
 
     def download_and_extract(self):
         # This will download and extract the fennec.apk and tests.zip
-        super(AndroidEmulatorTest, self).download_and_extract()
+        suite_categories = set([self.test_suite_definitions[c]['category']
+                                for c in self.test_suites])
+        super(AndroidEmulatorTest, self).download_and_extract(suite_categories=suite_categories)
         dirs = self.query_abs_dirs()
 
         for suite_name in self.test_suites:
