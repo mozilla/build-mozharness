@@ -102,12 +102,6 @@ class FirefoxUIUpdates(FirefoxUITests):
 
         dirs = self.query_abs_dirs()
 
-        if self.config.get('update_verify_config'):
-            self.updates_config_file = os.path.join(
-                dirs['tools_dir'], 'release', 'updates',
-                self.config['update_verify_config']
-            )
-
         if self.config.get('tools_tag') is None:
             # We want to make sure that anyone trying to reproduce a job will
             # is using the exact tools tag for reproducibility's sake
@@ -116,6 +110,15 @@ class FirefoxUIUpdates(FirefoxUITests):
         self.tools_repo = self.config['tools_repo']
         self.tools_tag = self.config['tools_tag']
 
+        if self.config.get('update_verify_config'):
+            self.updates_config_file = os.path.join(
+                dirs['tools_dir'], 'release', 'updates',
+                self.config['update_verify_config']
+            )
+        else:
+            self.fatal('Make sure to specify --update-verify-config. '
+                       'See under the directory release/updates in %s.' % self.tools_repo)
+
         self.installer_url = self.config.get('installer_url')
         self.installer_path = self.config.get('installer_path')
 
@@ -123,11 +126,6 @@ class FirefoxUIUpdates(FirefoxUITests):
             if not os.path.exists(self.installer_path):
                 self.critical('Please make sure that the path to the installer exists.')
                 exit(1)
-
-        if 'checkout' in self.actions and (self.installer_url or self.installer_path):
-            assert self.firefox_ui_branch, \
-                'When you use --installer-url or --installer-path you need to specify ' \
-                '--firefox-ui-branch. Valid values are mozilla-{central,aurora,beta,release,esr38}.'
 
         assert 'update_verify_config' in self.config or self.installer_url or self.installer_path, \
             'Either specify --update-verify-config, --installer-url or --installer-path.'
@@ -332,14 +330,16 @@ class FirefoxUIUpdates(FirefoxUITests):
                         self.warning('FAIL: firefox-ui-update has failed.' )
                         self.info('You can run the following command on the same machine to reproduce the issue:')
                         self.info('python scripts/firefox_ui_updates.py --cfg generic_releng_config.py '
-                                  '--cfg update_tests/%s.py --tools-tag %s --installer-url %s '
+                                  '--firefox-ui-branch %s --update-verify-config %s '
+                                  '--tools-tag %s --installer-url %s '
                                   '--determine-testing-configuration --run-tests '
-                                  % (self.firefox_ui_branch, self.tools_tag, url))
+                                  % (self.firefox_ui_branch, self.updates_config_file, self.tools_tag, url))
                         self.info('If you want to run this on your development machine:')
                         self.info('python scripts/firefox_ui_updates.py '
-                                  '--cfg update_tests/%s.py --tools-tag %s --installer-url %s '
+                                  '--firefox-ui-branch %s --update-verify-config %s '
+                                  '--tools-tag %s --installer-url %s '
                                   '--cfg developer_config.py '
-                                  % (self.firefox_ui_branch, self.tools_tag, url))
+                                  % (self.firefox_ui_branch, self.updates_config_file, self.tools_tag, url))
                         self.info('python scripts/firefox_ui_updates.py --cfg developer_config.py '
                                   '--installer-url %s --update-channel %s --firefox-ui-branch %s'
                                   % (url, self.channel, self.firefox_ui_branch))
