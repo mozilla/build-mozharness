@@ -1701,35 +1701,30 @@ or run without that action (ie: --no-{action})"
             self._ccache_s()
 
     def preflight_package_source(self):
-        """ a subset of preflight_build"""
-        self._checkout_source()
-        self._get_mozconfig()
+        # Make sure to have an empty .mozconfig. Removing it is not enough,
+        # because MOZ_OBJDIR is not used in this case
+        self._touch_file(os.path.join(self.query_abs_dirs()['abs_src_dir'],
+                                      '.mozconfig'))
 
     def package_source(self):
         """generates source archives and uploads them"""
         env = self.query_build_env()
         env.update(self.query_mach_build_env())
+        python = self.query_exe('python2.7')
 
         self.run_command_m(
-            command=['make', '-f', 'client.mk', 'configure', 'no_tooltool=1'],
+            command=[python, 'mach', '--log-no-times', 'configure'],
             cwd=self.query_abs_dirs()['abs_src_dir'],
-            env=env, output_timeout=60*3
+            env=env, output_timeout=60*3, halt_on_failure=True,
         )
-        return_code = self.run_command_m(
-            command=['make', 'source-package',
-                     'hg-bundle', 'HG_BUNDLE_REVISION=%s' % self.query_revision(),
-                     'source-upload', 'UPLOAD_HG_BUNDLE=1'],
+        self.run_command_m(
+            command=[
+                'make', 'source-package', 'hg-bundle',
+                'HG_BUNDLE_REVISION=%s' % self.query_revision(),
+            ],
             cwd=self.query_abs_dirs()['abs_obj_dir'],
-            env=env, output_timeout=60*45
+            env=env, output_timeout=60*45, halt_on_failure=True,
         )
-
-        if return_code:
-            self.return_code = self.worst_level(
-                EXIT_STATUS_DICT[TBPL_FAILURE],  self.return_code,
-                AUTOMATION_EXIT_CODES[::-1]
-            )
-            self.fatal("make did not run successfully. Please check "
-                       "log for errors.")
 
     def check_test(self):
         c = self.config
