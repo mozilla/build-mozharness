@@ -100,12 +100,12 @@ class MakeUploadOutputParser(OutputParser):
         ('codeCoverageUrl', "m.endswith('code-coverage-gcno.zip')"),
     ]
 
-    def __init__(self, use_package_as_marfile=False, **kwargs):
+    def __init__(self, use_package_as_marfile=False, package_filename=None, **kwargs):
         super(MakeUploadOutputParser, self).__init__(**kwargs)
         self.matches = {}
         self.tbpl_status = TBPL_SUCCESS
         self.use_package_as_marfile = use_package_as_marfile
-        self.package_filename = None
+        self.package_filename = package_filename
 
     def parse_single_line(self, line):
         prop_assigned = False
@@ -120,23 +120,30 @@ class MakeUploadOutputParser(OutputParser):
                     break
             if not prop_assigned:
                 # if we found a match but haven't identified the prop then this
-                # is the packageURL. Let's consider this the else block
-                self.matches['packageUrl'] = m
+                # is the packageURL. Alternatively, if we already know the
+                # package filename, then use that explicitly so we don't pick up
+                # just any random file and assume it's the package.
+                if not self.package_filename or m.endswith(self.package_filename):
+                    self.matches['packageUrl'] = m
 
-                # For android builds, the package is also used as the mar file.
-                # Grab the first one, since that is the one in the
-                # nightly/YYYY/MM directory
-                if self.use_package_as_marfile and 'completeMarUrl' not in self.matches:
-                    self.info("Using package as mar file: %s" % m)
-                    self.matches['completeMarUrl'] = m
-                    u, self.package_filename = os.path.split(m)
+                    # For android builds, the package is also used as the mar file.
+                    # Grab the first one, since that is the one in the
+                    # nightly/YYYY/MM directory
+                    if self.use_package_as_marfile and 'completeMarUrl' not in self.matches:
+                        self.info("Using package as mar file: %s" % m)
+                        self.matches['completeMarUrl'] = m
+                        u, self.package_filename = os.path.split(m)
 
         if self.use_package_as_marfile and self.package_filename:
-            pat = r'''^Uploading (.*/%s)$''' % self.package_filename
+            # The checksum file is also dumped during 'make upload'. Look
+            # through here to get the hash and filesize of the android package
+            # for balrog submission.
+            pat = r'''^([^ ]*) sha512 ([0-9]*) %s$''' % self.package_filename
             m = re.compile(pat).match(line)
             if m:
-                m = m.group(1)
-                self.matches['packageFilename'] = m
+                self.matches['completeMarHash'] = m.group(1)
+                self.matches['completeMarSize'] = m.group(2)
+                self.info("Using package as mar file and found package hash=%s size=%s" % (m.group(1), m.group(2)))
 
         # now let's check for retry errors which will give log levels:
         # tbpl status as RETRY and mozharness status as WARNING
@@ -1671,9 +1678,26 @@ or run without that action (ie: --no-{action})"
         self.run_command_m(cmd, env=self.query_build_env(), cwd=base_work_dir,
                            halt_on_failure=True)
 
+        package_cmd = [
+            'make',
+            'echo-variable-PACKAGE',
+            'AB_CD=multi',
+        ]
+        package_filename = self.get_output_from_command(
+            package_cmd,
+            cwd=objdir,
+            ignore_errors=True,
+        )
+        if not package_filename:
+            self.fatal("Unable to determine the package filename for the multi-l10n build. Was trying to run: %s" % package_cmd)
+
+        self.info('Multi-l10n package filename is: %s' % package_filename)
+
         parser = MakeUploadOutputParser(config=self.config,
                                         log_obj=self.log_obj,
-                                        use_package_as_marfile=self.config.get('use_package_as_marfile'))
+                                        use_package_as_marfile=True,
+                                        package_filename=package_filename,
+                                        )
         upload_cmd = ['make', 'upload', 'AB_CD=multi']
         self.run_command_m(upload_cmd,
                            env=self.query_mach_build_env(multiLocale=False),
@@ -1683,15 +1707,6 @@ or run without that action (ie: --no-{action})"
             self.set_buildbot_property(prop,
                                        parser.matches[prop],
                                        write_to_file=True)
-            if prop == 'packageFilename':
-                filename = parser.matches[prop]
-                self.info("Setting mar properties to match package: %s" % filename)
-                self.set_buildbot_property('completeMarSize',
-                                           self.query_filesize(filename),
-                                           write_to_file=True)
-                self.set_buildbot_property('completeMarHash',
-                                           self.query_sha512sum(filename),
-                                           write_to_file=True)
 
     def postflight_build(self, console_output=True):
         """grabs properties from post build and calls ccache -s"""
@@ -1701,35 +1716,30 @@ or run without that action (ie: --no-{action})"
             self._ccache_s()
 
     def preflight_package_source(self):
-        """ a subset of preflight_build"""
-        self._checkout_source()
-        self._get_mozconfig()
+        # Make sure to have an empty .mozconfig. Removing it is not enough,
+        # because MOZ_OBJDIR is not used in this case
+        self._touch_file(os.path.join(self.query_abs_dirs()['abs_src_dir'],
+                                      '.mozconfig'))
 
     def package_source(self):
         """generates source archives and uploads them"""
         env = self.query_build_env()
         env.update(self.query_mach_build_env())
+        python = self.query_exe('python2.7')
 
         self.run_command_m(
-            command=['make', '-f', 'client.mk', 'configure', 'no_tooltool=1'],
+            command=[python, 'mach', '--log-no-times', 'configure'],
             cwd=self.query_abs_dirs()['abs_src_dir'],
-            env=env, output_timeout=60*3
+            env=env, output_timeout=60*3, halt_on_failure=True,
         )
-        return_code = self.run_command_m(
-            command=['make', 'source-package',
-                     'hg-bundle', 'HG_BUNDLE_REVISION=%s' % self.query_revision(),
-                     'source-upload', 'UPLOAD_HG_BUNDLE=1'],
+        self.run_command_m(
+            command=[
+                'make', 'source-package', 'hg-bundle',
+                'HG_BUNDLE_REVISION=%s' % self.query_revision(),
+            ],
             cwd=self.query_abs_dirs()['abs_obj_dir'],
-            env=env, output_timeout=60*45
+            env=env, output_timeout=60*45, halt_on_failure=True,
         )
-
-        if return_code:
-            self.return_code = self.worst_level(
-                EXIT_STATUS_DICT[TBPL_FAILURE],  self.return_code,
-                AUTOMATION_EXIT_CODES[::-1]
-            )
-            self.fatal("make did not run successfully. Please check "
-                       "log for errors.")
 
     def check_test(self):
         c = self.config

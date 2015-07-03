@@ -57,7 +57,9 @@ class FirefoxUITests(VCSToolsScript, VirtualenvMixin):
             try:
                 self.firefox_ui_branch = self.config['firefox_ui_branch']
             except:
-                self.fatal('Please specify --firefox-ui-branch')
+                self.fatal(
+                    'Please specify --firefox-ui-branch. Valid values can be found '
+                    'in here https://github.com/mozilla/firefox-ui-tests/branches')
 
     def query_abs_dirs(self):
         if self.abs_dirs:
