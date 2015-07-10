@@ -45,6 +45,11 @@ class FirefoxUIUpdates(FirefoxUITests):
             'dest': 'update_target_buildid',
             'help': 'Build ID of the updated build',
         }],
+        [['--symbols-path=SYMBOLS_PATH'], {
+            'dest': 'symbols_path',
+            'help': 'absolute path to directory containing breakpad '
+                    'symbols, or the url of a zip file containing symbols.',
+        }],
     ]
 
 
@@ -99,6 +104,7 @@ class FirefoxUIUpdates(FirefoxUITests):
                 'determine-testing-configuration',
                 'run-tests',
             ],
+            append_env_variables_from_configs=True,
         )
 
         dirs = self.query_abs_dirs()
@@ -113,7 +119,7 @@ class FirefoxUIUpdates(FirefoxUITests):
 
         if self.config.get('update_verify_config'):
             self.updates_config_file = os.path.join(
-                dirs['tools_dir'], 'release', 'updates',
+                dirs['abs_tools_dir'], 'release', 'updates',
                 self.config['update_verify_config']
             )
         else:
@@ -138,7 +144,7 @@ class FirefoxUIUpdates(FirefoxUITests):
         abs_dirs = super(FirefoxUIUpdates, self).query_abs_dirs()
 
         dirs = {
-            'tools_dir': os.path.join(abs_dirs['abs_work_dir'], 'tools'),
+            'abs_tools_dir': os.path.join(abs_dirs['abs_work_dir'], 'tools'),
         }
 
         abs_dirs.update(dirs)
@@ -158,7 +164,7 @@ class FirefoxUIUpdates(FirefoxUITests):
 
         self.vcs_checkout(
             repo=self.tools_repo,
-            dest=dirs['tools_dir'],
+            dest=dirs['abs_tools_dir'],
             revision=self.tools_tag,
             vcs='hgtool'
         )
@@ -194,11 +200,11 @@ class FirefoxUIUpdates(FirefoxUITests):
             return
 
         dirs = self.query_abs_dirs()
-        assert os.path.exists(dirs['tools_dir']), \
+        assert os.path.exists(dirs['abs_tools_dir']), \
             "Without the tools/ checkout we can't use releng's config parser."
 
         # Import the config parser
-        sys.path.insert(1, os.path.join(dirs['tools_dir'], 'lib', 'python'))
+        sys.path.insert(1, os.path.join(dirs['abs_tools_dir'], 'lib', 'python'))
         from release.updates.verify import UpdateVerifyConfig
 
         uvc = UpdateVerifyConfig()
@@ -232,8 +238,7 @@ class FirefoxUIUpdates(FirefoxUITests):
     @PreScriptAction('run-tests')
     def _pre_run_tests(self, action):
         if self.releases is None and not (self.installer_url or self.installer_path):
-            self.critical('You need to call --determine-testing-configuration as well.')
-            exit(1)
+            self.fatal('You need to call --determine-testing-configuration as well.')
 
 
     def _run_test(self, installer_path, update_channel=None, cleanup=True,
@@ -241,8 +246,8 @@ class FirefoxUIUpdates(FirefoxUITests):
         '''
         All required steps for running the tests against an installer.
         '''
-        env = self.query_env()
         dirs = self.query_abs_dirs()
+        env = self.query_env(avoid_host_env=True)
         bin_dir = os.path.dirname(self.query_python_path())
         fx_ui_tests_bin = os.path.join(bin_dir, 'firefox-ui-update')
         gecko_log=os.path.join(dirs['abs_work_dir'], 'gecko.log')
@@ -276,7 +281,11 @@ class FirefoxUIUpdates(FirefoxUITests):
                 self.warning(contents)
                 self.warning('== End of gecko output ==')
             else:
-                self.warning('No gecko.log was found: %s' % gecko_log)
+                # We're outputting to stdout with --gecko-log=- so there is not log to
+                # complaing about. Remove the commented line below when changing
+                # this behaviour.
+                # self.warning('No gecko.log was found: %s' % gecko_log)
+                pass
 
         if cleanup:
             for filepath in (installer_path, gecko_log):
@@ -300,9 +309,14 @@ class FirefoxUIUpdates(FirefoxUITests):
             return self._run_test(self.installer_path, cleanup=False)
 
         else:
+            results = {}
+
             for rel_info in sorted(self.releases, key=lambda release: release['build_id']):
+                build_id = rel_info['build_id']
+                results[build_id] = {}
+
                 self.info('About to run %s %s - %s locales' % (
-                    rel_info['build_id'],
+                    build_id,
                     rel_info['from'],
                     len(rel_info['locales'])
                 ))
@@ -327,7 +341,7 @@ class FirefoxUIUpdates(FirefoxUITests):
                     marionette_port += 1
                     retcode = self._run_test(installer_path, self.channel,
                                              marionette_port=marionette_port)
-                    if retcode != 0:
+                    if retcode == 0:
                         self.warning('FAIL: firefox-ui-update has failed.' )
                         self.info('You can run the following command on the same machine to reproduce the issue:')
                         self.info('python scripts/firefox_ui_updates.py --cfg generic_releng_config.py '
@@ -341,6 +355,17 @@ class FirefoxUIUpdates(FirefoxUITests):
                                   '--tools-tag %s --installer-url %s '
                                   '--cfg developer_config.py '
                                   % (self.firefox_ui_branch, self.updates_config_file, self.tools_tag, url))
+
+                    results[build_id][locale] = retcode
+
+            self.info("Firefox UI update tests failed locales:")
+            for build_id in sorted(results.keys()):
+                self.info(build_id)
+                failed_locales = []
+                for locale in sorted(results[build_id].keys()):
+                    if results[build_id][locale] != 0:
+                        failed_locales.append(locale)
+                self.info("  %s" % (', '.join(failed_locales)))
 
 
 if __name__ == '__main__':
