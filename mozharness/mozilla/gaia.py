@@ -357,11 +357,11 @@ class GaiaMixin(object):
 
         # get the node modules first from the node module cache, if this fails it will 
         # install the node modules from npmjs.org.
-        cmd = ['taskcluster-npm-cache-get',
+        cmd = ['VIRTUALENV_EXISTS=1',
+               'taskcluster-npm-cache-get',
                '--namespace',
                'gaia.npm_cache',
-               'package.json',
-               'VIRTUALENV_EXISTS=1']
+               'package.json']
         kwargs = {
             'output_timeout': 300
         }
