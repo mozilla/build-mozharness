@@ -360,7 +360,8 @@ class GaiaMixin(object):
         cmd = ['taskcluster-npm-cache-get',
                '--namespace',
                'gaia.npm_cache',
-               'package.json']
+               'package.json',
+               'VIRTUALENV_EXISTS=1']
         kwargs = {
             'output_timeout': 300
         }
