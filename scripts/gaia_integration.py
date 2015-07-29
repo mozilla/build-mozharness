@@ -48,7 +48,6 @@ class GaiaIntegrationTest(GaiaTest):
         if os.path.exists(gaia_runner_service):
             self.install_module('gaia-runner-service', gaia_runner_service)
         env['VIRTUALENV_PATH'] = self.query_virtualenv_path()
-        env['HOST_LOG'] = dirs['abs_log_dir'] + '/gecko_output.log'
 
         cmd = [
             'make',
