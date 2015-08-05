@@ -116,6 +116,28 @@ config = {
     "l10n_config": {
         "gecko_config": GECKO_CONFIG,
         "gaia_config": {
+            'v2_2': {
+                'generate_git_notes': False, # we can change this when bug 1034725 is resolved
+                'mapper': {
+                    'project': 'gitmo-gaia-l10n',
+                    'url': 'https://api.pub.build.mozilla.org/mapper'
+                },
+                'locales_file_url': 'https://raw.github.com/mozilla-b2g/gaia/v2.2/locales/languages_all.json',
+                'hg_url': 'https://hg.mozilla.org/releases/gaia-l10n/v2_2/%(locale)s',
+                'git_branch_name': 'v2.2',
+                'targets': [{
+                    'target_dest': 'releases-l10n-%(locale)s-gaia/.git',
+                    'test_push': True,
+                    'vcs': 'git'
+                }, {
+                    'target_dest': 'gitmo-gaia-l10n-%(locale)s',
+                }],
+                'tag_config': {
+                    'tag_regexes': [
+                        '^B2G_',
+                    ],
+                },
+            },
             'v2_1': {
                 'generate_git_notes': False, # we can change this when bug 1034725 is resolved
                 'mapper': {
