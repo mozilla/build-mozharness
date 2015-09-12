@@ -999,10 +999,31 @@ intree=1
                     else:
                         self.info("Published mapfile ('%s') line range [%s, %s] to mapper (%s)" % (delta_for_mapper, i, i+200, insert_url))
                 if publish_successful:
-                    # if we get this far, we know we could successfully post to mapper, so now
-                    # we can copy the mapfile over "previously generated" version
-                    # so that we don't push to mapper for these commits again
-                    self.copyfile(complete_mapfile, published_to_mapper)
+                    # bug 1193011 says there are problems on occasion
+                    # with delta uploads. Check that items are in db in
+                    # an effort to find the root cause.
+                    publish_verified = True
+                    hashes_to_check = [all_new_mappings[0], all_new_mappings[-1]]
+                    def _check_mapping(url, vcs, sha, expected):
+                        import urlparse
+                        check_url = urlparse.urljoin(url, "../rev/%s/%s"
+                                % (vcs, sha))
+                        r = requests.get(check_url)
+                        if r.status_code != 200 or r.text != expected:
+                            global publish_verified
+                            publish_verified = False
+                            self.error("Mapper lookup failure: %s on %s ('%s')"
+                                    % (r.status_code, check_url, r.text))
+                    for mapping in hashes_to_check:
+                        git_sha, hg_sha = mapping.split()
+                        _check_mapping(insert_url, 'hg', hg_sha, git_sha)
+                        _check_mapping(insert_url, 'git', git_sha, hg_sha)
+
+                    if publish_verified:
+                        # if we get this far, we know we could successfully post to mapper, so now
+                        # we can copy the mapfile over "previously generated" version
+                        # so that we don't push to mapper for these commits again
+                        self.copyfile(complete_mapfile, published_to_mapper)
             else:
                 self.copyfile(complete_mapfile, published_to_mapper)
 
