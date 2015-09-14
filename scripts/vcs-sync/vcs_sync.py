@@ -1003,7 +1003,10 @@ intree=1
                     # with delta uploads. Check that items are in db in
                     # an effort to find the root cause.
                     publish_verified = True
-                    hashes_to_check = [all_new_mappings[0], all_new_mappings[-1]]
+                    try:
+                        hashes_to_check = [all_new_mappings[0], all_new_mappings[-1]]
+                    except IndexError:
+                        hashes_to_check = []
                     def _check_mapping(url, vcs, sha, expected):
                         import urlparse
                         check_url = urlparse.urljoin(url, "../rev/%s/%s"
