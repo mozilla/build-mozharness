@@ -1015,12 +1015,13 @@ intree=1
                         if r.status_code != 200 or r.text != expected:
                             global publish_verified
                             publish_verified = False
-                            self.error("Mapper lookup failure: %s on %s ('%s')"
-                                    % (r.status_code, check_url, r.text))
+                            self.error("Mapper lookup failure: %s on %s\n('%s') rcvd\n('%s') expected"
+                                    % (r.status_code, check_url, r.text, expected))
                     for mapping in hashes_to_check:
+                        mapping = mapping.rstrip()
                         git_sha, hg_sha = mapping.split()
-                        _check_mapping(insert_url, 'hg', hg_sha, git_sha)
-                        _check_mapping(insert_url, 'git', git_sha, hg_sha)
+                        _check_mapping(insert_url, 'hg', hg_sha, mapping)
+                        _check_mapping(insert_url, 'git', git_sha, mapping)
 
                     if publish_verified:
                         # if we get this far, we know we could successfully post to mapper, so now
