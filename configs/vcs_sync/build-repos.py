@@ -58,6 +58,34 @@ for repo in build_repos:
         "vcs": "git",
     }
 
+# version-control-tools is here because adding it to this job was easier
+# than defining its own config file and job.
+conversion_repos.append({
+    "repo": "https://hg.mozilla.org/hgcustom/version-control-tools",
+    "repo_name": "version-control-tools",
+    "conversion_dir": "version-control-tools",
+    "targets": [{
+        "target_dest": "version-control-tools-github",
+        "force_push": True,
+    }],
+    "vcs": "hg",
+    "mapper": {
+        "url": "https://api.pub.build.mozilla.org/mapper",
+        "project": "version-control-tools",
+    },
+    "branch_config": {
+        "branches": {
+            "default": "master",
+        },
+    },
+})
+
+remote_targets["version-control-tools-github"] = {
+    "repo": "git@github.com:mozilla/version-control-tools.git",
+    "ssh_key": "~/.ssh/releng-github-id_rsa",
+    "vcs": "git",
+}
+
 config = {
     "log_name": "build-repos",
     "log_max_rotate": 99,
