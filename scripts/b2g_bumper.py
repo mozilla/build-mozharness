@@ -73,7 +73,7 @@ class B2GBumper(VCSScript, MapperMixin):
             require_config_file=require_config_file,
             # Default config options
             config={
-                'treestatus_base_url': 'https://treestatus.mozilla.org',
+                'treestatus_base_url': 'https://api.pub.build.mozilla.org/treestatus',
                 'log_max_rotate': 99,
                 'do_write': True,
             }
@@ -421,7 +421,7 @@ class B2GBumper(VCSScript, MapperMixin):
         c = self.config
         dirs = self.query_abs_dirs()
         tree = c.get('treestatus_tree', os.path.basename(c['gecko_pull_url'].rstrip("/")))
-        treestatus_url = "%s/%s?format=json" % (c['treestatus_base_url'], tree)
+        treestatus_url = "%s/trees/%s" % (c['treestatus_base_url'], tree)
         treestatus_json = os.path.join(dirs['abs_work_dir'], 'treestatus.json')
         if not os.path.exists(dirs['abs_work_dir']):
             self.mkdir_p(dirs['abs_work_dir'])
@@ -432,7 +432,7 @@ class B2GBumper(VCSScript, MapperMixin):
             return True
 
         treestatus = self._read_json(treestatus_json)
-        if treestatus['status'] != 'closed':
+        if treestatus['result']['status'] != 'closed':
             self.info("treestatus is %s - assuming we can land" % repr(treestatus['status']))
             return True
 
