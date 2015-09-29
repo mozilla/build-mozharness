@@ -984,6 +984,16 @@ intree=1
                 all_new_mappings = []
                 all_new_mappings.extend(self.pull_out_new_sha_lookups(published_to_mapper, complete_mapfile))
                 self.write_to_file(delta_for_mapper, "".join(all_new_mappings))
+                # bug 1193011 says there are problems on occasion, independently
+                # check calculation of additions.
+                import subprocess   # this is debug code
+                lines_last_time = int(subprocess.check_output('wc -l <%s' % published_to_mapper, shell=True))
+                lines_this_time = int(subprocess.check_output('wc -l <%s' % complete_mapfile, shell=True))
+                if lines_this_time - lines_last_time != len(all_new_mappings):
+                    self.error("Bad calc of new mappings: last %d, now %d, diff %d, calc %d"
+                               % (lines_last_time, lines_this_time, lines_this_time - lines_last_time,
+                               len(all_new_mappings)))
+
                 # due to timeouts on load balancer, we only push 200 lines at a time
                 # this means that we should get http response back within 30 seconds
                 # including the time it takes to insert the mappings in the database
@@ -1004,7 +1014,10 @@ intree=1
                     # an effort to find the root cause.
                     publish_verified = True
                     try:
-                        hashes_to_check = [all_new_mappings[0], all_new_mappings[-1]]
+                        # previously checked first, last only. No errors
+                        # reported, yet map still drifted out of spec.. Check them all!
+                        # hashes_to_check = [all_new_mappings[0], all_new_mappings[-1]]
+                        hashes_to_check = all_new_mappings[:]
                     except IndexError:
                         hashes_to_check = []
                     def _check_mapping(url, vcs, sha, expected):
