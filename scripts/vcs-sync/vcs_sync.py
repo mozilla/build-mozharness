@@ -987,8 +987,26 @@ intree=1
                 # bug 1193011 says there are problems on occasion, independently
                 # check calculation of additions.
                 import subprocess   # this is debug code
-                lines_last_time = int(subprocess.check_output('wc -l <%s' % published_to_mapper, shell=True))
-                lines_this_time = int(subprocess.check_output('wc -l <%s' % complete_mapfile, shell=True))
+                # from https://gist.github.com/edufelipe/1027906 because we're py 2.6
+                def check_output(*popenargs, **kwargs):
+                    r"""Run command with arguments and return its output as a byte string.
+                    Backported from Python 2.7 as it's implemented as pure python on stdlib.
+                    >>> check_output(['/usr/bin/python', '--version'])
+                    Python 2.6.2
+                    """
+                    process = subprocess.Popen(stdout=subprocess.PIPE, *popenargs, **kwargs)
+                    output, unused_err = process.communicate()
+                    retcode = process.poll()
+                    if retcode:
+                        cmd = kwargs.get("args")
+                        if cmd is None:
+                            cmd = popenargs[0]
+                        error = subprocess.CalledProcessError(retcode, cmd)
+                        error.output = output
+                        raise error
+                    return output
+                lines_last_time = int(check_output('wc -l <%s' % published_to_mapper, shell=True))
+                lines_this_time = int(check_output('wc -l <%s' % complete_mapfile, shell=True))
                 if lines_this_time - lines_last_time != len(all_new_mappings):
                     self.error("Bad calc of new mappings: last %d, now %d, diff %d, calc %d"
                                % (lines_last_time, lines_this_time, lines_this_time - lines_last_time,
