@@ -433,7 +433,7 @@ class B2GBumper(VCSScript, MapperMixin):
 
         treestatus = self._read_json(treestatus_json)
         if treestatus['result']['status'] != 'closed':
-            self.info("treestatus is %s - assuming we can land" % repr(treestatus['status']))
+            self.info("treestatus is %s - assuming we can land" % repr(treestatus['result']['status']))
             return True
 
         return False
