@@ -1030,6 +1030,7 @@ intree=1
                     # bug 1193011 says there are problems on occasion
                     # with delta uploads. Check that items are in db in
                     # an effort to find the root cause.
+                    global publish_verified
                     publish_verified = True
                     try:
                         # previously checked first, last only. No errors
