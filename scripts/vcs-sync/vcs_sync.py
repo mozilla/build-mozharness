@@ -814,7 +814,7 @@ intree=1
                     self.write_hggit_hgrc(dest)
                     self.init_git_repo('%s/.git' % dest, additional_args=['--bare'])
                     self.run_command(
-                    git + ['--git-dir', '%s/.git' % dest, 'config', 'gc.auto', '0'],
+                        git + ['--git-dir', '%s/.git' % dest, 'config', 'gc.auto', '0'],
                     )
                 else:
                     self.add_failure(
@@ -893,7 +893,6 @@ intree=1
                 repo_map['repos'][repo_name]['branches'][branch]['git_revision'] = git_revision
         self._write_repo_update_json(repo_map)
 
-
     def create_git_notes(self):
         git = self.query_exe("git", return_type="list")
         for repo_config in self.query_all_non_failed_repos():
@@ -928,7 +927,7 @@ intree=1
                                 cwd=git_dir,
                                 ignore_errors=True
                             )
-                            git_note_text='Upstream source: %s/rev/%s' % (repo, hg_sha)
+                            git_note_text = 'Upstream source: %s/rev/%s' % (repo, hg_sha)
                             git_notes_add_return_code = 1
                             if not output or output.find(git_note_text) < 0:
                                 git_notes_add_return_code = self.run_command(
@@ -1010,7 +1009,7 @@ intree=1
                 if lines_this_time - lines_last_time != len(all_new_mappings):
                     self.error("Bad calc of new mappings: last %d, now %d, diff %d, calc %d"
                                % (lines_last_time, lines_this_time, lines_this_time - lines_last_time,
-                               len(all_new_mappings)))
+                                  len(all_new_mappings)))
 
                 # due to timeouts on load balancer, we only push 200 lines at a time
                 # this means that we should get http response back within 30 seconds
@@ -1042,13 +1041,13 @@ intree=1
                     def _check_mapping(url, vcs, sha, expected):
                         import urlparse
                         check_url = urlparse.urljoin(url, "../rev/%s/%s"
-                                % (vcs, sha))
+                                                     % (vcs, sha))
                         r = requests.get(check_url)
                         if r.status_code != 200 or r.text != expected:
                             global publish_verified
                             publish_verified = False
                             self.error("Mapper lookup failure: %s on %s\n('%s') rcvd\n('%s') expected"
-                                    % (r.status_code, check_url, r.text, expected))
+                                       % (r.status_code, check_url, r.text, expected))
                     for mapping in hashes_to_check:
                         mapping = mapping.rstrip()
                         git_sha, hg_sha = mapping.split()
