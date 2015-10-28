@@ -91,6 +91,28 @@ config = {
             ],
         },
     }, {
+        "repo": "https://hg.mozilla.org/releases/mozilla-b2g44_v2_5",
+        "revision": "default",
+        "repo_name": "mozilla-b2g44_v2_5",
+        "targets": [{
+            "target_dest": "gecko-git/.git",
+            "vcs": "git",
+            "test_push": True,
+        }, {
+            "target_dest": "github-gecko-git",
+        }],
+        "vcs": "hg",
+        "branch_config": {
+            "branches": {
+                "default": "v2.5",
+            },
+        },
+        "tag_config": {
+            "tag_regexes": [
+                "^B2G_",
+            ],
+        },
+    }, {
         "repo": "https://hg.mozilla.org/releases/mozilla-b2g34_v2_1",
         "revision": "default",
         "repo_name": "mozilla-b2g34_v2_1",
