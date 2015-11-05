@@ -70,6 +70,15 @@ config = {
             'ignore_projects': ['gecko'],
             'ignore_groups': ['darwin'],
         },
+        'nexus-4-kk': {
+            'ignore_projects': ['gecko'],
+            'ignore_groups': ['darwin'],
+        },
+        'aries': {
+            'ignore_projects': ['gecko'],
+            'ignore_groups': ['darwin'],
+            'manifest_file': 'shinano.xml',
+        },
     },
     'repo_remote_mappings': {
         'https://android.googlesource.com/': 'https://git.mozilla.org/external/aosp',
