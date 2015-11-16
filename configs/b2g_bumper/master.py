@@ -79,6 +79,11 @@ config = {
             'ignore_groups': ['darwin'],
             'manifest_file': 'shinano.xml',
         },
+        'aries-l': {
+            'ignore_projects': ['gecko'],
+            'ignore_groups': ['darwin'],
+            'manifest_file': 'sony-aosp-l.xml',
+        },
     },
     'repo_remote_mappings': {
         'https://android.googlesource.com/': 'https://git.mozilla.org/external/aosp',
