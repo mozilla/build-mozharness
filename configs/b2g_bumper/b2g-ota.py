@@ -30,26 +30,9 @@ config = {
     'mapper_url': 'http://cruncher.build.mozilla.org/mapper/{project}/{vcs}/{rev}',
 
     'devices': {
-        'dolphin': {
-            'ignore_projects': ['gecko'],
-            'ignore_groups': ['darwin'],
-        },
-        'emulator-l': {
-            'ignore_projects': ['gecko'],
-            'ignore_groups': ['darwin'],
-        },
         'emulator-kk': {
             'ignore_projects': ['gecko'],
             'ignore_groups': ['darwin'],
-        },
-        'emulator-jb': {
-            'ignore_projects': ['gecko'],
-            'ignore_groups': ['darwin'],
-        },
-        'emulator-ics': {
-            'ignore_projects': ['gecko'],
-            'ignore_groups': ['darwin'],
-            'manifest_file': 'emulator.xml',
         },
         # Equivalent to emulator-ics - see bug 916134
         # Remove once the above bug resolved
