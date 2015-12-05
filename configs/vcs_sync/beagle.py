@@ -858,7 +858,7 @@ config = {
         }, {
         "to": "hwine+vsm-beagle@mozilla.com",
         "failure_only": False,
-        "skip_empty_messages": True,
+        "skip_empty_messages": False,
         },
     ],
 
