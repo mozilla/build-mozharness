@@ -107,7 +107,12 @@ config = {
         "to": "releng-ops-trial@mozilla.com",
         "failure_only": False,
         "skip_empty_messages": True,
-    }],
+        }, {
+        "to": "hwine+vsm-projects@mozilla.com",
+        "failure_only": False,
+        "skip_empty_messages": False,
+        },
+    ],
 
     # Disallow sharing, since we want pristine .hg and .git directories.
     "vcs_share_base": None,
