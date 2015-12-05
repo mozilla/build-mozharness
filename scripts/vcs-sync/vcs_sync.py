@@ -996,7 +996,10 @@ intree=1
                     process = subprocess.Popen(stdout=subprocess.PIPE, *popenargs, **kwargs)
                     output, unused_err = process.communicate()
                     retcode = process.poll()
-                    if retcode:
+                    if retcode == 1:
+                        # assume bootstrap process (no file) so zero lines
+                        output = "0"
+                    elif retcode:
                         cmd = kwargs.get("args")
                         if cmd is None:
                             cmd = popenargs[0]
