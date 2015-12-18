@@ -263,6 +263,7 @@ intree=1
         project_repos = []
         for project in self.config.get("project_branches", []):
             repo_dict = {
+                'hg_clone_option': self.config.get('hg_clone_options', {}).get(project),
                 'repo': self.config['project_branch_repo_url'] % {'project': project},
                 'revision': 'default',
                 'repo_name': project,
@@ -339,6 +340,7 @@ intree=1
             if self.retry(
                 self.run_command,
                 args=(hg + ['clone', '--noupdate', repo_config['repo'],
+                      repo_config.get('hg_clone_option'),
                       source_dest], ),
                 kwargs={
                     'output_timeout': 15 * 60,

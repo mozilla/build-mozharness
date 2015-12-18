@@ -47,6 +47,14 @@ CONVERSION_REPOS = [{
     "tag_config": {},
 }]
 
+# Some repos need some help in cloning, due to the version of hg client
+# used, and large size of the repo.  See bug 1233611 for details.
+# List the required additional options here, with key=repos,
+# value=extra_options_as_string
+HG_CLONE_OPTIONS = {
+    'cypress': '--uncompressed',
+}
+
 config = {
     "log_name": "project-branches",
     "log_max_rotate": 99,
@@ -64,6 +72,7 @@ config = {
     "project_branches": PROJECT_BRANCHES,
     "project_branch_repo_url": "https://hg.mozilla.org/projects/%(project)s",
     "conversion_repos": CONVERSION_REPOS,
+    "hg_clone_options": HG_CLONE_OPTIONS,
     "remote_targets": {
         "github-project-branches": {
             "repo": "git@github.com:mozilla/gecko-projects.git",
