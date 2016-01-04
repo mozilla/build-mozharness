@@ -141,6 +141,8 @@ class B2GBumper(VCSScript, MapperMixin):
         def mapping_func(r):
             orig_url = r.getAttribute('fetch')
             m = repo_manifest.map_remote(r, self.config['repo_remote_mappings'])
+            if not m:
+                self.fatal("Missing configuration for remote '%s'" % orig_url)
             self._remote_mappings[m.getAttribute('fetch')] = orig_url
             return m
         repo_manifest.rewrite_remotes(manifest, mapping_func)
