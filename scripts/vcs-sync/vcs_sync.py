@@ -1044,12 +1044,18 @@ intree=1
                     except IndexError:
                         hashes_to_check = []
                     def _check_mapping(url, vcs, sha, expected):
+                        global publish_verified
                         import urlparse
                         check_url = urlparse.urljoin(url, "../rev/%s/%s"
                                                      % (vcs, sha))
-                        r = requests.get(check_url)
+                        try:
+                            r = requests.get(check_url)
+                        except OSError as e:
+                            # every so often, we get an uncaught
+                            # exception here. (Once a month.)
+                            publish_verified = False
+                            self.error("Mapper network error: %s" % repr(e))
                         if r.status_code != 200 or r.text != expected:
-                            global publish_verified
                             publish_verified = False
                             self.error("Mapper lookup failure: %s on %s\n('%s') rcvd\n('%s') expected"
                                        % (r.status_code, check_url, r.text, expected))
