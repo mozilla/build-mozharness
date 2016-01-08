@@ -308,10 +308,6 @@ config = {
         "to": "releng-ops-trial@mozilla.com",
         "failure_only": False,
         "skip_empty_messages": True,
-        }, {
-        "to": "hwine+vsm-l10n@mozilla.com",
-        "failure_only": False,
-        "skip_empty_messages": False,
         },
     ],
 
