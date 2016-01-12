@@ -47,7 +47,6 @@ config = {
         "ssh_key": os.path.expanduser("~/.ssh/b2gbld_dsa"),
         "ssh_user": "b2gbld",
         "branches": {
-            'mozilla-b2g37_v2_2': '2.2.0',
             'mozilla-central': '2.5.0',
         },
         "translate_hg_to_git": True,
