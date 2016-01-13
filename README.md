@@ -1,16 +1,17 @@
 # Mozharness
-This repository is a downstream read-only copy of:
-http://hg.mozilla.org/build/mozharness/
+If you are viewing this from git, this repository is a read-only
+downstream copy of http://hg.mozilla.org/build/mozharness/
+
+The mozharness repository is only used for 2 projects at this time:
+* https://wiki.mozilla.org/ReleaseEngineering/Applications/Bumper
+* https://wiki.mozilla.org/ReleaseEngineering/How_To/VCSSync
+
+All other uses of MozHarness are "in tree" of gecko repositories, in the
+```testing/mozharness``` directory.
 
 ### Submitting changes
-We do not support the github Pull Request workflow, since github is only a downstream
-mirror for us. However, feel free to fork from us and make changes. Then, rather than
-submitting a pull request, please create a patch for your changes (capture the output
-of your changes using e.g. git diff) and attach the patch file to a Bugzilla bug,
-created in the following component:
-https://bugzilla.mozilla.org/enter_bug.cgi?product=Release%20Engineering&component=Mozharness
-
-This bug will get triaged by us.
+Please contact the application developers via the above links to find
+their contribution process.
 
 ### Docs
 * https://developer.mozilla.org/en-US/docs/Mozharness_FAQ
