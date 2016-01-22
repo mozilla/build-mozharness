@@ -1015,6 +1015,13 @@ intree=1
                     self.error("Bad calc of new mappings: last %d, now %d, diff %d, calc %d"
                                % (lines_last_time, lines_this_time, lines_this_time - lines_last_time,
                                   len(all_new_mappings)))
+                # correct # of entries, but are they the correct
+                # entries? None of the lines in delta_for_mapper should
+                # be in published_to_mapper. grep -Ff can help verify
+                retcode = subprocess.call(['grep', '-Ff',
+                    delta_for_mapper, published_to_mapper])
+                if retcode != 1:
+                    self.error("Bad selection of new mappings, some already there")
 
                 # due to timeouts on load balancer, we only push 200 lines at a time
                 # this means that we should get http response back within 30 seconds
