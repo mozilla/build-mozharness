@@ -989,7 +989,8 @@ intree=1
                 # check calculation of additions and save off mapfiles
                 dirs = self.query_abs_dirs()
                 for mapfile in [delta_for_mapper, published_to_mapper, complete_mapfile]:
-                    self.copyfile(src=mapfile, dest='logs/')
+                    self.copyfile(src=mapfile, dest=os.path.join('logs',
+                        os.path.basename(mapfile))
                 import subprocess   # this is debug code
                 # from https://gist.github.com/edufelipe/1027906 because we're py 2.6
                 def check_output(*popenargs, **kwargs):
