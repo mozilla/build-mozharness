@@ -681,6 +681,37 @@ config = {
             "project": "gecko-dev"
         },
     }, {
+        "repo": "https://hg.mozilla.org/releases/mozilla-esr45",
+        "revision": "default",
+        "repo_name": "mozilla-esr45",
+        "targets": [{
+            "target_dest": "beagle/.git",
+            "vcs": "git",
+            "test_push": True,
+        }, {
+            "target_dest": "gitmo-beagle",
+        }, {
+            "target_dest": "github-beagle",
+        }],
+        "vcs": "hg",
+        "branch_config": {
+            "branches": {
+                "default": "esr45",
+            },
+            "branch_regexes": [
+                "^GECKO[0-9]+esr_[0-9]+_RELBRANCH$",
+            ],
+        },
+        "tag_config": {
+            "tag_regexes": [
+                "^B2G_",
+            ],
+        },
+        "mapper": {
+            "url": "https://api.pub.build.mozilla.org/mapper",
+            "project": "gecko-dev"
+        },
+    }, {
         "repo": "https://hg.mozilla.org/integration/mozilla-inbound",
         "revision": "default",
         "repo_name": "mozilla-inbound",
