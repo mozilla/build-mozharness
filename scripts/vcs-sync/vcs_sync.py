@@ -337,11 +337,16 @@ intree=1
         if clobber:
             self.rmtree(source_dest)
         if not os.path.exists(source_dest):
+            # if hg_clone_option isn't specified for this repo, we need
+            # to remove it from the argument list.  leave it in position
+            # and remove (most common execution path) rather than doing
+            # magic insert. (bug 1253068)
+            args = hg + ['clone', '--noupdate', repo_config['repo'],
+                repo_config.get('hg_clone_option'), source_dest]
+            args = [x for x in args if x]
             if self.retry(
                 self.run_command,
-                args=(hg + ['clone', '--noupdate', repo_config['repo'],
-                      repo_config.get('hg_clone_option'),
-                      source_dest], ),
+                args=[args],
                 kwargs={
                     'output_timeout': 15 * 60,
                     'cwd': dirs['abs_work_dir'],
