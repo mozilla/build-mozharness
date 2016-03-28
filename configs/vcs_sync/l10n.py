@@ -1,4 +1,5 @@
 from copy import deepcopy
+import os
 import socket
 hostname = socket.gethostname()
 
