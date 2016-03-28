@@ -98,7 +98,7 @@ config = {
         "ordereddict==1.1",
         "hg-git==0.4.0-moz2",
         "mapper==0.1",
-        os.path.join(os.environ('HOME'), 'hg-hwine-test.tgz'),
+        os.path.join(os.environ['HOME'], 'hg-hwine-test.tgz'),
         "mozfile==0.9",
         "mozinfo==0.5",
         "mozprocess==0.11",
