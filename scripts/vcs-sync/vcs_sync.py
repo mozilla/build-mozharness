@@ -882,7 +882,7 @@ intree=1
                 self.run_command,
                 args=(hg + ['-v', 'gexport'], ),
                 kwargs={
-                    'output_timeout': 15 * 60,
+                    'output_timeout': 25 * 60,
                     'cwd': dest,
                     'error_list': HgErrorList,
                 },
