@@ -160,7 +160,7 @@ class Talos(TestingMixin, MercurialScript, BlobUploadMixin):
                                               ])
         kwargs.setdefault('config', {})
         kwargs['config'].setdefault(
-            'virtualenv_modules', ["mozinstall", "mozdevice", "pyyaml", "mozversion", "datazilla",
+            'virtualenv_modules', ["mozinstall", "mozdevice", "pyyaml", "mozversion",
                                    "mozcrash", "mozhttpd", "mozprofile", "mozfile", "mozinfo",
                                    "moznetwork", "mozprocess", "httplib2"]
         )
@@ -444,13 +444,6 @@ class Talos(TestingMixin, MercurialScript, BlobUploadMixin):
             kw_options['activeTests'] = tests
         for key, value in kw_options.items():
             options.extend(['--%s' % key, value])
-        # add datazilla results urls
-        for url in self.config.get('datazilla_urls', []):
-            options.extend(['--datazilla-url', url])
-        # add datazilla authfile
-        authfile = self.config.get('datazilla_authfile')
-        if authfile:
-            options.extend(['--authfile', authfile])
         # configure profiling options
         options.extend(self.query_sps_profile_options())
         # extra arguments
