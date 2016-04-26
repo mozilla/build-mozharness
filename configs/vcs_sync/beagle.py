@@ -736,6 +736,14 @@ config = {
             "project": "gecko-dev"
         },
     }, {
+        "repo": "https://hg.mozilla.org/integration/b2g-inbound",
+        "revision": "default",
+        "repo_name": "b2g-inbound",
+        "targets": [{
+            "target_dest": "beagle/.git",
+            "vcs": "git",
+            "test_push": True,
+        }, {
             "target_dest": "gitmo-beagle",
         }, {
             "target_dest": "github-beagle",
