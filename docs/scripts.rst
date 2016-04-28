@@ -7,7 +7,6 @@ scripts
     android_panda.rst
     android_panda_talos.rst
     b2g_build.rst
-    b2g_bumper.rst
     b2g_desktop_multilocale.rst
     b2g_desktop_unittest.rst
     b2g_emulator_unittest.rst
