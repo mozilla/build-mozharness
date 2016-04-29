@@ -3,17 +3,12 @@ import socket
 hostname = socket.gethostname()
 
 build_repos = (
-    'autoland',
     'buildapi',
     'buildbot-configs',
     'buildbotcustom',
     'mozharness',
-    'opsi-package-sources',
     'partner-repacks',
-    'preproduction',
     'puppet',
-    'puppet-manifests',
-    'rpm-sources',
     'talos',
     'tools',
 )
