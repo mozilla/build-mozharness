@@ -790,11 +790,6 @@ config = {
             "ssh_key": "~/.ssh/releng-github-id_rsa",
             "vcs": "git",
         },
-        "gitmo-beagle": {
-            "repo": "gitolite3@git.mozilla.org:integration/gecko-dev.git",
-            "ssh_key": "~/.ssh/vcs-sync_rsa",
-            "vcs": "git",
-        },
     },
 
     "exes": {
