@@ -81,6 +81,35 @@ remote_targets["version-control-tools-github"] = {
     "vcs": "git",
 }
 
+
+# nss is here because adding it to this job was easier
+# than defining its own config file and job.
+conversion_repos.append({
+    "repo": "https://hg.mozilla.org/projects/nss",
+    "repo_name": "test-nss",
+    "conversion_dir": "nss-dev",
+    "targets": [{
+        "target_dest": "nss-github",
+        "force_push": True,
+    }],
+    "vcs": "hg",
+    "mapper": {
+        "url": "https://api.pub.build.mozilla.org/mapper",
+        "project": "nss",
+    },
+    "branch_config": {
+        "branches": {
+            "default": "master",
+        },
+    },
+})
+
+remote_targets["nss-github"] = {
+    "repo": "git@github.com:mozilla/test-nss.git",
+    "ssh_key": "~/.ssh/releng-github-id_rsa",
+    "vcs": "git",
+}
+
 config = {
     "log_name": "build-repos",
     "log_max_rotate": 99,
