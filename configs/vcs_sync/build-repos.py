@@ -86,7 +86,7 @@ remote_targets["version-control-tools-github"] = {
 # than defining its own config file and job.
 conversion_repos.append({
     "repo": "https://hg.mozilla.org/projects/nss",
-    "repo_name": "test-nss",
+    "repo_name": "nss-dev",
     "conversion_dir": "nss-dev",
     "targets": [{
         "target_dest": "nss-github",
@@ -105,7 +105,7 @@ conversion_repos.append({
 })
 
 remote_targets["nss-github"] = {
-    "repo": "git@github.com:mozilla/test-nss.git",
+    "repo": "git@github.com:nss-dev/nss.git",
     "ssh_key": "~/.ssh/releng-github-id_rsa",
     "vcs": "git",
 }
