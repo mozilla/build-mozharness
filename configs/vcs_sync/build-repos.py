@@ -106,6 +106,33 @@ conversion_repos.append({
 
 remote_targets["nss-github"] = {
     "repo": "git@github.com:nss-dev/nss.git",
+    "ssh_key": "~/.ssh/releng-github-id_rsa", "vcs": "git",
+}
+
+# comm-central is here because adding it to this job was easier
+# than defining its own config file and job.
+conversion_repos.append({
+    "repo": "https://hg.mozilla.org/comm-central",
+    "repo_name": "comm-central",
+    "conversion_dir": "comm-central",
+    "targets": [{
+        "target_dest": "comm-central-github",
+        "force_push": True,
+    }],
+    "vcs": "hg",
+    "mapper": {
+        "url": "https://api.pub.build.mozilla.org/mapper",
+        "project": "comm-central",
+    },
+    "branch_config": {
+        "branches": {
+            "default": "master",
+        },
+    },
+})
+
+remote_targets["comm-central-github"] = {
+    "repo": "git@github.com:mozilla/release-comm-central.git",
     "ssh_key": "~/.ssh/releng-github-id_rsa",
     "vcs": "git",
 }
