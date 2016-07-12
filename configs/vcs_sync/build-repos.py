@@ -132,7 +132,7 @@ conversion_repos.append({
 })
 
 remote_targets["comm-central-github"] = {
-    "repo": "git@github.com:mozilla/release-comm-central.git",
+    "repo": "git@github.com:mozilla/releases-comm-central.git",
     "ssh_key": "~/.ssh/releng-github-id_rsa",
     "vcs": "git",
 }
