@@ -91,6 +91,12 @@ conversion_repos.append({
     "targets": [{
         "target_dest": "nss-github",
         "force_push": True,
+        # push all tags for parity with legacy vcs-sync behavior
+        "tag_config": {
+            "tag_regexes": [
+                "^.*$"
+            ]
+        },
     }],
     "vcs": "hg",
     "mapper": {
