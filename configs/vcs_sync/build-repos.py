@@ -107,6 +107,9 @@ conversion_repos.append({
         "branches": {
             "default": "master",
         },
+        "branch_regexes": [
+            "^.*$",
+        ],
     },
 })
 
