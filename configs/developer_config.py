@@ -43,8 +43,8 @@ config = {
     "tooltool_cache_path": os.path.join(LOCAL_WORKDIR, "builds/tooltool_cache"),
 
     # VCS tools
-    "hgtool.py": 'http://hg.mozilla.org/build/puppet/raw-file/faaf5abd792e/modules/packages/files/hgtool.py',
-    "gittool.py": 'http://hg.mozilla.org/build/puppet/raw-file/faaf5abd792e/modules/packages/files/gittool.py',
+    "hgtool.py": 'https://hg.mozilla.org/build/puppet/raw-file/faaf5abd792e/modules/packages/files/hgtool.py',
+    "gittool.py": 'https://hg.mozilla.org/build/puppet/raw-file/faaf5abd792e/modules/packages/files/gittool.py',
 
     # Android related
     "host_utils_url": "https://api.pub.build.mozilla.org/tooltool/sha512/372c89f9dccaf5ee3b9d35fd1cfeb089e1e5db3ff1c04e35aa3adc8800bc61a2ae10e321f37ae7bab20b56e60941f91bb003bcb22035902a73d70872e7bd3282",

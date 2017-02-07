@@ -1,6 +1,6 @@
 # Mozharness
 If you are viewing this from git, this repository is a read-only
-downstream copy of http://hg.mozilla.org/build/mozharness/
+downstream copy of https://hg.mozilla.org/build/mozharness/
 
 The mozharness repository is only used for 2 projects at this time:
 * https://wiki.mozilla.org/ReleaseEngineering/Applications/Bumper
