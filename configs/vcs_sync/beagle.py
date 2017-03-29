@@ -719,8 +719,8 @@ config = {
             "target_dest": "beagle/.git",
             "vcs": "git",
             "test_push": True,
-        }, {
-            "target_dest": "gitmo-beagle",
+        # }, {
+        #     "target_dest": "gitmo-beagle",
         }, {
             "target_dest": "github-beagle",
         }],
