@@ -57,7 +57,7 @@ class Taskcluster(LogMixin):
                 "name": "Buildbot/mozharness S3 uploader",
                 "description": "Upload outputs of buildbot/mozharness builds to S3",
                 "owner": "mshal@mozilla.com",
-                "source": "http://hg.mozilla.org/build/mozharness/",
+                "source": "https://hg.mozilla.org/build/mozharness/",
             }
         }, taskId=self.task_id)
         return task

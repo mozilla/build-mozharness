@@ -47,6 +47,426 @@ config = {
         "PATH": "%(PATH)s:/usr/libexec/git-core",
     },
     "conversion_repos": [{
+        "repo": "https://hg.mozilla.org/releases/mozilla-b2g18",
+        "revision": "default",
+        "repo_name": "mozilla-b2g18",
+        "targets": [{
+            "target_dest": "beagle/.git",
+            "vcs": "git",
+            "test_push": True,
+        }, {
+            "target_dest": "github-beagle",
+            "tag_config": {
+                "tag_regexes": [
+                    "^B2G_",
+                ],
+            },
+        }],
+        "vcs": "hg",
+        "branch_config": {
+            "branches": {
+                "default": "b2g18",
+            },
+        },
+        "tag_config": {
+            "tag_regexes": [
+                "^B2G_",
+            ],
+        },
+        "mapper": {
+            "url": "https://api.pub.build.mozilla.org/mapper",
+            "project": "gecko-dev"
+        },
+    }, {
+        "repo": "https://hg.mozilla.org/releases/mozilla-b2g26_v1_2",
+        "revision": "default",
+        "repo_name": "mozilla-b2g26_v1_2",
+        "targets": [{
+            "target_dest": "beagle/.git",
+            "vcs": "git",
+            "test_push": True,
+        }, {
+            "target_dest": "github-beagle",
+            "tag_config": {
+                "tag_regexes": [
+                    "^B2G_",
+                ],
+            },
+        }],
+        "vcs": "hg",
+        "branch_config": {
+            "branches": {
+                "default": "b2g26_v1_2",
+            },
+        },
+        "tag_config": {
+            "tag_regexes": [
+                "^B2G_",
+            ],
+        },
+        "mapper": {
+            "url": "https://api.pub.build.mozilla.org/mapper",
+            "project": "gecko-dev"
+        },
+    }, {
+        "repo": "https://hg.mozilla.org/releases/mozilla-b2g26_v1_2f",
+        "revision": "default",
+        "repo_name": "mozilla-b2g26_v1_2f",
+        "targets": [{
+            "target_dest": "beagle/.git",
+            "vcs": "git",
+            "test_push": True,
+        }, {
+            "target_dest": "github-beagle",
+            "tag_config": {
+                "tag_regexes": [
+                    "^B2G_",
+                ],
+            },
+        }],
+        "vcs": "hg",
+        "branch_config": {
+            "branches": {
+                "default": "b2g26_v1_2f",
+            },
+        },
+        "tag_config": {
+            "tag_regexes": [
+                "^B2G_",
+            ],
+        },
+        "mapper": {
+            "url": "https://api.pub.build.mozilla.org/mapper",
+            "project": "gecko-dev"
+        },
+    }, {
+        "repo": "https://hg.mozilla.org/releases/mozilla-b2g28_v1_3",
+        "revision": "default",
+        "repo_name": "mozilla-b2g28_v1_3",
+        "targets": [{
+            "target_dest": "beagle/.git",
+            "vcs": "git",
+            "test_push": True,
+        }, {
+            "target_dest": "github-beagle",
+            "tag_config": {
+                "tag_regexes": [
+                    "^B2G_",
+                ],
+            },
+        }],
+        "vcs": "hg",
+        "branch_config": {
+            "branches": {
+                "default": "b2g28_v1_3",
+            },
+        },
+        "tag_config": {
+            "tag_regexes": [
+                "^B2G_",
+            ],
+        },
+        "mapper": {
+            "url": "https://api.pub.build.mozilla.org/mapper",
+            "project": "gecko-dev"
+        },
+    }, {
+        "repo": "https://hg.mozilla.org/releases/mozilla-b2g28_v1_3t",
+        "revision": "default",
+        "repo_name": "mozilla-b2g28_v1_3t",
+        "targets": [{
+            "target_dest": "beagle/.git",
+            "vcs": "git",
+            "test_push": True,
+        }, {
+            "target_dest": "github-beagle",
+            "tag_config": {
+                "tag_regexes": [
+                    "^B2G_",
+                ],
+            },
+        }],
+        "vcs": "hg",
+        "branch_config": {
+            "branches": {
+                "default": "b2g28_v1_3t",
+            },
+        },
+        "tag_config": {
+            "tag_regexes": [
+                "^B2G_",
+            ],
+        },
+        "mapper": {
+            "url": "https://api.pub.build.mozilla.org/mapper",
+            "project": "gecko-dev"
+        },
+    }, {
+        "repo": "https://hg.mozilla.org/releases/mozilla-b2g30_v1_4",
+        "revision": "default",
+        "repo_name": "mozilla-b2g30_v1_4",
+        "targets": [{
+            "target_dest": "beagle/.git",
+            "vcs": "git",
+            "test_push": True,
+        }, {
+            "target_dest": "github-beagle",
+            "tag_config": {
+                "tag_regexes": [
+                    "^B2G_",
+                ],
+            },
+        }],
+        "vcs": "hg",
+        "branch_config": {
+            "branches": {
+                "default": "b2g30_v1_4",
+            },
+        },
+        "tag_config": {
+            "tag_regexes": [
+                "^B2G_",
+            ],
+        },
+        "mapper": {
+            "url": "https://api.pub.build.mozilla.org/mapper",
+            "project": "gecko-dev"
+        },
+    }, {
+        "repo": "https://hg.mozilla.org/releases/mozilla-b2g34_v2_1",
+        "revision": "default",
+        "repo_name": "mozilla-b2g34_v2_1",
+        "targets": [{
+            "target_dest": "beagle/.git",
+            "vcs": "git",
+            "test_push": True,
+        }, {
+            "target_dest": "github-beagle",
+        }],
+        "vcs": "hg",
+        "branch_config": {
+            "branches": {
+                "default": "b2g34_v2_1",
+            },
+        },
+        "tag_config": {
+            "tag_regexes": [
+                "^B2G_",
+            ],
+        },
+        "mapper": {
+            "url": "https://api.pub.build.mozilla.org/mapper",
+            "project": "gecko-dev"
+        },
+    }, {
+        "repo": "https://hg.mozilla.org/releases/mozilla-b2g34_v2_1s",
+        "revision": "default",
+        "repo_name": "mozilla-b2g34_v2_1s",
+        "targets": [{
+            "target_dest": "beagle/.git",
+            "vcs": "git",
+            "test_push": True,
+        }, {
+            "target_dest": "github-beagle",
+        }],
+        "vcs": "hg",
+        "branch_config": {
+            "branches": {
+                "default": "b2g34_v2_1s",
+            },
+        },
+        "tag_config": {
+            "tag_regexes": [
+                "^B2G_",
+            ],
+        },
+        "mapper": {
+            "url": "https://api.pub.build.mozilla.org/mapper",
+            "project": "gecko-dev"
+        },
+    },  {
+        "repo": "https://hg.mozilla.org/releases/b2g-ota",
+        "revision": "default",
+        "repo_name": "b2g-ota",
+        "targets": [{
+            "target_dest": "beagle/.git",
+            "vcs": "git",
+            "test_push": True,
+        }, {
+            "target_dest": "github-beagle",
+        }],
+        "vcs": "hg",
+        "branch_config": {
+            "branches": {
+                "default": "b2g-ota",
+            },
+        },
+        "tag_config": {
+            "tag_regexes": [
+                "^B2G_",
+            ],
+        },
+        "mapper": {
+            "url": "https://api.pub.build.mozilla.org/mapper",
+            "project": "gecko-dev"
+        },
+    }, {
+        "repo": "https://hg.mozilla.org/releases/mozilla-b2g44_v2_5",
+        "revision": "default",
+        "repo_name": "mozilla-b2g44_v2_5",
+        "targets": [{
+            "target_dest": "beagle/.git",
+            "vcs": "git",
+            "test_push": True,
+        }, {
+            "target_dest": "github-beagle",
+        }],
+        "vcs": "hg",
+        "branch_config": {
+            "branches": {
+                "default": "b2g44_v2_5",
+            },
+        },
+        "tag_config": {
+            "tag_regexes": [
+                "^B2G_",
+            ],
+        },
+        "mapper": {
+            "url": "https://api.pub.build.mozilla.org/mapper",
+            "project": "gecko-dev"
+        },
+    }, {
+        "repo": "https://hg.mozilla.org/releases/mozilla-b2g32_v2_0",
+        "revision": "default",
+        "repo_name": "mozilla-b2g32_v2_0",
+        "targets": [{
+            "target_dest": "beagle/.git",
+            "vcs": "git",
+            "test_push": True,
+        }, {
+            "target_dest": "github-beagle",
+        }],
+        "vcs": "hg",
+        "branch_config": {
+            "branches": {
+                "default": "b2g32_v2_0",
+            },
+        },
+        "tag_config": {
+            "tag_regexes": [
+                "^B2G_",
+            ],
+        },
+        "mapper": {
+            "url": "https://api.pub.build.mozilla.org/mapper",
+            "project": "gecko-dev"
+        },
+    }, {
+        "repo": "https://hg.mozilla.org/releases/mozilla-b2g32_v2_0m",
+        "revision": "default",
+        "repo_name": "mozilla-b2g32_v2_0m",
+        "targets": [{
+            "target_dest": "beagle/.git",
+            "vcs": "git",
+            "test_push": True,
+        }, {
+            "target_dest": "github-beagle",
+        }],
+        "vcs": "hg",
+        "branch_config": {
+            "branches": {
+                "default": "b2g32_v2_0m",
+            },
+        },
+        "tag_config": {
+            "tag_regexes": [
+                "^B2G_",
+            ],
+        },
+        "mapper": {
+            "url": "https://api.pub.build.mozilla.org/mapper",
+            "project": "gecko-dev"
+        },
+    }, {
+        "repo": "https://hg.mozilla.org/releases/mozilla-b2g18_v1_1_0_hd",
+        "revision": "default",
+        "repo_name": "mozilla-b2g18_v1_1_0_hd",
+        "targets": [{
+            "target_dest": "beagle/.git",
+            "vcs": "git",
+            "test_push": True,
+        }, {
+            "target_dest": "github-beagle",
+        }],
+        "vcs": "hg",
+        "branch_config": {
+            "branches": {
+                "default": "b2g18_v1_1_0_hd",
+            },
+        },
+        "tag_config": {
+            "tag_regexes": [
+                "^B2G_",
+            ],
+        },
+        "mapper": {
+            "url": "https://api.pub.build.mozilla.org/mapper",
+            "project": "gecko-dev"
+        },
+    }, {
+        "repo": "https://hg.mozilla.org/releases/mozilla-b2g18_v1_0_1",
+        "revision": "default",
+        "repo_name": "mozilla-b2g18_v1_0_1",
+        "targets": [{
+            "target_dest": "beagle/.git",
+            "vcs": "git",
+            "test_push": True,
+        }, {
+            "target_dest": "github-beagle",
+        }],
+        "vcs": "hg",
+        "branch_config": {
+            "branches": {
+                "default": "b2g18_v1_0_1",
+            },
+        },
+        "tag_config": {
+            "tag_regexes": [
+                "^B2G_",
+            ],
+        },
+        "mapper": {
+            "url": "https://api.pub.build.mozilla.org/mapper",
+            "project": "gecko-dev"
+        },
+    }, {
+        "repo": "https://hg.mozilla.org/releases/mozilla-b2g18_v1_0_0",
+        "revision": "default",
+        "repo_name": "mozilla-b2g18_v1_0_0",
+        "targets": [{
+            "target_dest": "beagle/.git",
+            "vcs": "git",
+            "test_push": True,
+        }, {
+            "target_dest": "github-beagle",
+        }],
+        "vcs": "hg",
+        "branch_config": {
+            "branches": {
+                "default": "b2g18_v1_0_0",
+            },
+        },
+        "tag_config": {
+            "tag_regexes": [
+                "^B2G_",
+            ],
+        },
+        "mapper": {
+            "url": "https://api.pub.build.mozilla.org/mapper",
+            "project": "gecko-dev"
+        },
+    }, {
         "repo": "https://hg.mozilla.org/releases/mozilla-aurora",
         "revision": "default",
         "repo_name": "mozilla-aurora",
@@ -63,7 +483,11 @@ config = {
                 "default": "aurora",
             },
         },
-        "tag_config": {},
+        "tag_config": {
+            "tag_regexes": [
+                "^B2G_",
+            ],
+        },
         "mapper": {
             "url": "https://api.pub.build.mozilla.org/mapper",
             "project": "gecko-dev"
@@ -91,7 +515,7 @@ config = {
         },
         "tag_config": {
             "tag_regexes": [
-                "^RELEASE_BASE_",
+                "^(B2G|RELEASE_BASE)_",
             ],
         },
         "mapper": {
@@ -121,7 +545,91 @@ config = {
         },
         "tag_config": {
             "tag_regexes": [
-                "^RELEASE_BASE_",
+                "^(B2G|RELEASE_BASE)_",
+            ],
+        },
+        "mapper": {
+            "url": "https://api.pub.build.mozilla.org/mapper",
+            "project": "gecko-dev"
+        },
+    }, {
+        "repo": "https://hg.mozilla.org/releases/mozilla-esr17",
+        "revision": "default",
+        "repo_name": "mozilla-esr17",
+        "targets": [{
+            "target_dest": "beagle/.git",
+            "vcs": "git",
+            "test_push": True,
+        }, {
+            "target_dest": "github-beagle",
+        }],
+        "vcs": "hg",
+        "branch_config": {
+            "branches": {
+                "default": "esr17",
+            },
+        },
+        "tag_config": {
+            "tag_regexes": [
+                "^B2G_",
+            ],
+        },
+        "mapper": {
+            "url": "https://api.pub.build.mozilla.org/mapper",
+            "project": "gecko-dev"
+        },
+    }, {
+        "repo": "https://hg.mozilla.org/releases/mozilla-esr31",
+        "revision": "default",
+        "repo_name": "mozilla-esr31",
+        "targets": [{
+            "target_dest": "beagle/.git",
+            "vcs": "git",
+            "test_push": True,
+        }, {
+            "target_dest": "github-beagle",
+        }],
+        "vcs": "hg",
+        "branch_config": {
+            "branches": {
+                "default": "esr31",
+            },
+            "branch_regexes": [
+                "^GECKO[0-9]+esr_[0-9]+_RELBRANCH$",
+            ],
+        },
+        "tag_config": {
+            "tag_regexes": [
+                "^B2G_",
+            ],
+        },
+        "mapper": {
+            "url": "https://api.pub.build.mozilla.org/mapper",
+            "project": "gecko-dev"
+        },
+    }, {
+        "repo": "https://hg.mozilla.org/releases/mozilla-esr38",
+        "revision": "default",
+        "repo_name": "mozilla-esr38",
+        "targets": [{
+            "target_dest": "beagle/.git",
+            "vcs": "git",
+            "test_push": True,
+        }, {
+            "target_dest": "github-beagle",
+        }],
+        "vcs": "hg",
+        "branch_config": {
+            "branches": {
+                "default": "esr38",
+            },
+            "branch_regexes": [
+                "^GECKO[0-9]+esr_[0-9]+_RELBRANCH$",
+            ],
+        },
+        "tag_config": {
+            "tag_regexes": [
+                "^B2G_",
             ],
         },
         "mapper": {
@@ -148,7 +656,11 @@ config = {
                 "^GECKO[0-9]+esr_[0-9]+_RELBRANCH$",
             ],
         },
-        "tag_config": {},
+        "tag_config": {
+            "tag_regexes": [
+                "^B2G_",
+            ],
+        },
         "mapper": {
             "url": "https://api.pub.build.mozilla.org/mapper",
             "project": "gecko-dev"
@@ -161,6 +673,8 @@ config = {
             "target_dest": "beagle/.git",
             "vcs": "git",
             "test_push": True,
+        # }, {
+        #     "target_dest": "gitmo-beagle",
         }, {
             "target_dest": "github-beagle",
         }],
@@ -173,7 +687,11 @@ config = {
                 "^GECKO[0-9]+esr_[0-9]+_RELBRANCH$",
             ],
         },
-        "tag_config": {},
+        "tag_config": {
+            "tag_regexes": [
+                "^B2G_",
+            ],
+        },
         "mapper": {
             "url": "https://api.pub.build.mozilla.org/mapper",
             "project": "gecko-dev"
@@ -193,6 +711,28 @@ config = {
         "branch_config": {
             "branches": {
                 "default": "inbound",
+            },
+        },
+        "tag_config": {},
+        "mapper": {
+            "url": "https://api.pub.build.mozilla.org/mapper",
+            "project": "gecko-dev"
+        },
+    }, {
+        "repo": "https://hg.mozilla.org/integration/b2g-inbound",
+        "revision": "default",
+        "repo_name": "b2g-inbound",
+        "targets": [{
+            "target_dest": "beagle/.git",
+            "vcs": "git",
+            "test_push": True,
+        }, {
+            "target_dest": "github-beagle",
+        }],
+        "vcs": "hg",
+        "branch_config": {
+            "branches": {
+                "default": "b2g-inbound",
             },
         },
         "tag_config": {},
