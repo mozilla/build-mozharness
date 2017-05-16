@@ -555,7 +555,7 @@ intree=1
                     base_command,
                     refs_list=refs_list,
                     kwargs={
-                        'output_timeout': target_config.get("output_timeout", 30 * 60),
+                        'output_timeout': target_config.get("output_timeout", 90 * 60),
                         'cwd': os.path.join(conversion_dir, '.git'),
                         'error_list': GitErrorList,
                         'partial_env': env,
@@ -882,7 +882,7 @@ intree=1
                 self.run_command,
                 args=(hg + ['-v', 'gexport'], ),
                 kwargs={
-                    'output_timeout': 25 * 60,
+                    'output_timeout': repo_config.get("export_timeout", 120 * 60),
                     'cwd': dest,
                     'error_list': HgErrorList,
                 },
