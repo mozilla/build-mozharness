@@ -534,7 +534,7 @@ def generate_build_UID():
 
 class BuildScript(BuildbotMixin, PurgeMixin, MockMixin, BalrogMixin,
                   SigningMixin, VirtualenvMixin, MercurialScript,
-                  TransferMixin, InfluxRecordingMixin):
+                  TransferMixin):
     def __init__(self, **kwargs):
         # objdir is referenced in _query_abs_dirs() so let's make sure we
         # have that attribute before calling BaseScript.__init__
