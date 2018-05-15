@@ -179,6 +179,31 @@ config = {
             "project": "gecko-dev"
         },
     }, {
+        "repo": "https://hg.mozilla.org/releases/mozilla-esr60",
+        "revision": "default",
+        "repo_name": "mozilla-esr60",
+        "targets": [{
+            "target_dest": "beagle/.git",
+            "vcs": "git",
+            "test_push": True,
+        }, {
+            "target_dest": "github-beagle",
+        }],
+        "vcs": "hg",
+        "branch_config": {
+            "branches": {
+                "default": "esr60",
+            },
+            "branch_regexes": [
+                "^GECKO[0-9]+esr_[0-9]+_RELBRANCH$",
+            ],
+        },
+        "tag_config": {},
+        "mapper": {
+            "url": "https://api.pub.build.mozilla.org/mapper",
+            "project": "gecko-dev"
+        },
+    }, {
         "repo": "https://hg.mozilla.org/integration/mozilla-inbound",
         "revision": "default",
         "repo_name": "mozilla-inbound",
