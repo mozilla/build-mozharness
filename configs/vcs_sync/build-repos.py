@@ -8,7 +8,6 @@ build_repos = (
     'buildbotcustom',
     'mozharness',
     'partner-repacks',
-    'puppet',
     'talos',
     'tools',
 )
