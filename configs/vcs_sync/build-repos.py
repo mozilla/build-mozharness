@@ -26,7 +26,7 @@ for repo in build_repos:
         }],
         "vcs": "hg",
         "mapper": {
-            "url": "https://api.pub.build.mozilla.org/mapper",
+            "url": "https://mapper.mozilla-releng.net",
             "project": "build-%s" % repo,
         },
         "branch_config": {
@@ -64,7 +64,7 @@ conversion_repos.append({
     }],
     "vcs": "hg",
     "mapper": {
-        "url": "https://api.pub.build.mozilla.org/mapper",
+        "url": "https://mapper.mozilla-releng.net",
         "project": "version-control-tools",
     },
     "branch_config": {
@@ -99,7 +99,7 @@ conversion_repos.append({
     }],
     "vcs": "hg",
     "mapper": {
-        "url": "https://api.pub.build.mozilla.org/mapper",
+        "url": "https://mapper.mozilla-releng.net",
         "project": "nss",
     },
     "branch_config": {
@@ -135,7 +135,7 @@ conversion_repos.append({
     }],
     "vcs": "hg",
     "mapper": {
-        "url": "https://api.pub.build.mozilla.org/mapper",
+        "url": "https://mapper.mozilla-releng.net",
         "project": "conduit",
     },
     "branch_config": {
@@ -165,7 +165,7 @@ conversion_repos.append({
     }],
     "vcs": "hg",
     "mapper": {
-        "url": "https://api.pub.build.mozilla.org/mapper",
+        "url": "https://mapper.mozilla-releng.net",
         "project": "comm-central",
     },
     "branch_config": {
