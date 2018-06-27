@@ -65,7 +65,7 @@ config = {
         },
         "tag_config": {},
         "mapper": {
-            "url": "https://api.pub.build.mozilla.org/mapper",
+            "url": "https://mapper.mozilla-releng.net",
             "project": "gecko-dev"
         },
     }, {
@@ -95,7 +95,7 @@ config = {
             ],
         },
         "mapper": {
-            "url": "https://api.pub.build.mozilla.org/mapper",
+            "url": "https://mapper.mozilla-releng.net",
             "project": "gecko-dev"
         },
     }, {
@@ -125,7 +125,7 @@ config = {
             ],
         },
         "mapper": {
-            "url": "https://api.pub.build.mozilla.org/mapper",
+            "url": "https://mapper.mozilla-releng.net",
             "project": "gecko-dev"
         },
     }, {
@@ -150,7 +150,7 @@ config = {
         },
         "tag_config": {},
         "mapper": {
-            "url": "https://api.pub.build.mozilla.org/mapper",
+            "url": "https://mapper.mozilla-releng.net",
             "project": "gecko-dev"
         },
     }, {
@@ -175,7 +175,7 @@ config = {
         },
         "tag_config": {},
         "mapper": {
-            "url": "https://api.pub.build.mozilla.org/mapper",
+            "url": "https://mapper.mozilla-releng.net",
             "project": "gecko-dev"
         },
     }, {
@@ -200,7 +200,7 @@ config = {
         },
         "tag_config": {},
         "mapper": {
-            "url": "https://api.pub.build.mozilla.org/mapper",
+            "url": "https://mapper.mozilla-releng.net",
             "project": "gecko-dev"
         },
     }, {
@@ -222,7 +222,7 @@ config = {
         },
         "tag_config": {},
         "mapper": {
-            "url": "https://api.pub.build.mozilla.org/mapper",
+            "url": "https://mapper.mozilla-releng.net",
             "project": "gecko-dev"
         },
     }, {
@@ -244,7 +244,7 @@ config = {
         },
         "tag_config": {},
         "mapper": {
-            "url": "https://api.pub.build.mozilla.org/mapper",
+            "url": "https://mapper.mozilla-releng.net",
             "project": "gecko-dev"
         },
     }],
