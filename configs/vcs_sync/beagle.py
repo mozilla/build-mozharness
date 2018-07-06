@@ -16,10 +16,6 @@ CVS_MANIFEST = """[{
 config = {
     "log_name": "beagle",
     "log_max_rotate": 99,
-    "repos": [{
-        "repo": "https://hg.mozilla.org/users/hwine_mozilla.com/repo-sync-tools",
-        "vcs": "hg",
-    }],
     "job_name": "beagle",
     "conversion_dir": "beagle",
     "initial_repo": {
@@ -40,9 +36,7 @@ config = {
             },
         },
     },
-    "backup_dir": "/mnt/netapp/github_sync/aki/%s" % hostname,
     "cvs_manifest": CVS_MANIFEST,
-    "cvs_history_tarball": "/home/pmoore/mozilla-cvs-history.tar.bz2",
     "env": {
         "PATH": "%(PATH)s:/usr/libexec/git-core",
     },
