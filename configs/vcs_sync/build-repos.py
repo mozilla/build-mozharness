@@ -117,42 +117,6 @@ remote_targets["nss-github"] = {
     "ssh_key": "~/.ssh/releng-github-id_rsa", "vcs": "git",
 }
 
-# conduit is here because adding it to this job was easier
-# than defining its own config file and job.
-conversion_repos.append({
-    "repo": "https://hg.mozilla.org/automation/conduit",
-    "repo_name": "conduit",
-    "conversion_dir": "conduit",
-    "targets": [{
-        "target_dest": "conduit-github",
-        "force_push": True,
-        # push all tags for parity with legacy vcs-sync behavior
-        "tag_config": {
-            "tag_regexes": [
-                "^.*$"
-            ]
-        },
-    }],
-    "vcs": "hg",
-    "mapper": {
-        "url": "https://mapper.mozilla-releng.net",
-        "project": "conduit",
-    },
-    "branch_config": {
-        "branches": {
-            "default": "master",
-        },
-        "branch_regexes": [
-            "^.*$",
-        ],
-    },
-})
-
-remote_targets["conduit-github"] = {
-    "repo": "git@github.com:mozilla-conduit/conduit.git",
-    "ssh_key": "~/.ssh/conduit-github-id_rsa", "vcs": "git",
-}
-
 # comm-central is here because adding it to this job was easier
 # than defining its own config file and job.
 conversion_repos.append({
