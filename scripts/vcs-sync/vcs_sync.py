@@ -983,10 +983,7 @@ intree=1
                 mapper_url = mapper_config['url']
                 mapper_project = mapper_config['project']
                 insert_url = "%s/%s/insert/ignoredups" % (mapper_url, mapper_project)
-                headers = {
-                    'Content-Type': 'text/plain',
-                    'Authentication': 'Bearer %s' % os.environ["RELENGAPI_INSERT_HGGIT_MAPPINGS_AUTH_TOKEN"]
-                }
+
                 all_new_mappings = []
                 all_new_mappings.extend(self.pull_out_new_sha_lookups(published_to_mapper, complete_mapfile))
                 self.write_to_file(delta_for_mapper, "".join(all_new_mappings))
@@ -1018,8 +1015,12 @@ intree=1
                         error.output = output
                         raise error
                     return output
-                lines_last_time = int(check_output('wc -l <%s' % published_to_mapper, shell=True))
-                lines_this_time = int(check_output('wc -l <%s' % complete_mapfile, shell=True))
+                lines_last_time = 0
+                if os.path.exists(published_to_mapper):
+                    lines_last_time = int(check_output('wc -l <%s' % published_to_mapper, shell=True))
+                lines_this_time = 0
+                if os.path.exists(complete_mapfile):
+                    lines_this_time = int(check_output('wc -l <%s' % complete_mapfile, shell=True))
                 if lines_this_time - lines_last_time != len(all_new_mappings):
                     self.error("Bad calc of new mappings: last %d, now %d, diff %d, calc %d"
                                % (lines_last_time, lines_this_time, lines_this_time - lines_last_time,
@@ -1032,12 +1033,58 @@ intree=1
                 if retcode != 1:
                     self.error("Bad selection of new mappings, some already there")
 
+                # create authentication headers
+                content_type = 'text/plain'
+                tc_client_id = os.environ.get(
+                    'RELENGAPI_INSERT_HGGIT_MAPPINGS_TASKCLUSTER_CLIENT_ID')
+                tc_access_token = os.environ.get(
+                    'RELENGAPI_INSERT_HGGIT_MAPPINGS_TASKCLUSTER_ACCESS_TOKEN')
+                relengapi_token = os.environ.get(
+                    'RELENGAPI_INSERT_HGGIT_MAPPINGS_AUTH_TOKEN')
+
+                # For taskcluster auth, we only import mohawk since we need
+                # content to create the header
+                try:
+                    import mohawk
+                except ImportError as e:
+                    self.fatal("Can't import mohawk: %s\nDid you create-virtualenv?" % str(e))
+
                 # due to timeouts on load balancer, we only push 200 lines at a time
                 # this means that we should get http response back within 30 seconds
                 # including the time it takes to insert the mappings in the database
                 publish_successful = True
+
                 for i in range(0, len(all_new_mappings), 200):
-                    r = requests.post(insert_url, data="".join(all_new_mappings[i:i+200]), headers=headers)
+                    data = "".join(all_new_mappings[i:i+200])
+
+                    if tc_client_id and tc_access_token:
+                        headers = {
+                            'Content-Type': content_type,
+                            'Authentication': mohawk.Sender(
+                                credentials=dict(
+                                    id=tc_client_id,
+                                    key=tc_access_token,
+                                    algorithm='sha256',
+                                ),
+                                ext=dict(),
+                                url=insert_url,
+                                content=data,
+                                content_type=content_type,
+                                method='POST',
+                            ).request_header,
+                        }
+                    elif relengapi_token:
+                        headers = {
+                            'Content-Type': content_type,
+                            'Authentication': 'Bearer %s' % relengapi_token,
+                        }
+                    else:
+                        self.fatal(
+                            "Please provide either:\n"
+                            "- RELENGAPI_INSERT_HGGIT_MAPPINGS_AUTH_TOKEN\n"
+                            "- RELENGAPI_INSERT_HGGIT_MAPPINGS_TASKCLUSTER_ACCESS_TOKEN and RELENGAPI_INSERT_HGGIT_MAPPINGS_TASKCLUSTER_CLIENT_ID")
+
+                    r = requests.post(insert_url, data=data, headers=headers)
                     if (r.status_code != 200):
                         self.error("Could not publish mapfile ('%s') line range [%s, %s] to mapper (%s) - received http %s code" % (delta_for_mapper, i, i+200, insert_url, r.status_code))
                         publish_successful = False
@@ -1046,6 +1093,7 @@ intree=1
                         # time anyway
                     else:
                         self.info("Published mapfile ('%s') line range [%s, %s] to mapper (%s)" % (delta_for_mapper, i, i+200, insert_url))
+
                 if publish_successful:
                     # bug 1193011 says there are problems on occasion
                     # with delta uploads. Check that items are in db in

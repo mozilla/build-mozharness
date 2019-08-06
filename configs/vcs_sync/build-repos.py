@@ -164,6 +164,7 @@ config = {
         "mozinfo==0.5",
         "mozprocess==0.11",
         "requests==2.8.1",
+        "mohawk==1.0.0",
     ],
     "find_links": [
         "http://pypi.pub.build.mozilla.org/pub"
