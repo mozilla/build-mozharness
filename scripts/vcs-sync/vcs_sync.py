@@ -912,6 +912,12 @@ intree=1
         # - converting new hg changesets
         # - update tags
         # - update .hg/git-mapfile
+        partial_env = {
+            'PATH': os.pathsep.join([
+                os.path.join(self.query_virtualenv_path(), 'bin'),
+                os.environ['PATH'],
+            ]),
+        }
         if self.retry(
             self.run_command,
             args=(git + [
@@ -923,6 +929,7 @@ intree=1
                 'output_timeout': repo_config.get("export_timeout", 120 * 60),
                 'cwd': dest,
                 'error_list': GitErrorList,
+                'partial_env': partial_env,
             },
             error_level=FATAL,
         ):
@@ -938,6 +945,7 @@ intree=1
                 'output_timeout': 60,
                 'cwd': dest,
                 'error_list': GitErrorList,
+                'partial_env': partial_env,
             },
             error_level=FATAL,
         ):
@@ -982,10 +990,13 @@ intree=1
         git_sha1s = [diff_line.split()[-1].replace('/', '') for diff_line in (output or '').splitlines()]
         hg_sha1s = []
         CHUNK_SIZE = 50
+        env = os.environ.copy()
+        env.update(partial_env)
         for offset in range(0, len(git_sha1s), CHUNK_SIZE):
             output = self.get_output_from_command(
                 git + ['-c', 'cinnabar.check=no-version-check', 'cinnabar', 'git2hg'] + git_sha1s[offset:offset + CHUNK_SIZE],
                 cwd=dest,
+                env=env,
             )
             hg_sha1s += (output or '').split()
         if len(git_sha1s) != len(hg_sha1s) or '0000000000000000000000000000000000000000' in hg_sha1s:
