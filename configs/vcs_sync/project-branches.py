@@ -64,9 +64,10 @@ config = {
     }],
     "job_name": "project-branches",
     "conversion_dir": "project-branches",
+    "cinnabar": True,
     "mapfile_name": "project-branches-mapfile",
     "env": {
-        "PATH": "%(PATH)s:/usr/libexec/git-core",
+        "PATH": "%(PATH)s:/usr/libexec/git-core:/opt/vcs2vcs/git-cinnabar",
     },
     "conversion_type": "project-branches",
     "project_branches": PROJECT_BRANCHES,
@@ -94,11 +95,9 @@ config = {
 
     "virtualenv_modules": [
         "bottle==0.11.6",
-        "dulwich==0.9.0",
         "ordereddict==1.1",
-        "hg-git==0.4.0-moz2",
         "mapper==0.1",
-        "mercurial==3.7.3",
+        "mercurial==5.3.2",
         "mozfile==0.9",
         "mozinfo==0.5",
         "mozprocess==0.11",

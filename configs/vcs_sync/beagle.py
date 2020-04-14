@@ -18,6 +18,7 @@ config = {
     "log_max_rotate": 99,
     "job_name": "beagle",
     "conversion_dir": "beagle",
+    "cinnabar": True,
     "initial_repo": {
         "repo": "https://hg.mozilla.org/mozilla-central",
         "revision": "default",
@@ -38,7 +39,7 @@ config = {
     },
     "cvs_manifest": CVS_MANIFEST,
     "env": {
-        "PATH": "%(PATH)s:/usr/libexec/git-core",
+        "PATH": "%(PATH)s:/usr/libexec/git-core:/opt/vcs2vcs/git-cinnabar",
     },
     "conversion_repos": [{
         "repo": "https://hg.mozilla.org/releases/mozilla-aurora",
@@ -262,11 +263,9 @@ config = {
 
     "virtualenv_modules": [
         "bottle==0.11.6",
-        "dulwich==0.9.0",
         "ordereddict==1.1",
-        "hg-git==0.4.0-moz2",
         "mapper==0.1",
-        "mercurial==3.7.3",
+        "mercurial==5.3.2",
         "mozfile==0.9",
         "mozinfo==0.5",
         "mozprocess==0.11",
