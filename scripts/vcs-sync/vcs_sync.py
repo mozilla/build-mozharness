@@ -818,7 +818,8 @@ intree=1
                                  error_list=HgErrorList,
                                  halt_on_failure=False)
                 if os.path.exists(dest):
-                    self.write_hggit_hgrc(dest)
+                    if not self.config.get('cinnabar'):
+                        self.write_hggit_hgrc(dest)
                     self.init_git_repo('%s/.git' % dest, additional_args=['--bare'])
                     self.run_command(
                         git + ['--git-dir', '%s/.git' % dest, 'config', 'gc.auto', '0'],
@@ -878,17 +879,23 @@ intree=1
             if self.query_failure(repo_name):
                 # We hit an error in the for loop above
                 continue
-            self.retry(
-                self.run_command,
-                args=(hg + ['-v', 'gexport'], ),
-                kwargs={
-                    'output_timeout': repo_config.get("export_timeout", 120 * 60),
-                    'cwd': dest,
-                    'error_list': HgErrorList,
-                },
-                error_level=FATAL,
-            )
+
             generated_mapfile = os.path.join(dest, '.hg', 'git-mapfile')
+            if self.config.get('cinnabar'):
+                self._update_cinnabar_mirror(repo_config, git, dest, generated_mapfile)
+            else:
+                self.retry(
+                    self.run_command,
+                    args=(hg + ['-v', 'gexport'], ),
+                    kwargs={
+                        'output_timeout': repo_config.get("export_timeout", 120 * 60),
+                        'cwd': dest,
+                        'error_list': HgErrorList,
+                    },
+                    error_level=FATAL,
+                )
+
+
             self.copy_to_upload_dir(
                 generated_mapfile,
                 dest=repo_config.get('mapfile_name', self.config.get('mapfile_name', "gecko-mapfile")),
@@ -899,6 +906,143 @@ intree=1
                     revision=rev, mapfile=generated_mapfile)
                 repo_map['repos'][repo_name]['branches'][branch]['git_revision'] = git_revision
         self._write_repo_update_json(repo_map)
+
+    def _update_cinnabar_mirror(self, repo_config, git, dest, generated_mapfile):
+        # Do things somewhat equivalent to hg gexport with git-cinnabar, which involves:
+        # - converting new hg changesets
+        # - update tags
+        # - update .hg/git-mapfile
+        if self.retry(
+            self.run_command,
+            args=(git + [
+                '-c', 'gc.auto=0',
+                '-c', 'cinnabar.refs=bookmarks',
+                '-c', 'cinnabar.check=no-version-check',
+                'fetch', '--progress', 'hg::%s' % dest, 'refs/heads/*:refs/heads/*'], ),
+            kwargs={
+                'output_timeout': repo_config.get("export_timeout", 120 * 60),
+                'cwd': dest,
+                'error_list': GitErrorList,
+            },
+            error_level=FATAL,
+        ):
+            self.fatal('Error converting from mercurial to git')
+
+        if self.retry(
+            self.run_command,
+            args=(git + [
+                '-c', 'gc.auto=0',
+                '-c', 'cinnabar.check=no-version-check',
+                'fetch', '--tags', 'hg::tags:', 'tag', '*'], ),
+            kwargs={
+                'output_timeout': 60,
+                'cwd': dest,
+                'error_list': GitErrorList,
+            },
+            error_level=FATAL,
+        ):
+            self.fatal('Error converting tags')
+
+        # Extra cleanup step: if there are more than 6700 loose objects or more than 50 packs,
+        # repack everything.
+        self.retry(
+            self.run_command,
+            args=(git + [
+                '-c', 'gc.autoDetach=false',
+                # This is only supported by git >= 2.18.0 but earlier versions will just ignore.
+                '-c', 'gc.bigPackThreshold=1g',
+                'gc',
+                '--auto',
+                # This is only supported by git >= 2.18.0, skip for now, we'll use a .keep file
+                # in .git/objects/pack. Until new packs become large enough to be a problem, we
+                # hopefully will have upgraded git.
+                #'--keep-largest-pack',
+            ], ),
+            kwargs={
+                'output_timeout': 120 * 60,
+                'cwd': dest,
+                'error_list': GitErrorList,
+            },
+            error_level=FATAL,
+        )
+
+        # Update map file
+        # This relies on some git-cinnabar internals. We keep a `refs/cinnabar/map` ref
+        # pointing to where `refs/cinnabar/metadata` pointed when the mapfile was last
+        # updated. `refs/cinnabar/metadata^4` and thus `refs/cinnabar/map^4` point to
+        # git-cinnabar's git->hg mapping metadata, which is a `git-notes` tree for all
+        # the converted git commits. The diff between both an old and a new such tree
+        # gives us a list of the new git commits from the update we just did.
+        # We can then ask `git cinnabar git2hg` to convert them all back to mercurial
+        # changeset ids.
+        output = self.get_output_from_command(
+            git + ['diff-tree', '-r', 'refs/cinnabar/map^4', 'refs/cinnabar/metadata^4'],
+            cwd=dest,
+        )
+        git_sha1s = [diff_line.split()[-1].replace('/', '') for diff_line in (output or '').splitlines()]
+        hg_sha1s = []
+        CHUNK_SIZE = 50
+        for offset in range(0, len(git_sha1s), CHUNK_SIZE):
+            output = self.get_output_from_command(
+                git + ['-c', 'cinnabar.check=no-version-check', 'cinnabar', 'git2hg'] + git_sha1s[offset:offset + CHUNK_SIZE],
+                cwd=dest,
+            )
+            hg_sha1s += (output or '').split()
+        if len(git_sha1s) != len(hg_sha1s) or '0000000000000000000000000000000000000000' in hg_sha1s:
+            self.fatal('Error while updating git->hg mapping')
+
+        # Nothing to update, we can return now
+        if not git_sha1s:
+            return
+
+        def old_map():
+            with open(generated_mapfile) as map_file:
+                for line in map_file:
+                    l = line.split()
+                    if len(l) != 2:
+                        self.fatal('Error in git-mapfile')
+                    yield tuple(l)
+
+        # Merge two iterators of (git_sha1, hg_sha1), ordered by hg_sha1.
+        def merge_map(a, b):
+            a = iter(a)
+            b = iter(b)
+            item_a = next(a, None)
+            item_b = next(b, None)
+            while item_a is not None or item_b is not None:
+                while item_a and (item_b is None or item_a[1] < item_b[1]):
+                    yield item_a
+                    item_a = next(a, None)
+                while item_b and (item_a is None or item_b[1] < item_a[1]):
+                    yield item_b
+                    item_b = next(b, None)
+                if item_a is None or item_b is None:
+                    continue
+                if item_a[1] == item_b[1]:
+                    if item_a[0] != item_b[0]:
+                        self.fatal('%s already maps to %s ; cannot change that to %s',
+                                   item_a[1], item_a[0], item_b[0])
+                    yield item_a
+                    item_a = next(a, None)
+                    item_b = next(b, None)
+
+        new_map = sorted(zip(git_sha1s, hg_sha1s), key=lambda x: x[1])
+        with open(generated_mapfile + '.new', 'w') as new_map_file:
+            for git_sha1, hg_sha1 in merge_map(old_map(), new_map):
+                new_map_file.write('%s %s\n' % (git_sha1, hg_sha1))
+        os.rename(generated_mapfile, generated_mapfile + '.old')
+        os.rename(generated_mapfile + '.new', generated_mapfile)
+        if self.retry(
+            self.run_command,
+            args=(git + ['update-ref', 'refs/cinnabar/map', 'refs/cinnabar/metadata'], ),
+            kwargs={
+                'output_timeout': 60,
+                'cwd': dest,
+                'error_list': GitErrorList,
+            },
+            error_level=FATAL,
+        ):
+            self.fatal('Error updating refs/cinnabar/map')
 
     def create_git_notes(self):
         git = self.query_exe("git", return_type="list")
