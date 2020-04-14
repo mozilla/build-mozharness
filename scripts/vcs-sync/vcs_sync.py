@@ -951,6 +951,21 @@ intree=1
         ):
             self.fatal('Error converting tags')
 
+        # Extra security: run git cinnabar fsck.
+        if self.retry(
+            self.run_command,
+            args=(git + [
+                '-c', 'cinnabar.check=no-version-check',
+                'cinnabar', 'fsck'], ),
+            kwargs={
+                'output_timeout': 120 * 60,
+                'cwd': dest,
+                'partial_env': partial_env,
+            },
+            error_level=FATAL,
+        ):
+            self.fatal('Consistency error in the git-cinnabar repository')
+
         # Extra cleanup step: if there are more than 6700 loose objects or more than 50 packs,
         # repack everything.
         self.retry(
