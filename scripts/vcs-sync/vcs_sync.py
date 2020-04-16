@@ -912,10 +912,11 @@ intree=1
         # - converting new hg changesets
         # - update tags
         # - update .hg/git-mapfile
+        env = self.query_env()
         partial_env = {
             'PATH': os.pathsep.join([
                 os.path.join(self.query_virtualenv_path(), 'bin'),
-                os.environ['PATH'],
+                env['PATH'],
             ]),
         }
         if self.retry(
@@ -1005,7 +1006,7 @@ intree=1
         git_sha1s = [diff_line.split()[-1].replace('/', '') for diff_line in (output or '').splitlines()]
         hg_sha1s = []
         CHUNK_SIZE = 50
-        env = os.environ.copy()
+        env = env.copy()
         env.update(partial_env)
         for offset in range(0, len(git_sha1s), CHUNK_SIZE):
             output = self.get_output_from_command(
